@@ -1,0 +1,63 @@
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="css.css">
+    <script src="js.js"></script>
+    <script>
+
+        Q.Ready(function () {
+            Q('.container').each(function (index, element) {
+                // Q(this).html('Hello World');
+            });
+
+    // Example usage
+    // Test the deflate and inflate methods
+    const jsonData = {
+        name: "John",
+        age: 30,
+        address: {
+            city: "New York",
+            zip: "10001"
+        },
+        hobbies: ["reading", "traveling", "swimming"]
+    };
+    
+    const qJson = Q.JSON(jsonData);
+    const result = qJson.deflate(2);
+    console.log(result);
+    
+    const q2 = Q.JSON(result).inflate();
+    console.log(q2);
+
+
+        });
+
+    </script>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="container_blocks">
+<div class="container_block">
+<div class="container_title">Title</div>
+<div class="container_function">Function</div>
+<div class="container_input">Input</div>
+<div class="container_output">Output</div>
+<div class="container_example">Example</div>
+<input class="checkbox" type="checkbox">
+
+</div>
+        </div>
+
+        <textarea class="output"></textarea>
+
+    </div>
+
+
+
+
+
+</body>
+
+</html>
