@@ -362,8 +362,11 @@ const Q = (() => {
 
 
     Q.String = function (string) {
+        if (!(this instanceof Q.String)) {
+            return new Q.String(string);
+        }
         this.string = string;
-    }
+    };
 
     Q.String.prototype.capitalize = function () {
         return this.string.charAt(0).toUpperCase() + this.string.slice(1);
@@ -394,11 +397,12 @@ const Q = (() => {
     };
 
 
-
-
-    Q.JSON = function (json) {
+    Q.JSON = function(json) {
+        if (!(this instanceof Q.JSON)) {
+            return new Q.JSON(json);
+        }
         this.json = json;
-    }
+    };
 
     Q.JSON.prototype.Parse = function(options = {modify: false, recursive: false}, callback) {
         const process = (data) => {
@@ -419,7 +423,127 @@ const Q = (() => {
 
         process(this.json);
         return this.json;
+    };
+
+Q.JSON.prototype.deflate = function(level) {
+    const map = {};
+    let counter = 1;
+
+    function replaceRecursive(obj) {
+        if (typeof obj === 'object' && obj !== null) {
+            for (let key in obj) {
+                if (typeof obj[key] === 'object') {
+                    replaceRecursive(obj[key]);
+                }
+
+                if (key.length >= level) {
+                    if (!map[key]) {
+                        map[key] = `[${counter}]`;
+                        counter++;
+                    }
+                    const newKey = map[key];
+                    obj[newKey] = obj[key];
+                    delete obj[key];
+                }
+
+                if (typeof obj[key] === 'string' && obj[key].length >= level) {
+                    if (!map[obj[key]]) {
+                        map[obj[key]] = `[${counter}]`;
+                        counter++;
+                    }
+                    obj[key] = map[obj[key]];
+                }
+            }
+        }
     }
+
+    const compressedData = JSON.parse(JSON.stringify(this.json));
+    replaceRecursive(compressedData);
+
+    return { data: compressedData, map: map };
+};
+
+Q.JSON.prototype.inflate = function(deflatedJson) {
+    const { data, map } = deflatedJson;
+    const reverseMap = Object.fromEntries(Object.entries(map).map(([k, v]) => [v, k]));
+
+    function restoreRecursive(obj) {
+        if (typeof obj === 'object' && obj !== null) {
+            for (let key in obj) {
+                const originalKey = reverseMap[key] || key;
+                const value = obj[key];
+
+                delete obj[key];
+                obj[originalKey] = value;
+
+                if (typeof obj[originalKey] === 'object') {
+                    restoreRecursive(obj[originalKey]);
+                } else if (reverseMap[obj[originalKey]]) {
+                    obj[originalKey] = reverseMap[obj[originalKey]];
+                }
+            }
+        }
+    }
+
+    const inflatedData = JSON.parse(JSON.stringify(data));
+    restoreRecursive(inflatedData);
+    return inflatedData;
+};
+
+
+
+Q.Timer = function(callback, id, options = {}) {
+    const defaultOptions = {
+        tick: 0,
+        interval: 1000,
+        interrupt: false
+    };
+
+    options = { ...defaultOptions, ...options };
+    let tickCount = 0;
+    let intervalId = null;
+
+    if (!Q.Timer.activeTimers) {
+        Q.Timer.activeTimers = {};
+    }
+
+    if (options.interrupt && Q.Timer.activeTimers[id]) {
+        clearInterval(Q.Timer.activeTimers[id]);
+    }
+
+    intervalId = setInterval(() => {
+        callback();
+
+        tickCount++;
+        if (options.tick > 0 && tickCount >= options.tick) {
+            clearInterval(intervalId);
+            delete Q.Timer.activeTimers[id];
+        }
+    }, options.interval);
+
+    Q.Timer.activeTimers[id] = intervalId;
+
+    return intervalId;
+};
+
+Q.Timer.stop = function(id) {
+    if (Q.Timer.activeTimers && Q.Timer.activeTimers[id]) {
+        clearInterval(Q.Timer.activeTimers[id]);
+        delete Q.Timer.activeTimers[id];
+    }
+};
+
+Q.Timer.stopAll = function() {
+    if (Q.Timer.activeTimers) {
+        for (let id in Q.Timer.activeTimers) {
+            clearInterval(Q.Timer.activeTimers[id]);
+            delete Q.Timer.activeTimers[id];
+        }
+    }
+};
+
+
+
 
 
     return Q;

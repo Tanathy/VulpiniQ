@@ -12,22 +12,30 @@
 
     // Example usage
     // Test the deflate and inflate methods
-    const jsonData = {
-        name: "John",
-        age: 30,
-        address: {
-            city: "New York",
-            zip: "10001"
-        },
-        hobbies: ["reading", "traveling", "swimming"]
-    };
-    
-    const qJson = Q.JSON(jsonData);
-    const result = qJson.deflate(2);
-    console.log(result);
-    
-    const q2 = Q.JSON(result).inflate();
-    console.log(q2);
+    const originalJson = {
+    name: "John Doe",
+    address: {
+        city: "New York",
+        street: "123 Elm Street",
+        country: "USA"
+    },
+    hobbies: ["reading", "coding", "running"],
+    bio: {
+        name: "John Doe",
+        profession: "Software Developer"
+    }
+};
+
+const jsonInstance = Q.JSON(originalJson);
+
+// Deflating the JSON
+const level = 4;  // Any key or value longer than this will be replaced
+const deflated = jsonInstance.deflate(level);
+console.log("Deflated JSON:", deflated);
+
+// Inflating the JSON back to its original form
+const inflated = jsonInstance.inflate(deflated);
+console.log("Inflated JSON:", inflated);
 
 
         });
