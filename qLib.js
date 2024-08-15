@@ -14,6 +14,7 @@ const Q = (() => {
         }
     }
 
+    
     Q.prototype._querySelector = function (selector) {
         switch (selector) {
             case 'document':
