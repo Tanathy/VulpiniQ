@@ -83,7 +83,18 @@ const Q = (() => {
         return this;
     };
 
-    // Basic DOM Manipulation Methods
+    Q.ID = function (length = 8) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+    };
+
+    Q.UUID4 = function () {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    };
 
     Q.prototype.text = function (content) {
         if (content === undefined) {
@@ -125,30 +136,6 @@ const Q = (() => {
 
     Q.prototype.toggleClass = function (className) {
         return this.each(el => this.nodes[el].classList.toggle(className));
-    };
-
-    Q.prototype.on = function (events, handler) {
-        return this.each(el => {
-            events.split(' ').forEach(event => this.nodes[el].addEventListener(event, handler));
-        });
-    };
-
-    Q.prototype.off = function (events, handler) {
-        return this.each(el => {
-            events.split(' ').forEach(event => this.nodes[el].removeEventListener(event, handler));
-        });
-    };
-
-    Q.prototype.click = function () {
-        return this.each(el => this.nodes[el].click());
-    };
-
-    Q.prototype.focus = function () {
-        return this.each(el => this.nodes[el].focus());
-    };
-
-    Q.prototype.blur = function () {
-        return this.each(el => this.nodes[el].blur());
     };
 
     Q.prototype.val = function (value) {
@@ -228,46 +215,8 @@ const Q = (() => {
         return this.each(el => this.nodes[el].innerHTML = '');
     };
 
-    Q.prototype.show = function () {
-        return this.each(el => this.nodes[el].style.display = '');
-    };
-
-    Q.prototype.hide = function () {
-        return this.each(el => this.nodes[el].style.display = 'none');
-    };
-
-    Q.prototype.fadeIn = function (duration = 400, callback) {
-        return this.each(el => {
-            this.nodes[el].style.display = '';
-            this.nodes[el].style.transition = `opacity ${duration}ms`;
-            this.nodes[el].style.opacity = 1;
-            setTimeout(() => {
-                this.nodes[el].style.transition = '';
-                if (callback) callback();
-            }, duration);
-        });
-    };
-
-    Q.prototype.fadeOut = function (duration = 400, callback) {
-        return this.each(el => {
-            this.nodes[el].style.transition = `opacity ${duration}ms`;
-            this.nodes[el].style.opacity = 0;
-            setTimeout(() => {
-                this.nodes[el].style.transition = '';
-                this.nodes[el].style.display = 'none';
-                if (callback) callback();
-            }, duration);
-        });
-    };
-
-    Q.prototype.fadeToggle = function (duration = 400, callback) {
-        return this.each(el => {
-            if (this.nodes[el].style.opacity === '0') {
-                this.fadeIn(duration, callback);
-            } else {
-                this.fadeOut(duration, callback);
-            }
-        });
+    Q.prototype.clone = function () {
+        return new Q(this.nodes[0].cloneNode(true));
     };
 
     Q.prototype.parent = function () {
@@ -320,6 +269,91 @@ const Q = (() => {
         });
     };
 
+    Q.style = function (styles) {
+        let styleElement = document.getElementById('qlib-styles');
+        if (!styleElement) {
+            styleElement = document.createElement('style');
+            styleElement.id = 'qlib-styles';
+            document.head.appendChild(styleElement);
+        }
+
+        if (typeof styles === 'string') {
+            styleElement.appendChild(document.createTextNode(styles));
+        } else if (styles && typeof styles === 'object') {
+            const cssText = Object.entries(styles).map(([prop, val]) => `${prop}: ${val};`).join(' ');
+            const ruleIndex = Array.from(styleElement.sheet.cssRules).findIndex(rule => rule.selectorText === selector);
+
+            if (ruleIndex === -1) {
+                styleElement.sheet.insertRule(`${selector} { ${cssText} }`);
+            } else {
+                styleElement.sheet.deleteRule(ruleIndex);
+                styleElement.sheet.insertRule(`${selector} { ${cssText} }`, ruleIndex);
+            }
+        } else {
+            console.error('Invalid styles parameter. Expected a string or an object.');
+        }
+    };
+
+    Q.removeStyle = function () {
+        const styleElement = document.getElementById('qlib-styles');
+        styleElement?.parentNode.removeChild(styleElement);
+    };
+
+    // #region Animation
+    Q.prototype.show = function () {
+        return this.each(el => this.nodes[el].style.display = '');
+    };
+
+    Q.prototype.hide = function () {
+        return this.each(el => this.nodes[el].style.display = 'none');
+    };
+
+    Q.prototype.fadeIn = function (duration = 400, callback) {
+        return this.each(el => {
+            this.nodes[el].style.display = '';
+            this.nodes[el].style.transition = `opacity ${duration}ms`;
+            this.nodes[el].style.opacity = 1;
+            setTimeout(() => {
+                this.nodes[el].style.transition = '';
+                if (callback) callback();
+            }, duration);
+        });
+    };
+
+    Q.prototype.fadeOut = function (duration = 400, callback) {
+        return this.each(el => {
+            this.nodes[el].style.transition = `opacity ${duration}ms`;
+            this.nodes[el].style.opacity = 0;
+            setTimeout(() => {
+                this.nodes[el].style.transition = '';
+                this.nodes[el].style.display = 'none';
+                if (callback) callback();
+            }, duration);
+        });
+    };
+
+    Q.prototype.fadeToggle = function (duration = 400, callback) {
+        return this.each(el => {
+            if (this.nodes[el].style.opacity === '0') {
+                this.fadeIn(duration, callback);
+            } else {
+                this.fadeOut(duration, callback);
+            }
+        });
+    };
+
+    Q.prototype.fadeTo = function (opacity, duration = 400, callback) {
+        return this.each(el => {
+            this.nodes[el].style.transition = `opacity ${duration}ms`;
+            this.nodes[el].style.opacity = opacity;
+            setTimeout(() => {
+                this.nodes[el].style.transition = '';
+                if (callback) callback();
+            }, duration);
+        });
+    };
+    // #endregion
+    // #region Fetch and Socket
     Q.fetch = function (url, callback, options = {}) {
         const { method = 'GET', headers = {}, body, contentType = 'application/json', responseType = 'json', credentials = 'same-origin' } = options;
         headers['Content-Type'] = headers['Content-Type'] || contentType;
@@ -365,37 +399,8 @@ const Q = (() => {
             close: () => socket.close()
         };
     };
-
-    Q.style = function (styles) {
-        let styleElement = document.getElementById('qlib-styles');
-        if (!styleElement) {
-            styleElement = document.createElement('style');
-            styleElement.id = 'qlib-styles';
-            document.head.appendChild(styleElement);
-        }
-
-        if (typeof styles === 'string') {
-            styleElement.appendChild(document.createTextNode(styles));
-        } else if (styles && typeof styles === 'object') {
-            const cssText = Object.entries(styles).map(([prop, val]) => `${prop}: ${val};`).join(' ');
-            const ruleIndex = Array.from(styleElement.sheet.cssRules).findIndex(rule => rule.selectorText === selector);
-
-            if (ruleIndex === -1) {
-                styleElement.sheet.insertRule(`${selector} { ${cssText} }`);
-            } else {
-                styleElement.sheet.deleteRule(ruleIndex);
-                styleElement.sheet.insertRule(`${selector} { ${cssText} }`, ruleIndex);
-            }
-        } else {
-            console.error('Invalid styles parameter. Expected a string or an object.');
-        }
-    };
-
-    Q.removeStyle = function () {
-        const styleElement = document.getElementById('qlib-styles');
-        styleElement?.parentNode.removeChild(styleElement);
-    };
-
+    // #endregion
+    // #region String manipulation
     Q.String = function (string) {
         if (!(this instanceof Q.String)) {
             return new Q.String(string);
@@ -430,8 +435,8 @@ const Q = (() => {
     Q.String.prototype.replaceAll = function (stringOrRegex, replacement) {
         return this.string.replace(new RegExp(stringOrRegex, 'g'), replacement);
     };
-
-
+    // #endregion
+    // #region JSON manipulation
     Q.JSON = function (json) {
         if (!(this instanceof Q.JSON)) {
             return new Q.JSON(json);
@@ -524,7 +529,8 @@ const Q = (() => {
         restoreRecursive(inflatedData);
         return inflatedData;
     };
-
+    // #endregion
+    // #region Timer
     Q.Timer = function (callback, id, options = {}) {
         const defaultOptions = {
             tick: 1,
@@ -574,7 +580,8 @@ const Q = (() => {
             Q.Timer.activeTimers.clear();
         }
     };
-
+    // #endregion
+    // #region Storage
     Q.Store = function (key, value) {
         if (arguments.length === 2) { // Check if two arguments are passed
             if (value === null || value === '') { // If value is null or empty string
@@ -632,21 +639,8 @@ const Q = (() => {
             return _parse(document.cookie)[key]; // Retrieve the cookie value
         }
     };
-
-    Q.ID = function (length = 8) {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
-    };
-
-    Q.UUID4 = function () {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-            const r = Math.random() * 16 | 0;
-            const v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-    };
-
-
+    // #endregion
+    // #region Form Builder
     Q.Form = function () {
         Q.style(`
 
@@ -719,11 +713,107 @@ padding-left: 5px;
 
         };
     };
-
-
-
-
-
+    // #endregion
+    // #region Task Manager
+    const taskManager = (() => {
+        const tasks = {};
+        const runningTasks = {};
+    
+        function createTask(id) {
+            if (!tasks[id]) {
+                tasks[id] = [];
+            }
+        }
+    
+        function addTask(id, ...functions) {
+            if (!tasks[id]) {
+                createTask(id);
+            }
+            tasks[id].push(...functions);
+        }
+    
+        async function runTask(id) {
+            if (!tasks[id] || tasks[id].length === 0) {
+                console.error(`No tasks found with ID: ${id}`);
+                return;
+            }
+    
+            runningTasks[id] = {
+                doneCallback: null,
+                failCallback: null,
+            };
+    
+            try {
+                for (const task of tasks[id]) {
+                    await new Promise((resolve, reject) => {
+                        try {
+                            const result = task();
+                            if (result instanceof Promise) {
+                                result.then(resolve).catch(reject);
+                            } else {
+                                resolve();
+                            }
+                        } catch (error) {
+                            reject(error);
+                        }
+                    });
+                }
+    
+                if (runningTasks[id]?.doneCallback) {
+                    runningTasks[id].doneCallback();
+                }
+    
+            } catch (error) {
+                console.error(`Task with ID: ${id} failed with error:`, error);
+                if (runningTasks[id]?.failCallback) {
+                    runningTasks[id].failCallback(error);
+                }
+            } finally {
+                delete runningTasks[id];
+            }
+        }
+    
+        function abortTask(id) {
+            if (runningTasks[id]) {
+                delete runningTasks[id];
+                console.log(`Task with ID: ${id} has been aborted.`);
+            }
+        }
+    
+        function taskDone(id, callback) {
+            if (runningTasks[id]) {
+                runningTasks[id].doneCallback = callback;
+            }
+        }
+    
+        function taskFail(id, callback) {
+            if (runningTasks[id]) {
+                runningTasks[id].failCallback = callback;
+            }
+        }
+    
+        return {
+            addTask,
+            runTask,
+            abortTask,
+            taskDone,
+            taskFail,
+        };
+    })();
+    
+    Q.Task = function(id, ...functions) {
+        if (functions.length > 0) {
+            taskManager.addTask(id, ...functions);
+        }
+        return {
+            Run: () => taskManager.runTask(id),
+            Abort: () => taskManager.abortTask(id),
+            Done: callback => taskManager.taskDone(id, callback),
+            Fail: callback => taskManager.taskFail(id, callback),
+        };
+    };
+    // #endregion
+    // #region Event Manager
     Q.Ready = function (callback) {
         document.readyState === 'loading'
             ? document.addEventListener('DOMContentLoaded', callback, { once: true })
@@ -738,6 +828,30 @@ padding-left: 5px;
         window.addEventListener('beforeunload', callback);
     };
 
+    Q.prototype.on = function (events, handler) {
+        return this.each(el => {
+            events.split(' ').forEach(event => this.nodes[el].addEventListener(event, handler));
+        });
+    };
+
+    Q.prototype.off = function (events, handler) {
+        return this.each(el => {
+            events.split(' ').forEach(event => this.nodes[el].removeEventListener(event, handler));
+        });
+    };
+
+    Q.prototype.click = function () {
+        return this.each(el => this.nodes[el].click());
+    };
+
+    Q.prototype.focus = function () {
+        return this.each(el => this.nodes[el].focus());
+    };
+
+    Q.prototype.blur = function () {
+        return this.each(el => this.nodes[el].blur());
+    };
+    // #endregion
 
     return Q;
 })();
