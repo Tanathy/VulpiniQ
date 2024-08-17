@@ -139,6 +139,18 @@ const Q = (() => {
         });
     };
 
+    Q.prototype.click = function () {
+        return this.each(el => this.nodes[el].click());
+    };
+
+    Q.prototype.focus = function () {
+        return this.each(el => this.nodes[el].focus());
+    };
+
+    Q.prototype.blur = function () {
+        return this.each(el => this.nodes[el].blur());
+    };
+
     Q.prototype.val = function (value) {
         if (value === undefined) {
             return this.nodes[0]?.value || null;
