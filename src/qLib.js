@@ -170,6 +170,25 @@ const Q = (() => {
         return this.each(el => this.nodes[el].setAttribute(attribute, value));
     };
 
+    Q.prototype.prop = function (property, value) {
+        if (value === undefined) {
+            return this.nodes[0]?.[property] || null;
+        }
+        return this.each(function (index, el) {
+            el[property] = value;
+        });
+    };
+
+    Q.prototype.removeProp = function (property) {
+        return this.each(el => delete this.nodes[el][property]);
+    }
+
+    Q.prototype.trigger = function (event) {
+        return this.each(function (index, el) {
+            el.dispatchEvent(new Event(event));
+        });
+    };
+
     Q.prototype.removeAttr = function (attribute) {
         return this.each(el => this.nodes[el].removeAttribute(attribute));
     };
@@ -208,7 +227,7 @@ const Q = (() => {
     };
 
     Q.prototype.remove = function () {
-        return this.each(el => this.nodes[el].parentNode?.removeChild(el));
+        return this.each(el => this.nodes[el].remove());
     };
 
     Q.prototype.empty = function () {
@@ -644,17 +663,26 @@ const Q = (() => {
     Q.Form = function () {
         Q.style(`
 
-.q_form_checkbox {
+.q_form
+{
+box-sizing: border-box;
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    margin: 1px;
+}
+
+.q_form_checkbox, .q_form_radio {
     display: flex;
     width: fit-content;
     align-items: center;
 }
 
-.q_form_checkbox .label:empty {
+.q_form_checkbox .label:empty, .q_form_radio .label:empty {
     display: none;
 }
 
-.q_form_checkbox .label
+.q_form_checkbox .label, .q_form_radio .label
 {
 padding-left: 5px;
 }
@@ -687,121 +715,324 @@ padding-left: 5px;
     height: 100%;
     background-color: #1DA1F2;
 }
+
+.q_form_r {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    background-color: #555555;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.q_form_r input[type="radio"] {
+    opacity: 0;
+    top: 0;
+    left: 0;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    border-radius: 50%;
+}
+
+.q_form_r input[type="radio"]:checked + label:before {
+    content: "";
+    position: absolute;
+    display: block;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #1DA1F2;
+    border-radius: 50%;
+}
+
+.q_form_input {
+    width: calc(100% - 2px);
+    padding: 5px;
+    outline: none;
+    border: 0;
+        }
+
+.q_form_input:focus, .q_form_textarea:focus {
+    outline: 1px solid #1DA1F2;
+}
+    
+.q_form_textarea {
+    width: calc(100% - 2px);
+    padding: 5px;
+    outline: none;
+    border: 0;
+}
+
     `);
         return {
             CheckBox: function (checked = false, text = '') {
                 let ID = '_' + Q.ID();
-                const container = Q('<div class="q_form_checkbox">');
+                const container = Q('<div class="q_form q_form_checkbox">');
                 const checkbox_container = Q('<div class="q_form_cb">');
-                const input = Q(`<input type="checkbox" id="${ID}" ${checked ? 'checked' : ''}>`);
+                const input = Q(`<input type="checkbox" id="${ID}">`);
                 const label = Q(`<label for="${ID}">${text}</label>`);
                 const labeltext = Q(`<div class="label">${text}</div>`);
                 checkbox_container.append(input, label);
                 container.append(checkbox_container, labeltext);
-                return { node: container, input: input, label: labeltext };
+
+                container.checked = function (state) {
+                    input.prop('checked', state);
+                    if (state) {
+                        input.trigger('change');
+                    }
+                };
+
+                container.change = function (callback) {
+                    input.on('change', function () {
+                        callback(this.checked);
+                    });
+                };
+
+                container.disabled = function (state) {
+                    input.prop('disabled', state);
+                };
+
+                container.text = function (text) {
+                    labeltext.text(text);
+                };
+
+                return container;
+
             },
-            TextBox: function (type = 'text', placeholder = '', value = '') {
-                const input = Q(`<input class="q_form_input" type="${type}" placeholder="${placeholder}" value="${value}">`);
-                return { node: input, input: input };
+            TextBox: function (type = 'text', value = '', placeholder = '') {
+                const input = Q(`<input class="q_form q_form_input" type="${type}" placeholder="${placeholder}" value="${value}">`);
+
+                input.placeholder = function (text) {
+                    input.attr('placeholder', text);
+                };
+                input.disabled = function (state) {
+                    input.prop('disabled', state);
+                };
+                input.reset = function () {
+                    input.val('');
+                };
+                return input;
             },
-            TextArea: function (placeholder = '', value = '') {
-                const textarea = Q(`<textarea class="q_form_textarea" placeholder="${placeholder}">${value}</textarea>`);
-                return { node: textarea, input: textarea };
+
+            TextArea: function (value = '', placeholder = '') {
+                const textarea = Q(`<textarea class="q_form q_form_textarea" placeholder="${placeholder}">${value}</textarea>`);
+
+                textarea.placeholder = function (text) {
+                    textarea.attr('placeholder', text);
+                };
+                textarea.disabled = function (state) {
+                    textarea.prop('disabled', state);
+                };
+                textarea.reset = function () {
+                    textarea.val('');
+                };
+                return textarea;
+            },
+
+            Radio: function (data) {
+                let wrapper = Q('<div class="q_form q_form_radio_wrapper">');
+                let radios = [];
+
+                data.forEach((item, index) => {
+                    let ID = '_' + Q.ID();
+                    const container = Q('<div class="q_form q_form_radio">');
+                    const radio_container = Q('<div class="q_form_r">');
+                    const input = Q(`<input type="radio" id="${ID}" name="${item.name}" value="${item.value}">`);
+                    const label = Q(`<label for="${ID}"></label>`);
+                    const labeltext = Q(`<div class="label">${item.text}</div>`);
+
+                    radios.push({ container, input, labeltext });
+
+                    radio_container.append(input, label);
+                    container.append(radio_container, labeltext);
+                    wrapper.append(container);
+                });
+
+                wrapper.change = function (callback) {
+                    radios.forEach(radio => {
+                        radio.input.on('change', function () {
+                            if (this.checked) {
+                                callback(this.value);
+                            }
+                        });
+                    });
+                };
+
+                wrapper.select = function (value) {
+                    radios.forEach(radio => {
+                        if (radio.input.val() === value) {
+                            radio.input.prop('checked', true).trigger('click');
+                        }
+                    });
+                };
+
+                wrapper.disabled = function (value, state) {
+                    radios.forEach(radio => {
+                        if (radio.input.val() === value) {
+                            radio.input.prop('disabled', state);
+                        }
+                    });
+                };
+
+                wrapper.text = function (value, text) {
+                    radios.forEach(radio => {
+                        if (radio.input.val() === value) {
+                            radio.labeltext.text(text);
+                        }
+                    });
+                };
+
+                wrapper.remove = function (value) {
+                    radios.forEach(radio => {
+                        if (radio.input.val() === value) {
+                            radio.container.remove();
+                        }
+                    });
+                };
+
+                wrapper.reset = function () {
+                    radios.forEach(radio => radio.input.prop('checked', false));
+                };
+
+                wrapper.checked = function (value, state) {
+                    radios.forEach(radio => {
+                        if (radio.input.val() === value) {
+                            radio.input.prop('checked', state);
+                        }
+                    });
+                };
+                return wrapper;
             }
-
-
-
         };
+
     };
+
     // #endregion
     // #region Task Manager
     const taskManager = (() => {
         const tasks = {};
         const runningTasks = {};
-    
+
         function createTask(id) {
             if (!tasks[id]) {
                 tasks[id] = [];
             }
         }
-    
+
         function addTask(id, ...functions) {
             if (!tasks[id]) {
                 createTask(id);
             }
             tasks[id].push(...functions);
         }
-    
+
         async function runTask(id) {
             if (!tasks[id] || tasks[id].length === 0) {
                 console.error(`No tasks found with ID: ${id}`);
                 return;
             }
-    
+
             runningTasks[id] = {
                 doneCallback: null,
                 failCallback: null,
+                timeout: 20000, // Default timeout is 20 seconds
+                timeoutCallback: null,
             };
-    
+
+            const { timeout, timeoutCallback } = runningTasks[id];
+            const timeoutPromise = new Promise((_, reject) => {
+                const timer = setTimeout(() => {
+                    abortTask(id);
+                    reject(new Error(`Task with ID: ${id} timed out after ${timeout / 1000} seconds`));
+                }, timeout);
+
+                runningTasks[id].timeoutClear = () => clearTimeout(timer);
+            });
+
             try {
-                for (const task of tasks[id]) {
-                    await new Promise((resolve, reject) => {
-                        try {
-                            const result = task();
-                            if (result instanceof Promise) {
-                                result.then(resolve).catch(reject);
-                            } else {
-                                resolve();
-                            }
-                        } catch (error) {
-                            reject(error);
+                await Promise.race([
+                    (async () => {
+                        for (const task of tasks[id]) {
+                            await new Promise((resolve, reject) => {
+                                try {
+                                    const result = task();
+                                    if (result instanceof Promise) {
+                                        result.then(resolve).catch(reject);
+                                    } else {
+                                        resolve();
+                                    }
+                                } catch (error) {
+                                    reject(error);
+                                }
+                            });
                         }
-                    });
-                }
-    
+                    })(),
+                    timeoutPromise
+                ]);
+
                 if (runningTasks[id]?.doneCallback) {
                     runningTasks[id].doneCallback();
                 }
-    
             } catch (error) {
                 console.error(`Task with ID: ${id} failed with error:`, error);
                 if (runningTasks[id]?.failCallback) {
                     runningTasks[id].failCallback(error);
                 }
             } finally {
+                if (runningTasks[id]?.timeoutClear) {
+                    runningTasks[id].timeoutClear();
+                }
                 delete runningTasks[id];
             }
         }
-    
+
         function abortTask(id) {
             if (runningTasks[id]) {
                 delete runningTasks[id];
                 console.log(`Task with ID: ${id} has been aborted.`);
             }
         }
-    
+
         function taskDone(id, callback) {
             if (runningTasks[id]) {
                 runningTasks[id].doneCallback = callback;
             }
         }
-    
+
         function taskFail(id, callback) {
             if (runningTasks[id]) {
                 runningTasks[id].failCallback = callback;
             }
         }
-    
+
+        function setTimeoutForTask(id, seconds) {
+            if (runningTasks[id]) {
+                runningTasks[id].timeout = seconds * 1000;
+            }
+        }
+
+        function setTimeoutCallback(id, callback) {
+            if (runningTasks[id]) {
+                runningTasks[id].timeoutCallback = callback;
+            }
+        }
+
         return {
             addTask,
             runTask,
             abortTask,
             taskDone,
             taskFail,
+            setTimeoutForTask,
+            setTimeoutCallback
         };
     })();
-    
-    Q.Task = function(id, ...functions) {
+
+    Q.Task = function (id, ...functions) {
         if (functions.length > 0) {
             taskManager.addTask(id, ...functions);
         }
@@ -810,6 +1041,8 @@ padding-left: 5px;
             Abort: () => taskManager.abortTask(id),
             Done: callback => taskManager.taskDone(id, callback),
             Fail: callback => taskManager.taskFail(id, callback),
+            Timeout: (seconds) => taskManager.setTimeoutForTask(id, seconds),
+            TimeoutCallback: (callback) => taskManager.setTimeoutCallback(id, callback),
         };
     };
     // #endregion
@@ -828,16 +1061,36 @@ padding-left: 5px;
         window.addEventListener('beforeunload', callback);
     };
 
-    Q.prototype.on = function (events, handler) {
+    Q.prototype.on = function (events, handler, options = {}) {
+
+        const defaultOptions = {
+            capture: false,
+            once: false,
+            passive: false
+        };
+
+        options = { ...defaultOptions, ...options };
+
+
         return this.each(el => {
-            events.split(' ').forEach(event => this.nodes[el].addEventListener(event, handler));
-        });
+            events.split(' ').forEach(event => this.nodes[el].addEventListener(event, handler, options));
+        }
+        );
     };
 
-    Q.prototype.off = function (events, handler) {
+    Q.prototype.off = function (events, handler, options = {}) {
+
+        const defaultOptions = {
+            capture: false,
+            once: false,
+            passive: false
+        };
+        options = { ...defaultOptions, ...options };
+
         return this.each(el => {
-            events.split(' ').forEach(event => this.nodes[el].removeEventListener(event, handler));
-        });
+            events.split(' ').forEach(event => this.nodes[el].removeEventListener(event, handler, options));
+        }
+        );
     };
 
     Q.prototype.click = function () {
