@@ -5,13 +5,19 @@ const Q = (() => {
         if (!(this instanceof Q)) {
             return new Q(selector, attributes, directProps);
         }
-
-        if (selector instanceof HTMLElement || selector instanceof Node) {
+        else if (selector instanceof HTMLElement || selector instanceof Node) {
             this.nodes = [selector];
             return;
         }
-
-        if (typeof selector === 'string') {
+        else if (selector instanceof Q) {
+            this.nodes = selector.nodes;
+            return;
+        }
+        else if (selector instanceof NodeList) {
+            this.nodes = Array.from(selector);
+            return;
+        }
+        else if (typeof selector === 'string') {
             const isCreating = selector.includes('<');
 
             if (isCreating) {
@@ -124,12 +130,17 @@ const Q = (() => {
         });
     };
 
+    Q.prototype.hasClass = function (className) {
+        return this.nodes[0]?.classList.contains(className) || false;
+    };
+
     Q.prototype.addClass = function (classes) {
         const classList = classes.split(' ');
         return this.each(el => this.nodes[el].classList.add(...classList));
     };
 
     Q.prototype.removeClass = function (classes) {
+
         const classList = classes.split(' ');
         return this.each(el => this.nodes[el].classList.remove(...classList));
     };
@@ -230,6 +241,56 @@ const Q = (() => {
         return this.each(el => this.nodes[el].remove());
     };
 
+    Q.prototype.scrollWidth = function () {
+        return this.nodes[0].scrollWidth;
+    };
+
+    Q.prototype.scrollHeight = function () {
+        return this.nodes[0].scrollHeight;
+    };
+
+    Q.prototype.scrollTop = function (value, increment = false) {
+        if (value === undefined) {
+            return this.nodes[0].scrollTop;
+        }
+        return this.each(el => {
+            const maxScrollTop = this.nodes[el].scrollHeight - this.nodes[el].clientHeight;
+            if (increment) {
+                this.nodes[el].scrollTop = Math.min(this.nodes[el].scrollTop + value, maxScrollTop);
+            } else {
+                this.nodes[el].scrollTop = Math.min(value, maxScrollTop);
+            }
+        });
+    };
+
+    Q.prototype.scrollLeft = function (value, increment = false) {
+        if (value === undefined) {
+            return this.nodes[0].scrollLeft;
+        }
+        return this.each(el => {
+            const maxScrollLeft = this.nodes[el].scrollWidth - this.nodes[el].clientWidth;
+            if (increment) {
+                this.nodes[el].scrollLeft = Math.min(this.nodes[el].scrollLeft + value, maxScrollLeft);
+            } else {
+                this.nodes[el].scrollLeft = Math.min(value, maxScrollLeft);
+            }
+        });
+    };
+
+    Q.prototype.width = function (value) {
+        if (value === undefined) {
+            return this.nodes[0].offsetWidth;
+        }
+        return this.each(el => this.nodes[el].style.width = value);
+    };
+
+    Q.prototype.height = function (value) {
+        if (value === undefined) {
+            return this.nodes[0].offsetHeight;
+        }
+        return this.each(el => this.nodes[el].style.height = value);
+    };
+
     Q.prototype.empty = function () {
         return this.each(el => this.nodes[el].innerHTML = '');
     };
@@ -247,7 +308,8 @@ const Q = (() => {
     };
 
     Q.prototype.find = function (selector) {
-        return new Q(this.nodes[0].querySelectorAll(selector));
+        const foundNodes = this.nodes[0].querySelectorAll(selector);
+        return foundNodes.length ? Q(foundNodes) : null;
     };
 
     Q.prototype.closest = function (selector) {
@@ -662,29 +724,29 @@ const Q = (() => {
     // #region Form Builder
     Q.Form = function () {
         Q.style(`
-
-.q_form
-{
-box-sizing: border-box;
+.q_form {
+    box-sizing: border-box;
     font-family: inherit;
     font-size: inherit;
     color: inherit;
     margin: 1px;
 }
 
-.q_form_checkbox, .q_form_radio {
+.q_form_checkbox,
+.q_form_radio {
     display: flex;
     width: fit-content;
     align-items: center;
 }
 
-.q_form_checkbox .label:empty, .q_form_radio .label:empty {
+.q_form_checkbox .label:empty,
+.q_form_radio .label:empty {
     display: none;
 }
 
-.q_form_checkbox .label, .q_form_radio .label
-{
-padding-left: 5px;
+.q_form_checkbox .label,
+.q_form_radio .label {
+    padding-left: 5px;
 }
 
 .q_form_cb {
@@ -705,7 +767,7 @@ padding-left: 5px;
     position: absolute;
 }
 
-.q_form_cb input[type="checkbox"]:checked + label:before {
+.q_form_cb input[type="checkbox"]:checked+label:before {
     content: "";
     position: absolute;
     display: block;
@@ -737,7 +799,7 @@ padding-left: 5px;
     border-radius: 50%;
 }
 
-.q_form_r input[type="radio"]:checked + label:before {
+.q_form_r input[type="radio"]:checked+label:before {
     content: "";
     position: absolute;
     display: block;
@@ -754,12 +816,13 @@ padding-left: 5px;
     padding: 5px;
     outline: none;
     border: 0;
-        }
+}
 
-.q_form_input:focus, .q_form_textarea:focus {
+.q_form_input:focus,
+.q_form_textarea:focus {
     outline: 1px solid #1DA1F2;
 }
-    
+
 .q_form_textarea {
     width: calc(100% - 2px);
     padding: 5px;
@@ -767,8 +830,118 @@ padding-left: 5px;
     border: 0;
 }
 
+.q_tabs_nav {
+    width: 20px;
+    background-color: #333;
+    display: flex;
+}
+
+.q_tabs_nav:hover {
+    background-color: #555;
+}
+
+.q_tabcontainer {
+    width: 100%;
+    height: 300px;
+}
+
+.q_tabs_wrapper {
+    width: 100%;
+    height: 30px;
+    background-color: #333;
+    display: flex;
+}
+
+.q_tabs {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.q_tab_active {
+    background-color: #555;
+    color: #fff;
+}
+
+.q_tab {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: default;
+    padding: 5px 25px;
+}
+
+.q_tab_disabled {
+    background-color: #333;
+    color: #555;
+}
     `);
         return {
+
+            Tab: function (data) {
+
+                let wrapper = Q('<div class="q_tabcontainer">');
+                let tabs_wrapper = Q('<div class="q_tabs_wrapper">');
+                let tabs_nav_left = Q('<div class="q_tabs_nav q_tabs_nav_left">');
+                let tabs_nav_right = Q('<div class="q_tabs_nav q_tabs_nav_right">');
+                let tabs = Q('<div class="q_tabs">');
+                tabs_wrapper.append(tabs_nav_left, tabs, tabs_nav_right);
+                let content = Q('<div class="q_tabcontent">');
+                wrapper.append(tabs_wrapper, content);
+
+                let data_tabs = {};
+                let data_contents = {};
+
+                data.forEach((item, index) => {
+                    const tab = Q(`<div class="q_tab" data-value="${item.value}">${item.title}</div>`);
+                    if (item.disabled) {
+                        tab.addClass('q_tab_disabled');
+                    }
+
+                    data_tabs[item.value] = tab;
+                    data_contents[item.value] = item.content;
+
+                    tab.on('click', function () {
+
+                        if (item.disabled) {
+                            return;
+                        }
+
+                        let foundTabs = tabs.find('.q_tab_active');
+
+                        if (foundTabs) {
+                            foundTabs.removeClass('q_tab_active');
+                        }
+
+                        tab.addClass('q_tab_active');
+                        content.html(data_contents[item.value]);
+                    });
+
+                    tabs.append(tab);
+                });
+
+                tabs_nav_left.on('click', function () {
+                    tabs.scrollLeft(-tabs.width(), true);
+                });
+
+                tabs_nav_right.on('click', function () {
+                    tabs.scrollLeft(tabs.width(), true);
+                });
+
+                wrapper.select = function (value) {
+                    data_tabs.forEach(tab => {
+                        if (tab.data('value') === value) {
+                            tab.click();
+                        }
+                    });
+                };
+
+                return wrapper;
+            },
+
+
             CheckBox: function (checked = false, text = '') {
                 let ID = '_' + Q.ID();
                 const container = Q('<div class="q_form q_form_checkbox">');
@@ -803,6 +976,7 @@ padding-left: 5px;
                 return container;
 
             },
+
             TextBox: function (type = 'text', value = '', placeholder = '') {
                 const input = Q(`<input class="q_form q_form_input" type="${type}" placeholder="${placeholder}" value="${value}">`);
 
@@ -815,6 +989,12 @@ padding-left: 5px;
                 input.reset = function () {
                     input.val('');
                 };
+                input.change = function (callback) {
+                    input.on('change', function () {
+                        callback(this.value);
+                    });
+                };
+
                 return input;
             },
 
@@ -829,6 +1009,11 @@ padding-left: 5px;
                 };
                 textarea.reset = function () {
                     textarea.val('');
+                };
+                textarea.change = function (callback) {
+                    textarea.on('change', function () {
+                        callback(this.value);
+                    });
                 };
                 return textarea;
             },
@@ -861,7 +1046,6 @@ padding-left: 5px;
                         });
                     });
                 };
-
                 wrapper.select = function (value) {
                     radios.forEach(radio => {
                         if (radio.input.val() === value) {
@@ -869,7 +1053,6 @@ padding-left: 5px;
                         }
                     });
                 };
-
                 wrapper.disabled = function (value, state) {
                     radios.forEach(radio => {
                         if (radio.input.val() === value) {
@@ -877,7 +1060,6 @@ padding-left: 5px;
                         }
                     });
                 };
-
                 wrapper.text = function (value, text) {
                     radios.forEach(radio => {
                         if (radio.input.val() === value) {
@@ -885,7 +1067,6 @@ padding-left: 5px;
                         }
                     });
                 };
-
                 wrapper.remove = function (value) {
                     radios.forEach(radio => {
                         if (radio.input.val() === value) {
@@ -893,11 +1074,9 @@ padding-left: 5px;
                         }
                     });
                 };
-
                 wrapper.reset = function () {
                     radios.forEach(radio => radio.input.prop('checked', false));
                 };
-
                 wrapper.checked = function (value, state) {
                     radios.forEach(radio => {
                         if (radio.input.val() === value) {
