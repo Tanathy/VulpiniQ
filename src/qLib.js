@@ -176,11 +176,20 @@ const Q = (() => {
     };
 
     Q.prototype.attr = function (attribute, value) {
-        // Gets or sets an attribute on the nodes.|Attribute Manipulation|Q(selector).attr(attribute, value);
-        if (value === undefined) {
-            return this.nodes[0]?.getAttribute(attribute) || null;
+        if (typeof attribute === 'object') {
+            return this.each(el => {
+                for (let key in attribute) {
+                    if (attribute.hasOwnProperty(key)) {
+                        this.nodes[el].setAttribute(key, attribute[key]);
+                    }
+                }
+            });
+        } else {
+            if (value === undefined) {
+                return this.nodes[0]?.getAttribute(attribute) || null;
+            }
+            return this.each(el => this.nodes[el].setAttribute(attribute, value));
         }
-        return this.each(el => this.nodes[el].setAttribute(attribute, value));
     };
 
     Q.prototype.prop = function (property, value) {
