@@ -1,5 +1,7 @@
 # qLib Utility tool
 
+Currently this version is heavily under development. Use at your own risk.
+
 ## Introduction
 
 qLib is a utility library designed to simplify common tasks in web development. It provides methods for DOM manipulation, event handling, AJAX requests, and more. The library is designed to be lightweight, modular, and easy to use.

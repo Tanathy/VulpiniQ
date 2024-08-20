@@ -304,17 +304,43 @@ const Q = (() => {
     };
 
     Q.prototype.is = function (selector) {
-        if (selector === ':visible') {
-            return this.nodes[0].offsetWidth > 0 && this.nodes[0].offsetHeight > 0;
-        } else if (selector === ':hover') {
-            return this.nodes[0] === document.querySelector(':hover');
-        } else if (selector === ':focus') {
-            return this.nodes[0] === document.activeElement;
-        } else if (selector === ':blur') {
-            return this.nodes[0] !== document.activeElement;
-        } else {
-            return this.nodes[0].matches(selector);
+        if (typeof selector === 'function') {
+            return selector.call(this.nodes[0], 0, this.nodes[0]);
         }
+    
+        if (typeof selector === 'string') {
+            if (selector === ':visible') {
+                return this.nodes[0].offsetWidth > 0 && this.nodes[0].offsetHeight > 0;
+            } else if (selector === ':hidden') {
+                return this.nodes[0].offsetWidth === 0 || this.nodes[0].offsetHeight === 0;
+            } else if (selector === ':hover') {
+                return this.nodes[0] === document.querySelector(':hover');
+            } else if (selector === ':focus') {
+                return this.nodes[0] === document.activeElement;
+            } else if (selector === ':blur') {
+                return this.nodes[0] !== document.activeElement;
+            } else if (selector === ':checked') {
+                return this.nodes[0].checked;
+            } else if (selector === ':selected') {
+                return this.nodes[0].selected;
+            } else if (selector === ':disabled') {
+                return this.nodes[0].disabled;
+            } else if (selector === ':enabled') {
+                return !this.nodes[0].disabled;
+            } else {
+                return this.nodes[0].matches(selector);
+            }
+        }
+    
+        if (selector instanceof HTMLElement || selector instanceof Node) {
+            return this.nodes[0] === selector;
+        }
+    
+        if (selector instanceof Q) {
+            return this.nodes[0] === selector.nodes[0];
+        }
+    
+        return false;
     };
 
     Q.prototype.empty = function () {
@@ -474,6 +500,29 @@ const Q = (() => {
             }, duration);
         });
     };
+
+    Q.prototype.animate = function (duration, properties, callback) {
+        return this.each(el => {
+            const element = this.nodes[el];
+            const transitionProperties = Object.keys(properties).map(prop => `${prop} ${duration}ms`).join(', ');
+    
+            // Apply the transition properties
+            element.style.transition = transitionProperties;
+    
+            // Apply the new properties
+            for (const prop in properties) {
+                element.style[prop] = properties[prop];
+            }
+    
+            // Handle the callback function
+            if (typeof callback === 'function') {
+                setTimeout(() => {
+                    callback.call(element);
+                }, duration);
+            }
+        });
+    };
+
     // #endregion
 
     // #region Event Manager

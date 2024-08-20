@@ -206,6 +206,7 @@ user-select: none;
 .q_window_content {
 width: 100%;
 overflow-y: auto;
+    }
 
     `);
     return {
@@ -227,6 +228,9 @@ overflow-y: auto;
             content.append(data);
 
             titletext.text(title);
+
+            titletext.attr('title', title);
+
             titlebar.append(titletext, uniqueButtons, default_buttons);
             default_buttons.append(minimize, maximize, close);
             window_wrapper.append(titlebar, content);
@@ -256,35 +260,48 @@ overflow-y: auto;
                     timeout = setTimeout(() => func.apply(this, args), wait);
                 };
             }
-            
+
             // Resize handler function
             function handleResize() {
-                let parentWidth = window_wrapper.parent().width();
-                let parentHeight = window_wrapper.parent().height();
-            
-                // Constrain width and height within parent dimensions
-                width = Math.min(width, parentWidth);
-                height = Math.min(height, parentHeight);
-            
-                // Adjust x and y to ensure the window stays within bounds
-                x = Math.min(x, parentWidth - width);
-                y = Math.min(y, parentHeight - height);
-            
+                let browserWidth = window.innerWidth;
+                let browserHeight = window.innerHeight;
+
+                // Get the current position of the window
+                let currentPosition = window_wrapper.position();
+                let currentX = currentPosition.left;
+                let currentY = currentPosition.top;
+
+                // Constrain width and height within browser dimensions
+                width = Math.min(width, browserWidth);
+                height = Math.min(height, browserHeight);
+
+                // Adjust currentX and currentY to ensure the window stays within bounds
+                currentX = Math.min(currentX, browserWidth - width);
+                currentY = Math.min(currentY, browserHeight - height);
+
                 // Apply the constrained dimensions and positions
                 window_wrapper.css({
                     width: width + 'px',
                     height: height + 'px',
-                    left: x + 'px',
-                    top: y + 'px'
+                    left: currentX + 'px',
+                    top: currentY + 'px'
                 });
             }
-            
+
             // Wrap the resize handler with debounce
             window.addEventListener('resize', debounce(handleResize, 200));
 
 
             close.on('click', function () {
-                window_wrapper.fadeOut(200);
+                // window_wrapper.fadeOut(200);
+
+                window_wrapper.animate(200, {
+                    opacity: 0,
+                    transform: 'scale(0.9)'
+                }, function () {
+                    window_wrapper.hide();
+                });
+
             });
 
             minimize.on('click', function () {
@@ -292,8 +309,21 @@ overflow-y: auto;
 
                 if (content.is(':visible')) {
                     minimize.text('-');
+
+                    //this should expand the window to the original size
+                    window_wrapper.css({
+                        height: height + 'px'
+                    });
+                    handleResize();
+
                 } else {
                     minimize.text('+');
+
+                    //this should shrink the window to the titlebar
+                    window_wrapper.css({
+                        height: titlebar.height() + 'px'
+                    });
+
                 }
 
             });
@@ -312,52 +342,51 @@ overflow-y: auto;
 
 
             //here we should make the logic for moving the window when dragging the titlebar
-            titlebar.on('mousedown', function (e) {
+            titlebar.on('pointerdown', function (e) {
                 let offset = window_wrapper.offset();
                 let x = e.clientX - offset.left;
                 let y = e.clientY - offset.top;
-
+            
                 window_wrapper.css({
                     'z-index': zindex()
                 });
-
+            
                 // Define the event handlers
-                const mouseMoveHandler = function (e) {
-
-                    //we should make sure that the window is not going outside the viewport
+                const pointerMoveHandler = function (e) {
+                    // Ensure the window is not going outside the viewport
                     let left = e.clientX - x;
                     let top = e.clientY - y;
-
+            
                     if (left < 0) {
                         left = 0;
                     }
-
+            
                     if (top < 0) {
                         top = 0;
                     }
-
-                    if (left + window_wrapper.width() > window_wrapper.parent().width()) {
-                        left = window_wrapper.parent().width() - window_wrapper.width();
+            
+                    if (left + window_wrapper.width() > window.innerWidth) {
+                        left = window.innerWidth - window_wrapper.width();
                     }
-
-                    if (top + window_wrapper.height() > window_wrapper.parent().height()) {
-                        top = window_wrapper.parent().height() - window_wrapper.height();
+            
+                    if (top + window_wrapper.height() > window.innerHeight) {
+                        top = window.innerHeight - window_wrapper.height();
                     }
-
+            
                     window_wrapper.css({
                         left: left + 'px',
                         top: top + 'px'
                     });
                 };
-
-                const mouseUpHandler = function () {
-                    Q('document').off('mousemove', mouseMoveHandler);
-                    Q('document').off('mouseup', mouseUpHandler);
+            
+                const pointerUpHandler = function () {
+                    Q('document').off('pointermove', pointerMoveHandler);
+                    Q('document').off('pointerup', pointerUpHandler);
                 };
-
+            
                 // Attach the event handlers to the document
-                Q('document').on('mousemove', mouseMoveHandler);
-                Q('document').on('mouseup', mouseUpHandler);
+                Q('document').on('pointermove', pointerMoveHandler);
+                Q('document').on('pointerup', pointerUpHandler);
             });
 
             window_wrapper.show = function () {
