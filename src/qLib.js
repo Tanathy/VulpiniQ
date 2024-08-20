@@ -122,13 +122,13 @@ const Q = (() => {
     };
 
     Q.prototype.addClass = function (classes) {
-        // Adds one or more classes to each node.|Class Manipulation|Q(selector).addClass('class1 class2');
+        // Adds one or more classes to each node.|Class Manipulation|Q(selector).addClass("class1 class2");
         const classList = classes.split(' ');
         return this.each(el => this.nodes[el].classList.add(...classList));
     };
 
     Q.prototype.removeClass = function (classes) {
-        // Removes one or more classes from each node.|Class Manipulation|Q(selector).removeClass('class1 class2');
+        // Removes one or more classes from each node.|Class Manipulation|Q(selector).removeClass("class1 class2");
         const classList = classes.split(' ');
         return this.each(el => this.nodes[el].classList.remove(...classList));
     };
@@ -201,7 +201,7 @@ const Q = (() => {
     }
 
     Q.prototype.trigger = function (event) {
-        // Triggers a specific event on each node.|Event Handling|Q(selector).trigger('click');
+        // Triggers a specific event on each node.|Event Handling|Q(selector).trigger("click");
         return this.each(function (index, el) {
             el.dispatchEvent(new Event(event));
         });
@@ -213,7 +213,7 @@ const Q = (() => {
     };
 
     Q.prototype.append = function (...nodes) {
-        // Appends child nodes or HTML to each node.|DOM Manipulation|Q(selector).append('<div>Appended</div>');
+        // Appends child nodes or HTML to each node.|DOM Manipulation|Q(selector).append("<div>Appended</div>");
         return this.each(el => {
             const parent = this.nodes[el];
 
@@ -231,7 +231,7 @@ const Q = (() => {
     };
 
     Q.prototype.prepend = function (...nodes) {
-        // Prepends child nodes or HTML to each node.|DOM Manipulation|Q(selector).prepend('<div>Prepended</div>');
+        // Prepends child nodes or HTML to each node.|DOM Manipulation|Q(selector).prepend("<div>Prepended</div>");
         return this.each(el => {
             const parent = this.nodes[el];
 
@@ -248,7 +248,7 @@ const Q = (() => {
     };
 
     Q.prototype.wrap = function (wrapper) {
-        // Wraps each node with the specified wrapper element.|DOM Manipulation|Q(selector).wrap('<div class="wrapper"></div>');
+        // Wraps each node with the specified wrapper element.|DOM Manipulation|Q(selector).wrap("<div class="wrapper"></div>");
         return this.each(el => {
             const parent = this.nodes[el].parentNode;
             const newParent = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;
@@ -258,7 +258,7 @@ const Q = (() => {
     };
 
     Q.prototype.wrapAll = function (wrapper) {
-        // Wraps all nodes together in a single wrapper element.|DOM Manipulation|Q(selector).wrapAll('<div class="wrapper"></div>');
+        // Wraps all nodes together in a single wrapper element.|DOM Manipulation|Q(selector).wrapAll("<div class="wrapper"></div>");
         return this.each(el => {
             const parent = this.nodes[el].parentNode;
             const newParent = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;
@@ -366,7 +366,7 @@ const Q = (() => {
     };
 
     Q.prototype.is = function (selector) {
-        // Checks if the first node matches a specific selector.|Utilities|Q(selector).is(':visible');
+        // Checks if the first node matches a specific selector.|Utilities|Q(selector).is(":visible");
         if (typeof selector === 'function') {
             return selector.call(this.nodes[0], 0, this.nodes[0]);
         }
@@ -427,13 +427,13 @@ const Q = (() => {
     };
 
     Q.prototype.find = function (selector) {
-        // Finds child nodes of the first node that match a specific selector.|Traversal|Q(selector).find('.child');
+        // Finds child nodes of the first node that match a specific selector.|Traversal|Q(selector).find(".child");
         const foundNodes = this.nodes[0].querySelectorAll(selector);
         return foundNodes.length ? Q(foundNodes) : null;
     };
 
     Q.prototype.closest = function (selector) {
-        // Returns the closest ancestor of the first node that matches a specific selector.|Traversal|Q(selector).closest('.ancestor');
+        // Returns the closest ancestor of the first node that matches a specific selector.|Traversal|Q(selector).closest(".ancestor");
         let el = this.nodes[0];
         while (el) {
             if (el.matches(selector)) return new Q(el);
@@ -578,7 +578,7 @@ const Q = (() => {
     };
 
     Q.prototype.animate = function (duration, properties, callback) {
-        // Animates each node with specific CSS properties.|Display|Q(selector).animate(duration, { opacity: 0, left: '50px' }, callback);
+        // Animates each node with specific CSS properties.|Display|Q(selector).animate(duration, { opacity: 0, left: "50px" }, callback);
         return this.each(el => {
             const element = this.nodes[el];
             const transitionProperties = Object.keys(properties).map(prop => `${prop} ${duration}ms`).join(', ');
@@ -608,7 +608,7 @@ const Q = (() => {
     };
 
     Q.prototype.on = function (events, handler, options = {}) {
-        // Adds an event listener to each node.|Event Handling|Q(selector).on('click', () => console.log('Clicked'));
+        // Adds an event listener to each node.|Event Handling|Q(selector).on("click", () => console.log("Clicked"));
         const defaultOptions = {
             capture: false,
             once: false,
@@ -625,7 +625,7 @@ const Q = (() => {
     };
 
     Q.prototype.off = function (events, handler, options = {}) {
-        // Removes an event listener from each node.|Event Handling|Q(selector).off('click', handler);
+        // Removes an event listener from each node.|Event Handling|Q(selector).off("click", handler);
         const defaultOptions = {
             capture: false,
             once: false,
