@@ -1,7 +1,7 @@
 # addClass()
 ## Q(selector).addClass(classes)
 Adds one or more CSS classes to the selected elements. This method allows you to dynamically change the styling of elements by applying new classes.
-```
+``` 
 Q('.box').addClass('highlight active');
 ```
 The addClass method is useful for applying one or more classes to selected elements in your document. It modifies the classList of each element, allowing you to control their appearance or behavior based on CSS class rules. This method supports chaining, so you can quickly apply multiple styles in a single line of code. It’s particularly beneficial for adding visual effects, managing dynamic styles, or toggling classes for interactive elements.
@@ -36,4 +36,9 @@ document.body.appendChild(newDiv);
 ```
 const newDiv = Q('<div>').addClass('new-style');
 Q('body').append(newDiv);
+<<<<<<< HEAD
 ```
+=======
+```
+This example creates a new div, applies the new-style class to it using addClass, and then appends it to the document body. This method is effective for dynamically styling elements as they are added to the DOM.
+>>>>>>> 40c24f9a4fae9b68aa2e9ebf4d58f5158780f6de
