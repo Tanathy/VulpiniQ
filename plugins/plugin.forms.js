@@ -8,6 +8,10 @@ Q.Form = function () {
     margin: 1px;
 }
 
+.q_form_disabled {
+    opacity: 0.5;
+}
+
 .q_form_checkbox,
 .q_form_radio {
     display: flex;
@@ -234,8 +238,310 @@ position: absolute;
     position: absolute;
 }
 
+
+.q_form_dropdown
+{
+user-select: none;
+    position: relative;
+    background-color: #333;
+    }
+
+.q_form_dropdown_options
+{
+    position: absolute;
+    width: 100%;
+    background-color: #333;
+    z-index: 1;
+    }
+
+.q_form_dropdown_option, .q_form_dropdown_selected
+{
+    padding: 5px 0px;
+    }
+
+    .q_form_button
+    {
+    user-select: none;
+        padding: 5px 10px;
+        cursor: pointer;
+    }
+
+    .q_form_button:hover
+    {
+        background-color: #555;
+    }
+
+    .q_form_button:active
+    {
+        background-color: #777;
+    }
+
+    .q_form_file
+    {
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+    }
+
+    .q_form_file input[type="file"]
+    {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    }
+
     `);
     return {
+
+        ProgressBar: function (value = 0, max = 100, autoKill = 0) {
+            let timer = null;
+            const progress = Q('<div class="q_form q_form_progress">');
+            const bar = Q('<div class="q_form_progress_bar">');
+            progress.append(bar);
+
+            function clearAutoKillTimer() {
+                if (timer) {
+                    clearTimeout(timer);
+                    timer = null;
+                }
+            }
+
+            function setAutoKillTimer() {
+                if (autoKill > 0) {
+                    clearAutoKillTimer();
+                    timer = setTimeout(() => {
+                        progress.hide();
+                    }, autoKill);
+                }
+            }
+
+            progress.value = function (value) {
+                const newWidth = (value / max) * 100 + '%';
+                if (bar.css('width') !== newWidth) {
+                    bar.css({ width: newWidth });
+                }
+                progress.show();
+                clearAutoKillTimer();
+                setAutoKillTimer();
+            };
+
+            progress.min = function (value) {
+                min = value;
+                progress.value(value);
+            };
+
+            progress.max = function (value) {
+                max = value;
+                progress.value(value);
+            };
+
+            progress.autoKill = function (delay) {
+                autoKill = delay;
+                setAutoKillTimer();
+            };
+
+            progress.value(value);
+
+            return progress;
+        },
+
+        Button: function (text = '') {
+            const button = Q(`<div class="q_form q_form_button">${text}</div>`);
+
+            button.click = function (callback) {
+                button.on('click', callback);
+            };
+
+            button.disabled = function (state) {
+                if (state) {
+                    button.addClass('q_form_disabled');
+                }
+                else {
+                    button.removeClass('q_form_disabled');
+                }
+            };
+
+            button.text = function (text) {
+                button.text(text);
+            };
+
+            button.remove = function () {
+                button.remove();
+            };
+
+            return button;
+        },
+
+        File: function (text = '', accept = '*', multiple = false) {
+            const container = Q('<div class="q_form q_form_file q_form_button">');
+            const input = Q(`<input type="file" accept="${accept}" ${multiple ? 'multiple' : ''}>`);
+            const label = Q(`<div>${text}</div>`);
+            container.append(input, label);
+
+            input.disabled = function (state) {
+                input.prop('disabled', state);
+                if (state) {
+                    container.addClass('q_form_disabled');
+                } else {
+                    container.removeClass('q_form_disabled');
+                }
+            };
+
+            container.change = function (callback) {
+                input.on('change', function () {
+                    callback(this.files);
+                });
+            };
+
+            container.image = function (processText = '', size, callback) {
+                input.on('change', function () {
+                    label.text(processText);
+                    let files = this.files;
+                    let fileReaders = [];
+                    let images = [];
+
+                    for (let i = 0; i < files.length; i++) {
+                        if (!files[i].type.startsWith('image/')) {
+                            continue;
+                        }
+
+                        fileReaders[i] = new FileReader();
+                        fileReaders[i].onload = function (e) {
+                            let img = new Image();
+                            img.onload = function () {
+                                if (size !== 'original') {
+                                    let canvas = document.createElement('canvas');
+                                    let ctx = canvas.getContext('2d');
+                                    let width = size;
+                                    let height = (img.height / img.width) * width;
+                                    canvas.width = width;
+                                    canvas.height = height;
+                                    ctx.drawImage(img, 0, 0, width, height);
+                                    images.push(canvas.toDataURL('image/png'));
+                                } else {
+                                    images.push(e.target.result);
+                                }
+                                if (images.length === files.length) {
+                                    label.text(text);
+                                    callback(images);
+                                }
+                            };
+                            img.src = e.target.result;
+                        };
+                        fileReaders[i].readAsDataURL(files[i]);
+                    }
+                });
+            };
+
+            return container;
+        },
+
+
+        DropDown: function (data) {
+            let wrapper = Q('<div class="q_form q_form_dropdown">');
+            let selected = Q('<div class="q_form_dropdown_selected">');
+            let options = Q('<div class="q_form_dropdown_options">');
+
+            options.hide();
+            wrapper.append(selected, options);
+
+            // Map to store the association between option elements and their values
+            let valueMap = new Map();
+
+            data.forEach((item, index) => {
+                let option = Q('<div class="q_form_dropdown_option">');
+                option.html(item.content);
+                if (item.disabled) {
+                    option.addClass('q_form_disabled');
+                }
+                options.append(option);
+                valueMap.set(option, item.value);
+            });
+
+            // Append the first option as selected
+            selected.html(data[0].content);
+            let selectedValue = data[0].value;
+
+            function deselect() {
+                options.hide();
+                document.removeEventListener('click', deselect);
+            }
+            options.find('.q_form_dropdown_option').first().addClass('q_form_dropdown_active');
+
+            options.on('click', function (e) {
+                let target = Q(e.target);
+                if (target.hasClass('q_form_dropdown_option') && !target.hasClass('q_form_disabled')) {
+                    selected.html(target.html());
+                    selectedValue = valueMap.get(target);
+                    deselect();
+                    options.find('.q_form_dropdown_option').removeClass('q_form_dropdown_active');
+                    target.addClass('q_form_dropdown_active');
+                }
+            });
+
+            selected.on('click', function (e) {
+                e.stopPropagation();
+                options.toggle();
+                if (options.is(':visible')) {
+                    document.addEventListener('click', deselect);
+                } else {
+                    document.removeEventListener('click', deselect);
+                }
+            });
+
+            wrapper.change = function (callback) {
+                options.on('click', function (e) {
+                    let target = Q(e.target);
+                    if (target.hasClass('q_form_dropdown_option') && !target.hasClass('q_form_dropdown_disabled')) {
+                        callback(valueMap.get(target));
+                    }
+                });
+            };
+
+            wrapper.select = function (value) {
+                options.find('.q_form_dropdown_option').each(function () {
+                    let option = Q(this);
+                    if (valueMap.get(option) === value) {
+                        selected.html(option.html());
+                        selectedValue = value;
+                        deselect();
+                        options.find('.q_form_dropdown_option').removeClass('q_form_dropdown_active');
+                        option.addClass('q_form_dropdown_active');
+                    }
+                });
+            };
+
+            wrapper.disabled = function (value, state) {
+                options.find('.q_form_dropdown_option').each(function () {
+                    let option = Q(this);
+                    if (valueMap.get(option) === value) {
+                        option.prop('disabled', state);
+                        if (state) {
+                            option.addClass('q_form_disabled');
+                        } else {
+                            option.removeClass('q_form_disabled');
+                        }
+                    }
+                });
+            };
+
+            wrapper.remove = function (value) {
+                options.find('.q_form_dropdown_option').each(function () {
+                    let option = Q(this);
+                    if (valueMap.get(option) === value) {
+                        option.remove();
+                        valueMap.delete(option);
+                    }
+                });
+            };
+
+            wrapper.value = function () {
+                return selectedValue;
+            };
+
+            return wrapper;
+        },
 
         Slider: function (min = 0, max = 100, value = 50) {
             const slider = Q('<input type="range" class="q_form_slider">');
@@ -246,26 +552,26 @@ position: absolute;
             let slider_wrapper = Q('<div class="q_form q_slider_wrapper">');
             let slider_value = Q('<div class="q_slider_pos">');
             slider_wrapper.append(slider_value, slider);
-            
+
             const slider_width = () => {
                 let percent = (slider.val() - slider.attr('min')) / (slider.attr('max') - slider.attr('min')) * 100;
                 slider_value.css({
                     width: percent + '%'
                 });
             };
-            
+
             slider.on('input', function () {
                 slider_width();
             });
-            
+
             slider_width();
-            
+
             slider_wrapper.change = function (callback) {
                 slider.on('input', function () {
                     callback(this.value);
                 });
             };
-            
+
             slider_wrapper.value = function (value) {
                 if (value !== undefined) {
                     slider.val(value);
@@ -273,9 +579,15 @@ position: absolute;
                 }
                 return slider.val();
             };
-            
+
             slider_wrapper.disabled = function (state) {
                 slider.prop('disabled', state);
+                if (state) {
+                    slider_wrapper.addClass('q_form_disabled');
+                } else {
+                    slider_wrapper.removeClass('q_form_disabled');
+                }
+
             };
             slider_wrapper.min = function (value) {
                 if (value !== undefined) {
@@ -558,83 +870,7 @@ position: absolute;
             return window_wrapper;
         },
 
-        Tab: function (data, horizontal = true) {
 
-            let wrapper = Q('<div class="q_tabcontainer">');
-            let tabs_wrapper = Q('<div class="q_tabs_wrapper">');
-            let tabs_nav_left = Q('<div class="q_tabs_nav q_tabs_nav_left">');
-            let tabs_nav_right = Q('<div class="q_tabs_nav q_tabs_nav_right">');
-            let tabs = Q('<div class="q_tabs">');
-            tabs_wrapper.append(tabs_nav_left, tabs, tabs_nav_right);
-            let content = Q('<div class="q_tabcontent">');
-            wrapper.append(tabs_wrapper, content);
-
-            if (!horizontal) {
-                wrapper.addClass('q_tc_vertical');
-                tabs.addClass('q_tabs_vertical');
-                tabs_wrapper.addClass('q_tabs_wrapper_vertical');
-                tabs_nav_left.addClass('q_tabs_nav_vertical');
-                tabs_nav_right.addClass('q_tabs_nav_vertical');
-            }
-
-            let data_tabs = {};
-            let data_contents = {};
-
-            data.forEach((item, index) => {
-                const tab = Q(`<div class="q_tab" data-value="${item.value}">${item.title}</div>`);
-                if (item.disabled) {
-                    tab.addClass('q_tab_disabled');
-                }
-
-                data_tabs[item.value] = tab;
-                data_contents[item.value] = item.content;
-
-                tab.on('click', function () {
-
-                    if (item.disabled) {
-                        return;
-                    }
-
-                    let foundTabs = tabs.find('.q_tab_active');
-
-                    if (foundTabs) {
-                        foundTabs.removeClass('q_tab_active');
-                    }
-
-                    tab.addClass('q_tab_active');
-                    content.html(data_contents[item.value]);
-                });
-                tabs.append(tab);
-            });
-
-            tabs_nav_left.on('click', function () {
-
-                if (!horizontal) {
-                    tabs.scrollTop(-tabs.height(), true);
-                } else {
-                    tabs.scrollLeft(-tabs.width(), true);
-                }
-            });
-
-            tabs_nav_right.on('click', function () {
-
-                if (!horizontal) {
-                    tabs.scrollTop(tabs.height(), true);
-                } else {
-                    tabs.scrollLeft(tabs.width(), true);
-                }
-            });
-
-            wrapper.select = function (value) {
-                data_tabs.forEach(tab => {
-                    if (tab.data('value') === value) {
-                        tab.click();
-                    }
-                });
-            };
-
-            return wrapper;
-        },
 
 
         CheckBox: function (checked = false, text = '') {
@@ -662,6 +898,11 @@ position: absolute;
 
             container.disabled = function (state) {
                 input.prop('disabled', state);
+                if (state) {
+                    container.addClass('q_form_disabled');
+                } else {
+                    container.removeClass('q_form_disabled');
+                }
             };
 
             container.text = function (text) {
@@ -680,6 +921,12 @@ position: absolute;
             };
             input.disabled = function (state) {
                 input.prop('disabled', state);
+
+                if (state) {
+                    input.addClass('q_form_disabled');
+                } else {
+                    input.removeClass('q_form_disabled');
+                }
             };
             input.reset = function () {
                 input.val('');
@@ -701,6 +948,11 @@ position: absolute;
             };
             textarea.disabled = function (state) {
                 textarea.prop('disabled', state);
+                if (state) {
+                    textarea.addClass('q_form_disabled');
+                } else {
+                    textarea.removeClass('q_form_disabled');
+                }
             };
             textarea.reset = function () {
                 textarea.val('');
@@ -724,6 +976,11 @@ position: absolute;
                 const input = Q(`<input type="radio" id="${ID}" name="${item.name}" value="${item.value}">`);
                 const label = Q(`<label for="${ID}"></label>`);
                 const labeltext = Q(`<div class="label">${item.text}</div>`);
+
+                if (item.disabled) {
+                    input.prop('disabled', true);
+                    container.addClass('q_form_disabled');
+                }
 
                 radios.push({ container, input, labeltext });
 
@@ -752,6 +1009,12 @@ position: absolute;
                 radios.forEach(radio => {
                     if (radio.input.val() === value) {
                         radio.input.prop('disabled', state);
+
+                        if (state) {
+                            radio.container.addClass('q_form_disabled');
+                        } else {
+                            radio.container.removeClass('q_form_disabled');
+                        }
                     }
                 });
             };
