@@ -43,6 +43,8 @@ While Q is inspired by jQuery, it distinguishes itself in several key areas:
 
 |**Method**|**Type**|**Example**|**Description**|
 | --- | --- | --- | --- |
+
+|**[each()](overview/each.md)**|Iteration|`Q(selector).each((index, element) => console.log(index, element));`|Iterates over all nodes in the Q object and executes a callback on each node.|
 |**[text()](overview/text.md)**|Content Manipulation|`Q(selector).text(string);`|Gets or sets the text content of the nodes.|
 |**[html()](overview/html.md)**|Content Manipulation|`Q(selector).html(string);`|Gets or sets the innerHTML or outerHTML of the nodes.|
 |**[hasClass()](overview/hasclass.md)**|Class Manipulation|`Q(selector).hasClass(className);`|Checks if the first node has a specific class.|
@@ -76,3 +78,25 @@ While Q is inspired by jQuery, it distinguishes itself in several key areas:
 |**[toggle()](overview/toggle.md)**|Utilities|`Q(selector).toggle();`|Toggles the display of each node.|
 |**[is()](overview/is.md)**|Utilities|`Q(selector).is(":visible");`|Checks if the first node matches a specific selector.|
 |**[empty()](overview/empty.md)**|Content Manipulation|`Q(selector).empty();`|Empties the innerHTML of each node.|
+|**[clone()](overview/clone.md)**|DOM Manipulation|`Q(selector).clone();`|Clones the first node.|
+|**[parent()](overview/parent.md)**|Traversal|`Q(selector).parent();`|Returns the parent node of the first node.|
+|**[children()](overview/children.md)**|Traversal|`Q(selector).children();`|Returns the children of the first node.|
+|**[find()](overview/find.md)**|Traversal|`Q(selector).find(".child");`|Finds child nodes of the first node that match a specific selector.|
+|**[closest()](overview/closest.md)**|Traversal|`Q(selector).closest(".ancestor");`|Returns the closest ancestor of the first node that matches a specific selector.|
+|**[first()](overview/first.md)**|Traversal|`Q(selector).first();`|Returns the first node.|
+|**[last()](overview/last.md)**|Traversal|`Q(selector).last();`|Returns the last node.|
+|**[eq()](overview/eq.md)**|Traversal|`Q(selector).eq(1);`|Returns a specific node by index.|
+|**[index()](overview/index.md)**|Traversal/DOM Manipulation|`Q(selector).index(index);`|Returns the index of the first node, or the index of a specific node.|
+|**[show()](overview/show.md)**|Display|`Q(selector).show();`|Shows each node.|
+|**[hide()](overview/hide.md)**|Display|`Q(selector).hide();`|Hides each node.|
+|**[fadeIn()](overview/fadein.md)**|Display|`Q(selector).fadeIn(duration, callback);`|Fades in each node.|
+|**[zIndex()](overview/zindex.md)**|Display|`Q(selector).zIndex(value);`|Gets or sets the z-index of the first node.|
+|**[fadeOut()](overview/fadeout.md)**|Display|`Q(selector).fadeOut(duration, callback);`|Fades out each node.|
+|**[fadeToggle()](overview/fadetoggle.md)**|Display|`Q(selector).fadeToggle(duration, callback);`|Toggles the fade state of each node.|
+|**[fadeTo()](overview/fadeto.md)**|Display|`Q(selector).fadeTo(opacity, duration, callback);`|Fades each node to a specific opacity.|
+|**[animate()](overview/animate.md)**|Display|`Q(selector).animate(duration, { opacity: 0, left: "50px" }, callback);`|Animates each node with specific CSS properties.|
+|**[on()](overview/on.md)**|Event Handling|`Q(selector).on("click", () => console.log("Clicked"));`|Adds an event listener to each node.|
+|**[off()](overview/off.md)**|Event Handling|`Q(selector).off("click", handler);`|Removes an event listener from each node.|
+|**[click()](overview/click.md)**|Event Handling|`Q(selector).click();`|Triggers a click event on each node.|
+|**[focus()](overview/focus.md)**|Form Manipulation|`Q(selector).focus();`|Focuses on the first node.|
+|**[blur()](overview/blur.md)**|Form Manipulation|`Q(selector).blur();`|Blurs the first node.|

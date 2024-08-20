@@ -49,23 +49,21 @@ const Q = (() => {
                     });
                 }
             } else {
-                this.nodes = Array.from(this._querySelector(selector));
+                let elem;
+                switch (selector) {
+                    case 'body':
+                        elem = [document.body];
+                    case 'head':
+                        elem = [document.head];
+                    case 'document':
+                        elem = [document.documentElement];
+                    default:
+                        elem = document.querySelectorAll(selector);
+                }
+                this.nodes = Array.from(elem);
             }
         }
     }
-
-    Q.prototype._querySelector = function (selector) {
-        switch (selector) {
-            case 'body':
-                return [document.body];
-            case 'head':
-                return [document.head];
-            case 'document':
-                return [document.documentElement];
-            default:
-                return document.querySelectorAll(selector);
-        }
-    };
 
     Q.ID = function (length = 8) {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -81,7 +79,7 @@ const Q = (() => {
     };
 
     Q.prototype.each = function (callback) {
-        // Iterates over all nodes in the Q object and executes a callback on each node.|Iteration
+        // Iterates over all nodes in the Q object and executes a callback on each node.|Iteration|Q(selector).each((index, element) => console.log(index, element));
         this.nodes.forEach((el, index) => callback.call(el, index, el));
         return this;
     };
@@ -412,7 +410,7 @@ const Q = (() => {
     };
 
     Q.prototype.clone = function () {
-        // Clones the first node.|DOM Manipulation
+        // Clones the first node.|DOM Manipulation|Q(selector).clone();
         return new Q(this.nodes[0].cloneNode(true));
     };
 
