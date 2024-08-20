@@ -294,7 +294,7 @@ user-select: none;
     `);
     return {
 
-        ProgressBar: function (value = 0, max = 100, autoKill = 0) {
+        ProgressBar: function (value = 0, min = 0, max = 100, autoKill = 0) {
             let timer = null;
             const progress = Q('<div class="q_form q_form_progress">');
             const bar = Q('<div class="q_form_progress_bar">');
@@ -317,7 +317,8 @@ user-select: none;
             }
 
             progress.value = function (value) {
-                const newWidth = (value / max) * 100 + '%';
+                const range = max - min;
+                const newWidth = ((value - min) / range) * 100 + '%';
                 if (bar.css('width') !== newWidth) {
                     bar.css({ width: newWidth });
                 }
