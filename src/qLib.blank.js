@@ -49,21 +49,23 @@ const Q = (() => {
                     });
                 }
             } else {
-                this.nodes = Array.from(this._querySelector(selector));
+                let elem;
+                switch (selector) {
+                    case 'body':
+                        elem = [document.body];
+                    case 'head':
+                        elem = [document.head];
+                    case 'document':
+                        elem = [document.documentElement];
+                    default:
+                        elem = document.querySelectorAll(selector);
+                }
+                this.nodes = Array.from(elem);
             }
         }
     }
 
-    Q.prototype._querySelector = function (selector) {
-        switch (selector) {
-            case 'body':
-                return [document.body];
-            case 'head':
-                return [document.head];
-            default:
-                return document.querySelectorAll(selector);
-        }
-    };
+    //EXTENSIONS//
 
-return Q;
+    return Q;
 })();

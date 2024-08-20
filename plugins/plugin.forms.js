@@ -447,7 +447,7 @@ user-select: none;
             options.hide();
             wrapper.append(selected, options);
 
-            // Map to store the association between option elements and their values
+            
             let valueMap = new Map();
 
             data.forEach((item, index) => {
@@ -460,7 +460,7 @@ user-select: none;
                 valueMap.set(option, item.value);
             });
 
-            // Append the first option as selected
+            
             selected.html(data[0].content);
             let selectedValue = data[0].value;
 
@@ -634,7 +634,7 @@ user-select: none;
             default_buttons.append(minimize, maximize, close);
             window_wrapper.append(titlebar, content);
 
-            //We should make sure that the window is not going outside the viewport
+            
 
             width = width > window_wrapper.parent().width() ? window_wrapper.parent().width() : width;
             height = height > window_wrapper.parent().height() ? window_wrapper.parent().height() : height;
@@ -649,8 +649,8 @@ user-select: none;
             });
 
 
-            //when window size changes we should make sure that the window is not going outside the viewport
-            // Debounce function to limit the rate at which a function can fire
+            
+            
             function debounce(func, wait) {
                 console.log('debounce');
                 let timeout;
@@ -660,25 +660,25 @@ user-select: none;
                 };
             }
 
-            // Resize handler function
+            
             function handleResize() {
                 let browserWidth = window.innerWidth;
                 let browserHeight = window.innerHeight;
 
-                // Get the current position of the window
+                
                 let currentPosition = window_wrapper.position();
                 let currentX = currentPosition.left;
                 let currentY = currentPosition.top;
 
-                // Constrain width and height within browser dimensions
+                
                 width = Math.min(width, browserWidth);
                 height = Math.min(height, browserHeight);
 
-                // Adjust currentX and currentY to ensure the window stays within bounds
+                
                 currentX = Math.min(currentX, browserWidth - width);
                 currentY = Math.min(currentY, browserHeight - height);
 
-                // Apply the constrained dimensions and positions
+                
                 window_wrapper.css({
                     width: width + 'px',
                     height: height + 'px',
@@ -687,12 +687,12 @@ user-select: none;
                 });
             }
 
-            // Wrap the resize handler with debounce
+            
             window.addEventListener('resize', debounce(handleResize, 300));
 
 
             close.on('click', function () {
-                // window_wrapper.fadeOut(200);
+                
 
                 window_wrapper.animate(200, {
                     opacity: 0,
@@ -709,7 +709,7 @@ user-select: none;
                 if (content.is(':visible')) {
                     minimize.text('-');
 
-                    //this should expand the window to the original size
+                    
                     window_wrapper.css({
                         height: height + 'px'
                     });
@@ -718,7 +718,7 @@ user-select: none;
                 } else {
                     minimize.text('+');
 
-                    //this should shrink the window to the titlebar
+                    
                     window_wrapper.css({
                         height: titlebar.height() + 'px'
                     });
@@ -757,7 +757,7 @@ user-select: none;
 
             };
 
-            //here we should make the logic for moving the window when dragging the titlebar
+            
             titlebar.on('pointerdown', function (e) {
                 let offset = window_wrapper.offset();
                 let x = e.clientX - offset.left;
@@ -767,9 +767,9 @@ user-select: none;
                     'z-index': zindex()
                 });
 
-                // Define the event handlers
+                
                 const pointerMoveHandler = function (e) {
-                    // Ensure the window is not going outside the viewport
+                    
                     let left = e.clientX - x;
                     let top = e.clientY - y;
 
@@ -800,7 +800,7 @@ user-select: none;
                     Q('document').off('pointerup', pointerUpHandler);
                 };
 
-                // Attach the event handlers to the document
+                
                 Q('document').on('pointermove', pointerMoveHandler);
                 Q('document').on('pointerup', pointerUpHandler);
             });

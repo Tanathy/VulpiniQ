@@ -598,8 +598,9 @@ const Q = (() => {
                     callback.call(element);
                 }, duration);
             }
-        });
+        }), this;
     };
+
     Q.Ready = function (callback) {
         document.readyState === 'loading'
             ? document.addEventListener('DOMContentLoaded', callback, { once: true })
@@ -660,6 +661,8 @@ const Q = (() => {
         // Blurs the first node.|Form Manipulation|Q(selector).blur();
         return this.each(el => this.nodes[el].blur());
     };
+
+    //EXTENSIONS//
 
     return Q;
 })();

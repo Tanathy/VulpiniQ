@@ -1,16 +1,16 @@
 Q.Store = function (key, value) {
-    if (arguments.length === 2) { // Check if two arguments are passed
-        if (value === null || value === '') { // If value is null or empty string
-            localStorage.removeItem(key); // Remove the item from localStorage
+    if (arguments.length === 2) { 
+        if (value === null || value === '') { 
+            localStorage.removeItem(key); 
         } else {
-            localStorage.setItem(key, JSON.stringify(value)); // Store the value as a JSON string
+            localStorage.setItem(key, JSON.stringify(value)); 
         }
-    } else if (arguments.length === 1) { // Check if one argument is passed
-        let storedValue = localStorage.getItem(key); // Retrieve the value from localStorage
+    } else if (arguments.length === 1) { 
+        let storedValue = localStorage.getItem(key); 
         try {
-            return JSON.parse(storedValue); // Try to parse the value as JSON
+            return JSON.parse(storedValue); 
         } catch (e) {
-            return storedValue; // Return the value as is if parsing fails
+            return storedValue; 
         }
     }
 };
@@ -45,13 +45,13 @@ Q.Cookie = function (key, value, options = {}) {
         }, {});
     }
 
-    if (arguments.length === 2) { // Check if two arguments are passed
-        if (value === null || value === '') { // If value is null or empty string
-            value = ''; // Set the value to an empty string
-            options = { ...options, days: -1 }; // Set the number of days to -1
+    if (arguments.length === 2) { 
+        if (value === null || value === '') { 
+            value = ''; 
+            options = { ...options, days: -1 }; 
         }
-        return document.cookie = `${key}=${value}; ${_serialize(options)}`; // Set the cookie
-    } else if (arguments.length === 1) { // Check if one argument is passed
-        return _parse(document.cookie)[key]; // Retrieve the cookie value
+        return document.cookie = `${key}=${value}; ${_serialize(options)}`; 
+    } else if (arguments.length === 1) { 
+        return _parse(document.cookie)[key]; 
     }
 };

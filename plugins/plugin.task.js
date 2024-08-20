@@ -24,7 +24,7 @@ Q.Task = (function () {
         runningTasks[id] = {
             doneCallback: null,
             failCallback: null,
-            timeout: 20000, // Default timeout is 20 seconds
+            timeout: 20000, 
             timeoutCallback: null,
         };
 

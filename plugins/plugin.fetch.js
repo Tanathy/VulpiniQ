@@ -7,20 +7,20 @@ Q.fetch = function (url, callback, options = {}) {
         responseType = 'json',
         credentials = 'same-origin',
         retries = 3,
-        retryDelay = 1000, // Delay between retries in milliseconds
-        timeout = 0, // Timeout in milliseconds (0 means no timeout)
-        validateResponse = (data) => data // Function to validate response data
+        retryDelay = 1000, 
+        timeout = 0, 
+        validateResponse = (data) => data 
     } = options;
 
     headers['Content-Type'] = headers['Content-Type'] || contentType;
 
-    // Internal AbortController for request cancellation
+    
     const controller = new AbortController();
     const { signal } = controller;
 
-    // Function to handle fetch with retry mechanism
+    
     const fetchWithRetry = (attempt) => {
-        // Set up timeout if specified
+        
         const timeoutId = timeout ? setTimeout(() => controller.abort(), timeout) : null;
 
         fetch(url, { method, headers, body, credentials, signal })
@@ -57,7 +57,7 @@ Q.fetch = function (url, callback, options = {}) {
 
     fetchWithRetry(0);
 
-    // Return the abort function to allow external cancellation if needed
+    
     return {
         abort: () => controller.abort()
     };
