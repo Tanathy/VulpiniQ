@@ -23,6 +23,7 @@ Q.Form = function () {
 .q_form_checkbox .label,
 .q_form_radio .label {
     padding-left: 5px;
+    user-select: none;
 }
 
 .q_form_cb {
@@ -142,6 +143,7 @@ display: flex;
 }
 
 .q_tabs {
+user-select: none;
     display: flex;
     flex-direction: row;
     width: 100%;
@@ -208,8 +210,92 @@ width: 100%;
 overflow-y: auto;
     }
 
+.q_slider_wrapper {
+position: relative;
+    height: 20px;
+    overflow: hidden;
+    background-color: #333;
+}
+
+.q_slider_pos {
+position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    background-color: #1DA1F2;
+}
+
+.q_form_slider
+{
+    width: 100%;
+    opacity: 0;
+    height: 100%;
+    position: absolute;
+}
+
     `);
     return {
+
+        Slider: function (min = 0, max = 100, value = 50) {
+            const slider = Q('<input type="range" class="q_form_slider">');
+            slider.attr('min', min);
+            slider.attr('max', max);
+            slider.attr('value', value);
+
+            let slider_wrapper = Q('<div class="q_form q_slider_wrapper">');
+            let slider_value = Q('<div class="q_slider_pos">');
+            slider_wrapper.append(slider_value, slider);
+            
+            const slider_width = () => {
+                let percent = (slider.val() - slider.attr('min')) / (slider.attr('max') - slider.attr('min')) * 100;
+                slider_value.css({
+                    width: percent + '%'
+                });
+            };
+            
+            slider.on('input', function () {
+                slider_width();
+            });
+            
+            slider_width();
+            
+            slider_wrapper.change = function (callback) {
+                slider.on('input', function () {
+                    callback(this.value);
+                });
+            };
+            
+            slider_wrapper.value = function (value) {
+                if (value !== undefined) {
+                    slider.val(value);
+                    slider.trigger('input');
+                }
+                return slider.val();
+            };
+            
+            slider_wrapper.disabled = function (state) {
+                slider.prop('disabled', state);
+            };
+            slider_wrapper.min = function (value) {
+                if (value !== undefined) {
+                    slider.attr('min', value);
+                    slider.trigger('input');
+                }
+                return slider.attr('min');
+            };
+            slider_wrapper.max = function (value) {
+                if (value !== undefined) {
+                    slider.attr('max', value);
+                    slider.trigger('input');
+                }
+                return slider.attr('max');
+            };
+            slider_wrapper.remove = function () {
+                slider_wrapper.remove();
+            };
+            return slider_wrapper;
+        },
 
         Window: function (title = '', data, width = 300, height = 300, x = 0, y = 0) {
             let window_wrapper = Q('<div class="q_window">');
@@ -289,7 +375,7 @@ overflow-y: auto;
             }
 
             // Wrap the resize handler with debounce
-            window.addEventListener('resize', debounce(handleResize, 200));
+            window.addEventListener('resize', debounce(handleResize, 300));
 
 
             close.on('click', function () {
@@ -328,6 +414,24 @@ overflow-y: auto;
 
             });
 
+            maximize.on('click', function () {
+                if (window_wrapper.height() === window.innerHeight) {
+                    window_wrapper.css({
+                        width: width + 'px',
+                        height: height + 'px',
+                        left: x + 'px',
+                        top: y + 'px'
+                    });
+                } else {
+                    window_wrapper.css({
+                        width: '100%',
+                        height: '100%',
+                        left: 0,
+                        top: 0
+                    });
+                }
+            });
+
             const zindex = () => {
                 let highestZIndex = 0;
                 Q('.q_window').each(function () {
@@ -340,57 +444,61 @@ overflow-y: auto;
 
             };
 
-
             //here we should make the logic for moving the window when dragging the titlebar
             titlebar.on('pointerdown', function (e) {
                 let offset = window_wrapper.offset();
                 let x = e.clientX - offset.left;
                 let y = e.clientY - offset.top;
-            
+
                 window_wrapper.css({
                     'z-index': zindex()
                 });
-            
+
                 // Define the event handlers
                 const pointerMoveHandler = function (e) {
                     // Ensure the window is not going outside the viewport
                     let left = e.clientX - x;
                     let top = e.clientY - y;
-            
+
                     if (left < 0) {
                         left = 0;
                     }
-            
+
                     if (top < 0) {
                         top = 0;
                     }
-            
+
                     if (left + window_wrapper.width() > window.innerWidth) {
                         left = window.innerWidth - window_wrapper.width();
                     }
-            
+
                     if (top + window_wrapper.height() > window.innerHeight) {
                         top = window.innerHeight - window_wrapper.height();
                     }
-            
+
                     window_wrapper.css({
                         left: left + 'px',
                         top: top + 'px'
                     });
                 };
-            
+
                 const pointerUpHandler = function () {
                     Q('document').off('pointermove', pointerMoveHandler);
                     Q('document').off('pointerup', pointerUpHandler);
                 };
-            
+
                 // Attach the event handlers to the document
                 Q('document').on('pointermove', pointerMoveHandler);
                 Q('document').on('pointerup', pointerUpHandler);
             });
 
             window_wrapper.show = function () {
-                window_wrapper.fadeIn(200);
+                if (window_wrapper.isExists()) {
+                    window_wrapper.fadeIn(200);
+                }
+                else {
+                    Q('body').append(window_wrapper);
+                }
             };
 
             window_wrapper.hide = function () {
@@ -402,6 +510,49 @@ overflow-y: auto;
                     titletext.text(newTitle);
                 }
                 return titletext.text();
+            };
+
+            window_wrapper.content = function (newContent) {
+                if (newContent !== undefined) {
+                    content.html(newContent);
+                }
+                return content.html();
+            };
+
+            window_wrapper.position = function (x, y) {
+                if (x !== undefined && y !== undefined) {
+                    window_wrapper.css({
+                        left: x + 'px',
+                        top: y + 'px'
+                    });
+                }
+                return { x: window_wrapper.offset().left, y: window_wrapper.offset().top };
+            };
+
+            window_wrapper.size = function (width, height) {
+                if (width !== undefined && height !== undefined) {
+                    window_wrapper.css({
+                        width: width + 'px',
+                        height: height + 'px'
+                    });
+                }
+                return { width: window_wrapper.width(), height: window_wrapper.height() };
+            };
+
+            window_wrapper.close = function () {
+                close.click();
+            };
+
+            window_wrapper.minimize = function () {
+                minimize.click();
+            };
+
+            window_wrapper.maximize = function () {
+                maximize.click();
+            };
+
+            window_wrapper.remove = function () {
+                window_wrapper.remove();
             };
 
             return window_wrapper;

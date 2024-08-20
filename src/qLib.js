@@ -319,6 +319,10 @@ const Q = (() => {
         };
     };
 
+    Q.prototype.isExists = function () {
+        return document.body.contains(this.nodes[0]);
+    };
+
     Q.prototype.position = function () {
         return {
             top: this.nodes[0].offsetTop,
