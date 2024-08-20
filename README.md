@@ -43,7 +43,6 @@ While Q is inspired by jQuery, it distinguishes itself in several key areas:
 
 |**Method**|**Type**|**Example**|**Description**|
 | --- | --- | --- | --- |
-
 |**[each()](overview/each.md)**|Iteration|`Q(selector).each((index, element) => console.log(index, element));`|Iterates over all nodes in the Q object and executes a callback on each node.|
 |**[text()](overview/text.md)**|Content Manipulation|`Q(selector).text(string);`|Gets or sets the text content of the nodes.|
 |**[html()](overview/html.md)**|Content Manipulation|`Q(selector).html(string);`|Gets or sets the innerHTML or outerHTML of the nodes.|
