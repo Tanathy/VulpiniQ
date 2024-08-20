@@ -230,6 +230,33 @@ const Q = (() => {
         });
     };
 
+    Q.prototype.wrap = function (wrapper) {
+        return this.each(el => {
+            const parent = this.nodes[el].parentNode;
+            const newParent = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;
+            parent.insertBefore(newParent, this.nodes[el]);
+            newParent.appendChild(this.nodes[el]);
+        });
+    };
+
+    Q.prototype.wrapAll = function (wrapper) {
+        return this.each(el => {
+            const parent = this.nodes[el].parentNode;
+            const newParent = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;
+            parent.insertBefore(newParent, this.nodes[0]);
+            this.nodes.forEach(child => newParent.appendChild(child));
+        });
+    };
+
+    Q.prototype.unwrap = function () {
+        return this.each(el => {
+            const parent = this.nodes[el].parentNode;
+            if (parent !== document.body) {
+                parent.replaceWith(...this.nodes);
+            }
+        });
+    };
+
     Q.prototype.remove = function () {
         return this.each(el => this.nodes[el].remove());
     };
@@ -307,7 +334,7 @@ const Q = (() => {
         if (typeof selector === 'function') {
             return selector.call(this.nodes[0], 0, this.nodes[0]);
         }
-    
+
         if (typeof selector === 'string') {
             if (selector === ':visible') {
                 return this.nodes[0].offsetWidth > 0 && this.nodes[0].offsetHeight > 0;
@@ -331,15 +358,15 @@ const Q = (() => {
                 return this.nodes[0].matches(selector);
             }
         }
-    
+
         if (selector instanceof HTMLElement || selector instanceof Node) {
             return this.nodes[0] === selector;
         }
-    
+
         if (selector instanceof Q) {
             return this.nodes[0] === selector.nodes[0];
         }
-    
+
         return false;
     };
 
@@ -465,7 +492,7 @@ const Q = (() => {
         }
         return this.each(el => this.nodes[el].style.zIndex = value);
     };
-    
+
     Q.prototype.fadeOut = function (duration = 400, callback) {
         return this.each(el => {
             this.nodes[el].style.transition = `opacity ${duration}ms`;
@@ -477,7 +504,7 @@ const Q = (() => {
             }, duration);
         });
     };
-    
+
     Q.prototype.fadeToggle = function (duration = 400, callback) {
         return this.each(el => {
             if (window.getComputedStyle(this.nodes[el]).opacity === '0') {
@@ -487,7 +514,7 @@ const Q = (() => {
             }
         });
     };
-    
+
     Q.prototype.fadeTo = function (opacity, duration = 400, callback) {
         return this.each(el => {
             this.nodes[el].style.transition = `opacity ${duration}ms`;
@@ -505,15 +532,15 @@ const Q = (() => {
         return this.each(el => {
             const element = this.nodes[el];
             const transitionProperties = Object.keys(properties).map(prop => `${prop} ${duration}ms`).join(', ');
-    
+
             // Apply the transition properties
             element.style.transition = transitionProperties;
-    
+
             // Apply the new properties
             for (const prop in properties) {
                 element.style[prop] = properties[prop];
             }
-    
+
             // Handle the callback function
             if (typeof callback === 'function') {
                 setTimeout(() => {
