@@ -67,11 +67,6 @@ const Q = (() => {
         }
     };
 
-    Q.prototype.each = function (callback) {
-        this.nodes.forEach((el, index) => callback.call(el, index, el));
-        return this;
-    };
-
     Q.ID = function (length = 8) {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
@@ -85,7 +80,14 @@ const Q = (() => {
         });
     };
 
+    Q.prototype.each = function (callback) {
+        // Iterates over all nodes in the Q object and executes a callback on each node.|Iteration
+        this.nodes.forEach((el, index) => callback.call(el, index, el));
+        return this;
+    };
+
     Q.prototype.text = function (content) {
+        // Gets or sets the text content of the nodes.|Content Manipulation|Q(selector).text(string);
         if (content === undefined) {
             return this.nodes[0]?.textContent || null;
         }
@@ -93,6 +95,7 @@ const Q = (() => {
     };
 
     Q.prototype.html = function (content, outer = false) {
+        // Gets or sets the innerHTML or outerHTML of the nodes.|Content Manipulation|Q(selector).html(string);
         if (content === undefined) {
             if (outer) {
                 return this.nodes[0]?.outerHTML || null;
@@ -114,25 +117,29 @@ const Q = (() => {
     };
 
     Q.prototype.hasClass = function (className) {
+        // Checks if the first node has a specific class.|Class Manipulation|Q(selector).hasClass(className);
         return this.nodes[0]?.classList.contains(className) || false;
     };
 
     Q.prototype.addClass = function (classes) {
+        // Adds one or more classes to each node.|Class Manipulation|Q(selector).addClass('class1 class2');
         const classList = classes.split(' ');
         return this.each(el => this.nodes[el].classList.add(...classList));
     };
 
     Q.prototype.removeClass = function (classes) {
-
+        // Removes one or more classes from each node.|Class Manipulation|Q(selector).removeClass('class1 class2');
         const classList = classes.split(' ');
         return this.each(el => this.nodes[el].classList.remove(...classList));
     };
 
     Q.prototype.toggleClass = function (className) {
+        // Toggles a class on each node.|Class Manipulation|Q(selector).toggleClass(className);
         return this.each(el => this.nodes[el].classList.toggle(className));
     };
 
     Q.prototype.val = function (value) {
+        // Gets or sets the value of form elements in the nodes.|Form Manipulation|Q(selector).val(value);
         if (value === undefined) {
             return this.nodes[0]?.value || null;
         }
@@ -140,6 +147,7 @@ const Q = (() => {
     };
 
     Q.prototype.data = function (key, value) {
+        // Gets or sets data-* attributes on the nodes.|Data Manipulation|Q(selector).data(key, value);
         if (value === undefined) {
             return this.nodes[0]?.dataset[key] || null;
         }
@@ -147,10 +155,12 @@ const Q = (() => {
     };
 
     Q.prototype.removeData = function (key) {
+        // Removes a data-* attribute from each node.|Data Manipulation|Q(selector).removeData(key);
         return this.each(el => delete this.nodes[el].dataset[key]);
     };
 
     Q.prototype.css = function (property, value) {
+        // Gets or sets CSS styles on the nodes. Can handle multiple styles if provided as an object.|Style Manipulation|Q(selector).css(property, value);
         if (typeof property === 'object') {
             return this.each(el => {
                 for (let key in property) {
@@ -168,6 +178,7 @@ const Q = (() => {
     };
 
     Q.prototype.attr = function (attribute, value) {
+        // Gets or sets an attribute on the nodes.|Attribute Manipulation|Q(selector).attr(attribute, value);
         if (value === undefined) {
             return this.nodes[0]?.getAttribute(attribute) || null;
         }
@@ -175,6 +186,7 @@ const Q = (() => {
     };
 
     Q.prototype.prop = function (property, value) {
+        // Gets or sets a property on the nodes.|Property Manipulation|Q(selector).prop(property, value);
         if (value === undefined) {
             return this.nodes[0]?.[property] || null;
         }
@@ -184,20 +196,24 @@ const Q = (() => {
     };
 
     Q.prototype.removeProp = function (property) {
+        // Removes a property from each node.|Property Manipulation|Q(selector).removeProp(property);
         return this.each(el => delete this.nodes[el][property]);
     }
 
     Q.prototype.trigger = function (event) {
+        // Triggers a specific event on each node.|Event Handling|Q(selector).trigger('click');
         return this.each(function (index, el) {
             el.dispatchEvent(new Event(event));
         });
     };
 
     Q.prototype.removeAttr = function (attribute) {
+        // Removes an attribute from each node.|Attribute Manipulation|Q(selector).removeAttr(attribute);
         return this.each(el => this.nodes[el].removeAttribute(attribute));
     };
 
     Q.prototype.append = function (...nodes) {
+        // Appends child nodes or HTML to each node.|DOM Manipulation|Q(selector).append('<div>Appended</div>');
         return this.each(el => {
             const parent = this.nodes[el];
 
@@ -215,6 +231,7 @@ const Q = (() => {
     };
 
     Q.prototype.prepend = function (...nodes) {
+        // Prepends child nodes or HTML to each node.|DOM Manipulation|Q(selector).prepend('<div>Prepended</div>');
         return this.each(el => {
             const parent = this.nodes[el];
 
@@ -231,6 +248,7 @@ const Q = (() => {
     };
 
     Q.prototype.wrap = function (wrapper) {
+        // Wraps each node with the specified wrapper element.|DOM Manipulation|Q(selector).wrap('<div class="wrapper"></div>');
         return this.each(el => {
             const parent = this.nodes[el].parentNode;
             const newParent = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;
@@ -240,6 +258,7 @@ const Q = (() => {
     };
 
     Q.prototype.wrapAll = function (wrapper) {
+        // Wraps all nodes together in a single wrapper element.|DOM Manipulation|Q(selector).wrapAll('<div class="wrapper"></div>');
         return this.each(el => {
             const parent = this.nodes[el].parentNode;
             const newParent = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;
@@ -249,6 +268,7 @@ const Q = (() => {
     };
 
     Q.prototype.unwrap = function () {
+        // Removes the parent wrapper of each node.|DOM Manipulation|Q(selector).unwrap();
         return this.each(el => {
             const parent = this.nodes[el].parentNode;
             if (parent !== document.body) {
@@ -258,18 +278,22 @@ const Q = (() => {
     };
 
     Q.prototype.remove = function () {
+        // Removes each node from the DOM.|DOM Manipulation|Q(selector).remove();
         return this.each(el => this.nodes[el].remove());
     };
 
     Q.prototype.scrollWidth = function () {
+        // Returns the scroll width of the first node.|Dimensions|Q(selector).scrollWidth();
         return this.nodes[0].scrollWidth;
     };
 
     Q.prototype.scrollHeight = function () {
+        // Returns the scroll height of the first node.|Dimensions|Q(selector).scrollHeight();
         return this.nodes[0].scrollHeight;
     };
 
     Q.prototype.scrollTop = function (value, increment = false) {
+        // Gets or sets the vertical scroll position of the first node, with an option to increment.|Dimensions|Q(selector).scrollTop(value, increment);
         if (value === undefined) {
             return this.nodes[0].scrollTop;
         }
@@ -284,6 +308,7 @@ const Q = (() => {
     };
 
     Q.prototype.scrollLeft = function (value, increment = false) {
+        // Gets or sets the horizontal scroll position of the first node, with an option to increment.|Scroll Manipulation|Q(selector).scrollLeft(value, increment);
         if (value === undefined) {
             return this.nodes[0].scrollLeft;
         }
@@ -298,6 +323,7 @@ const Q = (() => {
     };
 
     Q.prototype.width = function (value) {
+        // Gets or sets the width of the first node.|Dimensions|Q(selector).width(value);
         if (value === undefined) {
             return this.nodes[0].offsetWidth;
         }
@@ -305,6 +331,7 @@ const Q = (() => {
     };
 
     Q.prototype.height = function (value) {
+        // Gets or sets the height of the first node.|Dimensions|Q(selector).height(value);
         if (value === undefined) {
             return this.nodes[0].offsetHeight;
         }
@@ -312,6 +339,7 @@ const Q = (() => {
     };
 
     Q.prototype.offset = function () {
+        // Returns the top and left offset of the first node relative to the document.|Dimensions|Q(selector).offset();
         const rect = this.nodes[0].getBoundingClientRect();
         return {
             top: rect.top + window.scrollY,
@@ -320,10 +348,12 @@ const Q = (() => {
     };
 
     Q.prototype.isExists = function () {
+        // Checks if the first node exists in the DOM.|Utilities|Q(selector).isExists();
         return document.body.contains(this.nodes[0]);
     };
 
     Q.prototype.position = function () {
+        // Returns the top and left position of the first node relative to its offset parent.|Dimension/Position|Q(selector).position();
         return {
             top: this.nodes[0].offsetTop,
             left: this.nodes[0].offsetLeft
@@ -331,10 +361,12 @@ const Q = (() => {
     };
 
     Q.prototype.toggle = function () {
+        // Toggles the display of each node.|Utilities|Q(selector).toggle();
         return this.each(el => this.nodes[el].style.display = this.nodes[el].style.display === 'none' ? '' : 'none');
     };
 
     Q.prototype.is = function (selector) {
+        // Checks if the first node matches a specific selector.|Utilities|Q(selector).is(':visible');
         if (typeof selector === 'function') {
             return selector.call(this.nodes[0], 0, this.nodes[0]);
         }
@@ -375,27 +407,33 @@ const Q = (() => {
     };
 
     Q.prototype.empty = function () {
+        // Empties the innerHTML of each node.|Content Manipulation|Q(selector).empty();
         return this.each(el => this.nodes[el].innerHTML = '');
     };
 
     Q.prototype.clone = function () {
+        // Clones the first node.|DOM Manipulation
         return new Q(this.nodes[0].cloneNode(true));
     };
 
     Q.prototype.parent = function () {
+        // Returns the parent node of the first node.|Traversal|Q(selector).parent();
         return new Q(this.nodes[0].parentNode);
     };
 
     Q.prototype.children = function () {
+        // Returns the children of the first node.|Traversal|Q(selector).children();
         return new Q(this.nodes[0].children);
     };
 
     Q.prototype.find = function (selector) {
+        // Finds child nodes of the first node that match a specific selector.|Traversal|Q(selector).find('.child');
         const foundNodes = this.nodes[0].querySelectorAll(selector);
         return foundNodes.length ? Q(foundNodes) : null;
     };
 
     Q.prototype.closest = function (selector) {
+        // Returns the closest ancestor of the first node that matches a specific selector.|Traversal|Q(selector).closest('.ancestor');
         let el = this.nodes[0];
         while (el) {
             if (el.matches(selector)) return new Q(el);
@@ -405,18 +443,22 @@ const Q = (() => {
     };
 
     Q.prototype.first = function () {
+        // Returns the first node.|Traversal|Q(selector).first();
         return new Q(this.nodes[0]);
     };
 
     Q.prototype.last = function () {
+        // Returns the last node.|Traversal|Q(selector).last();
         return new Q(this.nodes[this.nodes.length - 1]);
     };
 
     Q.prototype.eq = function (index) {
+        // Returns a specific node by index.|Traversal|Q(selector).eq(1);
         return new Q(this.nodes[index]);
     };
 
     Q.prototype.index = function (index) {
+        // Returns the index of the first node, or the index of a specific node.|Traversal/DOM Manipulation|Q(selector).index(index);
         if (index === undefined) {
             return Array.from(this.nodes[0].parentNode.children).indexOf(this.nodes[0]);
         }
@@ -462,21 +504,21 @@ const Q = (() => {
         const styleElement = document.getElementById('qlib-styles');
         styleElement?.parentNode.removeChild(styleElement);
     };
-
-    // #region Animation
     Q.prototype.show = function () {
+        // Shows each node.|Display|Q(selector).show();
         return this.each(el => this.nodes[el].style.display = '');
     };
 
     Q.prototype.hide = function () {
+        // Hides each node.|Display|Q(selector).hide();
         return this.each(el => this.nodes[el].style.display = 'none');
     };
 
     Q.prototype.fadeIn = function (duration = 400, callback) {
+        // Fades in each node.|Display|Q(selector).fadeIn(duration, callback);
         return this.each(el => {
             this.nodes[el].style.display = '';
             this.nodes[el].style.transition = `opacity ${duration}ms`;
-            // Force reflow
             this.nodes[el].offsetHeight;
             this.nodes[el].style.opacity = 1;
             setTimeout(() => {
@@ -487,6 +529,7 @@ const Q = (() => {
     };
 
     Q.prototype.zIndex = function (value) {
+        // Gets or sets the z-index of the first node.|Display|Q(selector).zIndex(value);
         if (value === undefined) {
             let zIndex = this.nodes[0].style.zIndex;
             if (!zIndex) {
@@ -498,6 +541,7 @@ const Q = (() => {
     };
 
     Q.prototype.fadeOut = function (duration = 400, callback) {
+        // Fades out each node.|Display|Q(selector).fadeOut(duration, callback);
         return this.each(el => {
             this.nodes[el].style.transition = `opacity ${duration}ms`;
             this.nodes[el].style.opacity = 0;
@@ -510,6 +554,7 @@ const Q = (() => {
     };
 
     Q.prototype.fadeToggle = function (duration = 400, callback) {
+        // Toggles the fade state of each node.|Display|Q(selector).fadeToggle(duration, callback);
         return this.each(el => {
             if (window.getComputedStyle(this.nodes[el]).opacity === '0') {
                 this.fadeIn(duration, callback);
@@ -520,9 +565,9 @@ const Q = (() => {
     };
 
     Q.prototype.fadeTo = function (opacity, duration = 400, callback) {
+        // Fades each node to a specific opacity.|Display|Q(selector).fadeTo(opacity, duration, callback);
         return this.each(el => {
             this.nodes[el].style.transition = `opacity ${duration}ms`;
-            // Force reflow
             this.nodes[el].offsetHeight;
             this.nodes[el].style.opacity = opacity;
             setTimeout(() => {
@@ -533,19 +578,14 @@ const Q = (() => {
     };
 
     Q.prototype.animate = function (duration, properties, callback) {
+        // Animates each node with specific CSS properties.|Display|Q(selector).animate(duration, { opacity: 0, left: '50px' }, callback);
         return this.each(el => {
             const element = this.nodes[el];
             const transitionProperties = Object.keys(properties).map(prop => `${prop} ${duration}ms`).join(', ');
-
-            // Apply the transition properties
             element.style.transition = transitionProperties;
-
-            // Apply the new properties
             for (const prop in properties) {
                 element.style[prop] = properties[prop];
             }
-
-            // Handle the callback function
             if (typeof callback === 'function') {
                 setTimeout(() => {
                     callback.call(element);
@@ -553,10 +593,6 @@ const Q = (() => {
             }
         });
     };
-
-    // #endregion
-
-    // #region Event Manager
     Q.Ready = function (callback) {
         document.readyState === 'loading'
             ? document.addEventListener('DOMContentLoaded', callback, { once: true })
@@ -572,7 +608,7 @@ const Q = (() => {
     };
 
     Q.prototype.on = function (events, handler, options = {}) {
-
+        // Adds an event listener to each node.|Event Handling|Q(selector).on('click', () => console.log('Clicked'));
         const defaultOptions = {
             capture: false,
             once: false,
@@ -589,7 +625,7 @@ const Q = (() => {
     };
 
     Q.prototype.off = function (events, handler, options = {}) {
-
+        // Removes an event listener from each node.|Event Handling|Q(selector).off('click', handler);
         const defaultOptions = {
             capture: false,
             once: false,
@@ -604,17 +640,19 @@ const Q = (() => {
     };
 
     Q.prototype.click = function () {
+        // Triggers a click event on each node.|Event Handling|Q(selector).click();
         return this.each(el => this.nodes[el].click());
     };
 
     Q.prototype.focus = function () {
+        // Focuses on the first node.|Form Manipulation|Q(selector).focus();
         return this.each(el => this.nodes[el].focus());
     };
 
     Q.prototype.blur = function () {
+        // Blurs the first node.|Form Manipulation|Q(selector).blur();
         return this.each(el => this.nodes[el].blur());
     };
-    // #endregion
 
     return Q;
 })();
