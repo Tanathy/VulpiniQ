@@ -35,6 +35,6 @@ document.body.appendChild(newDiv);
 ```
 ```
 const newDiv = Q('<div>').addClass('new-style');
-document.body.appendChild(newDiv.nodes[0]);
+Q('body').append(newDiv);
 ```
 This example creates a new div, applies the new-style class to it using addClass, and then appends it to the document body. This method is effective for dynamically styling elements as they are added to the DOM.
