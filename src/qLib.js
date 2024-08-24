@@ -49,17 +49,18 @@ const Q = (() => {
                     });
                 }
             } else {
-                let elem;
-                switch (selector) {
-                    case 'body':
-                        elem = [document.body];
-                    case 'head':
-                        elem = [document.head];
-                    case 'document':
-                        elem = [document.documentElement];
-                    default:
-                        elem = document.querySelectorAll(selector);
-                }
+                // let elem;
+                // switch (selector) {
+                //     case 'body':
+                //         elem = [document.body];
+                //     case 'head':
+                //         elem = [document.head];
+                //     case 'document':
+                //         elem = [document];
+                //     default:
+                //         elem = document.querySelectorAll(selector);
+                // }
+                let elem = document.querySelectorAll(selector);
                 this.nodes = Array.from(elem);
             }
         }
@@ -92,25 +93,26 @@ const Q = (() => {
         return this.each(el => this.nodes[el].textContent = content);
     };
 
-    Q.prototype.html = function (content, outer = false) {
-        // Gets or sets the innerHTML or outerHTML of the nodes.|Content Manipulation|Q(selector).html(string);
-        if (content === undefined) {
-            if (outer) {
-                return this.nodes[0]?.outerHTML || null;
-            }
+    Q.prototype.html = function (...content) {
+        // Gets or sets the innerHTML of the nodes.|Content Manipulation|Q(selector).html(string);
+
+        if (content.length === 0) {
             return this.nodes[0]?.innerHTML || null;
         }
         return this.each(el => {
             el = this.nodes[el];
-            if (typeof content === 'string') {
-                el.innerHTML = content;
-            } else if (content instanceof HTMLElement || content instanceof Q) {
-                el.innerHTML = '';
-                new Q(content).each(child => el.appendChild(child));
-            } else if (Array.isArray(content) || content instanceof NodeList) {
-                el.innerHTML = '';
-                Array.from(content).forEach(child => el.appendChild(child));
-            }
+            el.innerHTML = '';
+            content.forEach(child => {
+                if (typeof child === 'string') {
+                    el.insertAdjacentHTML('beforeend', child);
+                } else if (child instanceof Q) {
+                    child.nodes.forEach(node => el.appendChild(node));
+                } else if (child instanceof HTMLElement) {
+                    el.appendChild(child);
+                } else if (Array.isArray(child) || child instanceof NodeList) {
+                    Array.from(child).forEach(subchild => el.appendChild(subchild));
+                }
+            });
         });
     };
 
@@ -176,6 +178,7 @@ const Q = (() => {
     };
 
     Q.prototype.attr = function (attribute, value) {
+        // Gets or sets attributes on the nodes. Can handle multiple attributes if provided as an object.|Attribute Manipulation|Q(selector).attr(attribute, value);
         if (typeof attribute === 'object') {
             return this.each(el => {
                 for (let key in attribute) {
@@ -367,6 +370,14 @@ const Q = (() => {
         };
     };
 
+    Q.prototype.size = function () {
+        // Returns the width and height of the first node.|Dimensions|Q(selector).size();
+        return {
+            width: this.nodes[0].offsetWidth,
+            height: this.nodes[0].offsetHeight
+        };
+    };
+
     Q.prototype.toggle = function () {
         // Toggles the display of each node.|Utilities|Q(selector).toggle();
         return this.each(el => this.nodes[el].style.display = this.nodes[el].style.display === 'none' ? '' : 'none');
@@ -482,35 +493,6 @@ const Q = (() => {
         });
     };
 
-    Q.style = function (styles) {
-        let styleElement = document.getElementById('qlib-styles');
-        if (!styleElement) {
-            styleElement = document.createElement('style');
-            styleElement.id = 'qlib-styles';
-            document.head.appendChild(styleElement);
-        }
-
-        if (typeof styles === 'string') {
-            styleElement.appendChild(document.createTextNode(styles));
-        } else if (styles && typeof styles === 'object') {
-            const cssText = Object.entries(styles).map(([prop, val]) => `${prop}: ${val};`).join(' ');
-            const ruleIndex = Array.from(styleElement.sheet.cssRules).findIndex(rule => rule.selectorText === selector);
-
-            if (ruleIndex === -1) {
-                styleElement.sheet.insertRule(`${selector} { ${cssText} }`);
-            } else {
-                styleElement.sheet.deleteRule(ruleIndex);
-                styleElement.sheet.insertRule(`${selector} { ${cssText} }`, ruleIndex);
-            }
-        } else {
-            console.error('Invalid styles parameter. Expected a string or an object.');
-        }
-    };
-
-    Q.removeStyle = function () {
-        const styleElement = document.getElementById('qlib-styles');
-        styleElement?.parentNode.removeChild(styleElement);
-    };
     Q.prototype.show = function () {
         // Shows each node.|Display|Q(selector).show();
         return this.each(el => this.nodes[el].style.display = '');
@@ -595,10 +577,15 @@ const Q = (() => {
             }
             if (typeof callback === 'function') {
                 setTimeout(() => {
-                    callback.call(element);
+                    if (callback) callback.call(element);
                 }, duration);
             }
         }), this;
+    };
+
+    Q.prototype.removeTransition = function () {
+        // Removes the transition from each node.|Display|Q(selector).removeTransition();
+        return this.each(el => this.nodes[el].style.transition = '');
     };
 
     Q.Ready = function (callback) {
@@ -613,6 +600,10 @@ const Q = (() => {
 
     Q.Leaving = function (callback) {
         window.addEventListener('beforeunload', callback);
+    };
+
+    Q.Done = function (callback) {
+        window.addEventListener('load', callback, { once: true });
     };
 
     Q.prototype.on = function (events, handler, options = {}) {

@@ -45,7 +45,7 @@ While Q is inspired by jQuery, it distinguishes itself in several key areas:
 | --- | --- | --- | --- |
 |**[each()](overview/each.md)**|Iteration|`Q(selector).each((index, element) => console.log(index, element));`|Iterates over all nodes in the Q object and executes a callback on each node.|
 |**[text()](overview/text.md)**|Content Manipulation|`Q(selector).text(string);`|Gets or sets the text content of the nodes.|
-|**[html()](overview/html.md)**|Content Manipulation|`Q(selector).html(string);`|Gets or sets the innerHTML or outerHTML of the nodes.|
+|**[html()](overview/html.md)**|Content Manipulation|`Q(selector).html(string);`|Gets or sets the innerHTML of the nodes.|
 |**[hasClass()](overview/hasclass.md)**|Class Manipulation|`Q(selector).hasClass(className);`|Checks if the first node has a specific class.|
 |**[addClass()](overview/addclass.md)**|Class Manipulation|`Q(selector).addClass("class1 class2");`|Adds one or more classes to each node.|
 |**[removeClass()](overview/removeclass.md)**|Class Manipulation|`Q(selector).removeClass("class1 class2");`|Removes one or more classes from each node.|
@@ -54,7 +54,7 @@ While Q is inspired by jQuery, it distinguishes itself in several key areas:
 |**[data()](overview/data.md)**|Data Manipulation|`Q(selector).data(key, value);`|Gets or sets data-* attributes on the nodes.|
 |**[removeData()](overview/removedata.md)**|Data Manipulation|`Q(selector).removeData(key);`|Removes a data-* attribute from each node.|
 |**[css()](overview/css.md)**|Style Manipulation|`Q(selector).css(property, value);`|Gets or sets CSS styles on the nodes. Can handle multiple styles if provided as an object.|
-|**[attr()](overview/attr.md)**|Attribute Manipulation|`Q(selector).attr(attribute, value);`|Gets or sets an attribute on the nodes.|
+|**[attr()](overview/attr.md)**|Attribute Manipulation|`Q(selector).attr(attribute, value);`|Gets or sets attributes on the nodes. Can handle multiple attributes if provided as an object.|
 |**[prop()](overview/prop.md)**|Property Manipulation|`Q(selector).prop(property, value);`|Gets or sets a property on the nodes.|
 |**[removeProp()](overview/removeprop.md)**|Property Manipulation|`Q(selector).removeProp(property);`|Removes a property from each node.|
 |**[trigger()](overview/trigger.md)**|Event Handling|`Q(selector).trigger("click");`|Triggers a specific event on each node.|
@@ -74,6 +74,7 @@ While Q is inspired by jQuery, it distinguishes itself in several key areas:
 |**[offset()](overview/offset.md)**|Dimensions|`Q(selector).offset();`|Returns the top and left offset of the first node relative to the document.|
 |**[isExists()](overview/isexists.md)**|Utilities|`Q(selector).isExists();`|Checks if the first node exists in the DOM.|
 |**[position()](overview/position.md)**|Dimension/Position|`Q(selector).position();`|Returns the top and left position of the first node relative to its offset parent.|
+|**[size()](overview/size.md)**|Dimensions|`Q(selector).size();`|Returns the width and height of the first node.|
 |**[toggle()](overview/toggle.md)**|Utilities|`Q(selector).toggle();`|Toggles the display of each node.|
 |**[is()](overview/is.md)**|Utilities|`Q(selector).is(":visible");`|Checks if the first node matches a specific selector.|
 |**[empty()](overview/empty.md)**|Content Manipulation|`Q(selector).empty();`|Empties the innerHTML of each node.|
@@ -94,6 +95,7 @@ While Q is inspired by jQuery, it distinguishes itself in several key areas:
 |**[fadeToggle()](overview/fadetoggle.md)**|Display|`Q(selector).fadeToggle(duration, callback);`|Toggles the fade state of each node.|
 |**[fadeTo()](overview/fadeto.md)**|Display|`Q(selector).fadeTo(opacity, duration, callback);`|Fades each node to a specific opacity.|
 |**[animate()](overview/animate.md)**|Display|`Q(selector).animate(duration, { opacity: 0, left: "50px" }, callback);`|Animates each node with specific CSS properties.|
+|**[removeTransition()](overview/removetransition.md)**|Display|`Q(selector).removeTransition();`|Removes the transition from each node.|
 |**[on()](overview/on.md)**|Event Handling|`Q(selector).on("click", () => console.log("Clicked"));`|Adds an event listener to each node.|
 |**[off()](overview/off.md)**|Event Handling|`Q(selector).off("click", handler);`|Removes an event listener from each node.|
 |**[click()](overview/click.md)**|Event Handling|`Q(selector).click();`|Triggers a click event on each node.|
