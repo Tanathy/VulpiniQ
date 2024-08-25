@@ -1,6 +1,6 @@
-Q.Form = function () {
-    Q.style(`
-       :root {
+Q.Form = function (options = {}) {
+    let style = `
+           :root {
 	--svg_window-close: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 2.8176856,98.903421 -4.0360052e-7,96.085741 22.611458,73.473146 45.222917,50.860554 22.611458,28.247962 -4.0360052e-7,5.6353711 2.8176856,2.8176851 5.6353716,-9.1835591e-7 28.247963,22.611458 50.860555,45.222916 73.473147,22.611458 96.085743,-9.1835591e-7 98.903423,2.8176851 101.72111,5.6353711 79.109651,28.247962 56.498193,50.860554 79.109651,73.473146 101.72111,96.085741 98.903423,98.903421 96.085743,101.72111 73.473147,79.109651 50.860555,56.498192 28.247963,79.109651 5.6353716,101.72111 Z"/></svg>');
 	--svg_window-full: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 H 50.860555 84.417403 V 50.860554 84.417401 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z"/></svg>');
 	--svg_window-minimize: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 0.5252846,83.893071 V 79.698469 H 50.860555 101.19582 v 4.194602 4.19461 H 50.860555 0.5252846 Z"/></svg>');
@@ -42,10 +42,10 @@ Q.Form = function () {
         .form_icon {
             width: 100%;
             height: 100%;
-            color: #777; /* Default color */
+            color: #fff; /* Default color */
         }
-`);
-    let style = `
+
+
 .q_form {
     box-sizing: border-box;
     font-family: inherit;
@@ -161,7 +161,10 @@ Q.Form = function () {
 position: fixed;
     background-color: #333;
     z-index: 1000;
-    box-shadow: 0 7px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255,255,255,0.01); 
+    border-radius: 5px;
+    overflow: hidden;
     }
 
 .q_window_titlebar {
@@ -184,6 +187,16 @@ box-sizing: border-box;
     width: 30px;
     height: 30px;
     padding: 10px;
+    background-color: rgba(255,255,255,0.01);
+    margin-left: 1px;
+}
+
+.q_window_button:hover {
+    background-color: #424242;
+}
+
+.q_window_close:hover {
+    background-color: #e81123;
 }
 
 .q_window_titletext {
@@ -214,7 +227,7 @@ position: absolute;
     left: 0;
     width: 0;
     height: 100%;
-    background-color: #1DA1F2;
+    background-color: #1473e6;
 }
 
 .q_form_slider
@@ -277,8 +290,7 @@ user-select: none;
     height: 100%;
     opacity: 0;
     }
-
-    `
+    `;
 
     let createIcon = function (icon) {
         let iconElement = Q('<div>');
@@ -322,7 +334,10 @@ user-select: none;
         'q_form_progress_bar': 'q_form_progress_bar',
         'q_form_file': 'q_form_file',
         'q_form_progress': 'q_form_progress',
-        'q_form_dropdown_active': 'q_form_dropdown_active'
+        'q_form_dropdown_active': 'q_form_dropdown_active',
+        'q_window_close': 'q_window_close',
+        'q_window_minimize': 'q_window_minimize',
+        'q_window_maximize': 'q_window_maximize',
     };
 
     //replace all classes with the new random ones
@@ -335,6 +350,10 @@ user-select: none;
     }, {});
 
     Q.style(style);
+
+    if (options.classes) {
+        classes = Object.assign(classes, options.classes);
+    }
 
     return {
 
@@ -416,7 +435,6 @@ user-select: none;
 
             return button;
         },
-
         File: function (text = '', accept = '*', multiple = false) {
             const container = Q('<div class="' + classes.q_form + ' ' + classes.q_form_file + ' ' + classes.q_form_button + '">');
             const input = Q(`<input type="file" accept="${accept}" ${multiple ? 'multiple' : ''}>`);
@@ -480,7 +498,6 @@ user-select: none;
 
             return container;
         },
-
         DropDown: function (data) {
             let wrapper = Q('<div class="' + classes.q_form + ' ' + classes.q_form_dropdown + '">');
             let selected = Q('<div class="' + classes.q_form_dropdown_selected + '">');
@@ -585,7 +602,6 @@ user-select: none;
 
             return wrapper;
         },
-
         Slider: function (min = 0, max = 100, value = 50) {
             const slider = Q('<input type="range" class="' + classes.q_form_slider + '">');
             slider.attr('min', min);
@@ -651,7 +667,6 @@ user-select: none;
             };
             return slider_wrapper;
         },
-
         Window: function (title = '', data, width = 300, height = 300, x = 100, y = 10) {
 
             let dimensions = { width, height, x, y };
@@ -779,7 +794,7 @@ user-select: none;
                     }
                 }
 
-                if (window_wrapper.height() === window.innerHeight) {
+                if (maximized) {
                     maximized = false;
                     maximize.html(createIcon('window-full'));
                     window_wrapper.animate(animation_speed, {
@@ -799,7 +814,8 @@ user-select: none;
                         width: '100%',
                         height: '100%',
                         left: 0,
-                        top: 0
+                        top: 0,
+                        borderRadius: 0
                     }, function () {
                         window_wrapper.removeTransition();
                     });
@@ -932,7 +948,6 @@ user-select: none;
 
             return window_wrapper;
         },
-
         CheckBox: function (checked = false, text = '') {
             let ID = '_' + Q.ID();
             const container = Q('<div class="' + classes.q_form + ' ' + classes.q_form_checkbox + '">');
@@ -972,7 +987,6 @@ user-select: none;
             return container;
 
         },
-
         TextBox: function (type = 'text', value = '', placeholder = '') {
             const input = Q(`<input class="${classes.q_form} ${classes.q_form_input}" type="${type}" placeholder="${placeholder}" value="${value}">`);
 
@@ -999,7 +1013,6 @@ user-select: none;
 
             return input;
         },
-
         TextArea: function (value = '', placeholder = '') {
             const textarea = Q(`<textarea class="${classes.q_form} ${classes.q_form_textarea}" placeholder="${placeholder}">${value}</textarea>`);
 
@@ -1024,7 +1037,6 @@ user-select: none;
             };
             return textarea;
         },
-
         Radio: function (data) {
             let wrapper = Q('<div class="q_form q_form_radio_wrapper">');
             let radios = [];
