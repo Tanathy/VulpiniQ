@@ -49,17 +49,6 @@ const Q = (() => {
                     });
                 }
             } else {
-                // let elem;
-                // switch (selector) {
-                //     case 'body':
-                //         elem = [document.body];
-                //     case 'head':
-                //         elem = [document.head];
-                //     case 'document':
-                //         elem = [document];
-                //     default:
-                //         elem = document.querySelectorAll(selector);
-                // }
                 let elem = document.querySelectorAll(selector);
                 this.nodes = Array.from(elem);
             }
