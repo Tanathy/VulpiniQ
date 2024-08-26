@@ -110,6 +110,11 @@ const Q = (() => {
         return this.nodes[0]?.classList.contains(className) || false;
     };
 
+    Q.prototype.inside = function (selector) {
+        // Checks if the first node is inside another node.|Traversal|Q(selector).inside(".parent");
+        return this.nodes[0]?.closest(selector) === null || false;
+    }
+
     Q.prototype.addClass = function (classes) {
         // Adds one or more classes to each node.|Class Manipulation|Q(selector).addClass("class1 class2");
         const classList = classes.split(' ');
@@ -440,10 +445,12 @@ const Q = (() => {
     };
 
     Q.prototype.closest = function (selector) {
-        // Returns the closest ancestor of the first node that matches a specific selector.|Traversal|Q(selector).closest(".ancestor");
+        // Returns the closest parent node of the first node that matches a specific selector.|Traversal|Q(selector).closest(".parent");
         let el = this.nodes[0];
         while (el) {
-            if (el.matches(selector)) return new Q(el);
+            if (el.matches && el.matches(selector)) {
+                return new Q(el);
+            }
             el = el.parentElement;
         }
         return null;
@@ -482,14 +489,48 @@ const Q = (() => {
         });
     };
 
-    Q.prototype.show = function () {
-        // Shows each node.|Display|Q(selector).show();
-        return this.each(el => this.nodes[el].style.display = '');
+    Q.prototype.show = function (duration = 0, callback) {
+        return this.each(el => {
+            const element = this.nodes[el];
+            if (duration === 0) {
+                element.style.display = '';
+                if (callback) callback();
+            } else {
+                element.style.transition = `opacity ${duration}ms`;
+                element.style.opacity = 0;
+                element.style.display = '';
+                setTimeout(() => {
+                    element.style.opacity = 1;
+                    element.addEventListener('transitionend', function handler() {
+                        element.style.transition = '';
+                        element.removeEventListener('transitionend', handler);
+                        if (callback) callback();
+                    });
+                }, 0);
+            }
+        });
     };
-
-    Q.prototype.hide = function () {
-        // Hides each node.|Display|Q(selector).hide();
-        return this.each(el => this.nodes[el].style.display = 'none');
+    
+    Q.prototype.hide = function (duration = 0, callback) {
+        return this.each(el => {
+            const element = this.nodes[el];
+            if (duration === 0) {
+                element.style.display = 'none';
+                if (callback) callback();
+            } else {
+                element.style.transition = `opacity ${duration}ms`;
+                element.style.opacity = 1;
+                setTimeout(() => {
+                    element.style.opacity = 0;
+                    element.addEventListener('transitionend', function handler() {
+                        element.style.display = 'none';
+                        element.style.transition = '';
+                        element.removeEventListener('transitionend', handler);
+                        if (callback) callback();
+                    });
+                }, 0);
+            }
+        });
     };
 
     Q.prototype.fadeIn = function (duration = 400, callback) {

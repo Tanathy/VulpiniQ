@@ -165,6 +165,8 @@ position: fixed;
     border: 1px solid rgba(255,255,255,0.01); 
     border-radius: 5px;
     overflow: hidden;
+    display:flex;
+    flex-direction: column;
     }
 
 .q_window_titlebar {
@@ -172,6 +174,7 @@ user-select: none;
     display: flex;
     background-color: #222;
     width: 100%;
+    flex-shrink: 0;
 }
 
 .q_window_buttons {
@@ -212,6 +215,7 @@ box-sizing: border-box;
 .q_window_content {
 width: 100%;
 overflow-y: auto;
+flex: 1;
     }
 
 .q_slider_wrapper {
@@ -290,6 +294,56 @@ user-select: none;
     height: 100%;
     opacity: 0;
     }
+
+
+.datepicker_wrapper {
+user-select: none;
+width: 100%;
+height: 100%;
+display: flex;
+flex-direction: column;
+}
+
+.datepicker_weekdays {
+display: grid;
+grid-template-columns: repeat(7, 1fr);
+}
+
+.datepicker_weekdays div {
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.datepicker_days {
+display: grid;
+grid-template-columns: repeat(7, 1fr);
+flex:1;
+}
+
+.prev_month, .next_month {
+opacity: 0.5;
+}
+
+.datepicker_body {
+display: flex;
+flex-direction: column;
+    flex: 1;
+}
+
+.days {
+cursor: default;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.day_selected {
+background-color: #1473e6;
+color: #fff;
+}
+
+
     `;
 
     let createIcon = function (icon) {
@@ -341,13 +395,13 @@ user-select: none;
     };
 
     //replace all classes with the new random ones
-    classes = Object.keys(classes).reduce((acc, key) => {
-        acc[key] = randomletters(6);
+    // classes = Object.keys(classes).reduce((acc, key) => {
+    //     acc[key] = randomletters(6);
 
-        //find and replace all class names in the style
-        style = style.replace(new RegExp(`\\b${key}\\b`, 'gm'), acc[key]);
-        return acc;
-    }, {});
+    //     //find and replace all class names in the style
+    //     style = style.replace(new RegExp(`\\b${key}\\b`, 'gm'), acc[key]);
+    //     return acc;
+    // }, {});
 
     Q.style(style);
 
@@ -356,6 +410,106 @@ user-select: none;
     }
 
     return {
+
+        DatePicker: function (value = '', range = false) {
+            let wrapper = Q('<div class="datepicker_wrapper">');
+            let header = Q('<div class="datepicker_header">');
+            let body = Q('<div class="datepicker_body">');
+            let footer = Q('<div class="datepicker_footer">');
+            let weekdays = Q('<div class="datepicker_weekdays">');
+            let days_wrapper = Q('<div class="datepicker_days">');
+            let dateInput = Q('<input type="date">');
+            let button_ok = this.Button('OK');
+            footer.append(button_ok);
+            body.append(weekdays, days_wrapper);
+            wrapper.append(header, body, footer);
+
+            //check if parent is actually a window
+            if (wrapper.inside(classes.q_window)) {
+                let button_cancel = this.Button('Cancel');
+                footer.append(button_cancel);
+                button_cancel.click(function () {
+                wrapper.closest('.'+classes.q_window).hide(200);
+                });
+            }
+
+            
+
+            let daysLocale = (short = true, locale = window.navigator.language) => {
+                let days = [];
+                const baseDate = new Date(2021, 0, 4);
+                for (let i = 0; i < 7; i++) {
+                    let date = new Date(baseDate);
+                    date.setDate(date.getDate() + i);
+                    days.push(date.toLocaleDateString(locale, { weekday: short ? 'short' : 'long' }));
+                }
+                return days;
+            };
+
+            let date = value ? new Date(value) : new Date();
+            let day = date.getDate();
+            let month = date.getMonth() + 1;
+            let year = date.getFullYear();
+            let daysInMonth = new Date(year, month, 0).getDate();
+            let firstDay = new Date(year, month - 1, 1).getDay();
+            let lastDay = new Date(year, month - 1, daysInMonth).getDay();
+            let days = daysLocale(true, 'en-US');
+            let daysInPrevMonth = new Date(year, month - 1, 0).getDate();
+            let daysInNextMonth = new Date(year, month + 1, 0).getDate();
+
+            let dayNames = days.map(day => {
+                let dayElement = Q('<div>');
+                dayElement.text(day);
+                return dayElement;
+            });
+
+            weekdays.append(...dayNames);
+
+            let populateDays = function (month, year, day) {
+                days_wrapper.empty();
+            let prevMonthDays = [];
+            for (let i = daysInPrevMonth - firstDay + 1; i <= daysInPrevMonth; i++) {
+                let dayElement = Q('<div>');
+                dayElement.text(i);
+                dayElement.addClass('days prev_month');
+                prevMonthDays.push(dayElement);
+            }
+
+            let currentMonthDays = [];
+            for (let i = 1; i <= daysInMonth; i++) {
+                let dayElement = Q('<div>');
+                dayElement.text(i);
+                dayElement.addClass('days current_month');
+                if (i === day) {
+                    dayElement.addClass('day_selected');
+                }
+                currentMonthDays.push(dayElement);
+            }
+
+            let nextMonthDays = [];
+            for (let i = 1; i <= 7 - lastDay; i++) {
+                let dayElement = Q('<div>');
+                dayElement.text(i);
+                dayElement.addClass('days next_month');
+                nextMonthDays.push(dayElement);
+            }
+
+            //select the day in the current month
+            currentMonthDays.forEach(day => {
+                if (parseInt(day.text()) === day) {
+                    day.addClass('day_selected');
+                }
+            });
+
+            days_wrapper.append(...prevMonthDays, ...currentMonthDays, ...nextMonthDays);
+        };
+
+        populateDays(month, year, day);
+
+
+
+            return wrapper;
+        },
 
         ProgressBar: function (value = 0, min = 0, max = 100, autoKill = 0) {
             let timer = null;
@@ -535,7 +689,7 @@ user-select: none;
                     selected.html(target.html());
                     selectedValue = valueMap.get(target);
                     deselect();
-                    options.find(classes.q_form_dropdown_option).removeClass(classes.q_form_dropdown_active);
+                    options.find('.' + classes.q_form_dropdown_option).removeClass(classes.q_form_dropdown_active);
                     target.addClass(classes.q_form_dropdown_active);
                 }
             });
@@ -767,7 +921,7 @@ user-select: none;
                     });
                 }
 
-                if (content.is(':visible')) {
+                if (minimized) {
                     minimize.html(createIcon('window-minimize'));
                     window_wrapper.css({
                         height: dimensions.height + 'px'
