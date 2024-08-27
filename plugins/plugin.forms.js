@@ -1,349 +1,356 @@
 Q.Form = function (options = {}) {
     let style = `
            :root {
-	--svg_window-close: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 2.8176856,98.903421 -4.0360052e-7,96.085741 22.611458,73.473146 45.222917,50.860554 22.611458,28.247962 -4.0360052e-7,5.6353711 2.8176856,2.8176851 5.6353716,-9.1835591e-7 28.247963,22.611458 50.860555,45.222916 73.473147,22.611458 96.085743,-9.1835591e-7 98.903423,2.8176851 101.72111,5.6353711 79.109651,28.247962 56.498193,50.860554 79.109651,73.473146 101.72111,96.085741 98.903423,98.903421 96.085743,101.72111 73.473147,79.109651 50.860555,56.498192 28.247963,79.109651 5.6353716,101.72111 Z"/></svg>');
-	--svg_window-full: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 H 50.860555 84.417403 V 50.860554 84.417401 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z"/></svg>');
-	--svg_window-minimize: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 0.5252846,83.893071 V 79.698469 H 50.860555 101.19582 v 4.194602 4.19461 H 50.860555 0.5252846 Z"/></svg>');
-	--svg_window-windowed: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 h 8.389212 8.389212 V 8.9144961 0.52528408 H 67.638978 101.19582 V 34.082131 67.638977 h -8.389207 -8.38921 v 8.389212 8.389212 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z M 92.806613,34.082131 V 8.9144961 H 67.638978 42.471343 v 4.1946059 4.194606 h 20.973029 20.973031 v 20.973029 20.973029 h 4.1946 4.19461 z"/></svg>');
-}
+               --svg_window-close: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 2.8176856,98.903421 -4.0360052e-7,96.085741 22.611458,73.473146 45.222917,50.860554 22.611458,28.247962 -4.0360052e-7,5.6353711 2.8176856,2.8176851 5.6353716,-9.1835591e-7 28.247963,22.611458 50.860555,45.222916 73.473147,22.611458 96.085743,-9.1835591e-7 98.903423,2.8176851 101.72111,5.6353711 79.109651,28.247962 56.498193,50.860554 79.109651,73.473146 101.72111,96.085741 98.903423,98.903421 96.085743,101.72111 73.473147,79.109651 50.860555,56.498192 28.247963,79.109651 5.6353716,101.72111 Z"/></svg>');
+               --svg_window-full: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 H 50.860555 84.417403 V 50.860554 84.417401 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z"/></svg>');
+               --svg_window-minimize: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 0.5252846,83.893071 V 79.698469 H 50.860555 101.19582 v 4.194602 4.19461 H 50.860555 0.5252846 Z"/></svg>');
+               --svg_window-windowed: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 h 8.389212 8.389212 V 8.9144961 0.52528408 H 67.638978 101.19582 V 34.082131 67.638977 h -8.389207 -8.38921 v 8.389212 8.389212 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z M 92.806613,34.082131 V 8.9144961 H 67.638978 42.471343 v 4.1946059 4.194606 h 20.973029 20.973031 v 20.973029 20.973029 h 4.1946 4.19461 z"/></svg>');
+           }
 
-.svg_window-close {
-	-webkit-mask: var(--svg_window-close) no-repeat center;
-	mask: var(--svg_window-close) no-repeat center;
-	background-color: currentColor;
-	-webkit-mask-size: contain;
-	mask-size: contain;
-}
+           .svg_window-close {
+               -webkit-mask: var(--svg_window-close) no-repeat center;
+               mask: var(--svg_window-close) no-repeat center;
+               background-color: currentColor;
+               -webkit-mask-size: contain;
+               mask-size: contain;
+           }
 
-.svg_window-full {
-	-webkit-mask: var(--svg_window-full) no-repeat center;
-	mask: var(--svg_window-full) no-repeat center;
-	background-color: currentColor;
-	-webkit-mask-size: contain;
-	mask-size: contain;
-}
+           .svg_window-full {
+               -webkit-mask: var(--svg_window-full) no-repeat center;
+               mask: var(--svg_window-full) no-repeat center;
+               background-color: currentColor;
+               -webkit-mask-size: contain;
+               mask-size: contain;
+           }
 
-.svg_window-minimize {
-	-webkit-mask: var(--svg_window-minimize) no-repeat center;
-	mask: var(--svg_window-minimize) no-repeat center;
-	background-color: currentColor;
-	-webkit-mask-size: contain;
-	mask-size: contain;
-}
+           .svg_window-minimize {
+               -webkit-mask: var(--svg_window-minimize) no-repeat center;
+               mask: var(--svg_window-minimize) no-repeat center;
+               background-color: currentColor;
+               -webkit-mask-size: contain;
+               mask-size: contain;
+           }
 
-.svg_window-windowed {
-	-webkit-mask: var(--svg_window-windowed) no-repeat center;
-	mask: var(--svg_window-windowed) no-repeat center;
-	background-color: currentColor;
-	-webkit-mask-size: contain;
-	mask-size: contain;
-}
+           .svg_window-windowed {
+               -webkit-mask: var(--svg_window-windowed) no-repeat center;
+               mask: var(--svg_window-windowed) no-repeat center;
+               background-color: currentColor;
+               -webkit-mask-size: contain;
+               mask-size: contain;
+           }
 
-        .form_icon {
-            width: 100%;
-            height: 100%;
-            color: #fff; /* Default color */
-        }
-
-
-.q_form {
-    box-sizing: border-box;
-    font-family: inherit;
-    font-size: inherit;
-    color: inherit;
-    margin: 1px;
-}
-
-.q_form_disabled {
-    opacity: 0.5;
-}
-
-.q_form_checkbox,
-.q_form_radio {
-    display: flex;
-    width: fit-content;
-    align-items: center;
-}
-
-.q_form_checkbox .label:empty,
-.q_form_radio .label:empty {
-    display: none;
-}
-
-.q_form_checkbox .label,
-.q_form_radio .label {
-    padding-left: 5px;
-    user-select: none;
-}
-
-.q_form_cb {
-    position: relative;
-    width: 20px;
-    height: 20px;
-    background-color: #555555;
-}
-
-.q_form_cb input[type="checkbox"] {
-    opacity: 0;
-    top: 0;
-    left: 0;
-    padding: 0;
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    position: absolute;
-}
-
-.q_form_cb input[type="checkbox"]:checked+label:before {
-    content: "";
-    position: absolute;
-    display: block;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #1DA1F2;
-}
-
-.q_form_r {
-    position: relative;
-    width: 20px;
-    height: 20px;
-    background-color: #555555;
-    border-radius: 50%;
-    overflow: hidden;
-}
-
-.q_form_r input[type="radio"] {
-    opacity: 0;
-    top: 0;
-    left: 0;
-    padding: 0;
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    border-radius: 50%;
-}
-
-.q_form_r input[type="radio"]:checked+label:before {
-    content: "";
-    position: absolute;
-    display: block;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #1DA1F2;
-    border-radius: 50%;
-}
-
-.q_form_input {
-    width: calc(100% - 2px);
-    padding: 5px;
-    outline: none;
-    border: 0;
-}
-
-.q_form_input:focus,
-.q_form_textarea:focus {
-    outline: 1px solid #1DA1F2;
-}
-
-.q_form_textarea {
-    width: calc(100% - 2px);
-    padding: 5px;
-    outline: none;
-    border: 0;
-}
-
-.q_window {
-position: fixed;
-    background-color: #333;
-    z-index: 1000;
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255,255,255,0.01); 
-    border-radius: 5px;
-    overflow: hidden;
-    display:flex;
-    flex-direction: column;
-    }
-
-.q_window_titlebar {
-user-select: none;
-    display: flex;
-    background-color: #222;
-    width: 100%;
-    flex-shrink: 0;
-}
-
-.q_window_buttons {
-    display: flex;
-}
-
-.q_window_button {
-box-sizing: border-box;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    width: 30px;
-    height: 30px;
-    padding: 10px;
-    background-color: rgba(255,255,255,0.01);
-    margin-left: 1px;
-}
-
-.q_window_button:hover {
-    background-color: #424242;
-}
-
-.q_window_close:hover {
-    background-color: #e81123;
-}
-
-.q_window_titletext {
-    flex-grow: 1;
-    color: #fff;
-    align-content: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 0 5px
-}
-
-.q_window_content {
-width: 100%;
-overflow-y: auto;
-flex: 1;
-    }
-
-.q_slider_wrapper {
-position: relative;
-    height: 20px;
-    overflow: hidden;
-    background-color: #333;
-}
-
-.q_slider_pos {
-position: absolute;
-    top: 0;
-    left: 0;
-    width: 0;
-    height: 100%;
-    background-color: #1473e6;
-}
-
-.q_form_slider
-{
-    width: 100%;
-    opacity: 0;
-    height: 100%;
-    position: absolute;
-}
+           .form_icon {
+               width: 100%;
+               height: 100%;
+               color: #fff;
+               /* Default color */
+           }
 
 
-.q_form_dropdown
-{
-user-select: none;
-    position: relative;
-    background-color: #333;
-    }
+           .q_form {
+               box-sizing: border-box;
+               font-family: inherit;
+               font-size: inherit;
+               color: inherit;
+               margin: 1px;
+           }
 
-.q_form_dropdown_options
-{
-    position: absolute;
-    width: 100%;
-    background-color: #333;
-    z-index: 1;
-    }
+           .q_form_disabled {
+               opacity: 0.5;
+           }
 
-.q_form_dropdown_option, .q_form_dropdown_selected
-{
-    padding: 5px 0px;
-    }
+           .q_form_checkbox,
+           .q_form_radio {
+               display: flex;
+               width: fit-content;
+               align-items: center;
+           }
 
-    .q_form_button
-    {
-    user-select: none;
-        padding: 5px 10px;
-        cursor: pointer;
-    }
+           .q_form_checkbox .label:empty,
+           .q_form_radio .label:empty {
+               display: none;
+           }
 
-    .q_form_button:hover
-    {
-        background-color: #555;
-    }
+           .q_form_checkbox .label,
+           .q_form_radio .label {
+               padding-left: 5px;
+               user-select: none;
+           }
 
-    .q_form_button:active
-    {
-        background-color: #777;
-    }
+           .q_form_cb {
+               position: relative;
+               width: 20px;
+               height: 20px;
+               background-color: #555555;
+           }
 
-    .q_form_file
-    {
-    user-select: none;
-    position: relative;
-    overflow: hidden;
-    }
+           .q_form_cb input[type="checkbox"] {
+               opacity: 0;
+               top: 0;
+               left: 0;
+               padding: 0;
+               margin: 0;
+               width: 100%;
+               height: 100%;
+               position: absolute;
+           }
 
-    .q_form_file input[type="file"]
-    {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    }
+           .q_form_cb input[type="checkbox"]:checked+label:before {
+               content: "";
+               position: absolute;
+               display: block;
+               top: 0;
+               left: 0;
+               width: 100%;
+               height: 100%;
+               background-color: #1DA1F2;
+           }
+
+           .q_form_r {
+               position: relative;
+               width: 20px;
+               height: 20px;
+               background-color: #555555;
+               border-radius: 50%;
+               overflow: hidden;
+           }
+
+           .q_form_r input[type="radio"] {
+               opacity: 0;
+               top: 0;
+               left: 0;
+               padding: 0;
+               margin: 0;
+               width: 100%;
+               height: 100%;
+               position: absolute;
+               border-radius: 50%;
+           }
+
+           .q_form_r input[type="radio"]:checked+label:before {
+               content: "";
+               position: absolute;
+               display: block;
+               top: 0;
+               left: 0;
+               width: 100%;
+               height: 100%;
+               background-color: #1DA1F2;
+               border-radius: 50%;
+           }
+
+           .q_form_input {
+               width: calc(100% - 2px);
+               padding: 5px;
+               outline: none;
+               border: 0;
+           }
+
+           .q_form_input:focus,
+           .q_form_textarea:focus {
+               outline: 1px solid #1DA1F2;
+           }
+
+           .q_form_textarea {
+               width: calc(100% - 2px);
+               padding: 5px;
+               outline: none;
+               border: 0;
+           }
+
+           .q_window {
+               position: fixed;
+               background-color: #333;
+               z-index: 1000;
+               box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+               border: 1px solid rgba(255, 255, 255, 0.01);
+               border-radius: 5px;
+               overflow: hidden;
+               display: flex;
+               flex-direction: column;
+           }
+
+           .q_window_titlebar {
+               user-select: none;
+               display: flex;
+               background-color: #222;
+               width: 100%;
+               flex-shrink: 0;
+           }
+
+           .q_window_buttons {
+               display: flex;
+           }
+
+           .q_window_button {
+               box-sizing: border-box;
+               display: flex;
+               justify-content: center;
+               align-items: center;
+               cursor: pointer;
+               width: 30px;
+               height: 30px;
+               padding: 10px;
+               background-color: rgba(255, 255, 255, 0.01);
+               margin-left: 1px;
+           }
+
+           .q_window_button:hover {
+               background-color: #424242;
+           }
+
+           .q_window_close:hover {
+               background-color: #e81123;
+           }
+
+           .q_window_titletext {
+               flex-grow: 1;
+               color: #fff;
+               align-content: center;
+               white-space: nowrap;
+               overflow: hidden;
+               text-overflow: ellipsis;
+               padding: 0 5px
+           }
+
+           .q_window_content {
+               width: 100%;
+               overflow-y: auto;
+               flex: 1;
+           }
+
+           .q_slider_wrapper {
+               position: relative;
+               height: 20px;
+               overflow: hidden;
+               background-color: #333;
+           }
+
+           .q_slider_pos {
+               position: absolute;
+               top: 0;
+               left: 0;
+               width: 0;
+               height: 100%;
+               background-color: #1473e6;
+           }
+
+           .q_form_slider {
+               width: 100%;
+               opacity: 0;
+               height: 100%;
+               position: absolute;
+           }
 
 
-.datepicker_wrapper {
-user-select: none;
-width: 100%;
-height: 100%;
-display: flex;
-flex-direction: column;
-}
+           .q_form_dropdown {
+               user-select: none;
+               position: relative;
+               background-color: #333;
+           }
 
-.datepicker_weekdays {
-display: grid;
-grid-template-columns: repeat(7, 1fr);
-}
+           .q_form_dropdown_options {
+               position: absolute;
+               width: 100%;
+               background-color: #333;
+               z-index: 1;
+           }
 
-.datepicker_weekdays div {
-display: flex;
-align-items: center;
-justify-content: center;
-}
+           .q_form_dropdown_option,
+           .q_form_dropdown_selected {
+               padding: 5px 0px;
+           }
 
-.datepicker_days {
-display: grid;
-grid-template-columns: repeat(7, 1fr);
-flex:1;
-}
+           .q_form_button {
+               user-select: none;
+               padding: 5px 10px;
+               cursor: pointer;
+           }
 
-.prev_month, .next_month {
-opacity: 0.5;
-}
+           .q_form_button:hover {
+               background-color: #555;
+           }
 
-.datepicker_body {
-display: flex;
-flex-direction: column;
-    flex: 1;
-}
+           .q_form_button:active {
+               background-color: #777;
+           }
 
-.days {
-cursor: default;
-display: flex;
-align-items: center;
-justify-content: center;
-}
+           .q_form_file {
+               user-select: none;
+               position: relative;
+               overflow: hidden;
+           }
 
-.day_selected {
-background-color: #1473e6;
-color: #fff;
-}
+           .q_form_file input[type="file"] {
+               position: absolute;
+               width: 100%;
+               height: 100%;
+               opacity: 0;
+           }
 
+           .datepicker_wrapper {
+               user-select: none;
+               width: 100%;
+               height: 100%;
+               display: flex;
+               flex-direction: column;
+           }
 
+           .datepicker_header {
+               display: flex;
+               align-items: center;
+               color: #fff;
+               justify-content: center;
+           }
+
+           .datepicker_header div {
+               padding: 15px 5px;
+           }
+
+           .datepicker_weekdays {
+               display: grid;
+               grid-template-columns: repeat(7, 1fr);
+           }
+
+           .datepicker_weekdays div {
+               display: flex;
+               align-items: center;
+               justify-content: center;
+           }
+
+           .datepicker_days {
+               display: grid;
+               grid-template-columns: repeat(7, 1fr);
+               flex: 1;
+           }
+
+           .prev_month,
+           .next_month {
+               opacity: 0.5;
+           }
+
+           .datepicker_body {
+               display: flex;
+               flex-direction: column;
+               flex: 1;
+           }
+
+           .days {
+               cursor: default;
+               display: flex;
+               align-items: center;
+               justify-content: center;
+           }
+
+           .day_selected {
+               background-color: #1473e6;
+               color: #fff;
+           }
+
+           .datepicker_footer {
+               display: flex;
+               justify-content: flex-end;
+           }
     `;
 
     let createIcon = function (icon) {
@@ -411,39 +418,46 @@ color: #fff;
 
     return {
 
-        DatePicker: function (value = '', range = false) {
-            let wrapper = Q('<div class="datepicker_wrapper">');
-            let header = Q('<div class="datepicker_header">');
-            let body = Q('<div class="datepicker_body">');
-            let footer = Q('<div class="datepicker_footer">');
-            let weekdays = Q('<div class="datepicker_weekdays">');
-            let days_wrapper = Q('<div class="datepicker_days">');
-            let dateInput = Q('<input type="date">');
-            let button_ok = this.Button('OK');
-            footer.append(button_ok);
-            body.append(weekdays, days_wrapper);
-            wrapper.append(header, body, footer);
+        // Datepicker is work in progress yet
+        DatePicker: function (value = '', locale = window.navigator.language, range = false) {
 
-            //check if parent is actually a window
-            if (wrapper.inside(classes.q_window)) {
-                let button_cancel = this.Button('Cancel');
-                footer.append(button_cancel);
-                button_cancel.click(function () {
-                wrapper.closest('.'+classes.q_window).hide(200);
-                });
-            }
+            let getFirstDayOfWeek = () => {
+                // Create a date that is the first day of a week in the locale
+                let startDate = new Date();
+                let dayOfWeek = startDate.getDay();
+                startDate.setDate(startDate.getDate() - dayOfWeek);
 
-            
+                // Return the day of the week as the first day of the week in locale (0 = Sunday, 1 = Monday, etc.)
+                return startDate.toLocaleDateString(locale, { weekday: 'short' });
+            };
 
-            let daysLocale = (short = true, locale = window.navigator.language) => {
+            let daysLocale = (short = true) => {
                 let days = [];
-                const baseDate = new Date(2021, 0, 4);
+                let baseDate = new Date(2021, 0, 4); // A Monday (we will adjust later)
+                const options = { weekday: short ? 'short' : 'long' };
+
+                let firstDayOfWeek = getFirstDayOfWeek(); // Get the locale's first day of the week
+
+                // Shift the baseDate to the locale's first day of the week
+                while (baseDate.toLocaleDateString(locale, options) !== firstDayOfWeek) {
+                    baseDate.setDate(baseDate.getDate() - 1);
+                }
+
                 for (let i = 0; i < 7; i++) {
                     let date = new Date(baseDate);
                     date.setDate(date.getDate() + i);
-                    days.push(date.toLocaleDateString(locale, { weekday: short ? 'short' : 'long' }));
+                    days.push(date.toLocaleDateString(locale, options));
                 }
                 return days;
+            };
+
+            let monthsLocale = (short = true) => {
+                let months = [];
+                for (let i = 0; i < 12; i++) {
+                    let date = new Date(2021, i, 1);
+                    months.push(date.toLocaleDateString(locale, { month: short ? 'short' : 'long' }));
+                }
+                return months;
             };
 
             let date = value ? new Date(value) : new Date();
@@ -453,60 +467,139 @@ color: #fff;
             let daysInMonth = new Date(year, month, 0).getDate();
             let firstDay = new Date(year, month - 1, 1).getDay();
             let lastDay = new Date(year, month - 1, daysInMonth).getDay();
-            let days = daysLocale(true, 'en-US');
-            let daysInPrevMonth = new Date(year, month - 1, 0).getDate();
-            let daysInNextMonth = new Date(year, month + 1, 0).getDate();
 
-            let dayNames = days.map(day => {
+            // Get the localized days of the week starting from the locale's first day of the week
+            let days = daysLocale(true);
+            let dayNames = days.map((dayName, i) => {
                 let dayElement = Q('<div>');
-                dayElement.text(day);
+                dayElement.text(dayName);
                 return dayElement;
             });
 
-            weekdays.append(...dayNames);
+            let wrapper = Q('<div class="datepicker_wrapper">');
+            let header = Q('<div class="datepicker_header">');
+            let body = Q('<div class="datepicker_body">');
+            let footer = Q('<div class="datepicker_footer">');
+            let weekdays = Q('<div class="datepicker_weekdays">');
+            let days_wrapper = Q('<div class="datepicker_days">');
+            let dateInput = Q('<input type="date">');
+            let button_ok = this.Button('OK');
+            let button_today = this.Button('Today');
+            footer.append(button_today,button_ok);
+            body.append(weekdays, days_wrapper);
+            wrapper.append(header, body, footer);
+
+            // let container_day = Q('<div>');
+            // let container_weekday = Q('<div>');
+            let container_months = Q('<div>');
+            let container_years = Q('<div>');
+
+            header.append(container_months, container_years);
+
+            if (wrapper.inside(classes.q_window)) {
+                let button_cancel = this.Button('Cancel');
+                footer.append(button_cancel);
+                button_cancel.click(function () {
+                    wrapper.closest('.' + classes.q_window).hide(200);
+                });
+            }
+
+            container_months.on('click',function () {
+
+                
+
+            });
+
+            button_today.click(function () {
+                date = new Date();
+                day = date.getDate();
+                month = date.getMonth() + 1;
+                year = date.getFullYear();
+                daysInMonth = new Date(year, month, 0).getDate();
+                firstDay = new Date(year, month - 1, 1).getDay();
+                lastDay = new Date(year, month - 1, daysInMonth).getDay();
+                populateDays(month, year, day);
+                populateHeader(month, year, day);
+            });
+
+            const populateHeader = function (month, year, day) {
+                // let fullDay = date.toLocaleDateString(locale, { weekday: 'long' });
+                // let days = daysLocale(true);
+                let months = monthsLocale(false);
+
+                // container_day.text(fullDay); // Display full day name in the header
+                // container_weekday.text(day);
+                container_months.text(months[month - 1]);
+                container_years.text(year);
+            }
 
             let populateDays = function (month, year, day) {
                 days_wrapper.empty();
-            let prevMonthDays = [];
-            for (let i = daysInPrevMonth - firstDay + 1; i <= daysInPrevMonth; i++) {
-                let dayElement = Q('<div>');
-                dayElement.text(i);
-                dayElement.addClass('days prev_month');
-                prevMonthDays.push(dayElement);
-            }
 
-            let currentMonthDays = [];
-            for (let i = 1; i <= daysInMonth; i++) {
-                let dayElement = Q('<div>');
-                dayElement.text(i);
-                dayElement.addClass('days current_month');
-                if (i === day) {
-                    dayElement.addClass('day_selected');
+                // Calculate the number of days in the previous month
+                let daysInPrevMonth = new Date(year, month - 1, 0).getDate();
+                let prevMonthDays = [];
+                for (let i = daysInPrevMonth - firstDay + 1; i <= daysInPrevMonth; i++) {
+                    let dayElement = Q('<div>');
+                    dayElement.text(i);
+                    dayElement.addClass('days prev_month');
+                    prevMonthDays.push(dayElement);
                 }
-                currentMonthDays.push(dayElement);
-            }
 
-            let nextMonthDays = [];
-            for (let i = 1; i <= 7 - lastDay; i++) {
-                let dayElement = Q('<div>');
-                dayElement.text(i);
-                dayElement.addClass('days next_month');
-                nextMonthDays.push(dayElement);
-            }
+                let currentMonthDays = [];
+                for (let i = 1; i <= daysInMonth; i++) {
+                    let dayElement = Q('<div>');
+                    dayElement.text(i);
+                    dayElement.addClass('days current_month');
+                    if (i === day) {
+                        dayElement.addClass('day_selected');
+                    }
+                    currentMonthDays.push(dayElement);
+                }
 
-            //select the day in the current month
-            currentMonthDays.forEach(day => {
-                if (parseInt(day.text()) === day) {
-                    day.addClass('day_selected');
+                let nextMonthDays = [];
+                for (let i = 1; i <= 7 - lastDay; i++) {
+                    let dayElement = Q('<div>');
+                    dayElement.text(i);
+                    dayElement.addClass('days next_month');
+                    nextMonthDays.push(dayElement);
+                }
+
+                days_wrapper.append(...prevMonthDays, ...currentMonthDays, ...nextMonthDays);
+            };
+
+            weekdays.append(...dayNames);
+
+            populateDays(month, year, day);
+
+            populateHeader(month, year, day);
+
+            days_wrapper.on('click', function (e) {
+                let target = Q(e.target);
+                if (target.hasClass('days')) {
+                    let day = parseInt(target.text());
+
+                    if (target.hasClass('prev_month')) {
+                        if (month === 1) {
+                            month = 12;
+                            year--;
+                        } else {
+                            month--;
+                        }
+                    } else if (target.hasClass('next_month')) {
+                        if (month === 12) {
+                            month = 1;
+                            year++;
+                        } else {
+                            month++;
+                        }
+                    }
+
+                    date = new Date(year, month - 1, day);
+                    populateDays(month, year, day);
+                    populateHeader(month, year, day);
                 }
             });
-
-            days_wrapper.append(...prevMonthDays, ...currentMonthDays, ...nextMonthDays);
-        };
-
-        populateDays(month, year, day);
-
-
 
             return wrapper;
         },
@@ -821,6 +914,8 @@ color: #fff;
             };
             return slider_wrapper;
         },
+
+        // Window: Need solution for resize
         Window: function (title = '', data, width = 300, height = 300, x = 100, y = 10) {
 
             let dimensions = { width, height, x, y };

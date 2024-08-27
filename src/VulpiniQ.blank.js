@@ -54,7 +54,7 @@ const Q = (() => {
             }
         }
     }
-
+    //METHODS//
     //EXTENSIONS//
 
     return Q;

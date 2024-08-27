@@ -49,612 +49,618 @@ const Q = (() => {
                     });
                 }
             } else {
-                // let elem;
-                // switch (selector) {
-                //     case 'body':
-                //         elem = [document.body];
-                //     case 'head':
-                //         elem = [document.head];
-                //     case 'document':
-                //         elem = [document];
-                //     default:
-                //         elem = document.querySelectorAll(selector);
-                // }
                 let elem = document.querySelectorAll(selector);
                 this.nodes = Array.from(elem);
             }
         }
     }
-
-    Q.ID = function (length = 8) {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
-    };
-
-    Q.UUID = function () {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-            const r = Math.random() * 16 | 0;
-            const v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-    };
-
-    Q.prototype.each = function (callback) {
-        // Iterates over all nodes in the Q object and executes a callback on each node.|Iteration|Q(selector).each((index, element) => console.log(index, element));
-        this.nodes.forEach((el, index) => callback.call(el, index, el));
-        return this;
-    };
-
-    Q.prototype.text = function (content) {
-        // Gets or sets the text content of the nodes.|Content Manipulation|Q(selector).text(string);
-        if (content === undefined) {
-            return this.nodes[0]?.textContent || null;
-        }
-        return this.each(el => this.nodes[el].textContent = content);
-    };
-
-    Q.prototype.html = function (...content) {
-        // Gets or sets the innerHTML of the nodes.|Content Manipulation|Q(selector).html(string);
-
-        if (content.length === 0) {
-            return this.nodes[0]?.innerHTML || null;
-        }
-        return this.each(el => {
-            el = this.nodes[el];
-            el.innerHTML = '';
-            content.forEach(child => {
-                if (typeof child === 'string') {
-                    el.insertAdjacentHTML('beforeend', child);
-                } else if (child instanceof Q) {
-                    child.nodes.forEach(node => el.appendChild(node));
-                } else if (child instanceof HTMLElement) {
-                    el.appendChild(child);
-                } else if (Array.isArray(child) || child instanceof NodeList) {
-                    Array.from(child).forEach(subchild => el.appendChild(subchild));
-                }
-            });
-        });
-    };
-
-    Q.prototype.hasClass = function (className) {
-        // Checks if the first node has a specific class.|Class Manipulation|Q(selector).hasClass(className);
-        return this.nodes[0]?.classList.contains(className) || false;
-    };
-
     Q.prototype.addClass = function (classes) {
-        // Adds one or more classes to each node.|Class Manipulation|Q(selector).addClass("class1 class2");
-        const classList = classes.split(' ');
-        return this.each(el => this.nodes[el].classList.add(...classList));
-    };
-
-    Q.prototype.removeClass = function (classes) {
-        // Removes one or more classes from each node.|Class Manipulation|Q(selector).removeClass("class1 class2");
-        const classList = classes.split(' ');
-        return this.each(el => this.nodes[el].classList.remove(...classList));
-    };
-
-    Q.prototype.toggleClass = function (className) {
-        // Toggles a class on each node.|Class Manipulation|Q(selector).toggleClass(className);
-        return this.each(el => this.nodes[el].classList.toggle(className));
-    };
-
-    Q.prototype.val = function (value) {
-        // Gets or sets the value of form elements in the nodes.|Form Manipulation|Q(selector).val(value);
-        if (value === undefined) {
-            return this.nodes[0]?.value || null;
+    // Adds one or more classes to each node.|Class Manipulation|Q(selector).addClass("class1 class2");
+    const classList = classes.split(' ');
+    return this.each(el => this.nodes[el].classList.add(...classList));
+};
+Q.prototype.animate = function (duration, properties, callback) {
+    // Animates each node with specific CSS properties.|Display|Q(selector).animate(duration, { opacity: 0, left: "50px" }, callback);
+    return this.each(el => {
+        const element = this.nodes[el];
+        const transitionProperties = Object.keys(properties).map(prop => `${prop} ${duration}ms`).join(', ');
+        element.style.transition = transitionProperties;
+        for (const prop in properties) {
+            element.style[prop] = properties[prop];
         }
-        return this.each(el => this.nodes[el].value = value);
-    };
-
-    Q.prototype.data = function (key, value) {
-        // Gets or sets data-* attributes on the nodes.|Data Manipulation|Q(selector).data(key, value);
-        if (value === undefined) {
-            return this.nodes[0]?.dataset[key] || null;
+        if (typeof callback === 'function') {
+            setTimeout(() => {
+                if (callback) callback.call(element);
+            }, duration);
         }
-        return this.each(el => this.nodes[el].dataset[key] = value);
-    };
+    }), this;
+};
+Q.prototype.append = function (...nodes) {
+    // Appends child nodes or HTML to each node.|DOM Manipulation|Q(selector).append("<div>Appended</div>");
+    return this.each(el => {
+        const parent = this.nodes[el];
 
-    Q.prototype.removeData = function (key) {
-        // Removes a data-* attribute from each node.|Data Manipulation|Q(selector).removeData(key);
-        return this.each(el => delete this.nodes[el].dataset[key]);
-    };
+        nodes.forEach(child => {
 
-    Q.prototype.css = function (property, value) {
-        // Gets or sets CSS styles on the nodes. Can handle multiple styles if provided as an object.|Style Manipulation|Q(selector).css(property, value);
-        if (typeof property === 'object') {
-            return this.each(el => {
-                for (let key in property) {
-                    if (property.hasOwnProperty(key)) {
-                        this.nodes[el].style[key] = property[key];
-                    }
-                }
-            });
-        } else {
-            if (value === undefined) {
-                return getComputedStyle(this.nodes[0])[property];
+            if (typeof child === 'string') {
+                parent.insertAdjacentHTML('beforeend', child);
+            } else if (child instanceof HTMLElement || child instanceof Q) {
+                parent.appendChild(child.nodes[0]);
+            } else if (Array.isArray(child) || child instanceof NodeList) {
+                Array.from(child).forEach(subchild => parent.appendChild(subchild));
             }
-            return this.each(el => this.nodes[el].style[property] = value);
-        }
-    };
-
-    Q.prototype.attr = function (attribute, value) {
-        // Gets or sets attributes on the nodes. Can handle multiple attributes if provided as an object.|Attribute Manipulation|Q(selector).attr(attribute, value);
-        if (typeof attribute === 'object') {
-            return this.each(el => {
-                for (let key in attribute) {
-                    if (attribute.hasOwnProperty(key)) {
-                        this.nodes[el].setAttribute(key, attribute[key]);
-                    }
-                }
-            });
-        } else {
-            if (value === undefined) {
-                return this.nodes[0]?.getAttribute(attribute) || null;
-            }
-            return this.each(el => this.nodes[el].setAttribute(attribute, value));
-        }
-    };
-
-    Q.prototype.prop = function (property, value) {
-        // Gets or sets a property on the nodes.|Property Manipulation|Q(selector).prop(property, value);
-        if (value === undefined) {
-            return this.nodes[0]?.[property] || null;
-        }
-        return this.each(function (index, el) {
-            el[property] = value;
         });
-    };
-
-    Q.prototype.removeProp = function (property) {
-        // Removes a property from each node.|Property Manipulation|Q(selector).removeProp(property);
-        return this.each(el => delete this.nodes[el][property]);
+    });
+};
+Q.prototype.attr = function (attribute, value) {
+    // Gets or sets attributes on the nodes. Can handle multiple attributes if provided as an object.|Attribute Manipulation|Q(selector).attr(attribute, value);
+    if (typeof attribute === 'object') {
+        return this.each(el => {
+            for (let key in attribute) {
+                if (attribute.hasOwnProperty(key)) {
+                    this.nodes[el].setAttribute(key, attribute[key]);
+                }
+            }
+        });
+    } else {
+        if (value === undefined) {
+            return this.nodes[0]?.getAttribute(attribute) || null;
+        }
+        return this.each(el => this.nodes[el].setAttribute(attribute, value));
+    }
+};
+Q.prototype.bind = function (event, handler) {
+    // Adds an event listener to each node with the ability to use event delegation.|Event Handling|Q(selector).bind("click", () => console.log("Clicked"));
+    if (!this._eventDelegation) {
+        this._eventDelegation = {};
     }
 
-    Q.prototype.trigger = function (event) {
-        // Triggers a specific event on each node.|Event Handling|Q(selector).trigger("click");
-        return this.each(function (index, el) {
-            el.dispatchEvent(new Event(event));
-        });
-    };
-
-    Q.prototype.removeAttr = function (attribute) {
-        // Removes an attribute from each node.|Attribute Manipulation|Q(selector).removeAttr(attribute);
-        return this.each(el => this.nodes[el].removeAttribute(attribute));
-    };
-
-    Q.prototype.append = function (...nodes) {
-        // Appends child nodes or HTML to each node.|DOM Manipulation|Q(selector).append("<div>Appended</div>");
-        return this.each(el => {
-            const parent = this.nodes[el];
-
-            nodes.forEach(child => {
-
-                if (typeof child === 'string') {
-                    parent.insertAdjacentHTML('beforeend', child);
-                } else if (child instanceof HTMLElement || child instanceof Q) {
-                    parent.appendChild(child.nodes[0]);
-                } else if (Array.isArray(child) || child instanceof NodeList) {
-                    Array.from(child).forEach(subchild => parent.appendChild(subchild));
+    if (!this._eventDelegation[event]) {
+        document.addEventListener(event, (e) => {
+            this.each(el => {
+                if (this.nodes[el].contains(e.target)) {
+                    handler.call(e.target, e);
                 }
             });
         });
-    };
-
-    Q.prototype.prepend = function (...nodes) {
-        // Prepends child nodes or HTML to each node.|DOM Manipulation|Q(selector).prepend("<div>Prepended</div>");
+        this._eventDelegation[event] = true;
+    }
+    return this;
+};
+Q.prototype.blur = function () {
+    // Blurs the first node.|Form Manipulation|Q(selector).blur();
+    return this.each(el => this.nodes[el].blur());
+};
+Q.prototype.children = function () {
+    // Returns the children of the first node.|Traversal|Q(selector).children();
+    return new Q(this.nodes[0].children);
+};
+Q.prototype.click = function () {
+    // Triggers a click event on each node.|Event Handling|Q(selector).click();
+    return this.each(el => this.nodes[el].click());
+};
+Q.prototype.clone = function () {
+    // Clones the first node.|DOM Manipulation|Q(selector).clone();
+    return new Q(this.nodes[0].cloneNode(true));
+};
+Q.prototype.closest = function (selector) {
+    // Returns the closest parent node of the first node that matches a specific selector.|Traversal|Q(selector).closest(".parent");
+    let el = this.nodes[0];
+    while (el) {
+        if (el.matches && el.matches(selector)) {
+            return new Q(el);
+        }
+        el = el.parentElement;
+    }
+    return null;
+};
+Q.prototype.css = function (property, value) {
+    // Gets or sets CSS styles on the nodes. Can handle multiple styles if provided as an object.|Style Manipulation|Q(selector).css(property, value);
+    if (typeof property === 'object') {
         return this.each(el => {
-            const parent = this.nodes[el];
-
-            nodes.forEach(child => {
-                if (typeof child === 'string') {
-                    parent.insertAdjacentHTML('afterbegin', child);
-                } else if (child instanceof HTMLElement || child instanceof Q) {
-                    parent.insertBefore(child.nodes[0], parent.firstChild);
-                } else if (Array.isArray(child) || child instanceof NodeList) {
-                    Array.from(child).forEach(subchild => parent.insertBefore(subchild, parent.firstChild));
+            for (let key in property) {
+                if (property.hasOwnProperty(key)) {
+                    this.nodes[el].style[key] = property[key];
                 }
-            });
-        });
-    };
-
-    Q.prototype.wrap = function (wrapper) {
-        // Wraps each node with the specified wrapper element.|DOM Manipulation|Q(selector).wrap("<div class="wrapper"></div>");
-        return this.each(el => {
-            const parent = this.nodes[el].parentNode;
-            const newParent = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;
-            parent.insertBefore(newParent, this.nodes[el]);
-            newParent.appendChild(this.nodes[el]);
-        });
-    };
-
-    Q.prototype.wrapAll = function (wrapper) {
-        // Wraps all nodes together in a single wrapper element.|DOM Manipulation|Q(selector).wrapAll("<div class="wrapper"></div>");
-        return this.each(el => {
-            const parent = this.nodes[el].parentNode;
-            const newParent = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;
-            parent.insertBefore(newParent, this.nodes[0]);
-            this.nodes.forEach(child => newParent.appendChild(child));
-        });
-    };
-
-    Q.prototype.unwrap = function () {
-        // Removes the parent wrapper of each node.|DOM Manipulation|Q(selector).unwrap();
-        return this.each(el => {
-            const parent = this.nodes[el].parentNode;
-            if (parent !== document.body) {
-                parent.replaceWith(...this.nodes);
             }
         });
-    };
-
-    Q.prototype.remove = function () {
-        // Removes each node from the DOM.|DOM Manipulation|Q(selector).remove();
-        return this.each(el => this.nodes[el].remove());
-    };
-
-    Q.prototype.scrollWidth = function () {
-        // Returns the scroll width of the first node.|Dimensions|Q(selector).scrollWidth();
-        return this.nodes[0].scrollWidth;
-    };
-
-    Q.prototype.scrollHeight = function () {
-        // Returns the scroll height of the first node.|Dimensions|Q(selector).scrollHeight();
-        return this.nodes[0].scrollHeight;
-    };
-
-    Q.prototype.scrollTop = function (value, increment = false) {
-        // Gets or sets the vertical scroll position of the first node, with an option to increment.|Dimensions|Q(selector).scrollTop(value, increment);
+    } else {
         if (value === undefined) {
-            return this.nodes[0].scrollTop;
+            return getComputedStyle(this.nodes[0])[property];
         }
-        return this.each(el => {
-            const maxScrollTop = this.nodes[el].scrollHeight - this.nodes[el].clientHeight;
-            if (increment) {
-                this.nodes[el].scrollTop = Math.min(this.nodes[el].scrollTop + value, maxScrollTop);
-            } else {
-                this.nodes[el].scrollTop = Math.min(value, maxScrollTop);
-            }
-        });
+        return this.each(el => this.nodes[el].style[property] = value);
+    }
+};
+Q.prototype.data = function (key, value) {
+    // Gets or sets data-* attributes on the nodes.|Data Manipulation|Q(selector).data(key, value);
+    if (value === undefined) {
+        return this.nodes[0]?.dataset[key] || null;
+    }
+    return this.each(el => this.nodes[el].dataset[key] = value);
+};
+Q.Done = (function () {
+    const callbacks = [];
+    window.addEventListener('load', () => {
+        callbacks.forEach(callback => callback());
+    });
+    return function (callback) {
+        callbacks.push(callback);
     };
-
-    Q.prototype.scrollLeft = function (value, increment = false) {
-        // Gets or sets the horizontal scroll position of the first node, with an option to increment.|Scroll Manipulation|Q(selector).scrollLeft(value, increment);
-        if (value === undefined) {
-            return this.nodes[0].scrollLeft;
+})();
+Q.prototype.each = function (callback) {
+    // Iterates over all nodes in the Q object and executes a callback on each node.|Iteration|Q(selector).each((index, element) => console.log(index, element));
+    this.nodes.forEach((el, index) => callback.call(el, index, el));
+    return this;
+};
+Q.prototype.empty = function () {
+    // Empties the innerHTML of each node.|Content Manipulation|Q(selector).empty();
+    return this.each(el => this.nodes[el].innerHTML = '');
+};
+Q.prototype.eq = function (index) {
+    // Returns a specific node by index.|Traversal|Q(selector).eq(1);
+    return new Q(this.nodes[index]);
+};
+Q.prototype.fadeIn = function (duration = 400, callback) {
+    // Fades in each node.|Display|Q(selector).fadeIn(duration, callback);
+    return this.each(el => {
+        this.nodes[el].style.display = '';
+        this.nodes[el].style.transition = `opacity ${duration}ms`;
+        this.nodes[el].offsetHeight;
+        this.nodes[el].style.opacity = 1;
+        setTimeout(() => {
+            this.nodes[el].style.transition = '';
+            if (callback) callback();
+        }, duration);
+    });
+};
+Q.prototype.fadeOut = function (duration = 400, callback) {
+    // Fades out each node.|Display|Q(selector).fadeOut(duration, callback);
+    return this.each(el => {
+        this.nodes[el].style.transition = `opacity ${duration}ms`;
+        this.nodes[el].style.opacity = 0;
+        setTimeout(() => {
+            this.nodes[el].style.transition = '';
+            this.nodes[el].style.display = 'none';
+            if (callback) callback();
+        }, duration);
+    });
+};
+Q.prototype.fadeTo = function (opacity, duration = 400, callback) {
+    // Fades each node to a specific opacity.|Display|Q(selector).fadeTo(opacity, duration, callback);
+    return this.each(el => {
+        this.nodes[el].style.transition = `opacity ${duration}ms`;
+        this.nodes[el].offsetHeight;
+        this.nodes[el].style.opacity = opacity;
+        setTimeout(() => {
+            this.nodes[el].style.transition = '';
+            if (callback) callback();
+        }, duration);
+    });
+};
+Q.prototype.fadeToggle = function (duration = 400, callback) {
+    // Toggles the fade state of each node.|Display|Q(selector).fadeToggle(duration, callback);
+    return this.each(el => {
+        if (window.getComputedStyle(this.nodes[el]).opacity === '0') {
+            this.fadeIn(duration, callback);
+        } else {
+            this.fadeOut(duration, callback);
         }
-        return this.each(el => {
-            const maxScrollLeft = this.nodes[el].scrollWidth - this.nodes[el].clientWidth;
-            if (increment) {
-                this.nodes[el].scrollLeft = Math.min(this.nodes[el].scrollLeft + value, maxScrollLeft);
-            } else {
-                this.nodes[el].scrollLeft = Math.min(value, maxScrollLeft);
-            }
-        });
-    };
-
-    Q.prototype.width = function (value) {
-        // Gets or sets the width of the first node.|Dimensions|Q(selector).width(value);
-        if (value === undefined) {
-            return this.nodes[0].offsetWidth;
-        }
-        return this.each(el => this.nodes[el].style.width = value);
-    };
-
-    Q.prototype.height = function (value) {
-        // Gets or sets the height of the first node.|Dimensions|Q(selector).height(value);
-        if (value === undefined) {
-            return this.nodes[0].offsetHeight;
-        }
-        return this.each(el => this.nodes[el].style.height = value);
-    };
-
-    Q.prototype.offset = function () {
-        // Returns the top and left offset of the first node relative to the document.|Dimensions|Q(selector).offset();
-        const rect = this.nodes[0].getBoundingClientRect();
-        return {
-            top: rect.top + window.scrollY,
-            left: rect.left + window.scrollX
-        };
-    };
-
-    Q.prototype.isExists = function () {
-        // Checks if the first node exists in the DOM.|Utilities|Q(selector).isExists();
-        return document.body.contains(this.nodes[0]);
-    };
-
-    Q.prototype.position = function () {
-        // Returns the top and left position of the first node relative to its offset parent.|Dimension/Position|Q(selector).position();
-        return {
-            top: this.nodes[0].offsetTop,
-            left: this.nodes[0].offsetLeft
-        };
-    };
-
-    Q.prototype.size = function () {
-        // Returns the width and height of the first node.|Dimensions|Q(selector).size();
-        return {
-            width: this.nodes[0].offsetWidth,
-            height: this.nodes[0].offsetHeight
-        };
-    };
-
-    Q.prototype.toggle = function () {
-        // Toggles the display of each node.|Utilities|Q(selector).toggle();
-        return this.each(el => this.nodes[el].style.display = this.nodes[el].style.display === 'none' ? '' : 'none');
-    };
-
-    Q.prototype.is = function (selector) {
-        // Checks if the first node matches a specific selector.|Utilities|Q(selector).is(":visible");
-        if (typeof selector === 'function') {
-            return selector.call(this.nodes[0], 0, this.nodes[0]);
-        }
-
-        if (typeof selector === 'string') {
-            if (selector === ':visible') {
-                return this.nodes[0].offsetWidth > 0 && this.nodes[0].offsetHeight > 0;
-            } else if (selector === ':hidden') {
-                return this.nodes[0].offsetWidth === 0 || this.nodes[0].offsetHeight === 0;
-            } else if (selector === ':hover') {
-                return this.nodes[0] === document.querySelector(':hover');
-            } else if (selector === ':focus') {
-                return this.nodes[0] === document.activeElement;
-            } else if (selector === ':blur') {
-                return this.nodes[0] !== document.activeElement;
-            } else if (selector === ':checked') {
-                return this.nodes[0].checked;
-            } else if (selector === ':selected') {
-                return this.nodes[0].selected;
-            } else if (selector === ':disabled') {
-                return this.nodes[0].disabled;
-            } else if (selector === ':enabled') {
-                return !this.nodes[0].disabled;
-            } else {
-                return this.nodes[0].matches(selector);
-            }
-        }
-
-        if (selector instanceof HTMLElement || selector instanceof Node) {
-            return this.nodes[0] === selector;
-        }
-
-        if (selector instanceof Q) {
-            return this.nodes[0] === selector.nodes[0];
-        }
-
-        return false;
-    };
-
-    Q.prototype.empty = function () {
-        // Empties the innerHTML of each node.|Content Manipulation|Q(selector).empty();
-        return this.each(el => this.nodes[el].innerHTML = '');
-    };
-
-    Q.prototype.clone = function () {
-        // Clones the first node.|DOM Manipulation|Q(selector).clone();
-        return new Q(this.nodes[0].cloneNode(true));
-    };
-
-    Q.prototype.parent = function () {
-        // Returns the parent node of the first node.|Traversal|Q(selector).parent();
-        return new Q(this.nodes[0].parentNode);
-    };
-
-    Q.prototype.children = function () {
-        // Returns the children of the first node.|Traversal|Q(selector).children();
-        return new Q(this.nodes[0].children);
-    };
-
-    Q.prototype.find = function (selector) {
-        // Finds child nodes of the first node that match a specific selector.|Traversal|Q(selector).find(".child");
-        const foundNodes = this.nodes[0].querySelectorAll(selector);
-        return foundNodes.length ? Q(foundNodes) : null;
-    };
-
-    Q.prototype.closest = function (selector) {
-        // Returns the closest ancestor of the first node that matches a specific selector.|Traversal|Q(selector).closest(".ancestor");
-        let el = this.nodes[0];
-        while (el) {
-            if (el.matches(selector)) return new Q(el);
-            el = el.parentElement;
-        }
-        return null;
-    };
-
-    Q.prototype.first = function () {
-        // Returns the first node.|Traversal|Q(selector).first();
-        return new Q(this.nodes[0]);
-    };
-
-    Q.prototype.last = function () {
-        // Returns the last node.|Traversal|Q(selector).last();
-        return new Q(this.nodes[this.nodes.length - 1]);
-    };
-
-    Q.prototype.eq = function (index) {
-        // Returns a specific node by index.|Traversal|Q(selector).eq(1);
-        return new Q(this.nodes[index]);
-    };
-
-    Q.prototype.index = function (index) {
-        // Returns the index of the first node, or the index of a specific node.|Traversal/DOM Manipulation|Q(selector).index(index);
-        if (index === undefined) {
-            return Array.from(this.nodes[0].parentNode.children).indexOf(this.nodes[0]);
-        }
-        return this.each(el => {
-            const parent = this.nodes[el].parentNode;
-            const siblings = Array.from(parent.children);
-            const position = siblings.indexOf(el);
-            const target = siblings.splice(index, 1)[0];
-            if (position < index) {
-                parent.insertBefore(target, el);
-            } else {
-                parent.insertBefore(target, this.nodes[el].nextSibling);
-            }
-        });
-    };
-
-    Q.prototype.show = function () {
-        // Shows each node.|Display|Q(selector).show();
-        return this.each(el => this.nodes[el].style.display = '');
-    };
-
-    Q.prototype.hide = function () {
-        // Hides each node.|Display|Q(selector).hide();
-        return this.each(el => this.nodes[el].style.display = 'none');
-    };
-
-    Q.prototype.fadeIn = function (duration = 400, callback) {
-        // Fades in each node.|Display|Q(selector).fadeIn(duration, callback);
-        return this.each(el => {
-            this.nodes[el].style.display = '';
-            this.nodes[el].style.transition = `opacity ${duration}ms`;
-            this.nodes[el].offsetHeight;
-            this.nodes[el].style.opacity = 1;
+    });
+};
+Q.prototype.find = function (selector) {
+    // Finds child nodes of the first node that match a specific selector.|Traversal|Q(selector).find(".child");
+    const foundNodes = this.nodes[0].querySelectorAll(selector);
+    return foundNodes.length ? Q(foundNodes) : null;
+};
+Q.prototype.first = function () {
+    // Returns the first node.|Traversal|Q(selector).first();
+    return new Q(this.nodes[0]);
+};
+Q.prototype.focus = function () {
+    // Focuses on the first node.|Form Manipulation|Q(selector).focus();
+    return this.each(el => this.nodes[el].focus());
+};
+Q.prototype.hasClass = function (className) {
+    // Checks if the first node has a specific class.|Class Manipulation|Q(selector).hasClass(className);
+    return this.nodes[0]?.classList.contains(className) || false;
+};
+Q.prototype.height = function (value) {
+    // Gets or sets the height of the first node.|Dimensions|Q(selector).height(value);
+    if (value === undefined) {
+        return this.nodes[0].offsetHeight;
+    }
+    return this.each(el => this.nodes[el].style.height = value);
+};
+Q.prototype.hide = function (duration = 0, callback) {
+    // Hides each node.|Display|Q(selector).hide(duration, callback);
+    return this.each(el => {
+        const element = this.nodes[el];
+        if (duration === 0) {
+            element.style.display = 'none';
+            if (callback) callback();
+        } else {
+            element.style.transition = `opacity ${duration}ms`;
+            element.style.opacity = 1;
             setTimeout(() => {
-                this.nodes[el].style.transition = '';
-                if (callback) callback();
-            }, duration);
-        });
-    };
-
-    Q.prototype.zIndex = function (value) {
-        // Gets or sets the z-index of the first node.|Display|Q(selector).zIndex(value);
-        if (value === undefined) {
-            let zIndex = this.nodes[0].style.zIndex;
-            if (!zIndex) {
-                zIndex = window.getComputedStyle(this.nodes[0]).zIndex;
-            }
-            return zIndex;
+                element.style.opacity = 0;
+                element.addEventListener('transitionend', function handler() {
+                    element.style.display = 'none';
+                    element.style.transition = '';
+                    element.removeEventListener('transitionend', handler);
+                    if (callback) callback();
+                });
+            }, 0);
         }
-        return this.each(el => this.nodes[el].style.zIndex = value);
+    });
+};
+Q.prototype.html = function (...content) {
+    // Gets or sets the innerHTML of the nodes.|Content Manipulation|Q(selector).html(string);
+
+    if (content.length === 0) {
+        return this.nodes[0]?.innerHTML || null;
+    }
+    return this.each(el => {
+        el = this.nodes[el];
+        el.innerHTML = '';
+        content.forEach(child => {
+            if (typeof child === 'string') {
+                el.insertAdjacentHTML('beforeend', child);
+            } else if (child instanceof Q) {
+                child.nodes.forEach(node => el.appendChild(node));
+            } else if (child instanceof HTMLElement) {
+                el.appendChild(child);
+            } else if (Array.isArray(child) || child instanceof NodeList) {
+                Array.from(child).forEach(subchild => el.appendChild(subchild));
+            }
+        });
+    });
+};
+Q.ID = function (length = 8) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+};
+Q.prototype.index = function (index) {
+    // Returns the index of the first node, or the index of a specific node.|Traversal/DOM Manipulation|Q(selector).index(index);
+    if (index === undefined) {
+        return Array.from(this.nodes[0].parentNode.children).indexOf(this.nodes[0]);
+    }
+    return this.each(el => {
+        const parent = this.nodes[el].parentNode;
+        const siblings = Array.from(parent.children);
+        const position = siblings.indexOf(el);
+        const target = siblings.splice(index, 1)[0];
+        if (position < index) {
+            parent.insertBefore(target, el);
+        } else {
+            parent.insertBefore(target, this.nodes[el].nextSibling);
+        }
+    });
+};
+Q.prototype.inside = function (selector) {
+    // Checks if the first node is inside another node.|Traversal|Q(selector).inside(".parent");
+    return this.nodes[0]?.closest(selector) === null || false;
+};
+Q.prototype.is = function (selector) {
+    // Checks if the first node matches a specific selector.|Utilities|Q(selector).is(":visible");
+    if (typeof selector === 'function') {
+        return selector.call(this.nodes[0], 0, this.nodes[0]);
+    }
+
+    if (typeof selector === 'string') {
+        if (selector === ':visible') {
+            return this.nodes[0].offsetWidth > 0 && this.nodes[0].offsetHeight > 0;
+        } else if (selector === ':hidden') {
+            return this.nodes[0].offsetWidth === 0 || this.nodes[0].offsetHeight === 0;
+        } else if (selector === ':hover') {
+            return this.nodes[0] === document.querySelector(':hover');
+        } else if (selector === ':focus') {
+            return this.nodes[0] === document.activeElement;
+        } else if (selector === ':blur') {
+            return this.nodes[0] !== document.activeElement;
+        } else if (selector === ':checked') {
+            return this.nodes[0].checked;
+        } else if (selector === ':selected') {
+            return this.nodes[0].selected;
+        } else if (selector === ':disabled') {
+            return this.nodes[0].disabled;
+        } else if (selector === ':enabled') {
+            return !this.nodes[0].disabled;
+        } else {
+            return this.nodes[0].matches(selector);
+        }
+    }
+
+    if (selector instanceof HTMLElement || selector instanceof Node) {
+        return this.nodes[0] === selector;
+    }
+
+    if (selector instanceof Q) {
+        return this.nodes[0] === selector.nodes[0];
+    }
+
+    return false;
+};
+Q.prototype.isExists = function () {
+    // Checks if the first node exists in the DOM.|Utilities|Q(selector).isExists();
+    return document.body.contains(this.nodes[0]);
+};
+Q.prototype.last = function () {
+    // Returns the last node.|Traversal|Q(selector).last();
+    return new Q(this.nodes[this.nodes.length - 1]);
+};
+Q.Leaving = (function () {
+    const callbacks = [];
+    window.addEventListener('beforeunload', (event) => {
+        callbacks.forEach(callback => callback(event));
+    });
+    return function (callback) {
+        callbacks.push(callback);
+    };
+})();
+Q.prototype.off = function (events, handler, options = {}) {
+    // Removes an event listener from each node.|Event Handling|Q(selector).off("click", handler);
+    const defaultOptions = {
+        capture: false,
+        once: false,
+        passive: false
+    };
+    options = { ...defaultOptions, ...options };
+
+    return this.each(el => {
+        events.split(' ').forEach(event => this.nodes[el].removeEventListener(event, handler, options));
+    }
+    );
+};
+Q.prototype.offset = function () {
+    // Returns the top and left offset of the first node relative to the document.|Dimensions|Q(selector).offset();
+    const rect = this.nodes[0].getBoundingClientRect();
+    return {
+        top: rect.top + window.scrollY,
+        left: rect.left + window.scrollX
+    };
+};
+Q.prototype.on = function (events, handler, options = {}) {
+    // Adds an event listener to each node.|Event Handling|Q(selector).on("click", () => console.log("Clicked"));
+    const defaultOptions = {
+        capture: false,
+        once: false,
+        passive: false
     };
 
-    Q.prototype.fadeOut = function (duration = 400, callback) {
-        // Fades out each node.|Display|Q(selector).fadeOut(duration, callback);
-        return this.each(el => {
-            this.nodes[el].style.transition = `opacity ${duration}ms`;
-            this.nodes[el].style.opacity = 0;
+    options = { ...defaultOptions, ...options };
+
+
+    return this.each(el => {
+        events.split(' ').forEach(event => this.nodes[el].addEventListener(event, handler, options));
+    }
+    );
+};
+Q.prototype.parent = function () {
+    // Returns the parent node of the first node.|Traversal|Q(selector).parent();
+    return new Q(this.nodes[0].parentNode);
+};
+Q.prototype.position = function () {
+    // Returns the top and left position of the first node relative to its offset parent.|Dimension/Position|Q(selector).position();
+    return {
+        top: this.nodes[0].offsetTop,
+        left: this.nodes[0].offsetLeft
+    };
+};
+Q.prototype.prepend = function (...nodes) {
+    // Prepends child nodes or HTML to each node.|DOM Manipulation|Q(selector).prepend("<div>Prepended</div>");
+    return this.each(el => {
+        const parent = this.nodes[el];
+
+        nodes.forEach(child => {
+            if (typeof child === 'string') {
+                parent.insertAdjacentHTML('afterbegin', child);
+            } else if (child instanceof HTMLElement || child instanceof Q) {
+                parent.insertBefore(child.nodes[0], parent.firstChild);
+            } else if (Array.isArray(child) || child instanceof NodeList) {
+                Array.from(child).forEach(subchild => parent.insertBefore(subchild, parent.firstChild));
+            }
+        });
+    });
+};
+Q.prototype.prop = function (property, value) {
+    // Gets or sets a property on the nodes.|Property Manipulation|Q(selector).prop(property, value);
+    if (value === undefined) {
+        return this.nodes[0]?.[property] || null;
+    }
+    return this.each(function (index, el) {
+        el[property] = value;
+    });
+};
+Q.Ready = (function () {
+    const callbacks = [];
+    document.addEventListener('DOMContentLoaded', () => {
+        callbacks.forEach(callback => callback());
+    }, { once: true });
+
+    return function (callback) {
+        if (document.readyState === 'loading') {
+            callbacks.push(callback);
+        } else {
+            callback();
+        }
+    };
+})();
+Q.prototype.remove = function () {
+    // Removes each node from the DOM.|DOM Manipulation|Q(selector).remove();
+    return this.each(el => this.nodes[el].remove());
+};
+Q.prototype.removeAttr = function (attribute) {
+    // Removes an attribute from each node.|Attribute Manipulation|Q(selector).removeAttr(attribute);
+    return this.each(el => this.nodes[el].removeAttribute(attribute));
+};
+Q.prototype.removeClass = function (classes) {
+    // Removes one or more classes from each node.|Class Manipulation|Q(selector).removeClass("class1 class2");
+    const classList = classes.split(' ');
+    return this.each(el => this.nodes[el].classList.remove(...classList));
+};
+Q.prototype.removeData = function (key) {
+    // Removes a data-* attribute from each node.|Data Manipulation|Q(selector).removeData(key);
+    return this.each(el => delete this.nodes[el].dataset[key]);
+};
+Q.prototype.removeProp = function (property) {
+    // Removes a property from each node.|Property Manipulation|Q(selector).removeProp(property);
+    return this.each(el => delete this.nodes[el][property]);
+};
+Q.prototype.removeTransition = function () {
+    // Removes the transition from each node.|Display|Q(selector).removeTransition();
+    return this.each(el => this.nodes[el].style.transition = '');
+};
+Q.Resize = (function () {
+    const callbacks = [];
+    window.addEventListener('resize', () => {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        callbacks.forEach(callback => callback(width, height));
+    });
+    return function (callback) {
+        callbacks.push(callback);
+    };
+})();
+Q.prototype.scrollHeight = function () {
+    // Returns the scroll height of the first node.|Dimensions|Q(selector).scrollHeight();
+    return this.nodes[0].scrollHeight;
+};
+Q.prototype.scrollLeft = function (value, increment = false) {
+    // Gets or sets the horizontal scroll position of the first node, with an option to increment.|Scroll Manipulation|Q(selector).scrollLeft(value, increment);
+    if (value === undefined) {
+        return this.nodes[0].scrollLeft;
+    }
+    return this.each(el => {
+        const maxScrollLeft = this.nodes[el].scrollWidth - this.nodes[el].clientWidth;
+        if (increment) {
+            this.nodes[el].scrollLeft = Math.min(this.nodes[el].scrollLeft + value, maxScrollLeft);
+        } else {
+            this.nodes[el].scrollLeft = Math.min(value, maxScrollLeft);
+        }
+    });
+};
+Q.prototype.scrollTop = function (value, increment = false) {
+    // Gets or sets the vertical scroll position of the first node, with an option to increment.|Dimensions|Q(selector).scrollTop(value, increment);
+    if (value === undefined) {
+        return this.nodes[0].scrollTop;
+    }
+    return this.each(el => {
+        const maxScrollTop = this.nodes[el].scrollHeight - this.nodes[el].clientHeight;
+        if (increment) {
+            this.nodes[el].scrollTop = Math.min(this.nodes[el].scrollTop + value, maxScrollTop);
+        } else {
+            this.nodes[el].scrollTop = Math.min(value, maxScrollTop);
+        }
+    });
+};
+Q.prototype.scrollWidth = function () {
+    // Returns the scroll width of the first node.|Dimensions|Q(selector).scrollWidth();
+    return this.nodes[0].scrollWidth;
+};
+Q.prototype.show = function (duration = 0, callback) {
+    // Shows each node.|Display|Q(selector).show(duration, callback);
+    return this.each(el => {
+        const element = this.nodes[el];
+        if (duration === 0) {
+            element.style.display = '';
+            if (callback) callback();
+        } else {
+            element.style.transition = `opacity ${duration}ms`;
+            element.style.opacity = 0;
+            element.style.display = '';
             setTimeout(() => {
-                this.nodes[el].style.transition = '';
-                this.nodes[el].style.display = 'none';
-                if (callback) callback();
-            }, duration);
-        });
-    };
-
-    Q.prototype.fadeToggle = function (duration = 400, callback) {
-        // Toggles the fade state of each node.|Display|Q(selector).fadeToggle(duration, callback);
-        return this.each(el => {
-            if (window.getComputedStyle(this.nodes[el]).opacity === '0') {
-                this.fadeIn(duration, callback);
-            } else {
-                this.fadeOut(duration, callback);
-            }
-        });
-    };
-
-    Q.prototype.fadeTo = function (opacity, duration = 400, callback) {
-        // Fades each node to a specific opacity.|Display|Q(selector).fadeTo(opacity, duration, callback);
-        return this.each(el => {
-            this.nodes[el].style.transition = `opacity ${duration}ms`;
-            this.nodes[el].offsetHeight;
-            this.nodes[el].style.opacity = opacity;
-            setTimeout(() => {
-                this.nodes[el].style.transition = '';
-                if (callback) callback();
-            }, duration);
-        });
-    };
-
-    Q.prototype.animate = function (duration, properties, callback) {
-        // Animates each node with specific CSS properties.|Display|Q(selector).animate(duration, { opacity: 0, left: "50px" }, callback);
-        return this.each(el => {
-            const element = this.nodes[el];
-            const transitionProperties = Object.keys(properties).map(prop => `${prop} ${duration}ms`).join(', ');
-            element.style.transition = transitionProperties;
-            for (const prop in properties) {
-                element.style[prop] = properties[prop];
-            }
-            if (typeof callback === 'function') {
-                setTimeout(() => {
-                    if (callback) callback.call(element);
-                }, duration);
-            }
-        }), this;
-    };
-
-    Q.prototype.removeTransition = function () {
-        // Removes the transition from each node.|Display|Q(selector).removeTransition();
-        return this.each(el => this.nodes[el].style.transition = '');
-    };
-
-    Q.Ready = function (callback) {
-        document.readyState === 'loading'
-            ? document.addEventListener('DOMContentLoaded', callback, { once: true })
-            : callback();
-    };
-
-    Q.Resize = function (callback) {
-        window.addEventListener('resize', () => callback(window.innerWidth, window.innerHeight));
-    };
-
-    Q.Leaving = function (callback) {
-        window.addEventListener('beforeunload', callback);
-    };
-
-    Q.Done = function (callback) {
-        window.addEventListener('load', callback, { once: true });
-    };
-
-    Q.prototype.on = function (events, handler, options = {}) {
-        // Adds an event listener to each node.|Event Handling|Q(selector).on("click", () => console.log("Clicked"));
-        const defaultOptions = {
-            capture: false,
-            once: false,
-            passive: false
-        };
-
-        options = { ...defaultOptions, ...options };
-
-
-        return this.each(el => {
-            events.split(' ').forEach(event => this.nodes[el].addEventListener(event, handler, options));
+                element.style.opacity = 1;
+                element.addEventListener('transitionend', function handler() {
+                    element.style.transition = '';
+                    element.removeEventListener('transitionend', handler);
+                    if (callback) callback();
+                });
+            }, 0);
         }
-        );
+    });
+};
+Q.prototype.size = function () {
+    // Returns the width and height of the first node.|Dimensions|Q(selector).size();
+    return {
+        width: this.nodes[0].offsetWidth,
+        height: this.nodes[0].offsetHeight
     };
-
-    Q.prototype.off = function (events, handler, options = {}) {
-        // Removes an event listener from each node.|Event Handling|Q(selector).off("click", handler);
-        const defaultOptions = {
-            capture: false,
-            once: false,
-            passive: false
-        };
-        options = { ...defaultOptions, ...options };
-
-        return this.each(el => {
-            events.split(' ').forEach(event => this.nodes[el].removeEventListener(event, handler, options));
+};
+Q.prototype.text = function (content) {
+    // Gets or sets the text content of the nodes.|Content Manipulation|Q(selector).text(string);
+    if (content === undefined) {
+        return this.nodes[0]?.textContent || null;
+    }
+    return this.each(el => this.nodes[el].textContent = content);
+};
+Q.prototype.toggle = function () {
+    // Toggles the display of each node.|Utilities|Q(selector).toggle();
+    return this.each(el => this.nodes[el].style.display = this.nodes[el].style.display === 'none' ? '' : 'none');
+};
+Q.prototype.toggleClass = function (className) {
+    // Toggles a class on each node.|Class Manipulation|Q(selector).toggleClass(className);
+    return this.each(el => this.nodes[el].classList.toggle(className));
+};
+Q.prototype.trigger = function (event) {
+    // Triggers a specific event on each node.|Event Handling|Q(selector).trigger("click");
+    return this.each(function (index, el) {
+        el.dispatchEvent(new Event(event));
+    });
+};
+Q.prototype.unwrap = function () {
+    // Removes the parent wrapper of each node.|DOM Manipulation|Q(selector).unwrap();
+    return this.each(el => {
+        const parent = this.nodes[el].parentNode;
+        if (parent !== document.body) {
+            parent.replaceWith(...this.nodes);
         }
-        );
-    };
-
-    Q.prototype.click = function () {
-        // Triggers a click event on each node.|Event Handling|Q(selector).click();
-        return this.each(el => this.nodes[el].click());
-    };
-
-    Q.prototype.focus = function () {
-        // Focuses on the first node.|Form Manipulation|Q(selector).focus();
-        return this.each(el => this.nodes[el].focus());
-    };
-
-    Q.prototype.blur = function () {
-        // Blurs the first node.|Form Manipulation|Q(selector).blur();
-        return this.each(el => this.nodes[el].blur());
-    };
-
-    Q.Container = function () {
-    Q.style(`
+    });
+};
+Q.prototype.val = function (value) {
+    // Gets or sets the value of form elements in the nodes.|Form Manipulation|Q(selector).val(value);
+    if (value === undefined) {
+        return this.nodes[0]?.value || null;
+    }
+    return this.each(el => this.nodes[el].value = value);
+};
+Q.prototype.width = function (value) {
+    // Gets or sets the width of the first node.|Dimensions|Q(selector).width(value);
+    if (value === undefined) {
+        return this.nodes[0].offsetWidth;
+    }
+    return this.each(el => this.nodes[el].style.width = value);
+};
+Q.prototype.wrap = function (wrapper) {
+    // Wraps each node with the specified wrapper element.|DOM Manipulation|Q(selector).wrap("<div class="wrapper"></div>");
+    return this.each(el => {
+        const parent = this.nodes[el].parentNode;
+        const newParent = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;
+        parent.insertBefore(newParent, this.nodes[el]);
+        newParent.appendChild(this.nodes[el]);
+    });
+};
+Q.prototype.wrapAll = function (wrapper) {
+    // Wraps all nodes together in a single wrapper element.|DOM Manipulation|Q(selector).wrapAll("<div class="wrapper"></div>");
+    return this.each(el => {
+        const parent = this.nodes[el].parentNode;
+        const newParent = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;
+        parent.insertBefore(newParent, this.nodes[0]);
+        this.nodes.forEach(child => newParent.appendChild(child));
+    });
+};
+Q.prototype.zIndex = function (value) {
+    // Gets or sets the z-index of the first node.|Display|Q(selector).zIndex(value);
+    if (value === undefined) {
+        let zIndex = this.nodes[0].style.zIndex;
+        if (!zIndex) {
+            zIndex = window.getComputedStyle(this.nodes[0]).zIndex;
+        }
+        return zIndex;
+    }
+    return this.each(el => this.nodes[el].style.zIndex = value);
+};
+    Q.Container = function (options = {}) {
+    let style = `
         :root {
   	--svg_arrow-down: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 134.49459 62.707709"><path d="M 100.93685,31.353867 C 82.480099,48.598492 67.319803,62.707709 67.247301,62.707709 c -0.0725,0 -15.232809,-14.109215 -33.689561,-31.353842 L 3.5365448e-8,6.6845858e-7 H 67.247301 134.4946 Z"/></svg>');
 	--svg_arrow-left: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62.707704 134.4946"><path d="M 31.353844,100.93685 C 14.109219,82.480099 1.6018623e-6,67.319803 1.6018623e-6,67.247301 1.6018623e-6,67.174801 14.109217,52.014492 31.353844,33.55774 L 62.70771,0 V 67.247301 134.4946 Z"/></svg>');
@@ -700,10 +706,7 @@ const Q = (() => {
              color: #777; /* Default color */
          }
 
- `);
-
-    Q.style(`
-         .q_tabs_nav {
+          .tab_navigation_buttons {
          box-sizing: border-box;
             width: 20px;
             background-color: #333;
@@ -712,36 +715,36 @@ const Q = (() => {
             padding: 4px;
         }
         
-        .q_tabs_nav_vertical {
+        .tab_navigation_buttons_vertical {
             width: auto;
             height: 20px;
         }
         
-        .q_tabs_nav:hover {
+        .tab_navigation_buttons:hover {
             background-color: #555;
         }
         
-        .q_tabcontainer {
+        .tab_container {
             width: 100%;
             height: 300px;
         }
         
-        .q_tc_vertical {
+        .tab_container_vertical {
         display: flex;
                 }
         
-        .q_tabs_wrapper {
+        .tab_navigation_header {
         
             background-color: #333;
             display: flex;
         }
         
-        .q_tabs_wrapper_vertical {
+        .tab_navigation_header_vertical {
             flex-direction: column;
                 width: auto;
         }
         
-        .q_tabs {
+        .tab_navigation_tabs {
         user-select: none;
             display: flex;
             flex-direction: row;
@@ -749,16 +752,16 @@ const Q = (() => {
             overflow: hidden;
         }
         
-        .q_tabs_vertical {
+        .tab_navigation_tabs_vertical {
             flex-direction: column;
         }
         
-        .q_tab_active {
+        .tab_active {
             background-color: #555;
             color: #fff;
         }
         
-        .q_tab {
+        .tab {
             display: flex;
             justify-content: center;
             align-items: center;
@@ -766,13 +769,12 @@ const Q = (() => {
             padding: 5px 25px;
         }
         
-        .q_tab_disabled {
+        .tab_disabled {
             background-color: #333;
             color: #555;
         }
 
-`);
-
+ `;
 
     let createIcon = function (icon) {
         let iconElement = Q('<div>');
@@ -780,24 +782,62 @@ const Q = (() => {
         return iconElement;
     }
 
+    let randomletters = function (length) {
+        let result = '';
+        let characters = 'abcdef0123456789';
+        let charactersLength = characters.length;
+        for (let i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return '_' + result;
+    }
+
+    let classes = {
+        'tab_navigation_buttons': 'tab_navigation_buttons',
+        'tab_navigation_buttons_vertical': 'tab_navigation_buttons_vertical',
+        'tab_container': 'tab_container',
+        'tab_container_vertical': 'tab_container_vertical',
+        'tab_navigation_header': 'tab_navigation_header',
+        'tab_navigation_header_vertical': 'tab_navigation_header_vertical',
+        'tab_navigation_tabs': 'tab_navigation_tabs',
+        'tab_navigation_tabs_vertical': 'tab_navigation_tabs_vertical',
+        'tab_active': 'tab_active',
+        'tab': 'tab',
+        'tab_disabled': 'tab_disabled'
+    };
+
+    classes = Object.keys(classes).reduce((acc, key) => {
+        acc[key] = randomletters(6);
+
+        //find and replace all class names in the style
+        style = style.replace(new RegExp(`\\b${key}\\b`, 'gm'), acc[key]);
+        return acc;
+    }, {});
+
+    Q.style(style);
+
+    if (options.classes) {
+        classes = Object.assign(classes, options.classes);
+    }
+
     return {
         Tab: function (data, horizontal = true) {
 
-            let wrapper = Q('<div class="q_tabcontainer">');
-            let tabs_wrapper = Q('<div class="q_tabs_wrapper">');
-            let tabs_nav_left = Q('<div class="q_tabs_nav q_tabs_nav_left">');
-            let tabs_nav_right = Q('<div class="q_tabs_nav q_tabs_nav_right">');
-            let tabs = Q('<div class="q_tabs">');
+            let wrapper = Q('<div class="' + classes.tab_container + '">');
+            let tabs_wrapper = Q('<div class="' + classes.tab_navigation_header + '">');
+            let tabs_nav_left = Q('<div class="' + classes.tab_navigation_buttons + '">');
+            let tabs_nav_right = Q('<div class="' + classes.tab_navigation_buttons + '">');
+            let tabs = Q('<div class="' + classes.tab_navigation_tabs + '">');
             tabs_wrapper.append(tabs_nav_left, tabs, tabs_nav_right);
-            let content = Q('<div class="q_tabcontent">');
+            let content = Q('<div">');
             wrapper.append(tabs_wrapper, content);
 
             if (!horizontal) {
-                wrapper.addClass('q_tc_vertical');
-                tabs.addClass('q_tabs_vertical');
-                tabs_wrapper.addClass('q_tabs_wrapper_vertical');
-                tabs_nav_left.addClass('q_tabs_nav_vertical');
-                tabs_nav_right.addClass('q_tabs_nav_vertical');
+                wrapper.addClass(classes.tab_container_vertical);
+                tabs.addClass(classes.tab_navigation_tabs_vertical);
+                tabs_wrapper.addClass(classes.tab_navigation_header_vertical);
+                tabs_nav_left.addClass(classes.tab_navigation_buttons_vertical);
+                tabs_nav_right.addClass(classes.tab_navigation_buttons_vertical);
                 tabs_nav_left.append(createIcon('arrow-up'));
                 tabs_nav_right.append(createIcon('arrow-down'));
             }
@@ -810,9 +850,9 @@ const Q = (() => {
             let data_contents = {};
 
             data.forEach((item) => {
-                const tab = Q(`<div class="q_tab" data-value="${item.value}">${item.title}</div>`);
+                const tab = Q(`<div class="${classes.tab}" data-value="${item.value}">${item.title}</div>`);
                 if (item.disabled) {
-                    tab.addClass('q_form_disabled');
+                    tab.addClass(classes.tab_disabled);
                 }
 
                 data_tabs[item.value] = tab;
@@ -824,13 +864,13 @@ const Q = (() => {
                         return;
                     }
 
-                    let foundTabs = tabs.find('.q_tab_active');
+                    let foundTabs = tabs.find('.' + classes.tab_active);
 
                     if (foundTabs) {
-                        foundTabs.removeClass('q_tab_active');
+                        foundTabs.removeClass(classes.tab_active);
                     }
 
-                    tab.addClass('q_tab_active');
+                    tab.addClass(classes.tab_active);
                     content.html(data_contents[item.value]);
                 });
                 tabs.append(tab);
@@ -865,9 +905,9 @@ const Q = (() => {
             wrapper.disabled = function (value, state) {
                 if (data_tabs[value]) {
                     if (state) {
-                        data_tabs[value].addClass('q_form_disabled');
+                        data_tabs[value].addClass(classes.tab_disabled);
                     } else {
-                        data_tabs[value].removeClass('q_form_disabled');
+                        data_tabs[value].removeClass(classes.tab_disabled);
                     }
                 }
             };
@@ -945,287 +985,360 @@ Q.fetch = function (url, callback, options = {}) {
     };
 };
 
-Q.Form = function () {
-    Q.style(`
-       :root {
-	--svg_window-close: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 2.8176856,98.903421 -4.0360052e-7,96.085741 22.611458,73.473146 45.222917,50.860554 22.611458,28.247962 -4.0360052e-7,5.6353711 2.8176856,2.8176851 5.6353716,-9.1835591e-7 28.247963,22.611458 50.860555,45.222916 73.473147,22.611458 96.085743,-9.1835591e-7 98.903423,2.8176851 101.72111,5.6353711 79.109651,28.247962 56.498193,50.860554 79.109651,73.473146 101.72111,96.085741 98.903423,98.903421 96.085743,101.72111 73.473147,79.109651 50.860555,56.498192 28.247963,79.109651 5.6353716,101.72111 Z"/></svg>');
-	--svg_window-full: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 H 50.860555 84.417403 V 50.860554 84.417401 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z"/></svg>');
-	--svg_window-minimize: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 0.5252846,83.893071 V 79.698469 H 50.860555 101.19582 v 4.194602 4.19461 H 50.860555 0.5252846 Z"/></svg>');
-	--svg_window-windowed: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 h 8.389212 8.389212 V 8.9144961 0.52528408 H 67.638978 101.19582 V 34.082131 67.638977 h -8.389207 -8.38921 v 8.389212 8.389212 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z M 92.806613,34.082131 V 8.9144961 H 67.638978 42.471343 v 4.1946059 4.194606 h 20.973029 20.973031 v 20.973029 20.973029 h 4.1946 4.19461 z"/></svg>');
-}
-
-.svg_window-close {
-	-webkit-mask: var(--svg_window-close) no-repeat center;
-	mask: var(--svg_window-close) no-repeat center;
-	background-color: currentColor;
-	-webkit-mask-size: contain;
-	mask-size: contain;
-}
-
-.svg_window-full {
-	-webkit-mask: var(--svg_window-full) no-repeat center;
-	mask: var(--svg_window-full) no-repeat center;
-	background-color: currentColor;
-	-webkit-mask-size: contain;
-	mask-size: contain;
-}
-
-.svg_window-minimize {
-	-webkit-mask: var(--svg_window-minimize) no-repeat center;
-	mask: var(--svg_window-minimize) no-repeat center;
-	background-color: currentColor;
-	-webkit-mask-size: contain;
-	mask-size: contain;
-}
-
-.svg_window-windowed {
-	-webkit-mask: var(--svg_window-windowed) no-repeat center;
-	mask: var(--svg_window-windowed) no-repeat center;
-	background-color: currentColor;
-	-webkit-mask-size: contain;
-	mask-size: contain;
-}
-
-        .form_icon {
-            width: 100%;
-            height: 100%;
-            color: #777; /* Default color */
-        }
-`);
+Q.Form = function (options = {}) {
     let style = `
-.q_form {
-    box-sizing: border-box;
-    font-family: inherit;
-    font-size: inherit;
-    color: inherit;
-    margin: 1px;
-}
+           :root {
+               --svg_window-close: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 2.8176856,98.903421 -4.0360052e-7,96.085741 22.611458,73.473146 45.222917,50.860554 22.611458,28.247962 -4.0360052e-7,5.6353711 2.8176856,2.8176851 5.6353716,-9.1835591e-7 28.247963,22.611458 50.860555,45.222916 73.473147,22.611458 96.085743,-9.1835591e-7 98.903423,2.8176851 101.72111,5.6353711 79.109651,28.247962 56.498193,50.860554 79.109651,73.473146 101.72111,96.085741 98.903423,98.903421 96.085743,101.72111 73.473147,79.109651 50.860555,56.498192 28.247963,79.109651 5.6353716,101.72111 Z"/></svg>');
+               --svg_window-full: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 H 50.860555 84.417403 V 50.860554 84.417401 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z"/></svg>');
+               --svg_window-minimize: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 0.5252846,83.893071 V 79.698469 H 50.860555 101.19582 v 4.194602 4.19461 H 50.860555 0.5252846 Z"/></svg>');
+               --svg_window-windowed: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 h 8.389212 8.389212 V 8.9144961 0.52528408 H 67.638978 101.19582 V 34.082131 67.638977 h -8.389207 -8.38921 v 8.389212 8.389212 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z M 92.806613,34.082131 V 8.9144961 H 67.638978 42.471343 v 4.1946059 4.194606 h 20.973029 20.973031 v 20.973029 20.973029 h 4.1946 4.19461 z"/></svg>');
+           }
 
-.q_form_disabled {
-    opacity: 0.5;
-}
+           .svg_window-close {
+               -webkit-mask: var(--svg_window-close) no-repeat center;
+               mask: var(--svg_window-close) no-repeat center;
+               background-color: currentColor;
+               -webkit-mask-size: contain;
+               mask-size: contain;
+           }
 
-.q_form_checkbox,
-.q_form_radio {
-    display: flex;
-    width: fit-content;
-    align-items: center;
-}
+           .svg_window-full {
+               -webkit-mask: var(--svg_window-full) no-repeat center;
+               mask: var(--svg_window-full) no-repeat center;
+               background-color: currentColor;
+               -webkit-mask-size: contain;
+               mask-size: contain;
+           }
 
-.q_form_checkbox .label:empty,
-.q_form_radio .label:empty {
-    display: none;
-}
+           .svg_window-minimize {
+               -webkit-mask: var(--svg_window-minimize) no-repeat center;
+               mask: var(--svg_window-minimize) no-repeat center;
+               background-color: currentColor;
+               -webkit-mask-size: contain;
+               mask-size: contain;
+           }
 
-.q_form_checkbox .label,
-.q_form_radio .label {
-    padding-left: 5px;
-    user-select: none;
-}
+           .svg_window-windowed {
+               -webkit-mask: var(--svg_window-windowed) no-repeat center;
+               mask: var(--svg_window-windowed) no-repeat center;
+               background-color: currentColor;
+               -webkit-mask-size: contain;
+               mask-size: contain;
+           }
 
-.q_form_cb {
-    position: relative;
-    width: 20px;
-    height: 20px;
-    background-color: #555555;
-}
-
-.q_form_cb input[type="checkbox"] {
-    opacity: 0;
-    top: 0;
-    left: 0;
-    padding: 0;
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    position: absolute;
-}
-
-.q_form_cb input[type="checkbox"]:checked+label:before {
-    content: "";
-    position: absolute;
-    display: block;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #1DA1F2;
-}
-
-.q_form_r {
-    position: relative;
-    width: 20px;
-    height: 20px;
-    background-color: #555555;
-    border-radius: 50%;
-    overflow: hidden;
-}
-
-.q_form_r input[type="radio"] {
-    opacity: 0;
-    top: 0;
-    left: 0;
-    padding: 0;
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    border-radius: 50%;
-}
-
-.q_form_r input[type="radio"]:checked+label:before {
-    content: "";
-    position: absolute;
-    display: block;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #1DA1F2;
-    border-radius: 50%;
-}
-
-.q_form_input {
-    width: calc(100% - 2px);
-    padding: 5px;
-    outline: none;
-    border: 0;
-}
-
-.q_form_input:focus,
-.q_form_textarea:focus {
-    outline: 1px solid #1DA1F2;
-}
-
-.q_form_textarea {
-    width: calc(100% - 2px);
-    padding: 5px;
-    outline: none;
-    border: 0;
-}
-
-.q_window {
-position: fixed;
-    background-color: #333;
-    z-index: 1000;
-    box-shadow: 0 7px 20px rgba(0, 0, 0, 0.3);
-    }
-
-.q_window_titlebar {
-user-select: none;
-    display: flex;
-    background-color: #222;
-    width: 100%;
-}
-
-.q_window_buttons {
-    display: flex;
-}
-
-.q_window_button {
-box-sizing: border-box;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    width: 30px;
-    height: 30px;
-    padding: 10px;
-}
-
-.q_window_titletext {
-    flex-grow: 1;
-    color: #fff;
-    align-content: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 0 5px
-}
-
-.q_window_content {
-width: 100%;
-overflow-y: auto;
-    }
-
-.q_slider_wrapper {
-position: relative;
-    height: 20px;
-    overflow: hidden;
-    background-color: #333;
-}
-
-.q_slider_pos {
-position: absolute;
-    top: 0;
-    left: 0;
-    width: 0;
-    height: 100%;
-    background-color: #1DA1F2;
-}
-
-.q_form_slider
-{
-    width: 100%;
-    opacity: 0;
-    height: 100%;
-    position: absolute;
-}
+           .form_icon {
+               width: 100%;
+               height: 100%;
+               color: #fff;
+               /* Default color */
+           }
 
 
-.q_form_dropdown
-{
-user-select: none;
-    position: relative;
-    background-color: #333;
-    }
+           .q_form {
+               box-sizing: border-box;
+               font-family: inherit;
+               font-size: inherit;
+               color: inherit;
+               margin: 1px;
+           }
 
-.q_form_dropdown_options
-{
-    position: absolute;
-    width: 100%;
-    background-color: #333;
-    z-index: 1;
-    }
+           .q_form_disabled {
+               opacity: 0.5;
+           }
 
-.q_form_dropdown_option, .q_form_dropdown_selected
-{
-    padding: 5px 0px;
-    }
+           .q_form_checkbox,
+           .q_form_radio {
+               display: flex;
+               width: fit-content;
+               align-items: center;
+           }
 
-    .q_form_button
-    {
-    user-select: none;
-        padding: 5px 10px;
-        cursor: pointer;
-    }
+           .q_form_checkbox .label:empty,
+           .q_form_radio .label:empty {
+               display: none;
+           }
 
-    .q_form_button:hover
-    {
-        background-color: #555;
-    }
+           .q_form_checkbox .label,
+           .q_form_radio .label {
+               padding-left: 5px;
+               user-select: none;
+           }
 
-    .q_form_button:active
-    {
-        background-color: #777;
-    }
+           .q_form_cb {
+               position: relative;
+               width: 20px;
+               height: 20px;
+               background-color: #555555;
+           }
 
-    .q_form_file
-    {
-    user-select: none;
-    position: relative;
-    overflow: hidden;
-    }
+           .q_form_cb input[type="checkbox"] {
+               opacity: 0;
+               top: 0;
+               left: 0;
+               padding: 0;
+               margin: 0;
+               width: 100%;
+               height: 100%;
+               position: absolute;
+           }
 
-    .q_form_file input[type="file"]
-    {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    }
+           .q_form_cb input[type="checkbox"]:checked+label:before {
+               content: "";
+               position: absolute;
+               display: block;
+               top: 0;
+               left: 0;
+               width: 100%;
+               height: 100%;
+               background-color: #1DA1F2;
+           }
 
-    `
+           .q_form_r {
+               position: relative;
+               width: 20px;
+               height: 20px;
+               background-color: #555555;
+               border-radius: 50%;
+               overflow: hidden;
+           }
+
+           .q_form_r input[type="radio"] {
+               opacity: 0;
+               top: 0;
+               left: 0;
+               padding: 0;
+               margin: 0;
+               width: 100%;
+               height: 100%;
+               position: absolute;
+               border-radius: 50%;
+           }
+
+           .q_form_r input[type="radio"]:checked+label:before {
+               content: "";
+               position: absolute;
+               display: block;
+               top: 0;
+               left: 0;
+               width: 100%;
+               height: 100%;
+               background-color: #1DA1F2;
+               border-radius: 50%;
+           }
+
+           .q_form_input {
+               width: calc(100% - 2px);
+               padding: 5px;
+               outline: none;
+               border: 0;
+           }
+
+           .q_form_input:focus,
+           .q_form_textarea:focus {
+               outline: 1px solid #1DA1F2;
+           }
+
+           .q_form_textarea {
+               width: calc(100% - 2px);
+               padding: 5px;
+               outline: none;
+               border: 0;
+           }
+
+           .q_window {
+               position: fixed;
+               background-color: #333;
+               z-index: 1000;
+               box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+               border: 1px solid rgba(255, 255, 255, 0.01);
+               border-radius: 5px;
+               overflow: hidden;
+               display: flex;
+               flex-direction: column;
+           }
+
+           .q_window_titlebar {
+               user-select: none;
+               display: flex;
+               background-color: #222;
+               width: 100%;
+               flex-shrink: 0;
+           }
+
+           .q_window_buttons {
+               display: flex;
+           }
+
+           .q_window_button {
+               box-sizing: border-box;
+               display: flex;
+               justify-content: center;
+               align-items: center;
+               cursor: pointer;
+               width: 30px;
+               height: 30px;
+               padding: 10px;
+               background-color: rgba(255, 255, 255, 0.01);
+               margin-left: 1px;
+           }
+
+           .q_window_button:hover {
+               background-color: #424242;
+           }
+
+           .q_window_close:hover {
+               background-color: #e81123;
+           }
+
+           .q_window_titletext {
+               flex-grow: 1;
+               color: #fff;
+               align-content: center;
+               white-space: nowrap;
+               overflow: hidden;
+               text-overflow: ellipsis;
+               padding: 0 5px
+           }
+
+           .q_window_content {
+               width: 100%;
+               overflow-y: auto;
+               flex: 1;
+           }
+
+           .q_slider_wrapper {
+               position: relative;
+               height: 20px;
+               overflow: hidden;
+               background-color: #333;
+           }
+
+           .q_slider_pos {
+               position: absolute;
+               top: 0;
+               left: 0;
+               width: 0;
+               height: 100%;
+               background-color: #1473e6;
+           }
+
+           .q_form_slider {
+               width: 100%;
+               opacity: 0;
+               height: 100%;
+               position: absolute;
+           }
+
+
+           .q_form_dropdown {
+               user-select: none;
+               position: relative;
+               background-color: #333;
+           }
+
+           .q_form_dropdown_options {
+               position: absolute;
+               width: 100%;
+               background-color: #333;
+               z-index: 1;
+           }
+
+           .q_form_dropdown_option,
+           .q_form_dropdown_selected {
+               padding: 5px 0px;
+           }
+
+           .q_form_button {
+               user-select: none;
+               padding: 5px 10px;
+               cursor: pointer;
+           }
+
+           .q_form_button:hover {
+               background-color: #555;
+           }
+
+           .q_form_button:active {
+               background-color: #777;
+           }
+
+           .q_form_file {
+               user-select: none;
+               position: relative;
+               overflow: hidden;
+           }
+
+           .q_form_file input[type="file"] {
+               position: absolute;
+               width: 100%;
+               height: 100%;
+               opacity: 0;
+           }
+
+           .datepicker_wrapper {
+               user-select: none;
+               width: 100%;
+               height: 100%;
+               display: flex;
+               flex-direction: column;
+           }
+
+           .datepicker_header {
+               display: flex;
+               align-items: center;
+               color: #fff;
+               justify-content: center;
+           }
+
+           .datepicker_header div {
+               padding: 15px 5px;
+           }
+
+           .datepicker_weekdays {
+               display: grid;
+               grid-template-columns: repeat(7, 1fr);
+           }
+
+           .datepicker_weekdays div {
+               display: flex;
+               align-items: center;
+               justify-content: center;
+           }
+
+           .datepicker_days {
+               display: grid;
+               grid-template-columns: repeat(7, 1fr);
+               flex: 1;
+           }
+
+           .prev_month,
+           .next_month {
+               opacity: 0.5;
+           }
+
+           .datepicker_body {
+               display: flex;
+               flex-direction: column;
+               flex: 1;
+           }
+
+           .days {
+               cursor: default;
+               display: flex;
+               align-items: center;
+               justify-content: center;
+           }
+
+           .day_selected {
+               background-color: #1473e6;
+               color: #fff;
+           }
+
+           .datepicker_footer {
+               display: flex;
+               justify-content: flex-end;
+           }
+    `;
 
     let createIcon = function (icon) {
         let iconElement = Q('<div>');
@@ -1269,21 +1382,214 @@ user-select: none;
         'q_form_progress_bar': 'q_form_progress_bar',
         'q_form_file': 'q_form_file',
         'q_form_progress': 'q_form_progress',
-        'q_form_dropdown_active': 'q_form_dropdown_active'
+        'q_form_dropdown_active': 'q_form_dropdown_active',
+        'q_window_close': 'q_window_close',
+        'q_window_minimize': 'q_window_minimize',
+        'q_window_maximize': 'q_window_maximize',
     };
 
     //replace all classes with the new random ones
-    classes = Object.keys(classes).reduce((acc, key) => {
-        acc[key] = randomletters(6);
+    // classes = Object.keys(classes).reduce((acc, key) => {
+    //     acc[key] = randomletters(6);
 
-        //find and replace all class names in the style
-        style = style.replace(new RegExp(`\\b${key}\\b`, 'gm'), acc[key]);
-        return acc;
-    }, {});
+    //     //find and replace all class names in the style
+    //     style = style.replace(new RegExp(`\\b${key}\\b`, 'gm'), acc[key]);
+    //     return acc;
+    // }, {});
 
     Q.style(style);
 
+    if (options.classes) {
+        classes = Object.assign(classes, options.classes);
+    }
+
     return {
+
+        // Datepicker is work in progress yet
+        DatePicker: function (value = '', locale = window.navigator.language, range = false) {
+
+            let getFirstDayOfWeek = () => {
+                // Create a date that is the first day of a week in the locale
+                let startDate = new Date();
+                let dayOfWeek = startDate.getDay();
+                startDate.setDate(startDate.getDate() - dayOfWeek);
+
+                // Return the day of the week as the first day of the week in locale (0 = Sunday, 1 = Monday, etc.)
+                return startDate.toLocaleDateString(locale, { weekday: 'short' });
+            };
+
+            let daysLocale = (short = true) => {
+                let days = [];
+                let baseDate = new Date(2021, 0, 4); // A Monday (we will adjust later)
+                const options = { weekday: short ? 'short' : 'long' };
+
+                let firstDayOfWeek = getFirstDayOfWeek(); // Get the locale's first day of the week
+
+                // Shift the baseDate to the locale's first day of the week
+                while (baseDate.toLocaleDateString(locale, options) !== firstDayOfWeek) {
+                    baseDate.setDate(baseDate.getDate() - 1);
+                }
+
+                for (let i = 0; i < 7; i++) {
+                    let date = new Date(baseDate);
+                    date.setDate(date.getDate() + i);
+                    days.push(date.toLocaleDateString(locale, options));
+                }
+                return days;
+            };
+
+            let monthsLocale = (short = true) => {
+                let months = [];
+                for (let i = 0; i < 12; i++) {
+                    let date = new Date(2021, i, 1);
+                    months.push(date.toLocaleDateString(locale, { month: short ? 'short' : 'long' }));
+                }
+                return months;
+            };
+
+            let date = value ? new Date(value) : new Date();
+            let day = date.getDate();
+            let month = date.getMonth() + 1;
+            let year = date.getFullYear();
+            let daysInMonth = new Date(year, month, 0).getDate();
+            let firstDay = new Date(year, month - 1, 1).getDay();
+            let lastDay = new Date(year, month - 1, daysInMonth).getDay();
+
+            // Get the localized days of the week starting from the locale's first day of the week
+            let days = daysLocale(true);
+            let dayNames = days.map((dayName, i) => {
+                let dayElement = Q('<div>');
+                dayElement.text(dayName);
+                return dayElement;
+            });
+
+            let wrapper = Q('<div class="datepicker_wrapper">');
+            let header = Q('<div class="datepicker_header">');
+            let body = Q('<div class="datepicker_body">');
+            let footer = Q('<div class="datepicker_footer">');
+            let weekdays = Q('<div class="datepicker_weekdays">');
+            let days_wrapper = Q('<div class="datepicker_days">');
+            let dateInput = Q('<input type="date">');
+            let button_ok = this.Button('OK');
+            let button_today = this.Button('Today');
+            footer.append(button_today,button_ok);
+            body.append(weekdays, days_wrapper);
+            wrapper.append(header, body, footer);
+
+            // let container_day = Q('<div>');
+            // let container_weekday = Q('<div>');
+            let container_months = Q('<div>');
+            let container_years = Q('<div>');
+
+            header.append(container_months, container_years);
+
+            if (wrapper.inside(classes.q_window)) {
+                let button_cancel = this.Button('Cancel');
+                footer.append(button_cancel);
+                button_cancel.click(function () {
+                    wrapper.closest('.' + classes.q_window).hide(200);
+                });
+            }
+
+            container_months.on('click',function () {
+
+                
+
+            });
+
+            button_today.click(function () {
+                date = new Date();
+                day = date.getDate();
+                month = date.getMonth() + 1;
+                year = date.getFullYear();
+                daysInMonth = new Date(year, month, 0).getDate();
+                firstDay = new Date(year, month - 1, 1).getDay();
+                lastDay = new Date(year, month - 1, daysInMonth).getDay();
+                populateDays(month, year, day);
+                populateHeader(month, year, day);
+            });
+
+            const populateHeader = function (month, year, day) {
+                // let fullDay = date.toLocaleDateString(locale, { weekday: 'long' });
+                // let days = daysLocale(true);
+                let months = monthsLocale(false);
+
+                // container_day.text(fullDay); // Display full day name in the header
+                // container_weekday.text(day);
+                container_months.text(months[month - 1]);
+                container_years.text(year);
+            }
+
+            let populateDays = function (month, year, day) {
+                days_wrapper.empty();
+
+                // Calculate the number of days in the previous month
+                let daysInPrevMonth = new Date(year, month - 1, 0).getDate();
+                let prevMonthDays = [];
+                for (let i = daysInPrevMonth - firstDay + 1; i <= daysInPrevMonth; i++) {
+                    let dayElement = Q('<div>');
+                    dayElement.text(i);
+                    dayElement.addClass('days prev_month');
+                    prevMonthDays.push(dayElement);
+                }
+
+                let currentMonthDays = [];
+                for (let i = 1; i <= daysInMonth; i++) {
+                    let dayElement = Q('<div>');
+                    dayElement.text(i);
+                    dayElement.addClass('days current_month');
+                    if (i === day) {
+                        dayElement.addClass('day_selected');
+                    }
+                    currentMonthDays.push(dayElement);
+                }
+
+                let nextMonthDays = [];
+                for (let i = 1; i <= 7 - lastDay; i++) {
+                    let dayElement = Q('<div>');
+                    dayElement.text(i);
+                    dayElement.addClass('days next_month');
+                    nextMonthDays.push(dayElement);
+                }
+
+                days_wrapper.append(...prevMonthDays, ...currentMonthDays, ...nextMonthDays);
+            };
+
+            weekdays.append(...dayNames);
+
+            populateDays(month, year, day);
+
+            populateHeader(month, year, day);
+
+            days_wrapper.on('click', function (e) {
+                let target = Q(e.target);
+                if (target.hasClass('days')) {
+                    let day = parseInt(target.text());
+
+                    if (target.hasClass('prev_month')) {
+                        if (month === 1) {
+                            month = 12;
+                            year--;
+                        } else {
+                            month--;
+                        }
+                    } else if (target.hasClass('next_month')) {
+                        if (month === 12) {
+                            month = 1;
+                            year++;
+                        } else {
+                            month++;
+                        }
+                    }
+
+                    date = new Date(year, month - 1, day);
+                    populateDays(month, year, day);
+                    populateHeader(month, year, day);
+                }
+            });
+
+            return wrapper;
+        },
 
         ProgressBar: function (value = 0, min = 0, max = 100, autoKill = 0) {
             let timer = null;
@@ -1363,7 +1669,6 @@ user-select: none;
 
             return button;
         },
-
         File: function (text = '', accept = '*', multiple = false) {
             const container = Q('<div class="' + classes.q_form + ' ' + classes.q_form_file + ' ' + classes.q_form_button + '">');
             const input = Q(`<input type="file" accept="${accept}" ${multiple ? 'multiple' : ''}>`);
@@ -1427,7 +1732,6 @@ user-select: none;
 
             return container;
         },
-
         DropDown: function (data) {
             let wrapper = Q('<div class="' + classes.q_form + ' ' + classes.q_form_dropdown + '">');
             let selected = Q('<div class="' + classes.q_form_dropdown_selected + '">');
@@ -1465,7 +1769,7 @@ user-select: none;
                     selected.html(target.html());
                     selectedValue = valueMap.get(target);
                     deselect();
-                    options.find(classes.q_form_dropdown_option).removeClass(classes.q_form_dropdown_active);
+                    options.find('.' + classes.q_form_dropdown_option).removeClass(classes.q_form_dropdown_active);
                     target.addClass(classes.q_form_dropdown_active);
                 }
             });
@@ -1532,7 +1836,6 @@ user-select: none;
 
             return wrapper;
         },
-
         Slider: function (min = 0, max = 100, value = 50) {
             const slider = Q('<input type="range" class="' + classes.q_form_slider + '">');
             slider.attr('min', min);
@@ -1599,6 +1902,7 @@ user-select: none;
             return slider_wrapper;
         },
 
+        // Window: Need solution for resize
         Window: function (title = '', data, width = 300, height = 300, x = 100, y = 10) {
 
             let dimensions = { width, height, x, y };
@@ -1699,7 +2003,7 @@ user-select: none;
                     });
                 }
 
-                if (content.is(':visible')) {
+                if (minimized) {
                     minimize.html(createIcon('window-minimize'));
                     window_wrapper.css({
                         height: dimensions.height + 'px'
@@ -1726,7 +2030,7 @@ user-select: none;
                     }
                 }
 
-                if (window_wrapper.height() === window.innerHeight) {
+                if (maximized) {
                     maximized = false;
                     maximize.html(createIcon('window-full'));
                     window_wrapper.animate(animation_speed, {
@@ -1746,7 +2050,8 @@ user-select: none;
                         width: '100%',
                         height: '100%',
                         left: 0,
-                        top: 0
+                        top: 0,
+                        borderRadius: 0
                     }, function () {
                         window_wrapper.removeTransition();
                     });
@@ -1879,7 +2184,6 @@ user-select: none;
 
             return window_wrapper;
         },
-
         CheckBox: function (checked = false, text = '') {
             let ID = '_' + Q.ID();
             const container = Q('<div class="' + classes.q_form + ' ' + classes.q_form_checkbox + '">');
@@ -1919,7 +2223,6 @@ user-select: none;
             return container;
 
         },
-
         TextBox: function (type = 'text', value = '', placeholder = '') {
             const input = Q(`<input class="${classes.q_form} ${classes.q_form_input}" type="${type}" placeholder="${placeholder}" value="${value}">`);
 
@@ -1946,7 +2249,6 @@ user-select: none;
 
             return input;
         },
-
         TextArea: function (value = '', placeholder = '') {
             const textarea = Q(`<textarea class="${classes.q_form} ${classes.q_form_textarea}" placeholder="${placeholder}">${value}</textarea>`);
 
@@ -1971,7 +2273,6 @@ user-select: none;
             };
             return textarea;
         },
-
         Radio: function (data) {
             let wrapper = Q('<div class="q_form q_form_radio_wrapper">');
             let radios = [];
@@ -2291,7 +2592,7 @@ Q.style = (function () {
     window.addEventListener('load', () => {
         console.log('Styles plugin loaded.');
         delete Q.style;
-        delete glob_styles;
+        glob_styles = null;
     }, { once: true });
 
     return function (styles) {
