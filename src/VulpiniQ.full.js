@@ -178,15 +178,6 @@ Q.prototype.data = function (key, value) {
     }
     return this.each(el => this.nodes[el].dataset[key] = value);
 };
-Q.Done = (function () {
-    const callbacks = [];
-    window.addEventListener('load', () => {
-        callbacks.forEach(callback => callback());
-    });
-    return function (callback) {
-        callbacks.push(callback);
-    };
-})();
 Q.prototype.each = function (callback) {
     // Iterates over all nodes in the Q object and executes a callback on each node.|Iteration|Q(selector).each((index, element) => console.log(index, element));
     this.nodes.forEach((el, index) => callback.call(el, index, el));
@@ -315,10 +306,6 @@ Q.prototype.html = function (...content) {
         });
     });
 };
-Q.ID = function (length = 8) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
-};
 Q.prototype.index = function (index) {
     // Returns the index of the first node, or the index of a specific node.|Traversal/DOM Manipulation|Q(selector).index(index);
     if (index === undefined) {
@@ -388,15 +375,6 @@ Q.prototype.last = function () {
     // Returns the last node.|Traversal|Q(selector).last();
     return new Q(this.nodes[this.nodes.length - 1]);
 };
-Q.Leaving = (function () {
-    const callbacks = [];
-    window.addEventListener('beforeunload', (event) => {
-        callbacks.forEach(callback => callback(event));
-    });
-    return function (callback) {
-        callbacks.push(callback);
-    };
-})();
 Q.prototype.off = function (events, handler, options = {}) {
     // Removes an event listener from each node.|Event Handling|Q(selector).off("click", handler);
     const defaultOptions = {
@@ -471,20 +449,6 @@ Q.prototype.prop = function (property, value) {
         el[property] = value;
     });
 };
-Q.Ready = (function () {
-    const callbacks = [];
-    document.addEventListener('DOMContentLoaded', () => {
-        callbacks.forEach(callback => callback());
-    }, { once: true });
-
-    return function (callback) {
-        if (document.readyState === 'loading') {
-            callbacks.push(callback);
-        } else {
-            callback();
-        }
-    };
-})();
 Q.prototype.remove = function () {
     // Removes each node from the DOM.|DOM Manipulation|Q(selector).remove();
     return this.each(el => this.nodes[el].remove());
@@ -510,17 +474,6 @@ Q.prototype.removeTransition = function () {
     // Removes the transition from each node.|Display|Q(selector).removeTransition();
     return this.each(el => this.nodes[el].style.transition = '');
 };
-Q.Resize = (function () {
-    const callbacks = [];
-    window.addEventListener('resize', () => {
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-        callbacks.forEach(callback => callback(width, height));
-    });
-    return function (callback) {
-        callbacks.push(callback);
-    };
-})();
 Q.prototype.scrollHeight = function () {
     // Returns the scroll height of the first node.|Dimensions|Q(selector).scrollHeight();
     return this.nodes[0].scrollHeight;
@@ -659,6 +612,53 @@ Q.prototype.zIndex = function (value) {
     }
     return this.each(el => this.nodes[el].style.zIndex = value);
 };
+Q.Done = (function () {
+    const callbacks = [];
+    window.addEventListener('load', () => {
+        callbacks.forEach(callback => callback());
+    });
+    return function (callback) {
+        callbacks.push(callback);
+    };
+})();
+Q.ID = function (length = 8) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+};
+Q.Leaving = (function () {
+    const callbacks = [];
+    window.addEventListener('beforeunload', (event) => {
+        callbacks.forEach(callback => callback(event));
+    });
+    return function (callback) {
+        callbacks.push(callback);
+    };
+})();
+Q.Ready = (function () {
+    const callbacks = [];
+    document.addEventListener('DOMContentLoaded', () => {
+        callbacks.forEach(callback => callback());
+    }, { once: true });
+
+    return function (callback) {
+        if (document.readyState === 'loading') {
+            callbacks.push(callback);
+        } else {
+            callback();
+        }
+    };
+})();
+Q.Resize = (function () {
+    const callbacks = [];
+    window.addEventListener('resize', () => {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        callbacks.forEach(callback => callback(width, height));
+    });
+    return function (callback) {
+        callbacks.push(callback);
+    };
+})();
     Q.Container = function (options = {}) {
     let style = `
         :root {
@@ -2592,7 +2592,7 @@ Q.style = (function () {
     window.addEventListener('load', () => {
         console.log('Styles plugin loaded.');
         delete Q.style;
-        glob_styles = null;
+        delete glob_styles;
     }, { once: true });
 
     return function (styles) {

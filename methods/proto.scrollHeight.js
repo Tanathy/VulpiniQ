@@ -1,4 +1,8 @@
+// Name: scrollHeight
+// Method: Prototype
+// Desc: Returns the scroll height of the first node.
+// Type: Dimensions
+// Example: Q(selector).scrollHeight();
 Q.prototype.scrollHeight = function () {
-    // Returns the scroll height of the first node.|Dimensions|Q(selector).scrollHeight();
     return this.nodes[0].scrollHeight;
 };

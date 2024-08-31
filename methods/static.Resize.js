@@ -1,3 +1,8 @@
+// Name: Resize
+// Method: Static
+// Desc: Registers callbacks to be executed on window resize, providing the new width and height.
+// Type: Event Handling
+// Example: Q.Resize((width, height) => { console.log(`Width: ${width}, Height: ${height}`); });
 Q.Resize = (function () {
     const callbacks = [];
     window.addEventListener('resize', () => {

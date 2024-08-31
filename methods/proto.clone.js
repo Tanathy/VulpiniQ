@@ -1,4 +1,8 @@
+// Name: clone
+// Method: Prototype
+// Desc: Clones the first node.
+// Type: DOM Manipulation
+// Example: Q(selector).clone();
 Q.prototype.clone = function () {
-    // Clones the first node.|DOM Manipulation|Q(selector).clone();
     return new Q(this.nodes[0].cloneNode(true));
 };

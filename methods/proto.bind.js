@@ -1,5 +1,9 @@
+// Name: bind
+// Method: Prototype
+// Desc: Adds an event listener to each node with the ability to use event delegation.
+// Type: Event Handling
+// Example: Q(selector).bind("click", () => console.log("Clicked"));
 Q.prototype.bind = function (event, handler) {
-    // Adds an event listener to each node with the ability to use event delegation.|Event Handling|Q(selector).bind("click", () => console.log("Clicked"));
     if (!this._eventDelegation) {
         this._eventDelegation = {};
     }

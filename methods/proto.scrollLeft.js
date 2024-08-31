@@ -1,5 +1,9 @@
+// Name: scrollLeft
+// Method: Prototype
+// Desc: Gets or sets the horizontal scroll position of the first node, with an option to increment.
+// Type: Scroll Manipulation
+// Example: Q(selector).scrollLeft(value, increment);
 Q.prototype.scrollLeft = function (value, increment = false) {
-    // Gets or sets the horizontal scroll position of the first node, with an option to increment.|Scroll Manipulation|Q(selector).scrollLeft(value, increment);
     if (value === undefined) {
         return this.nodes[0].scrollLeft;
     }

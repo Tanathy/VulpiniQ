@@ -1,5 +1,9 @@
+// Name: fadeIn
+// Method: Prototype
+// Desc: Fades in each node.
+// Type: Display
+// Example: Q(selector).fadeIn(duration, callback);
 Q.prototype.fadeIn = function (duration = 400, callback) {
-    // Fades in each node.|Display|Q(selector).fadeIn(duration, callback);
     return this.each(el => {
         this.nodes[el].style.display = '';
         this.nodes[el].style.transition = `opacity ${duration}ms`;

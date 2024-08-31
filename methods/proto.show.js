@@ -1,5 +1,9 @@
+// Name: show
+// Method: Prototype
+// Desc: Shows each node, optionally with a fade-in effect over a specified duration.
+// Type: Display
+// Example: Q(selector).show(duration, callback);
 Q.prototype.show = function (duration = 0, callback) {
-    // Shows each node.|Display|Q(selector).show(duration, callback);
     return this.each(el => {
         const element = this.nodes[el];
         if (duration === 0) {

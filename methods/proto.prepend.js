@@ -1,5 +1,9 @@
+// Name: prepend
+// Method: Prototype
+// Desc: Prepends child nodes or HTML to each node.
+// Type: DOM Manipulation
+// Example: Q(selector).prepend("<div>Prepended</div>");
 Q.prototype.prepend = function (...nodes) {
-    // Prepends child nodes or HTML to each node.|DOM Manipulation|Q(selector).prepend("<div>Prepended</div>");
     return this.each(el => {
         const parent = this.nodes[el];
 

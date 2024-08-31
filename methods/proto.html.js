@@ -1,6 +1,9 @@
+// Name: html
+// Method: Prototype
+// Desc: Gets or sets the innerHTML of the nodes.
+// Type: Content Manipulation
+// Example: Q(selector).html(string);
 Q.prototype.html = function (...content) {
-    // Gets or sets the innerHTML of the nodes.|Content Manipulation|Q(selector).html(string);
-
     if (content.length === 0) {
         return this.nodes[0]?.innerHTML || null;
     }

@@ -1,5 +1,9 @@
+// Name: hide
+// Method: Prototype
+// Desc: Hides each node, optionally with a fade-out effect over a specified duration.
+// Type: Display
+// Example: Q(selector).hide(duration, callback);
 Q.prototype.hide = function (duration = 0, callback) {
-    // Hides each node.|Display|Q(selector).hide(duration, callback);
     return this.each(el => {
         const element = this.nodes[el];
         if (duration === 0) {

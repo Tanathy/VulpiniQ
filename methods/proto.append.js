@@ -1,5 +1,8 @@
+// Name: append
+// Desc: Appends child nodes or HTML to each node.
+// Type: DOM Manipulation
+// Example: Q(selector).append("<div>Appended</div>");
 Q.prototype.append = function (...nodes) {
-    // Appends child nodes or HTML to each node.|DOM Manipulation|Q(selector).append("<div>Appended</div>");
     return this.each(el => {
         const parent = this.nodes[el];
 

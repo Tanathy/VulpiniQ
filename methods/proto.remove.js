@@ -1,4 +1,8 @@
+// Name: remove
+// Method: Prototype
+// Desc: Removes each node from the DOM.
+// Type: DOM Manipulation
+// Example: Q(selector).remove();
 Q.prototype.remove = function () {
-    // Removes each node from the DOM.|DOM Manipulation|Q(selector).remove();
     return this.each(el => this.nodes[el].remove());
 };

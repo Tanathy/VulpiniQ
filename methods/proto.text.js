@@ -1,5 +1,9 @@
+// Name: text
+// Method: Prototype
+// Desc: Gets or sets the text content of the nodes.
+// Type: Content Manipulation
+// Example: Q(selector).text(string);
 Q.prototype.text = function (content) {
-    // Gets or sets the text content of the nodes.|Content Manipulation|Q(selector).text(string);
     if (content === undefined) {
         return this.nodes[0]?.textContent || null;
     }

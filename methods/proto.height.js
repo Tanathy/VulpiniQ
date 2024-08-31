@@ -1,5 +1,9 @@
+// Name: height
+// Method: Prototype
+// Desc: Gets or sets the height of the first node.
+// Type: Dimensions
+// Example: Q(selector).height(value);
 Q.prototype.height = function (value) {
-    // Gets or sets the height of the first node.|Dimensions|Q(selector).height(value);
     if (value === undefined) {
         return this.nodes[0].offsetHeight;
     }

@@ -1,3 +1,8 @@
+// Name: Ready
+// Method: Static
+// Desc: Registers callbacks to be executed when the DOM is fully loaded.
+// Type: Event Handling
+// Example: Q.Ready(() => { console.log('DOM is ready'); });
 Q.Ready = (function () {
     const callbacks = [];
     document.addEventListener('DOMContentLoaded', () => {

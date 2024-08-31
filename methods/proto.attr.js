@@ -1,5 +1,8 @@
+// Name: attr
+// Desc: Gets or sets attributes on the nodes. Can handle multiple attributes if provided as an object.
+// Type: Attribute Manipulation
+// Example: Q(selector).attr(attribute, value);
 Q.prototype.attr = function (attribute, value) {
-    // Gets or sets attributes on the nodes. Can handle multiple attributes if provided as an object.|Attribute Manipulation|Q(selector).attr(attribute, value);
     if (typeof attribute === 'object') {
         return this.each(el => {
             for (let key in attribute) {

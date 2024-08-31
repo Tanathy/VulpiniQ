@@ -1,5 +1,9 @@
+// Name: zIndex
+// Method: Prototype
+// Desc: Gets or sets the z-index of the first node.
+// Type: Display
+// Example: Q(selector).zIndex(value);
 Q.prototype.zIndex = function (value) {
-    // Gets or sets the z-index of the first node.|Display|Q(selector).zIndex(value);
     if (value === undefined) {
         let zIndex = this.nodes[0].style.zIndex;
         if (!zIndex) {

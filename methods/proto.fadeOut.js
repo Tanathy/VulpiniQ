@@ -1,5 +1,9 @@
+// Name: fadeOut
+// Method: Prototype
+// Desc: Fades out each node.
+// Type: Display
+// Example: Q(selector).fadeOut(duration, callback);
 Q.prototype.fadeOut = function (duration = 400, callback) {
-    // Fades out each node.|Display|Q(selector).fadeOut(duration, callback);
     return this.each(el => {
         this.nodes[el].style.transition = `opacity ${duration}ms`;
         this.nodes[el].style.opacity = 0;

@@ -1,5 +1,9 @@
+// Name: css
+// Method: Prototype
+// Desc: Gets or sets CSS styles on the nodes. Can handle multiple styles if provided as an object.
+// Type: Style Manipulation
+// Example: Q(selector).css(property, value);
 Q.prototype.css = function (property, value) {
-    // Gets or sets CSS styles on the nodes. Can handle multiple styles if provided as an object.|Style Manipulation|Q(selector).css(property, value);
     if (typeof property === 'object') {
         return this.each(el => {
             for (let key in property) {

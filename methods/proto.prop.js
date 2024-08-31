@@ -1,5 +1,9 @@
+// Name: prop
+// Method: Prototype
+// Desc: Gets or sets a property on the nodes.
+// Type: Property Manipulation
+// Example: Q(selector).prop(property, value);
 Q.prototype.prop = function (property, value) {
-    // Gets or sets a property on the nodes.|Property Manipulation|Q(selector).prop(property, value);
     if (value === undefined) {
         return this.nodes[0]?.[property] || null;
     }

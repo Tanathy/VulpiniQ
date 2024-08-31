@@ -1,5 +1,9 @@
+// Name: off
+// Method: Prototype
+// Desc: Removes an event listener from each node.
+// Type: Event Handling
+// Example: Q(selector).off("click", handler);
 Q.prototype.off = function (events, handler, options = {}) {
-    // Removes an event listener from each node.|Event Handling|Q(selector).off("click", handler);
     const defaultOptions = {
         capture: false,
         once: false,
@@ -9,6 +13,5 @@ Q.prototype.off = function (events, handler, options = {}) {
 
     return this.each(el => {
         events.split(' ').forEach(event => this.nodes[el].removeEventListener(event, handler, options));
-    }
-    );
+    });
 };

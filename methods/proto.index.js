@@ -1,5 +1,9 @@
+// Name: index
+// Method: Prototype
+// Desc: Returns the index of the first node, or moves the node to a specific index within its parent.
+// Type: Traversal/DOM Manipulation
+// Example: Q(selector).index(index);
 Q.prototype.index = function (index) {
-    // Returns the index of the first node, or the index of a specific node.|Traversal/DOM Manipulation|Q(selector).index(index);
     if (index === undefined) {
         return Array.from(this.nodes[0].parentNode.children).indexOf(this.nodes[0]);
     }

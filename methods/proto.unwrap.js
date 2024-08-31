@@ -1,5 +1,9 @@
+// Name: unwrap
+// Method: Prototype
+// Desc: Removes the parent wrapper of each node.
+// Type: DOM Manipulation
+// Example: Q(selector).unwrap();
 Q.prototype.unwrap = function () {
-    // Removes the parent wrapper of each node.|DOM Manipulation|Q(selector).unwrap();
     return this.each(el => {
         const parent = this.nodes[el].parentNode;
         if (parent !== document.body) {
