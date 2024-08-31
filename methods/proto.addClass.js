@@ -1,4 +1,5 @@
 // Name: addClass
+// Method: Prototype
 // Desc: Adds one or more classes to each node.
 // Type: Class Manipulation
 // Example: Q(selector).addClass("class1 class2");

@@ -1,4 +1,5 @@
 // Name: append
+// Method: Prototype
 // Desc: Appends child nodes or HTML to each node.
 // Type: DOM Manipulation
 // Example: Q(selector).append("<div>Appended</div>");

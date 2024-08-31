@@ -1,4 +1,5 @@
 // Name: animate
+// Method: Prototype
 // Desc: Animates each node with specific CSS properties.
 // Type: Animation
 // Example: Q(selector).animate(duration, { opacity: 0, left: "50px" }, callback);

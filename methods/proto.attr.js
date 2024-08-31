@@ -1,4 +1,5 @@
 // Name: attr
+// Method: Prototype
 // Desc: Gets or sets attributes on the nodes. Can handle multiple attributes if provided as an object.
 // Type: Attribute Manipulation
 // Example: Q(selector).attr(attribute, value);
