@@ -1,3 +1,8 @@
+// Name: JSON
+// Method: Plugin
+// Desc: Provides methods to parse, deflate, and inflate, modify JSON objects.
+// Type: Plugin
+// Example: var json = Q.JSON({ key: 'value' }); json.Parse({ modify: true, recursive: true }, (key, value) => value + ' modified');
 Q.JSON = function (json) {
     if (!(this instanceof Q.JSON)) {
         return new Q.JSON(json);

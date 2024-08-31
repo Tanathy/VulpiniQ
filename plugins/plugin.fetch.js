@@ -1,3 +1,8 @@
+// Name: fetch
+// Method: Plugin
+// Desc: Fetches data from a URL and returns it to a callback function. Supports retries, timeouts, and custom response validation.
+// Type: Plugin
+// Example: Q.fetch('https://api.example.com/data', (error, data) => console.log(error, data));
 Q.fetch = function (url, callback, options = {}) {
     const {
         method = 'GET',

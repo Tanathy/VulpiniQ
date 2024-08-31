@@ -1,3 +1,9 @@
+// Name: Form
+// Method: Plugin
+// Desc: Form is a simple library for creating forms and windows in the browser. It provides a set of methods for creating form elements, windows, and other UI components.
+// Type: Plugin
+// Example: var containers = Q.Form()
+// Dependencies: Q.style, addClass, removeClass, on, append, each, find, scrollTop, scrollLeft
 Q.Form = function (options = {}) {
     let style = `
            :root {

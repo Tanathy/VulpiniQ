@@ -1,3 +1,9 @@
+// Name: Container
+// Method: Plugin
+// Desc: Useful to create tabbed containers.
+// Type: Plugin
+// Example: var containers = Q.Container();
+// Dependencies: Q.style, addClass, removeClass, on, append, each, find, scrollTop, scrollLeft
 Q.Container = function (options = {}) {
     let style = `
         :root {

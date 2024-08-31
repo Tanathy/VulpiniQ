@@ -1,3 +1,8 @@
+// Name: Timer
+// Method: Plugin
+// Desc: Provides a timer implementation with automatic stop and interrupt. Useful for running tasks at intervals or for a specific duration.
+// Type: Plugin
+// Example: Q.Timer(() => console.log('Tick'), 'timer1', { tick: 5, delay: 1000, interrupt: true });
 Q.Timer = function (callback, id, options = {}) {
     const defaultOptions = {
         tick: 1,

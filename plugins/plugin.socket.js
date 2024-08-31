@@ -1,4 +1,9 @@
-Q.socket = function (url, onMessage, onStatus, options = {}) {
+// Name: Socket
+// Method: Plugin
+// Desc: Provides a WebSocket implementation with automatic reconnection and status callbacks.
+// Type: Plugin
+// Example: var socket = Q.Socket('ws://localhost:8080', console.log, console.log);
+Q.Socket = function (url, onMessage, onStatus, options = {}) {
     const { retries = 5, delay = 1000, protocols = [] } = options;
     let socket, attempts = 0;
 

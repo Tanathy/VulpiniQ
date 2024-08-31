@@ -73,6 +73,20 @@
             margin-top: 10px;
         }
 
+        .card_dependencies {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .dependency_tag {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.4);
+            padding: 0 10px;
+            border-radius: 20px;
+            margin: 1px;
+        }
+
 
         .bracket {
             color: #e7e192;
@@ -134,6 +148,8 @@ var methods = {
         "Name": "addClass",
         "Method": "Prototype",
         "Desc": "Adds one or more classes to each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Class Manipulation",
         "Example": "Q(selector).addClass(\"class1 class2\");",
         "Script": "Q.prototype.addClass = function (classes) {\n    const classList = classes.split(' ');\n    return this.each(el => this.nodes[el].classList.add(...classList));\n};"
@@ -142,6 +158,8 @@ var methods = {
         "Name": "animate",
         "Method": "Prototype",
         "Desc": "Animates each node with specific CSS properties.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Animation",
         "Example": "Q(selector).animate(duration, { opacity: 0, left: \"50px\" }, callback);",
         "Script": "Q.prototype.animate = function (duration, properties, callback) {\n    return this.each(el => {\n        const element = this.nodes[el];\n        const transitionProperties = Object.keys(properties).map(prop => `${prop} ${duration}ms`).join(', ');\n        element.style.transition = transitionProperties;\n        for (const prop in properties) {\n            element.style[prop] = properties[prop];\n        }\n        if (typeof callback === 'function') {\n            setTimeout(() => {\n                if (callback) callback.call(element);\n            }, duration);\n        }\n    }), this;\n};"
@@ -150,6 +168,8 @@ var methods = {
         "Name": "append",
         "Method": "Prototype",
         "Desc": "Appends child nodes or HTML to each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "DOM Manipulation",
         "Example": "Q(selector).append(\"<div>Appended</div>\");",
         "Script": "Q.prototype.append = function (...nodes) {\n    return this.each(el => {\n        const parent = this.nodes[el];\n\n        nodes.forEach(child => {\n\n            if (typeof child === 'string') {\n                parent.insertAdjacentHTML('beforeend', child);\n            } else if (child instanceof HTMLElement || child instanceof Q) {\n                parent.appendChild(child.nodes[0]);\n            } else if (Array.isArray(child) || child instanceof NodeList) {\n                Array.from(child).forEach(subchild => parent.appendChild(subchild));\n            }\n        });\n    });\n};"
@@ -158,6 +178,8 @@ var methods = {
         "Name": "attr",
         "Method": "Prototype",
         "Desc": "Gets or sets attributes on the nodes. Can handle multiple attributes if provided as an object.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Attribute Manipulation",
         "Example": "Q(selector).attr(attribute, value);",
         "Script": "Q.prototype.attr = function (attribute, value) {\n    if (typeof attribute === 'object') {\n        return this.each(el => {\n            for (let key in attribute) {\n                if (attribute.hasOwnProperty(key)) {\n                    this.nodes[el].setAttribute(key, attribute[key]);\n                }\n            }\n        });\n    } else {\n        if (value === undefined) {\n            return this.nodes[0]?.getAttribute(attribute) || null;\n        }\n        return this.each(el => this.nodes[el].setAttribute(attribute, value));\n    }\n};"
@@ -166,6 +188,8 @@ var methods = {
         "Name": "bind",
         "Method": "Prototype",
         "Desc": "Adds an event listener to each node with the ability to use event delegation.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Event Handling",
         "Example": "Q(selector).bind(\"click\", () => console.log(\"Clicked\"));",
         "Script": "Q.prototype.bind = function (event, handler) {\n    if (!this._eventDelegation) {\n        this._eventDelegation = {};\n    }\n\n    if (!this._eventDelegation[event]) {\n        document.addEventListener(event, (e) => {\n            this.each(el => {\n                if (this.nodes[el].contains(e.target)) {\n                    handler.call(e.target, e);\n                }\n            });\n        });\n        this._eventDelegation[event] = true;\n    }\n    return this;\n};"
@@ -174,6 +198,8 @@ var methods = {
         "Name": "blur",
         "Method": "Prototype",
         "Desc": "Blurs the first node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Form Manipulation",
         "Example": "Q(selector).blur();",
         "Script": "Q.prototype.blur = function () {\n    return this.each(el => this.nodes[el].blur());\n};"
@@ -182,6 +208,8 @@ var methods = {
         "Name": "children",
         "Method": "Prototype",
         "Desc": "Returns the children of the first node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Traversal",
         "Example": "Q(selector).children();",
         "Script": "Q.prototype.children = function () {\n    return new Q(this.nodes[0].children);\n};"
@@ -190,6 +218,8 @@ var methods = {
         "Name": "click",
         "Method": "Prototype",
         "Desc": "Triggers a click event on each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Event Handling",
         "Example": "Q(selector).click();",
         "Script": "Q.prototype.click = function () {\n    return this.each(el => this.nodes[el].click());\n};"
@@ -198,6 +228,8 @@ var methods = {
         "Name": "clone",
         "Method": "Prototype",
         "Desc": "Clones the first node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "DOM Manipulation",
         "Example": "Q(selector).clone();",
         "Script": "Q.prototype.clone = function () {\n    return new Q(this.nodes[0].cloneNode(true));\n};"
@@ -206,6 +238,8 @@ var methods = {
         "Name": "closest",
         "Method": "Prototype",
         "Desc": "Returns the closest parent node of the first node that matches a specific selector.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Traversal",
         "Example": "Q(selector).closest(\".parent\");",
         "Script": "Q.prototype.closest = function (selector) {\n    let el = this.nodes[0];\n    while (el) {\n        if (el.matches && el.matches(selector)) {\n            return new Q(el);\n        }\n        el = el.parentElement;\n    }\n    return null;\n};"
@@ -214,6 +248,8 @@ var methods = {
         "Name": "css",
         "Method": "Prototype",
         "Desc": "Gets or sets CSS styles on the nodes. Can handle multiple styles if provided as an object.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Style Manipulation",
         "Example": "Q(selector).css(property, value);",
         "Script": "Q.prototype.css = function (property, value) {\n    if (typeof property === 'object') {\n        return this.each(el => {\n            for (let key in property) {\n                if (property.hasOwnProperty(key)) {\n                    this.nodes[el].style[key] = property[key];\n                }\n            }\n        });\n    } else {\n        if (value === undefined) {\n            return getComputedStyle(this.nodes[0])[property];\n        }\n        return this.each(el => this.nodes[el].style[property] = value);\n    }\n};"
@@ -222,6 +258,8 @@ var methods = {
         "Name": "data",
         "Method": "Prototype",
         "Desc": "Gets or sets data-* attributes on the nodes.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Data Manipulation",
         "Example": "Q(selector).data(key, value);",
         "Script": "Q.prototype.data = function (key, value) {\n    if (value === undefined) {\n        return this.nodes[0]?.dataset[key] || null;\n    }\n    return this.each(el => this.nodes[el].dataset[key] = value);\n};"
@@ -230,6 +268,8 @@ var methods = {
         "Name": "each",
         "Method": "Prototype",
         "Desc": "Iterates over all nodes in the Q object and executes a callback on each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Iteration",
         "Example": "Q(selector).each((index, element) => console.log(index, element));",
         "Script": "Q.prototype.each = function (callback) {\n    this.nodes.forEach((el, index) => callback.call(el, index, el));\n    return this;\n};"
@@ -238,6 +278,8 @@ var methods = {
         "Name": "empty",
         "Method": "Prototype",
         "Desc": "Empties the innerHTML of each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Content Manipulation",
         "Example": "Q(selector).empty();",
         "Script": "Q.prototype.empty = function () {\n    return this.each(el => this.nodes[el].innerHTML = '');\n};"
@@ -246,6 +288,8 @@ var methods = {
         "Name": "eq",
         "Method": "Prototype",
         "Desc": "Returns a specific node by index.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Traversal",
         "Example": "Q(selector).eq(1);",
         "Script": "Q.prototype.eq = function (index) {\n    return new Q(this.nodes[index]);\n};"
@@ -254,6 +298,8 @@ var methods = {
         "Name": "fadeIn",
         "Method": "Prototype",
         "Desc": "Fades in each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Display",
         "Example": "Q(selector).fadeIn(duration, callback);",
         "Script": "Q.prototype.fadeIn = function (duration = 400, callback) {\n    return this.each(el => {\n        this.nodes[el].style.display = '';\n        this.nodes[el].style.transition = `opacity ${duration}ms`;\n        this.nodes[el].offsetHeight;\n        this.nodes[el].style.opacity = 1;\n        setTimeout(() => {\n            this.nodes[el].style.transition = '';\n            if (callback) callback();\n        }, duration);\n    });\n};"
@@ -262,6 +308,8 @@ var methods = {
         "Name": "fadeOut",
         "Method": "Prototype",
         "Desc": "Fades out each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Display",
         "Example": "Q(selector).fadeOut(duration, callback);",
         "Script": "Q.prototype.fadeOut = function (duration = 400, callback) {\n    return this.each(el => {\n        this.nodes[el].style.transition = `opacity ${duration}ms`;\n        this.nodes[el].style.opacity = 0;\n        setTimeout(() => {\n            this.nodes[el].style.transition = '';\n            this.nodes[el].style.display = 'none';\n            if (callback) callback();\n        }, duration);\n    });\n};"
@@ -270,6 +318,8 @@ var methods = {
         "Name": "fadeTo",
         "Method": "Prototype",
         "Desc": "Fades each node to a specific opacity.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Display",
         "Example": "Q(selector).fadeTo(opacity, duration, callback);",
         "Script": "Q.prototype.fadeTo = function (opacity, duration = 400, callback) {\n    return this.each(el => {\n        this.nodes[el].style.transition = `opacity ${duration}ms`;\n        this.nodes[el].offsetHeight;\n        this.nodes[el].style.opacity = opacity;\n        setTimeout(() => {\n            this.nodes[el].style.transition = '';\n            if (callback) callback();\n        }, duration);\n    });\n};"
@@ -278,6 +328,8 @@ var methods = {
         "Name": "fadeToggle",
         "Method": "Prototype",
         "Desc": "Toggles the fade state of each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Display",
         "Example": "Q(selector).fadeToggle(duration, callback);",
         "Script": "Q.prototype.fadeToggle = function (duration = 400, callback) {\n    return this.each(el => {\n        if (window.getComputedStyle(this.nodes[el]).opacity === '0') {\n            this.fadeIn(duration, callback);\n        } else {\n            this.fadeOut(duration, callback);\n        }\n    });\n};"
@@ -286,6 +338,8 @@ var methods = {
         "Name": "find",
         "Method": "Prototype",
         "Desc": "Finds child nodes of the first node that match a specific selector.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Traversal",
         "Example": "Q(selector).find(\".child\");",
         "Script": "Q.prototype.find = function (selector) {\n    const foundNodes = this.nodes[0].querySelectorAll(selector);\n    return foundNodes.length ? Q(foundNodes) : null;\n};"
@@ -294,6 +348,8 @@ var methods = {
         "Name": "first",
         "Method": "Prototype",
         "Desc": "Returns the first node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Traversal",
         "Example": "Q(selector).first();",
         "Script": "Q.prototype.first = function () {\n    return new Q(this.nodes[0]);\n};"
@@ -302,6 +358,8 @@ var methods = {
         "Name": "focus",
         "Method": "Prototype",
         "Desc": "Focuses on the first node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Form Manipulation",
         "Example": "Q(selector).focus();",
         "Script": "Q.prototype.focus = function () {\n    return this.each(el => this.nodes[el].focus());\n};"
@@ -310,6 +368,8 @@ var methods = {
         "Name": "hasClass",
         "Method": "Prototype",
         "Desc": "Checks if the first node has a specific class.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Class Manipulation",
         "Example": "Q(selector).hasClass(className);",
         "Script": "Q.prototype.hasClass = function (className) {\n    return this.nodes[0]?.classList.contains(className) || false;\n};"
@@ -318,6 +378,8 @@ var methods = {
         "Name": "height",
         "Method": "Prototype",
         "Desc": "Gets or sets the height of the first node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Dimensions",
         "Example": "Q(selector).height(value);",
         "Script": "Q.prototype.height = function (value) {\n    if (value === undefined) {\n        return this.nodes[0].offsetHeight;\n    }\n    return this.each(el => this.nodes[el].style.height = value);\n};"
@@ -326,6 +388,8 @@ var methods = {
         "Name": "hide",
         "Method": "Prototype",
         "Desc": "Hides each node, optionally with a fade-out effect over a specified duration.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Display",
         "Example": "Q(selector).hide(duration, callback);",
         "Script": "Q.prototype.hide = function (duration = 0, callback) {\n    return this.each(el => {\n        const element = this.nodes[el];\n        if (duration === 0) {\n            element.style.display = 'none';\n            if (callback) callback();\n        } else {\n            element.style.transition = `opacity ${duration}ms`;\n            element.style.opacity = 1;\n            setTimeout(() => {\n                element.style.opacity = 0;\n                element.addEventListener('transitionend', function handler() {\n                    element.style.display = 'none';\n                    element.style.transition = '';\n                    element.removeEventListener('transitionend', handler);\n                    if (callback) callback();\n                });\n            }, 0);\n        }\n    });\n};"
@@ -334,6 +398,8 @@ var methods = {
         "Name": "html",
         "Method": "Prototype",
         "Desc": "Gets or sets the innerHTML of the nodes.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Content Manipulation",
         "Example": "Q(selector).html(string);",
         "Script": "Q.prototype.html = function (...content) {\n    if (content.length === 0) {\n        return this.nodes[0]?.innerHTML || null;\n    }\n    return this.each(el => {\n        el = this.nodes[el];\n        el.innerHTML = '';\n        content.forEach(child => {\n            if (typeof child === 'string') {\n                el.insertAdjacentHTML('beforeend', child);\n            } else if (child instanceof Q) {\n                child.nodes.forEach(node => el.appendChild(node));\n            } else if (child instanceof HTMLElement) {\n                el.appendChild(child);\n            } else if (Array.isArray(child) || child instanceof NodeList) {\n                Array.from(child).forEach(subchild => el.appendChild(subchild));\n            }\n        });\n    });\n};"
@@ -342,6 +408,8 @@ var methods = {
         "Name": "index",
         "Method": "Prototype",
         "Desc": "Returns the index of the first node, or moves the node to a specific index within its parent.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Traversal/DOM Manipulation",
         "Example": "Q(selector).index(index);",
         "Script": "Q.prototype.index = function (index) {\n    if (index === undefined) {\n        return Array.from(this.nodes[0].parentNode.children).indexOf(this.nodes[0]);\n    }\n    return this.each(el => {\n        const parent = this.nodes[el].parentNode;\n        const siblings = Array.from(parent.children);\n        const position = siblings.indexOf(el);\n        const target = siblings.splice(index, 1)[0];\n        if (position < index) {\n            parent.insertBefore(target, el);\n        } else {\n            parent.insertBefore(target, this.nodes[el].nextSibling);\n        }\n    });\n};"
@@ -350,6 +418,8 @@ var methods = {
         "Name": "inside",
         "Method": "Prototype",
         "Desc": "Checks if the first node is inside another node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Traversal",
         "Example": "Q(selector).inside(\".parent\");",
         "Script": "Q.prototype.inside = function (selector) {\n    return this.nodes[0]?.closest(selector) !== null;\n};"
@@ -358,6 +428,8 @@ var methods = {
         "Name": "is",
         "Method": "Prototype",
         "Desc": "Checks if the first node matches a specific selector.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Utilities",
         "Example": "Q(selector).is(\":visible\");",
         "Script": "Q.prototype.is = function (selector) {\n    const node = this.nodes[0];\n\n    if (!node) return false; \n\n    if (typeof selector === 'function') {\n        return selector.call(node, 0, node);\n    }\n\n    if (typeof selector === 'string') {\n        switch (selector) {\n            case ':visible':\n                return node.offsetWidth > 0 && node.offsetHeight > 0;\n            case ':hidden':\n                return node.offsetWidth === 0 || node.offsetHeight === 0;\n            case ':hover':\n                return node === document.querySelector(':hover');\n            case ':focus':\n                return node === document.activeElement;\n            case ':blur':\n                return node !== document.activeElement;\n            case ':checked':\n                return node.checked;\n            case ':selected':\n                return node.selected;\n            case ':disabled':\n                return node.disabled;\n            case ':enabled':\n                return !node.disabled;\n            default:\n                return node.matches(selector);\n        }\n    }\n\n    if (selector instanceof HTMLElement || selector instanceof Node) {\n        return node === selector;\n    }\n\n    if (selector instanceof Q) {\n        return node === selector.nodes[0];\n    }\n\n    return false;\n};"
@@ -366,6 +438,8 @@ var methods = {
         "Name": "isExists",
         "Method": "Prototype",
         "Desc": "Checks if the first node exists in the DOM.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Utilities",
         "Example": "Q(selector).isExists();",
         "Script": "Q.prototype.isExists = function () {\n    return document.body.contains(this.nodes[0]);\n};"
@@ -374,6 +448,8 @@ var methods = {
         "Name": "last",
         "Method": "Prototype",
         "Desc": "Returns the last node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Traversal",
         "Example": "Q(selector).last();",
         "Script": "Q.prototype.last = function () {\n    return new Q(this.nodes[this.nodes.length - 1]);\n};"
@@ -382,6 +458,8 @@ var methods = {
         "Name": "off",
         "Method": "Prototype",
         "Desc": "Removes an event listener from each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Event Handling",
         "Example": "Q(selector).off(\"click\", handler);",
         "Script": "Q.prototype.off = function (events, handler, options = {}) {\n    const defaultOptions = {\n        capture: false,\n        once: false,\n        passive: false\n    };\n    options = { ...defaultOptions, ...options };\n\n    return this.each(el => {\n        events.split(' ').forEach(event => this.nodes[el].removeEventListener(event, handler, options));\n    });\n};"
@@ -390,6 +468,8 @@ var methods = {
         "Name": "offset",
         "Method": "Prototype",
         "Desc": "Returns the top and left offset of the first node relative to the document.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Dimensions",
         "Example": "Q(selector).offset();",
         "Script": "Q.prototype.offset = function () {\n    const rect = this.nodes[0].getBoundingClientRect();\n    return {\n        top: rect.top + window.scrollY,\n        left: rect.left + window.scrollX\n    };\n};"
@@ -398,6 +478,8 @@ var methods = {
         "Name": "on",
         "Method": "Prototype",
         "Desc": "Adds an event listener to each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Event Handling",
         "Example": "Q(selector).on(\"click\", () => console.log(\"Clicked\"));",
         "Script": "Q.prototype.on = function (events, handler, options = {}) {\n    const defaultOptions = {\n        capture: false,\n        once: false,\n        passive: false\n    };\n\n    options = { ...defaultOptions, ...options };\n\n    return this.each(el => {\n        events.split(' ').forEach(event => this.nodes[el].addEventListener(event, handler, options));\n    });\n};"
@@ -406,6 +488,8 @@ var methods = {
         "Name": "parent",
         "Method": "Prototype",
         "Desc": "Returns the parent node of the first node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Traversal",
         "Example": "Q(selector).parent();",
         "Script": "Q.prototype.parent = function () {\n    return new Q(this.nodes[0].parentNode);\n};"
@@ -414,6 +498,8 @@ var methods = {
         "Name": "position",
         "Method": "Prototype",
         "Desc": "Returns the top and left position of the first node relative to its offset parent.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Dimension/Position",
         "Example": "Q(selector).position();",
         "Script": "Q.prototype.position = function () {\n    return {\n        top: this.nodes[0].offsetTop,\n        left: this.nodes[0].offsetLeft\n    };\n};"
@@ -422,6 +508,8 @@ var methods = {
         "Name": "prepend",
         "Method": "Prototype",
         "Desc": "Prepends child nodes or HTML to each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "DOM Manipulation",
         "Example": "Q(selector).prepend(\"<div>Prepended</div>\");",
         "Script": "Q.prototype.prepend = function (...nodes) {\n    return this.each(el => {\n        const parent = this.nodes[el];\n\n        nodes.forEach(child => {\n            if (typeof child === 'string') {\n                parent.insertAdjacentHTML('afterbegin', child);\n            } else if (child instanceof HTMLElement || child instanceof Q) {\n                parent.insertBefore(child.nodes[0], parent.firstChild);\n            } else if (Array.isArray(child) || child instanceof NodeList) {\n                Array.from(child).forEach(subchild => parent.insertBefore(subchild, parent.firstChild));\n            }\n        });\n    });\n};"
@@ -430,6 +518,8 @@ var methods = {
         "Name": "prop",
         "Method": "Prototype",
         "Desc": "Gets or sets a property on the nodes.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Property Manipulation",
         "Example": "Q(selector).prop(property, value);",
         "Script": "Q.prototype.prop = function (property, value) {\n    if (value === undefined) {\n        return this.nodes[0]?.[property] || null;\n    }\n    return this.each(function (index, el) {\n        el[property] = value;\n    });\n};"
@@ -438,6 +528,8 @@ var methods = {
         "Name": "remove",
         "Method": "Prototype",
         "Desc": "Removes each node from the DOM.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "DOM Manipulation",
         "Example": "Q(selector).remove();",
         "Script": "Q.prototype.remove = function () {\n    return this.each(el => this.nodes[el].remove());\n};"
@@ -446,6 +538,8 @@ var methods = {
         "Name": "removeAttr",
         "Method": "Prototype",
         "Desc": "Removes an attribute from each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Attribute Manipulation",
         "Example": "Q(selector).removeAttr(attribute);",
         "Script": "Q.prototype.removeAttr = function (attribute) {\n    return this.each(el => this.nodes[el].removeAttribute(attribute));\n};"
@@ -454,6 +548,8 @@ var methods = {
         "Name": "removeClass",
         "Method": "Prototype",
         "Desc": "Removes one or more classes from each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Class Manipulation",
         "Example": "Q(selector).removeClass(\"class1 class2\");",
         "Script": "Q.prototype.removeClass = function (classes) {\n    const classList = classes.split(' ');\n    return this.each(el => this.nodes[el].classList.remove(...classList));\n};"
@@ -462,6 +558,8 @@ var methods = {
         "Name": "removeData",
         "Method": "Prototype",
         "Desc": "Removes a data-* attribute from each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Data Manipulation",
         "Example": "Q(selector).removeData(key);",
         "Script": "Q.prototype.removeData = function (key) {\n    return this.each(el => delete this.nodes[el].dataset[key]);\n};"
@@ -470,6 +568,8 @@ var methods = {
         "Name": "removeProp",
         "Method": "Prototype",
         "Desc": "Removes a property from each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Property Manipulation",
         "Example": "Q(selector).removeProp(property);",
         "Script": "Q.prototype.removeProp = function (property) {\n    return this.each(el => delete this.nodes[el][property]);\n};"
@@ -478,6 +578,8 @@ var methods = {
         "Name": "removeTransition",
         "Method": "Prototype",
         "Desc": "Removes the transition from each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Display",
         "Example": "Q(selector).removeTransition();",
         "Script": "Q.prototype.removeTransition = function () {\n    return this.each(el => this.nodes[el].style.transition = '');\n};"
@@ -486,6 +588,8 @@ var methods = {
         "Name": "scrollHeight",
         "Method": "Prototype",
         "Desc": "Returns the scroll height of the first node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Dimensions",
         "Example": "Q(selector).scrollHeight();",
         "Script": "Q.prototype.scrollHeight = function () {\n    return this.nodes[0].scrollHeight;\n};"
@@ -494,6 +598,8 @@ var methods = {
         "Name": "scrollLeft",
         "Method": "Prototype",
         "Desc": "Gets or sets the horizontal scroll position of the first node, with an option to increment.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Scroll Manipulation",
         "Example": "Q(selector).scrollLeft(value, increment);",
         "Script": "Q.prototype.scrollLeft = function (value, increment = false) {\n    if (value === undefined) {\n        return this.nodes[0].scrollLeft;\n    }\n    return this.each(el => {\n        const maxScrollLeft = this.nodes[el].scrollWidth - this.nodes[el].clientWidth;\n        if (increment) {\n            this.nodes[el].scrollLeft = Math.min(this.nodes[el].scrollLeft + value, maxScrollLeft);\n        } else {\n            this.nodes[el].scrollLeft = Math.min(value, maxScrollLeft);\n        }\n    });\n};"
@@ -502,6 +608,8 @@ var methods = {
         "Name": "scrollTop",
         "Method": "Prototype",
         "Desc": "Gets or sets the vertical scroll position of the first node, with an option to increment.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Dimensions",
         "Example": "Q(selector).scrollTop(value, increment);",
         "Script": "Q.prototype.scrollTop = function (value, increment = false) {\n    if (value === undefined) {\n        return this.nodes[0].scrollTop;\n    }\n    return this.each(el => {\n        const maxScrollTop = this.nodes[el].scrollHeight - this.nodes[el].clientHeight;\n        if (increment) {\n            this.nodes[el].scrollTop = Math.min(this.nodes[el].scrollTop + value, maxScrollTop);\n        } else {\n            this.nodes[el].scrollTop = Math.min(value, maxScrollTop);\n        }\n    });\n};"
@@ -510,6 +618,8 @@ var methods = {
         "Name": "scrollWidth",
         "Method": "Prototype",
         "Desc": "Returns the scroll width of the first node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Dimensions",
         "Example": "Q(selector).scrollWidth();",
         "Script": "Q.prototype.scrollWidth = function () {\n    return this.nodes[0].scrollWidth;\n};"
@@ -518,6 +628,8 @@ var methods = {
         "Name": "show",
         "Method": "Prototype",
         "Desc": "Shows each node, optionally with a fade-in effect over a specified duration.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Display",
         "Example": "Q(selector).show(duration, callback);",
         "Script": "Q.prototype.show = function (duration = 0, callback) {\n    return this.each(el => {\n        const element = this.nodes[el];\n        if (duration === 0) {\n            element.style.display = '';\n            if (callback) callback();\n        } else {\n            element.style.transition = `opacity ${duration}ms`;\n            element.style.opacity = 0;\n            element.style.display = '';\n            setTimeout(() => {\n                element.style.opacity = 1;\n                element.addEventListener('transitionend', function handler() {\n                    element.style.transition = '';\n                    element.removeEventListener('transitionend', handler);\n                    if (callback) callback();\n                });\n            }, 0);\n        }\n    });\n};"
@@ -526,6 +638,8 @@ var methods = {
         "Name": "size",
         "Method": "Prototype",
         "Desc": "Returns the width and height of the first node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Dimensions",
         "Example": "Q(selector).size();",
         "Script": "Q.prototype.size = function () {\n    return {\n        width: this.nodes[0].offsetWidth,\n        height: this.nodes[0].offsetHeight\n    };\n};"
@@ -534,6 +648,8 @@ var methods = {
         "Name": "text",
         "Method": "Prototype",
         "Desc": "Gets or sets the text content of the nodes.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Content Manipulation",
         "Example": "Q(selector).text(string);",
         "Script": "Q.prototype.text = function (content) {\n    if (content === undefined) {\n        return this.nodes[0]?.textContent || null;\n    }\n    return this.each(el => this.nodes[el].textContent = content);\n};"
@@ -542,6 +658,8 @@ var methods = {
         "Name": "toggle",
         "Method": "Prototype",
         "Desc": "Toggles the display of each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Utilities",
         "Example": "Q(selector).toggle();",
         "Script": "Q.prototype.toggle = function () {\n    return this.each(el => this.nodes[el].style.display = this.nodes[el].style.display === 'none' ? '' : 'none');\n};"
@@ -550,6 +668,8 @@ var methods = {
         "Name": "toggleClass",
         "Method": "Prototype",
         "Desc": "Toggles a class on each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Class Manipulation",
         "Example": "Q(selector).toggleClass(className);",
         "Script": "Q.prototype.toggleClass = function (className) {\n    return this.each(el => this.nodes[el].classList.toggle(className));\n};"
@@ -558,6 +678,8 @@ var methods = {
         "Name": "trigger",
         "Method": "Prototype",
         "Desc": "Triggers a specific event on each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Event Handling",
         "Example": "Q(selector).trigger(\"click\");",
         "Script": "Q.prototype.trigger = function (event) {\n    return this.each(function (index, el) {\n        el.dispatchEvent(new Event(event));\n    });\n};"
@@ -566,6 +688,8 @@ var methods = {
         "Name": "unwrap",
         "Method": "Prototype",
         "Desc": "Removes the parent wrapper of each node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "DOM Manipulation",
         "Example": "Q(selector).unwrap();",
         "Script": "Q.prototype.unwrap = function () {\n    return this.each(el => {\n        const parent = this.nodes[el].parentNode;\n        if (parent !== document.body) {\n            parent.replaceWith(...this.nodes);\n        }\n    });\n};"
@@ -574,6 +698,8 @@ var methods = {
         "Name": "val",
         "Method": "Prototype",
         "Desc": "Gets or sets the value of form elements in the nodes.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Form Manipulation",
         "Example": "Q(selector).val(value);",
         "Script": "Q.prototype.val = function (value) {\n    if (value === undefined) {\n        return this.nodes[0]?.value || null;\n    }\n    return this.each(el => this.nodes[el].value = value);\n};"
@@ -582,6 +708,8 @@ var methods = {
         "Name": "width",
         "Method": "Prototype",
         "Desc": "Gets or sets the width of the first node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Dimensions",
         "Example": "Q(selector).width(value);",
         "Script": "Q.prototype.width = function (value) {\n    if (value === undefined) {\n        return this.nodes[0].offsetWidth;\n    }\n    return this.each(el => this.nodes[el].style.width = value);\n};"
@@ -590,6 +718,8 @@ var methods = {
         "Name": "wrap",
         "Method": "Prototype",
         "Desc": "Wraps each node with the specified wrapper element.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "DOM Manipulation",
         "Example": "Q(selector).wrap(\"<div class='wrapper'></div>\");",
         "Script": "Q.prototype.wrap = function (wrapper) {\n    return this.each(el => {\n        const parent = this.nodes[el].parentNode;\n        const newParent = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;\n        parent.insertBefore(newParent, this.nodes[el]);\n        newParent.appendChild(this.nodes[el]);\n    });\n};"
@@ -598,6 +728,8 @@ var methods = {
         "Name": "wrapAll",
         "Method": "Prototype",
         "Desc": "Wraps all nodes together in a single wrapper element.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "DOM Manipulation",
         "Example": "Q(selector).wrapAll(\"<div class='wrapper'></div>\");",
         "Script": "Q.prototype.wrapAll = function (wrapper) {\n    return this.each(el => {\n        const parent = this.nodes[el].parentNode;\n        const newParent = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;\n        parent.insertBefore(newParent, this.nodes[0]);\n        this.nodes.forEach(child => newParent.appendChild(child));\n    });\n};"
@@ -606,6 +738,8 @@ var methods = {
         "Name": "zIndex",
         "Method": "Prototype",
         "Desc": "Gets or sets the z-index of the first node.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Display",
         "Example": "Q(selector).zIndex(value);",
         "Script": "Q.prototype.zIndex = function (value) {\n    if (value === undefined) {\n        let zIndex = this.nodes[0].style.zIndex;\n        if (!zIndex) {\n            zIndex = window.getComputedStyle(this.nodes[0]).zIndex;\n        }\n        return zIndex;\n    }\n    return this.each(el => this.nodes[el].style.zIndex = value);\n};"
@@ -614,6 +748,8 @@ var methods = {
         "Name": "Done",
         "Method": "Static",
         "Desc": "Registers callbacks to be executed when the window has fully loaded.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Event Handling",
         "Example": "Q.Done(() => { console.log('Window has fully loaded'); });",
         "Script": "Q.Done = (function () {\n    const callbacks = [];\n    window.addEventListener('load', () => {\n        callbacks.forEach(callback => callback());\n    });\n    return function (callback) {\n        callbacks.push(callback);\n    };\n})();"
@@ -622,6 +758,8 @@ var methods = {
         "Name": "ID",
         "Method": "Static",
         "Desc": "Generates a random alphanumeric ID of specified length.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Utility",
         "Example": "Q.ID(10); // \"A1b2C3d4E5\"",
         "Script": "Q.ID = function (length = 8) {\n    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';\n    return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');\n};"
@@ -630,6 +768,8 @@ var methods = {
         "Name": "Leaving",
         "Method": "Static",
         "Desc": "Registers callbacks to be executed when the window is about to be unloaded.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Event Handling",
         "Example": "Q.Leaving((event) => { console.log('Window is about to be unloaded'); });",
         "Script": "Q.Leaving = (function () {\n    const callbacks = [];\n    window.addEventListener('beforeunload', (event) => {\n        callbacks.forEach(callback => callback(event));\n    });\n    return function (callback) {\n        callbacks.push(callback);\n    };\n})();"
@@ -638,6 +778,8 @@ var methods = {
         "Name": "Ready",
         "Method": "Static",
         "Desc": "Registers callbacks to be executed when the DOM is fully loaded.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Event Handling",
         "Example": "Q.Ready(() => { console.log('DOM is ready'); });",
         "Script": "Q.Ready = (function () {\n    const callbacks = [];\n    document.addEventListener('DOMContentLoaded', () => {\n        callbacks.forEach(callback => callback());\n    }, { once: true });\n\n    return function (callback) {\n        if (document.readyState === 'loading') {\n            callbacks.push(callback);\n        } else {\n            callback();\n        }\n    };\n})();"
@@ -646,197 +788,341 @@ var methods = {
         "Name": "Resize",
         "Method": "Static",
         "Desc": "Registers callbacks to be executed on window resize, providing the new width and height.",
+        "variant": "method",
+        "Dependencies": [],
         "Type": "Event Handling",
         "Example": "Q.Resize((width, height) => { console.log(`Width: ${width}, Height: ${height}`); });",
         "Script": "Q.Resize = (function () {\n    const callbacks = [];\n    window.addEventListener('resize', () => {\n        const width = window.innerWidth;\n        const height = window.innerHeight;\n        callbacks.forEach(callback => callback(width, height));\n    });\n    return function (callback) {\n        callbacks.push(callback);\n    };\n})();"
+    },
+    "Container": {
+        "Name": "Container",
+        "Method": "Plugin",
+        "Desc": "Useful to create tabbed containers.",
+        "variant": "plugin",
+        "Dependencies": [
+            "Q.style",
+            " addClass",
+            " removeClass",
+            " on",
+            " append",
+            " each",
+            " find",
+            " scrollTop",
+            " scrollLeft"
+        ],
+        "Type": "Plugin",
+        "Example": "var containers = Q.Container();",
+        "Script": "Q.Container = function (options = {}) {\n    let style = `\n        :root {\n  \t--svg_arrow-down: url('data:image/svg+xml,<svg xmlns=\"http:\n\t--svg_arrow-left: url('data:image/svg+xml,<svg xmlns=\"http:\n\t--svg_arrow-right: url('data:image/svg+xml,<svg xmlns=\"http:\n\t--svg_arrow-up: url('data:image/svg+xml,<svg xmlns=\"http:\n        }\n \n .svg_arrow-down {\n     -webkit-mask: var(--svg_arrow-down) no-repeat center;\n     mask: var(--svg_arrow-down) no-repeat center;\n     background-color: currentColor;\n     -webkit-mask-size: contain;\n     mask-size: contain;\n }\n \n .svg_arrow-left {\n     -webkit-mask: var(--svg_arrow-left) no-repeat center;\n     mask: var(--svg_arrow-left) no-repeat center;\n     background-color: currentColor;\n     -webkit-mask-size: contain;\n     mask-size: contain;\n }\n \n .svg_arrow-right {\n     -webkit-mask: var(--svg_arrow-right) no-repeat center;\n     mask: var(--svg_arrow-right) no-repeat center;\n     background-color: currentColor;\n     -webkit-mask-size: contain;\n     mask-size: contain;\n }\n \n .svg_arrow-up {\n     -webkit-mask: var(--svg_arrow-up) no-repeat center;\n     mask: var(--svg_arrow-up) no-repeat center;\n     background-color: currentColor;\n     -webkit-mask-size: contain;\n     mask-size: contain;\n }\n \n         .container_icon {\n             width: 100%;\n             height: 100%;\n             color: #777; /* Default color */\n         }\n\n          .tab_navigation_buttons {\n         box-sizing: border-box;\n            width: 20px;\n            background-color: #333;\n            display: flex;\n            justify-content: center;\n            padding: 4px;\n        }\n        \n        .tab_navigation_buttons_vertical {\n            width: auto;\n            height: 20px;\n        }\n        \n        .tab_navigation_buttons:hover {\n            background-color: #555;\n        }\n        \n        .tab_container {\n            width: 100%;\n            height: 300px;\n        }\n        \n        .tab_container_vertical {\n        display: flex;\n                }\n        \n        .tab_navigation_header {\n        \n            background-color: #333;\n            display: flex;\n        }\n        \n        .tab_navigation_header_vertical {\n            flex-direction: column;\n                width: auto;\n        }\n        \n        .tab_navigation_tabs {\n        user-select: none;\n            display: flex;\n            flex-direction: row;\n            width: 100%;\n            overflow: hidden;\n        }\n        \n        .tab_navigation_tabs_vertical {\n            flex-direction: column;\n        }\n        \n        .tab_active {\n            background-color: #555;\n            color: #fff;\n        }\n        \n        .tab {\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            cursor: default;\n            padding: 5px 25px;\n        }\n        \n        .tab_disabled {\n            background-color: #333;\n            color: #555;\n        }\n\n `;\n\n    let createIcon = function (icon) {\n        let iconElement = Q('<div>');\n        iconElement.addClass('svg_' + icon + ' container_icon');\n        return iconElement;\n    }\n\n    let randomletters = function (length) {\n        let result = '';\n        let characters = 'abcdef0123456789';\n        let charactersLength = characters.length;\n        for (let i = 0; i < length; i++) {\n            result += characters.charAt(Math.floor(Math.random() * charactersLength));\n        }\n        return '_' + result;\n    }\n\n    let classes = {\n        'tab_navigation_buttons': 'tab_navigation_buttons',\n        'tab_navigation_buttons_vertical': 'tab_navigation_buttons_vertical',\n        'tab_container': 'tab_container',\n        'tab_container_vertical': 'tab_container_vertical',\n        'tab_navigation_header': 'tab_navigation_header',\n        'tab_navigation_header_vertical': 'tab_navigation_header_vertical',\n        'tab_navigation_tabs': 'tab_navigation_tabs',\n        'tab_navigation_tabs_vertical': 'tab_navigation_tabs_vertical',\n        'tab_active': 'tab_active',\n        'tab': 'tab',\n        'tab_disabled': 'tab_disabled'\n    };\n\n    classes = Object.keys(classes).reduce((acc, key) => {\n        acc[key] = randomletters(6);\n\n        \n        style = style.replace(new RegExp(`\\\\b${key}\\\\b`, 'gm'), acc[key]);\n        return acc;\n    }, {});\n\n    Q.style(style);\n\n    if (options.classes) {\n        classes = Object.assign(classes, options.classes);\n    }\n\n    return {\n        Tab: function (data, horizontal = true) {\n\n            let wrapper = Q('<div class=\"' + classes.tab_container + '\">');\n            let tabs_wrapper = Q('<div class=\"' + classes.tab_navigation_header + '\">');\n            let tabs_nav_left = Q('<div class=\"' + classes.tab_navigation_buttons + '\">');\n            let tabs_nav_right = Q('<div class=\"' + classes.tab_navigation_buttons + '\">');\n            let tabs = Q('<div class=\"' + classes.tab_navigation_tabs + '\">');\n            tabs_wrapper.append(tabs_nav_left, tabs, tabs_nav_right);\n            let content = Q('<div\">');\n            wrapper.append(tabs_wrapper, content);\n\n            if (!horizontal) {\n                wrapper.addClass(classes.tab_container_vertical);\n                tabs.addClass(classes.tab_navigation_tabs_vertical);\n                tabs_wrapper.addClass(classes.tab_navigation_header_vertical);\n                tabs_nav_left.addClass(classes.tab_navigation_buttons_vertical);\n                tabs_nav_right.addClass(classes.tab_navigation_buttons_vertical);\n                tabs_nav_left.append(createIcon('arrow-up'));\n                tabs_nav_right.append(createIcon('arrow-down'));\n            }\n            else {\n                tabs_nav_left.append(createIcon('arrow-left'));\n                tabs_nav_right.append(createIcon('arrow-right'));\n            }\n\n            let data_tabs = {};\n            let data_contents = {};\n\n            data.forEach((item) => {\n                const tab = Q(`<div class=\"${classes.tab}\" data-value=\"${item.value}\">${item.title}</div>`);\n                if (item.disabled) {\n                    tab.addClass(classes.tab_disabled);\n                }\n\n                data_tabs[item.value] = tab;\n                data_contents[item.value] = item.content;\n\n                tab.on('click', function () {\n\n                    if (item.disabled) {\n                        return;\n                    }\n\n                    let foundTabs = tabs.find('.' + classes.tab_active);\n\n                    if (foundTabs) {\n                        foundTabs.removeClass(classes.tab_active);\n                    }\n\n                    tab.addClass(classes.tab_active);\n                    content.html(data_contents[item.value]);\n                });\n                tabs.append(tab);\n            });\n\n            tabs_nav_left.on('click', function () {\n\n                if (!horizontal) {\n                    tabs.scrollTop(-tabs.height(), true);\n                } else {\n                    tabs.scrollLeft(-tabs.width(), true);\n                }\n            });\n\n            tabs_nav_right.on('click', function () {\n\n                if (!horizontal) {\n                    tabs.scrollTop(tabs.height(), true);\n                } else {\n                    tabs.scrollLeft(tabs.width(), true);\n                }\n            });\n\n            wrapper.select = function (value) {\n                data_tabs.forEach(tab => {\n                    if (tab.data('value') === value) {\n                        tab.click();\n                    }\n                });\n            };\n\n            wrapper.disabled = function (value, state) {\n                if (data_tabs[value]) {\n                    if (state) {\n                        data_tabs[value].addClass(classes.tab_disabled);\n                    } else {\n                        data_tabs[value].removeClass(classes.tab_disabled);\n                    }\n                }\n            };\n\n            return wrapper;\n        }\n    };\n\n\n\n\n};"
+    },
+    "Cookie": {
+        "Name": "Cookie",
+        "Method": "Plugin",
+        "Desc": "Provides methods to store and retrieve data from the browser cookies.",
+        "variant": "plugin",
+        "Dependencies": [],
+        "Type": "Plugin",
+        "Example": "Q.Cookie('key', 'value to store'); Q.Cookie('key'); // returns 'value to store'",
+        "Script": "Q.Cookie = function (key, value, options = {}) {\n    function _serialize(options) {\n        const { days, path, domain, secure } = options;\n        let cookieString = '';\n\n        if (days) {\n            const date = new Date();\n            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));\n            cookieString += `expires=${date.toUTCString()}; `;\n        }\n        if (path) {\n            cookieString += `path=${path}; `;\n        }\n        if (domain) {\n            cookieString += `domain=${domain}; `;\n        }\n        if (secure) {\n            cookieString += 'secure; ';\n        }\n        return cookieString;\n    }\n\n    function _parse(cookieString) {\n        return cookieString.split(';').reduce((cookies, cookie) => {\n            const [name, value] = cookie.split('=').map(c => c.trim());\n            cookies[name] = value;\n            return cookies;\n        }, {});\n    }\n\n    if (arguments.length === 2) { \n        if (value === null || value === '') { \n            value = ''; \n            options = { ...options, days: -1 }; \n        }\n        return document.cookie = `${key}=${value}; ${_serialize(options)}`; \n    } else if (arguments.length === 1) { \n        return _parse(document.cookie)[key]; \n    }\n};"
+    },
+    "fetch": {
+        "Name": "fetch",
+        "Method": "Plugin",
+        "Desc": "Fetches data from a URL and returns it to a callback function. Supports retries, timeouts, and custom response validation.",
+        "variant": "plugin",
+        "Dependencies": [],
+        "Type": "Plugin",
+        "Example": "Q.fetch('https://api.example.com/data', (error, data) => console.log(error, data));",
+        "Script": "Q.fetch = function (url, callback, options = {}) {\n    const {\n        method = 'GET',\n        headers = {},\n        body,\n        contentType = 'application/json',\n        responseType = 'json',\n        credentials = 'same-origin',\n        retries = 3,\n        retryDelay = 1000, \n        timeout = 0, \n        validateResponse = (data) => data \n    } = options;\n\n    headers['Content-Type'] = headers['Content-Type'] || contentType;\n\n    \n    const controller = new AbortController();\n    const { signal } = controller;\n\n    \n    const fetchWithRetry = (attempt) => {\n        \n        const timeoutId = timeout ? setTimeout(() => controller.abort(), timeout) : null;\n\n        fetch(url, { method, headers, body, credentials, signal })\n            .then(response => {\n                if (!response.ok) {\n                    throw new Error(`Network response was not ok: ${response.statusText}`);\n                }\n                switch (responseType) {\n                    case 'json': return response.json();\n                    case 'text': return response.text();\n                    case 'blob': return response.blob();\n                    case 'arrayBuffer': return response.arrayBuffer();\n                    default: throw new Error('Unsupported response type');\n                }\n            })\n            .then(data => {\n                if (timeoutId) clearTimeout(timeoutId);\n                return validateResponse(data);\n            })\n            .then(data => callback(null, data))\n            .catch(error => {\n                if (timeoutId) clearTimeout(timeoutId);\n\n                if (error.name === 'AbortError') {\n                    callback(new Error('Fetch request was aborted'), null);\n                } else if (attempt < retries) {\n                    console.warn(`Retrying fetch (${attempt + 1}/${retries}):`, error);\n                    setTimeout(() => fetchWithRetry(attempt + 1), retryDelay);\n                } else {\n                    callback(error, null);\n                }\n            });\n    };\n\n    fetchWithRetry(0);\n\n    \n    return {\n        abort: () => controller.abort()\n    };\n};"
+    },
+    "Form": {
+        "Name": "Form",
+        "Method": "Plugin",
+        "Desc": "Form is a simple library for creating forms and windows in the browser. It provides a set of methods for creating form elements, windows, and other UI components.",
+        "variant": "plugin",
+        "Dependencies": [
+            "Q.style",
+            " addClass",
+            " removeClass",
+            " on",
+            " append",
+            " each",
+            " find",
+            " scrollTop",
+            " scrollLeft"
+        ],
+        "Type": "Plugin",
+        "Example": "var containers = Q.Form()",
+        "Script": "Q.Form = function (options = {}) {\n    let style = `\n           :root {\n               --svg_window-close: url('data:image/svg+xml,<svg xmlns=\"http:\n               --svg_window-full: url('data:image/svg+xml,<svg xmlns=\"http:\n               --svg_window-minimize: url('data:image/svg+xml,<svg xmlns=\"http:\n               --svg_window-windowed: url('data:image/svg+xml,<svg xmlns=\"http:\n           }\n\n           .svg_window-close {\n               -webkit-mask: var(--svg_window-close) no-repeat center;\n               mask: var(--svg_window-close) no-repeat center;\n               background-color: currentColor;\n               -webkit-mask-size: contain;\n               mask-size: contain;\n           }\n\n           .svg_window-full {\n               -webkit-mask: var(--svg_window-full) no-repeat center;\n               mask: var(--svg_window-full) no-repeat center;\n               background-color: currentColor;\n               -webkit-mask-size: contain;\n               mask-size: contain;\n           }\n\n           .svg_window-minimize {\n               -webkit-mask: var(--svg_window-minimize) no-repeat center;\n               mask: var(--svg_window-minimize) no-repeat center;\n               background-color: currentColor;\n               -webkit-mask-size: contain;\n               mask-size: contain;\n           }\n\n           .svg_window-windowed {\n               -webkit-mask: var(--svg_window-windowed) no-repeat center;\n               mask: var(--svg_window-windowed) no-repeat center;\n               background-color: currentColor;\n               -webkit-mask-size: contain;\n               mask-size: contain;\n           }\n\n           .form_icon {\n               width: 100%;\n               height: 100%;\n               color: #fff;\n               /* Default color */\n           }\n\n\n           .q_form {\n               box-sizing: border-box;\n               font-family: inherit;\n               font-size: inherit;\n               color: inherit;\n               margin: 1px;\n           }\n\n           .q_form_disabled {\n               opacity: 0.5;\n           }\n\n           .q_form_checkbox,\n           .q_form_radio {\n               display: flex;\n               width: fit-content;\n               align-items: center;\n           }\n\n           .q_form_checkbox .label:empty,\n           .q_form_radio .label:empty {\n               display: none;\n           }\n\n           .q_form_checkbox .label,\n           .q_form_radio .label {\n               padding-left: 5px;\n               user-select: none;\n           }\n\n           .q_form_cb {\n               position: relative;\n               width: 20px;\n               height: 20px;\n               background-color: #555555;\n           }\n\n           .q_form_cb input[type=\"checkbox\"] {\n               opacity: 0;\n               top: 0;\n               left: 0;\n               padding: 0;\n               margin: 0;\n               width: 100%;\n               height: 100%;\n               position: absolute;\n           }\n\n           .q_form_cb input[type=\"checkbox\"]:checked+label:before {\n               content: \"\";\n               position: absolute;\n               display: block;\n               top: 0;\n               left: 0;\n               width: 100%;\n               height: 100%;\n               background-color: #1DA1F2;\n           }\n\n           .q_form_r {\n               position: relative;\n               width: 20px;\n               height: 20px;\n               background-color: #555555;\n               border-radius: 50%;\n               overflow: hidden;\n           }\n\n           .q_form_r input[type=\"radio\"] {\n               opacity: 0;\n               top: 0;\n               left: 0;\n               padding: 0;\n               margin: 0;\n               width: 100%;\n               height: 100%;\n               position: absolute;\n               border-radius: 50%;\n           }\n\n           .q_form_r input[type=\"radio\"]:checked+label:before {\n               content: \"\";\n               position: absolute;\n               display: block;\n               top: 0;\n               left: 0;\n               width: 100%;\n               height: 100%;\n               background-color: #1DA1F2;\n               border-radius: 50%;\n           }\n\n           .q_form_input {\n               width: calc(100% - 2px);\n               padding: 5px;\n               outline: none;\n               border: 0;\n           }\n\n           .q_form_input:focus,\n           .q_form_textarea:focus {\n               outline: 1px solid #1DA1F2;\n           }\n\n           .q_form_textarea {\n               width: calc(100% - 2px);\n               padding: 5px;\n               outline: none;\n               border: 0;\n           }\n\n           .q_window {\n               position: fixed;\n               background-color: #333;\n               z-index: 1000;\n               box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);\n               border: 1px solid rgba(255, 255, 255, 0.01);\n               border-radius: 5px;\n               overflow: hidden;\n               display: flex;\n               flex-direction: column;\n           }\n\n           .q_window_titlebar {\n               user-select: none;\n               display: flex;\n               background-color: #222;\n               width: 100%;\n               flex-shrink: 0;\n           }\n\n           .q_window_buttons {\n               display: flex;\n           }\n\n           .q_window_button {\n               box-sizing: border-box;\n               display: flex;\n               justify-content: center;\n               align-items: center;\n               cursor: pointer;\n               width: 30px;\n               height: 30px;\n               padding: 10px;\n               background-color: rgba(255, 255, 255, 0.01);\n               margin-left: 1px;\n           }\n\n           .q_window_button:hover {\n               background-color: #424242;\n           }\n\n           .q_window_close:hover {\n               background-color: #e81123;\n           }\n\n           .q_window_titletext {\n               flex-grow: 1;\n               color: #fff;\n               align-content: center;\n               white-space: nowrap;\n               overflow: hidden;\n               text-overflow: ellipsis;\n               padding: 0 5px\n           }\n\n           .q_window_content {\n               width: 100%;\n               overflow-y: auto;\n               flex: 1;\n           }\n\n           .q_slider_wrapper {\n               position: relative;\n               height: 20px;\n               overflow: hidden;\n               background-color: #333;\n           }\n\n           .q_slider_pos {\n               position: absolute;\n               top: 0;\n               left: 0;\n               width: 0;\n               height: 100%;\n               background-color: #1473e6;\n           }\n\n           .q_form_slider {\n               width: 100%;\n               opacity: 0;\n               height: 100%;\n               position: absolute;\n           }\n\n\n           .q_form_dropdown {\n               user-select: none;\n               position: relative;\n               background-color: #333;\n           }\n\n           .q_form_dropdown_options {\n               position: absolute;\n               width: 100%;\n               background-color: #333;\n               z-index: 1;\n           }\n\n           .q_form_dropdown_option,\n           .q_form_dropdown_selected {\n               padding: 5px 0px;\n           }\n\n           .q_form_button {\n               user-select: none;\n               padding: 5px 10px;\n               cursor: pointer;\n           }\n\n           .q_form_button:hover {\n               background-color: #555;\n           }\n\n           .q_form_button:active {\n               background-color: #777;\n           }\n\n           .q_form_file {\n               user-select: none;\n               position: relative;\n               overflow: hidden;\n           }\n\n           .q_form_file input[type=\"file\"] {\n               position: absolute;\n               width: 100%;\n               height: 100%;\n               opacity: 0;\n           }\n\n           .datepicker_wrapper {\n               user-select: none;\n               width: 100%;\n               height: 100%;\n               display: flex;\n               flex-direction: column;\n           }\n\n           .datepicker_header {\n               display: flex;\n               align-items: center;\n               color: #fff;\n               justify-content: center;\n           }\n\n           .datepicker_header div {\n               padding: 15px 5px;\n           }\n\n           .datepicker_weekdays {\n               display: grid;\n               grid-template-columns: repeat(7, 1fr);\n           }\n\n           .datepicker_weekdays div {\n               display: flex;\n               align-items: center;\n               justify-content: center;\n           }\n\n           .datepicker_days {\n               display: grid;\n               grid-template-columns: repeat(7, 1fr);\n               flex: 1;\n           }\n\n           .prev_month,\n           .next_month {\n               opacity: 0.5;\n           }\n\n           .datepicker_body {\n               display: flex;\n               flex-direction: column;\n               flex: 1;\n           }\n\n           .days {\n               cursor: default;\n               display: flex;\n               align-items: center;\n               justify-content: center;\n           }\n\n           .day_selected {\n               background-color: #1473e6;\n               color: #fff;\n           }\n\n           .datepicker_footer {\n               display: flex;\n               justify-content: flex-end;\n           }\n    `;\n\n    let createIcon = function (icon) {\n        let iconElement = Q('<div>');\n        iconElement.addClass('svg_' + icon + ' form_icon');\n        return iconElement;\n    }\n\n    let randomletters = function (length) {\n        let result = '';\n        let characters = 'abcdef0123456789';\n        let charactersLength = characters.length;\n        for (let i = 0; i < length; i++) {\n            result += characters.charAt(Math.floor(Math.random() * charactersLength));\n        }\n        return '_' + result;\n    }\n\n    let classes = {\n        'q_form': 'q_form',\n        'q_form_disabled': 'q_form_disabled',\n        'q_form_checkbox': 'q_form_checkbox',\n        'q_form_radio': 'q_form_radio',\n        'q_form_cb': 'q_form_cb',\n        'q_form_r': 'q_form_r',\n        'q_form_input': 'q_form_input',\n        'q_form_textarea': 'q_form_textarea',\n        'q_window': 'q_window',\n        'q_window_titlebar': 'q_window_titlebar',\n        'q_window_buttons': 'q_window_buttons',\n        'q_window_button': 'q_window_button',\n        'q_window_titletext': 'q_window_titletext',\n        'q_window_content': 'q_window_content',\n        'q_slider_wrapper': 'q_slider_wrapper',\n        'q_slider_pos': 'q_slider_pos',\n        'q_form_slider': 'q_form_slider',\n        'q_form_dropdown': 'q_form_dropdown',\n        'q_form_dropdown_options': 'q_form_dropdown_options',\n        'q_form_dropdown_option': 'q_form_dropdown_option',\n        'q_form_dropdown_selected': 'q_form_dropdown_selected',\n        'q_form_button': 'q_form_button',\n        'q_form_progress_bar': 'q_form_progress_bar',\n        'q_form_file': 'q_form_file',\n        'q_form_progress': 'q_form_progress',\n        'q_form_dropdown_active': 'q_form_dropdown_active',\n        'q_window_close': 'q_window_close',\n        'q_window_minimize': 'q_window_minimize',\n        'q_window_maximize': 'q_window_maximize',\n    };\n\n    \n    \n    \n\n    \n    \n    \n    \n\n    Q.style(style);\n\n    if (options.classes) {\n        classes = Object.assign(classes, options.classes);\n    }\n\n    return {\n\n        \n        DatePicker: function (value = '', locale = window.navigator.language, range = false) {\n\n            let getFirstDayOfWeek = () => {\n                \n                let startDate = new Date();\n                let dayOfWeek = startDate.getDay();\n                startDate.setDate(startDate.getDate() - dayOfWeek);\n\n                \n                return startDate.toLocaleDateString(locale, { weekday: 'short' });\n            };\n\n            let daysLocale = (short = true) => {\n                let days = [];\n                let baseDate = new Date(2021, 0, 4); \n                const options = { weekday: short ? 'short' : 'long' };\n\n                let firstDayOfWeek = getFirstDayOfWeek(); \n\n                \n                while (baseDate.toLocaleDateString(locale, options) !== firstDayOfWeek) {\n                    baseDate.setDate(baseDate.getDate() - 1);\n                }\n\n                for (let i = 0; i < 7; i++) {\n                    let date = new Date(baseDate);\n                    date.setDate(date.getDate() + i);\n                    days.push(date.toLocaleDateString(locale, options));\n                }\n                return days;\n            };\n\n            let monthsLocale = (short = true) => {\n                let months = [];\n                for (let i = 0; i < 12; i++) {\n                    let date = new Date(2021, i, 1);\n                    months.push(date.toLocaleDateString(locale, { month: short ? 'short' : 'long' }));\n                }\n                return months;\n            };\n\n            let date = value ? new Date(value) : new Date();\n            let day = date.getDate();\n            let month = date.getMonth() + 1;\n            let year = date.getFullYear();\n            let daysInMonth = new Date(year, month, 0).getDate();\n            let firstDay = new Date(year, month - 1, 1).getDay();\n            let lastDay = new Date(year, month - 1, daysInMonth).getDay();\n\n            \n            let days = daysLocale(true);\n            let dayNames = days.map((dayName, i) => {\n                let dayElement = Q('<div>');\n                dayElement.text(dayName);\n                return dayElement;\n            });\n\n            let wrapper = Q('<div class=\"datepicker_wrapper\">');\n            let header = Q('<div class=\"datepicker_header\">');\n            let body = Q('<div class=\"datepicker_body\">');\n            let footer = Q('<div class=\"datepicker_footer\">');\n            let weekdays = Q('<div class=\"datepicker_weekdays\">');\n            let days_wrapper = Q('<div class=\"datepicker_days\">');\n            let dateInput = Q('<input type=\"date\">');\n            let button_ok = this.Button('OK');\n            let button_today = this.Button('Today');\n            footer.append(button_today,button_ok);\n            body.append(weekdays, days_wrapper);\n            wrapper.append(header, body, footer);\n\n            \n            \n            let container_months = Q('<div>');\n            let container_years = Q('<div>');\n\n            header.append(container_months, container_years);\n\n            if (wrapper.inside(classes.q_window)) {\n                let button_cancel = this.Button('Cancel');\n                footer.append(button_cancel);\n                button_cancel.click(function () {\n                    wrapper.closest('.' + classes.q_window).hide(200);\n                });\n            }\n\n            container_months.on('click',function () {\n\n                \n\n            });\n\n            button_today.click(function () {\n                date = new Date();\n                day = date.getDate();\n                month = date.getMonth() + 1;\n                year = date.getFullYear();\n                daysInMonth = new Date(year, month, 0).getDate();\n                firstDay = new Date(year, month - 1, 1).getDay();\n                lastDay = new Date(year, month - 1, daysInMonth).getDay();\n                populateDays(month, year, day);\n                populateHeader(month, year, day);\n            });\n\n            const populateHeader = function (month, year, day) {\n                \n                \n                let months = monthsLocale(false);\n\n                \n                \n                container_months.text(months[month - 1]);\n                container_years.text(year);\n            }\n\n            let populateDays = function (month, year, day) {\n                days_wrapper.empty();\n\n                \n                let daysInPrevMonth = new Date(year, month - 1, 0).getDate();\n                let prevMonthDays = [];\n                for (let i = daysInPrevMonth - firstDay + 1; i <= daysInPrevMonth; i++) {\n                    let dayElement = Q('<div>');\n                    dayElement.text(i);\n                    dayElement.addClass('days prev_month');\n                    prevMonthDays.push(dayElement);\n                }\n\n                let currentMonthDays = [];\n                for (let i = 1; i <= daysInMonth; i++) {\n                    let dayElement = Q('<div>');\n                    dayElement.text(i);\n                    dayElement.addClass('days current_month');\n                    if (i === day) {\n                        dayElement.addClass('day_selected');\n                    }\n                    currentMonthDays.push(dayElement);\n                }\n\n                let nextMonthDays = [];\n                for (let i = 1; i <= 7 - lastDay; i++) {\n                    let dayElement = Q('<div>');\n                    dayElement.text(i);\n                    dayElement.addClass('days next_month');\n                    nextMonthDays.push(dayElement);\n                }\n\n                days_wrapper.append(...prevMonthDays, ...currentMonthDays, ...nextMonthDays);\n            };\n\n            weekdays.append(...dayNames);\n\n            populateDays(month, year, day);\n\n            populateHeader(month, year, day);\n\n            days_wrapper.on('click', function (e) {\n                let target = Q(e.target);\n                if (target.hasClass('days')) {\n                    let day = parseInt(target.text());\n\n                    if (target.hasClass('prev_month')) {\n                        if (month === 1) {\n                            month = 12;\n                            year--;\n                        } else {\n                            month--;\n                        }\n                    } else if (target.hasClass('next_month')) {\n                        if (month === 12) {\n                            month = 1;\n                            year++;\n                        } else {\n                            month++;\n                        }\n                    }\n\n                    date = new Date(year, month - 1, day);\n                    populateDays(month, year, day);\n                    populateHeader(month, year, day);\n                }\n            });\n\n            return wrapper;\n        },\n\n        ProgressBar: function (value = 0, min = 0, max = 100, autoKill = 0) {\n            let timer = null;\n            const progress = Q('<div class=\"' + classes.q_form + ' ' + classes.q_form_progress + '\">');\n            const bar = Q('<div class=\"' + classes.q_form_progress_bar + '\">');\n            progress.append(bar);\n\n            function clearAutoKillTimer() {\n                if (timer) {\n                    clearTimeout(timer);\n                    timer = null;\n                }\n            }\n\n            function setAutoKillTimer() {\n                if (autoKill > 0) {\n                    clearAutoKillTimer();\n                    timer = setTimeout(() => {\n                        progress.hide();\n                    }, autoKill);\n                }\n            }\n\n            progress.value = function (value) {\n                const range = max - min;\n                const newWidth = ((value - min) / range) * 100 + '%';\n                if (bar.css('width') !== newWidth) {\n                    bar.css({ width: newWidth });\n                }\n                progress.show();\n                clearAutoKillTimer();\n                setAutoKillTimer();\n            };\n\n            progress.min = function (value) {\n                min = value;\n                progress.value(value);\n            };\n\n            progress.max = function (value) {\n                max = value;\n                progress.value(value);\n            };\n\n            progress.autoKill = function (delay) {\n                autoKill = delay;\n                setAutoKillTimer();\n            };\n\n            progress.value(value);\n\n            return progress;\n        },\n        Button: function (text = '') {\n            const button = Q(`<div class=\"${classes.q_form} ${classes.q_form_button}\">${text}</div>`);\n\n            button.click = function (callback) {\n                button.on('click', callback);\n            };\n\n            button.disabled = function (state) {\n                if (state) {\n                    button.addClass(classes.q_form_disabled);\n                }\n                else {\n                    button.removeClass(classes.q_form_disabled);\n                }\n            };\n\n            button.text = function (text) {\n                button.text(text);\n            };\n\n            button.remove = function () {\n                button.remove();\n            };\n\n            return button;\n        },\n        File: function (text = '', accept = '*', multiple = false) {\n            const container = Q('<div class=\"' + classes.q_form + ' ' + classes.q_form_file + ' ' + classes.q_form_button + '\">');\n            const input = Q(`<input type=\"file\" accept=\"${accept}\" ${multiple ? 'multiple' : ''}>`);\n            const label = Q(`<div>${text}</div>`);\n            container.append(input, label);\n\n            input.disabled = function (state) {\n                input.prop('disabled', state);\n                if (state) {\n                    container.addClass(classes.q_form_disabled);\n                } else {\n                    container.removeClass(classes.q_form_disabled);\n                }\n            };\n\n            container.change = function (callback) {\n                input.on('change', function () {\n                    callback(this.files);\n                });\n            };\n\n            container.image = function (processText = '', size, callback) {\n                input.on('change', function () {\n                    label.text(processText);\n                    let files = this.files;\n                    let fileReaders = [];\n                    let images = [];\n\n                    for (let i = 0; i < files.length; i++) {\n                        if (!files[i].type.startsWith('image/')) {\n                            continue;\n                        }\n\n                        fileReaders[i] = new FileReader();\n                        fileReaders[i].onload = function (e) {\n                            let img = new Image();\n                            img.onload = function () {\n                                if (size !== 'original') {\n                                    let canvas = document.createElement('canvas');\n                                    let ctx = canvas.getContext('2d');\n                                    let width = size;\n                                    let height = (img.height / img.width) * width;\n                                    canvas.width = width;\n                                    canvas.height = height;\n                                    ctx.drawImage(img, 0, 0, width, height);\n                                    images.push(canvas.toDataURL('image/png'));\n                                } else {\n                                    images.push(e.target.result);\n                                }\n                                if (images.length === files.length) {\n                                    label.text(text);\n                                    callback(images);\n                                }\n                            };\n                            img.src = e.target.result;\n                        };\n                        fileReaders[i].readAsDataURL(files[i]);\n                    }\n                });\n            };\n\n            return container;\n        },\n        DropDown: function (data) {\n            let wrapper = Q('<div class=\"' + classes.q_form + ' ' + classes.q_form_dropdown + '\">');\n            let selected = Q('<div class=\"' + classes.q_form_dropdown_selected + '\">');\n            let options = Q('<div class=\"' + classes.q_form_dropdown_options + '\">');\n\n            options.hide();\n            wrapper.append(selected, options);\n\n\n            let valueMap = new Map();\n\n            data.forEach((item, index) => {\n                let option = Q('<div class=\"' + classes.q_form_dropdown_option + '\">');\n                option.html(item.content);\n                if (item.disabled) {\n                    option.addClass(classes.q_form_disabled);\n                }\n                options.append(option);\n                valueMap.set(option, item.value);\n            });\n\n\n            selected.html(data[0].content);\n            let selectedValue = data[0].value;\n\n            function deselect() {\n                options.hide();\n                document.removeEventListener('click', deselect);\n            }\n            options.find('.' + classes.q_form_dropdown_option).first().addClass(classes.q_form_dropdown_active);\n\n            options.on('click', function (e) {\n                let target = Q(e.target);\n                if (target.hasClass(classes.q_form_dropdown_option) && !target.hasClass(classes.q_form_disabled)) {\n                    selected.html(target.html());\n                    selectedValue = valueMap.get(target);\n                    deselect();\n                    options.find('.' + classes.q_form_dropdown_option).removeClass(classes.q_form_dropdown_active);\n                    target.addClass(classes.q_form_dropdown_active);\n                }\n            });\n\n            selected.on('click', function (e) {\n                e.stopPropagation();\n                options.toggle();\n                if (options.is(':visible')) {\n                    document.addEventListener('click', deselect);\n                } else {\n                    document.removeEventListener('click', deselect);\n                }\n            });\n\n            wrapper.change = function (callback) {\n                options.on('click', function (e) {\n                    let target = Q(e.target);\n                    if (target.hasClass(classes.q_form_dropdown_option) && !target.hasClass(classes.q_form_disabled)) {\n                        callback(valueMap.get(target));\n                    }\n                });\n            };\n\n            wrapper.select = function (value) {\n                options.find('.' + classes.q_form_dropdown_option).each(function () {\n                    let option = Q(this);\n                    if (valueMap.get(option) === value) {\n                        selected.html(option.html());\n                        selectedValue = value;\n                        deselect();\n                        options.find('.' + classes.q_form_dropdown_option).removeClass(classes.q_form_dropdown_active);\n                        option.addClass(classes.q_form_dropdown_active);\n                    }\n                });\n            };\n\n            wrapper.disabled = function (value, state) {\n                options.find('.' + classes.q_form_dropdown_option).each(function () {\n                    let option = Q(this);\n                    if (valueMap.get(option) === value) {\n                        option.prop('disabled', state);\n                        if (state) {\n                            option.addClass(classes.q_form_disabled);\n                        } else {\n                            option.removeClass(classes.q_form_disabled);\n                        }\n                    }\n                });\n            };\n\n            wrapper.remove = function (value) {\n                options.find('.' + classes.q_form_dropdown_option).each(function () {\n                    let option = Q(this);\n                    if (valueMap.get(option) === value) {\n                        option.remove();\n                        valueMap.delete(option);\n                    }\n                });\n            };\n\n            wrapper.value = function () {\n                return selectedValue;\n            };\n\n            return wrapper;\n        },\n        Slider: function (min = 0, max = 100, value = 50) {\n            const slider = Q('<input type=\"range\" class=\"' + classes.q_form_slider + '\">');\n            slider.attr('min', min);\n            slider.attr('max', max);\n            slider.attr('value', value);\n\n            let slider_wrapper = Q('<div class=\"' + classes.q_form + ' ' + classes.q_slider_wrapper + '\">');\n            let slider_value = Q('<div class=\"' + classes.q_slider_pos + '\">');\n            slider_wrapper.append(slider_value, slider);\n\n            const slider_width = () => {\n                let percent = (slider.val() - slider.attr('min')) / (slider.attr('max') - slider.attr('min')) * 100;\n                slider_value.css({\n                    width: percent + '%'\n                });\n            };\n\n            slider.on('input', function () {\n                slider_width();\n            });\n\n            slider_width();\n\n            slider_wrapper.change = function (callback) {\n                slider.on('input', function () {\n                    callback(this.value);\n                });\n            };\n\n            slider_wrapper.value = function (value) {\n                if (value !== undefined) {\n                    slider.val(value);\n                    slider.trigger('input');\n                }\n                return slider.val();\n            };\n\n            slider_wrapper.disabled = function (state) {\n                slider.prop('disabled', state);\n                if (state) {\n                    slider_wrapper.addClass(classes.q_form_disabled);\n                } else {\n                    slider_wrapper.removeClass(classes.q_form_disabled);\n                }\n\n            };\n            slider_wrapper.min = function (value) {\n                if (value !== undefined) {\n                    slider.attr('min', value);\n                    slider.trigger('input');\n                }\n                return slider.attr('min');\n            };\n            slider_wrapper.max = function (value) {\n                if (value !== undefined) {\n                    slider.attr('max', value);\n                    slider.trigger('input');\n                }\n                return slider.attr('max');\n            };\n            slider_wrapper.remove = function () {\n                slider_wrapper.remove();\n            };\n            return slider_wrapper;\n        },\n\n        \n        Window: function (title = '', data, width = 300, height = 300, x = 100, y = 10) {\n\n            let dimensions = { width, height, x, y };\n            let minimized = false;\n            let maximized = false;\n            let animation_speed = 200;\n\n            let window_wrapper = Q('<div class=\"' + classes.q_window + '\">');\n            let titlebar = Q('<div class=\"' + classes.q_window_titlebar + '\">');\n            let titletext = Q('<div class=\"' + classes.q_window_titletext + '\">');\n            let uniqueButtons = Q('<div class=\"' + classes.q_window_unique_buttons + '\">');\n            let default_buttons = Q('<div class=\"' + classes.q_window_buttons + '\">');\n            let content = Q('<div class=\"' + classes.q_window_content + '\">');\n            let close = Q('<div class=\"' + classes.q_window_button + ' ' + classes.q_window_close + '\">');\n            let minimize = Q('<div class=\"' + classes.q_window_button + ' ' + classes.q_window_minimize + '\">');\n            let maximize = Q('<div class=\"' + classes.q_window_button + ' ' + classes.q_window_maximize + '\">');\n\n            close.append(createIcon('window-close'));\n            minimize.html(createIcon('window-minimize'));\n            maximize.html(createIcon('window-full'));\n\n            content.append(data);\n            titletext.text(title);\n            titletext.attr('title', title);\n\n            titlebar.append(titletext, uniqueButtons, default_buttons);\n            default_buttons.append(minimize, maximize, close);\n            window_wrapper.append(titlebar, content);\n\n\n\n            dimensions.width = dimensions.width > window_wrapper.parent().width() ? window_wrapper.parent().width() : dimensions.width;\n            dimensions.height = dimensions.height > window_wrapper.parent().height() ? window_wrapper.parent().height() : dimensions.height;\n            dimensions.x = dimensions.x + dimensions.width > window_wrapper.parent().width() ? window_wrapper.parent().width() - dimensions.width : dimensions.x;\n            dimensions.y = dimensions.y + dimensions.height > window_wrapper.parent().height() ? window_wrapper.parent().height() - dimensions.height : dimensions.y;\n\n            window_wrapper.css({\n                width: dimensions.width + 'px',\n                height: dimensions.height + 'px',\n                left: dimensions.x + 'px',\n                top: dimensions.y + 'px'\n            });\n\n            function debounce(func, wait) {\n                let timeout;\n                return function (...args) {\n                    clearTimeout(timeout);\n                    timeout = setTimeout(() => func.apply(this, args), wait);\n                };\n            }\n\n            function handleResize() {\n                const browserWidth = window.innerWidth;\n                const browserHeight = window.innerHeight;\n\n                const { left: currentX, top: currentY } = window_wrapper.position();\n                let { width: currentWidth, height: currentHeight } = window_wrapper.size();\n\n                currentWidth = Math.min(currentWidth, browserWidth);\n                currentHeight = Math.min(currentHeight, browserHeight);\n                const newX = Math.min(currentX, browserWidth - currentWidth);\n                const newY = Math.min(currentY, browserHeight - currentHeight);\n\n                window_wrapper.css({\n                    width: `${currentWidth}px`,\n                    height: `${currentHeight}px`,\n                    left: `${newX}px`,\n                    top: `${newY}px`\n                });\n            }\n\n            window.addEventListener('resize', debounce(handleResize, 300));\n\n            close.on('click', function () {\n\n                window_wrapper.animate(200, {\n                    opacity: 0,\n                    transform: 'scale(0.8)'\n                }, function () {\n                    window_wrapper.hide();\n                });\n\n            });\n\n            minimize.on('click', function () {\n                content.toggle();\n\n                if (maximized) {\n                    maximized = false;\n                    maximize.html(createIcon('window-full'));\n                    window_wrapper.animate(animation_speed, {\n                        width: dimensions.width + 'px',\n                        height: dimensions.height + 'px',\n                        left: dimensions.x + 'px',\n                        top: dimensions.y + 'px'\n                    }, function () {\n                        window_wrapper.removeTransition();\n                    });\n                }\n\n                if (minimized) {\n                    minimize.html(createIcon('window-minimize'));\n                    window_wrapper.css({\n                        height: dimensions.height + 'px'\n                    });\n                    minimized = false;\n                    handleResize();\n\n                } else {\n                    minimize.html(createIcon('window-windowed'));\n                    window_wrapper.css({\n                        height: titlebar.height() + 'px'\n                    });\n                    minimized = true;\n                }\n            });\n\n            maximize.on('click', function () {\n\n                if (minimized) {\n                    minimize.html(createIcon('window-minimize'));\n                    minimized = false;\n                    if (!content.is(':visible')) {\n                        content.toggle();\n                    }\n                }\n\n                if (maximized) {\n                    maximized = false;\n                    maximize.html(createIcon('window-full'));\n                    window_wrapper.animate(animation_speed, {\n                        width: dimensions.width + 'px',\n                        height: dimensions.height + 'px',\n                        left: dimensions.x + 'px',\n                        top: dimensions.y + 'px'\n                    }, function () {\n                        window_wrapper.removeTransition();\n                        handleResize();\n                    });\n\n                } else {\n                    maximized = true;\n                    maximize.html(createIcon('window-windowed'));\n                    window_wrapper.animate(animation_speed, {\n                        width: '100%',\n                        height: '100%',\n                        left: 0,\n                        top: 0,\n                        borderRadius: 0\n                    }, function () {\n                        window_wrapper.removeTransition();\n                    });\n                }\n            });\n\n            const zindex = () => {\n                let highestZIndex = 0;\n                Q('.q_window').each(function () {\n                    let zIndex = parseInt(Q(this).css('z-index'));\n                    if (zIndex > highestZIndex) {\n                        highestZIndex = zIndex;\n                    }\n                });\n                return highestZIndex + 1;\n\n            };\n\n\n            titlebar.on('pointerdown', function (e) {\n                let offset = window_wrapper.position();\n                let x = e.clientX - offset.left;\n                let y = e.clientY - offset.top;\n\n                window_wrapper.css({\n                    'z-index': zindex()\n                });\n\n\n                const pointerMoveHandler = function (e) {\n\n                    let left = e.clientX - x;\n                    let top = e.clientY - y;\n\n\n                    left = Math.max(0, left);\n                    top = Math.max(0, top);\n\n                    let currentWidth = window_wrapper.width();\n                    let currentHeight = window_wrapper.height();\n\n\n                    left = Math.min(window.innerWidth - currentWidth, left);\n                    top = Math.min(window.innerHeight - currentHeight, top);\n\n                    dimensions.x = left;\n                    dimensions.y = top;\n\n                    window_wrapper.css({\n                        left: dimensions.x + 'px',\n                        top: dimensions.y + 'px'\n                    });\n\n                };\n\n                const pointerUpHandler = function () {\n                    Q(document).off('pointermove', pointerMoveHandler);\n                    Q(document).off('pointerup', pointerUpHandler);\n                };\n\n                Q(document).on('pointermove', pointerMoveHandler);\n                Q(document).on('pointerup', pointerUpHandler);\n            });\n\n            window_wrapper.show = function () {\n                if (window_wrapper.isExists()) {\n                    window_wrapper.fadeIn(200);\n                }\n                else {\n                    Q('body').append(window_wrapper);\n                }\n            };\n\n            window_wrapper.hide = function () {\n                window_wrapper.fadeOut(200);\n            };\n\n            window_wrapper.title = function (newTitle) {\n                if (newTitle !== undefined) {\n                    titletext.text(newTitle);\n                }\n                return titletext.text();\n            };\n\n            window_wrapper.content = function (newContent) {\n                if (newContent !== undefined) {\n                    content.html(newContent);\n                }\n            };\n\n            \n            \n            \n            \n            \n            \n            \n            \n            \n            \n            \n\n            \n            \n            \n            \n            \n            \n            \n            \n            \n            \n            \n\n            window_wrapper.close = function () {\n                close.click();\n            };\n\n            window_wrapper.minimize = function () {\n                minimize.click();\n            };\n\n            window_wrapper.maximize = function () {\n                maximize.click();\n            };\n\n            window_wrapper.remove = function () {\n                window_wrapper.remove();\n            };\n\n            return window_wrapper;\n        },\n        CheckBox: function (checked = false, text = '') {\n            let ID = '_' + Q.ID();\n            const container = Q('<div class=\"' + classes.q_form + ' ' + classes.q_form_checkbox + '\">');\n            const checkbox_container = Q('<div class=\"' + classes.q_form_cb + '\">');\n            const input = Q(`<input type=\"checkbox\" id=\"${ID}\">`);\n            const label = Q(`<label for=\"${ID}\">${text}</label>`);\n            const labeltext = Q(`<div class=\"label\">${text}</div>`);\n            checkbox_container.append(input, label);\n            container.append(checkbox_container, labeltext);\n\n            container.checked = function (state) {\n                input.prop('checked', state);\n                if (state) {\n                    input.trigger('change');\n                }\n            };\n\n            container.change = function (callback) {\n                input.on('change', function () {\n                    callback(this.checked);\n                });\n            };\n\n            container.disabled = function (state) {\n                input.prop('disabled', state);\n                if (state) {\n                    container.addClass(classes.q_form_disabled);\n                } else {\n                    container.removeClass(classes.q_form_disabled);\n                }\n            };\n\n            container.text = function (text) {\n                labeltext.text(text);\n            };\n\n            return container;\n\n        },\n        TextBox: function (type = 'text', value = '', placeholder = '') {\n            const input = Q(`<input class=\"${classes.q_form} ${classes.q_form_input}\" type=\"${type}\" placeholder=\"${placeholder}\" value=\"${value}\">`);\n\n            input.placeholder = function (text) {\n                input.attr('placeholder', text);\n            };\n            input.disabled = function (state) {\n                input.prop('disabled', state);\n\n                if (state) {\n                    input.addClass(classes.q_form_disabled);\n                } else {\n                    input.removeClass(classes.q_form_disabled);\n                }\n            };\n            input.reset = function () {\n                input.val('');\n            };\n            input.change = function (callback) {\n                input.on('change', function () {\n                    callback(this.value);\n                });\n            };\n\n            return input;\n        },\n        TextArea: function (value = '', placeholder = '') {\n            const textarea = Q(`<textarea class=\"${classes.q_form} ${classes.q_form_textarea}\" placeholder=\"${placeholder}\">${value}</textarea>`);\n\n            textarea.placeholder = function (text) {\n                textarea.attr('placeholder', text);\n            };\n            textarea.disabled = function (state) {\n                textarea.prop('disabled', state);\n                if (state) {\n                    textarea.addClass(classes.q_form_disabled);\n                } else {\n                    textarea.removeClass(classes.q_form_disabled);\n                }\n            };\n            textarea.reset = function () {\n                textarea.val('');\n            };\n            textarea.change = function (callback) {\n                textarea.on('change', function () {\n                    callback(this.value);\n                });\n            };\n            return textarea;\n        },\n        Radio: function (data) {\n            let wrapper = Q('<div class=\"q_form q_form_radio_wrapper\">');\n            let radios = [];\n\n            data.forEach((item, index) => {\n                let ID = '_' + Q.ID();\n                const container = Q('<div class=\"' + classes.q_form + ' ' + classes.q_form_radio + '\">');\n                const radio_container = Q('<div class=\"' + classes.q_form_r + '\">');\n                const input = Q(`<input type=\"radio\" id=\"${ID}\" name=\"${item.name}\" value=\"${item.value}\">`);\n                const label = Q(`<label for=\"${ID}\"></label>`);\n                const labeltext = Q(`<div class=\"label\">${item.text}</div>`);\n\n                if (item.disabled) {\n                    input.prop('disabled', true);\n                    container.addClass(classes.q_form_disabled);\n                }\n\n                radios.push({ container, input, labeltext });\n\n                radio_container.append(input, label);\n                container.append(radio_container, labeltext);\n                wrapper.append(container);\n            });\n\n            wrapper.change = function (callback) {\n                radios.forEach(radio => {\n                    radio.input.on('change', function () {\n                        if (this.checked) {\n                            callback(this.value);\n                        }\n                    });\n                });\n            };\n            wrapper.select = function (value) {\n                radios.forEach(radio => {\n                    if (radio.input.val() === value) {\n                        radio.input.prop('checked', true).trigger('click');\n                    }\n                });\n            };\n            wrapper.disabled = function (value, state) {\n                radios.forEach(radio => {\n                    if (radio.input.val() === value) {\n                        radio.input.prop('disabled', state);\n\n                        if (state) {\n                            radio.container.addClass(classes.q_form_disabled);\n                        } else {\n                            radio.container.removeClass(classes.q_form_disabled);\n                        }\n                    }\n                });\n            };\n            wrapper.text = function (value, text) {\n                radios.forEach(radio => {\n                    if (radio.input.val() === value) {\n                        radio.labeltext.text(text);\n                    }\n                });\n            };\n            wrapper.remove = function (value) {\n                radios.forEach(radio => {\n                    if (radio.input.val() === value) {\n                        radio.container.remove();\n                    }\n                });\n            };\n            wrapper.reset = function () {\n                radios.forEach(radio => radio.input.prop('checked', false));\n            };\n            wrapper.checked = function (value, state) {\n                radios.forEach(radio => {\n                    if (radio.input.val() === value) {\n                        radio.input.prop('checked', state);\n                    }\n                });\n            };\n            return wrapper;\n        }\n    };\n\n};"
+    },
+    "JSON": {
+        "Name": "JSON",
+        "Method": "Plugin",
+        "Desc": "Provides methods to parse, deflate, and inflate, modify JSON objects.",
+        "variant": "plugin",
+        "Dependencies": [],
+        "Type": "Plugin",
+        "Example": "var json = Q.JSON({ key: 'value' }); json.Parse({ modify: true, recursive: true }, (key, value) => value + ' modified');",
+        "Script": "Q.JSON = function (json) {\n    if (!(this instanceof Q.JSON)) {\n        return new Q.JSON(json);\n    }\n    this.json = json;\n};\n\nQ.JSON.prototype.Parse = function (options = { modify: false, recursive: false }, callback) {\n    const process = (data) => {\n        if (typeof data === 'object' && data !== null && !Array.isArray(data)) {\n            for (const key in data) {\n                if (data.hasOwnProperty(key)) {\n                    const newValue = callback(key, data[key]);\n                    if (modify) {\n                        data[key] = newValue;\n                    }\n                    if (recursive && typeof data[key] === 'object' && data[key] !== null) {\n                        process(data[key]);\n                    }\n                }\n            }\n        }\n    };\n\n    process(this.json);\n    return this.json;\n};\n\nQ.JSON.prototype.deflate = function (level) {\n    const map = {};\n    let counter = 1;\n\n    function replaceRecursive(obj) {\n        if (typeof obj === 'object' && obj !== null) {\n            for (let key in obj) {\n                if (typeof obj[key] === 'object') {\n                    replaceRecursive(obj[key]);\n                }\n\n                if (key.length >= level) {\n                    if (!map[key]) {\n                        map[key] = `[${counter}]`;\n                        counter++;\n                    }\n                    const newKey = map[key];\n                    obj[newKey] = obj[key];\n                    delete obj[key];\n                }\n\n                if (typeof obj[key] === 'string' && obj[key].length >= level) {\n                    if (!map[obj[key]]) {\n                        map[obj[key]] = `[${counter}]`;\n                        counter++;\n                    }\n                    obj[key] = map[obj[key]];\n                }\n            }\n        }\n    }\n\n    const compressedData = JSON.parse(JSON.stringify(this.json));\n    replaceRecursive(compressedData);\n\n    return { data: compressedData, map: map };\n};\n\nQ.JSON.prototype.inflate = function (deflatedJson) {\n    const { data, map } = deflatedJson;\n    const reverseMap = Object.fromEntries(Object.entries(map).map(([k, v]) => [v, k]));\n\n    function restoreRecursive(obj) {\n        if (typeof obj === 'object' && obj !== null) {\n            for (let key in obj) {\n                const originalKey = reverseMap[key] || key;\n                const value = obj[key];\n\n                delete obj[key];\n                obj[originalKey] = value;\n\n                if (typeof obj[originalKey] === 'object') {\n                    restoreRecursive(obj[originalKey]);\n                } else if (reverseMap[obj[originalKey]]) {\n                    obj[originalKey] = reverseMap[obj[originalKey]];\n                }\n            }\n        }\n    }\n\n    const inflatedData = JSON.parse(JSON.stringify(data));\n    restoreRecursive(inflatedData);\n    return inflatedData;\n};"
+    },
+    "Socket": {
+        "Name": "Socket",
+        "Method": "Plugin",
+        "Desc": "Provides a WebSocket implementation with automatic reconnection and status callbacks.",
+        "variant": "plugin",
+        "Dependencies": [],
+        "Type": "Plugin",
+        "Example": "var socket = Q.Socket('ws://localhost:8080', console.log, console.log);",
+        "Script": "Q.Socket = function (url, onMessage, onStatus, options = {}) {\n    const { retries = 5, delay = 1000, protocols = [] } = options;\n    let socket, attempts = 0;\n\n    const connect = () => {\n        socket = new WebSocket(url, protocols);\n        socket.onopen = () => { onStatus?.('connected'); attempts = 0; };\n        socket.onmessage = event => onMessage?.(event.data);\n        socket.onerror = error => onStatus?.('error', error);\n        socket.onclose = () => {\n            if (++attempts <= retries) {\n                onStatus?.('closed');\n                setTimeout(connect, delay);\n            } else {\n                onStatus?.('Max retries exceeded');\n            }\n        };\n    };\n    connect();\n\n    return {\n        send: msg => socket.readyState === WebSocket.OPEN && socket.send(msg),\n        reconnect: () => connect(),\n        close: () => socket.close()\n    };\n};"
+    },
+    "Storage": {
+        "Name": "Storage",
+        "Method": "Plugin",
+        "Desc": "Provides methods to store and retrieve data from the local storage.",
+        "variant": "plugin",
+        "Dependencies": [],
+        "Type": "Plugin",
+        "Example": "Q.Storage('key', 'value to store'); Q.Storage('key'); // returns 'value to store'",
+        "Script": "Q.Storage = function (key, value) {\n    if (arguments.length === 2) { \n        if (value === null || value === '') { \n            localStorage.removeItem(key); \n        } else {\n            localStorage.setItem(key, JSON.stringify(value)); \n        }\n    } else if (arguments.length === 1) { \n        let storedValue = localStorage.getItem(key); \n        try {\n            return JSON.parse(storedValue); \n        } catch (e) {\n            return storedValue; \n        }\n    }\n};"
+    },
+    "String": {
+        "Name": "String",
+        "Method": "Plugin",
+        "Desc": "Provides methods to manipulate strings.",
+        "variant": "plugin",
+        "Dependencies": [],
+        "Type": "Plugin",
+        "Example": "Q.String('hello').capitalize(); // returns 'Hello'",
+        "Script": "Q.String = function (string) {\n    if (!(this instanceof Q.String)) {\n        return new Q.String(string);\n    }\n    this.string = string;\n};\n\nQ.String.prototype.capitalize = function () {\n    return this.string.charAt(0).toUpperCase() + this.string.slice(1);\n};\n\nQ.String.prototype.levenshtein = function (string) {\n    const a = this.string, b = string;\n    const matrix = Array.from({ length: a.length + 1 }, (_, i) => Array.from({ length: b.length + 1 }, (_, j) => i || j));\n\n    for (let i = 1; i <= a.length; i++) {\n        for (let j = 1; j <= b.length; j++) {\n            matrix[i][j] = Math.min(\n                matrix[i - 1][j] + 1,\n                matrix[i][j - 1] + 1,\n                matrix[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)\n            );\n        }\n    }\n    return matrix[a.length][b.length];\n};\n\nQ.String.prototype.find = function (stringOrRegex) {\n    return this.string.match(stringOrRegex);\n};\n\nQ.String.prototype.replaceAll = function (stringOrRegex, replacement) {\n    return this.string.replace(new RegExp(stringOrRegex, 'g'), replacement);\n};"
+    },
+    "Style": {
+        "Name": "Style",
+        "Method": "Plugin",
+        "Desc": "Provides methods to apply global styles to the document. It's useful for applying CSS variables from JavaScript. Q.style will be removed after the styles are applied on the document ready event.",
+        "variant": "plugin",
+        "Dependencies": [],
+        "Type": "Plugin",
+        "Example": "Q.style(':root { --color: red; } body { background-color: var(--color); }');",
+        "Script": "var glob_styles = {\n    styles: '',\n    root: '',\n    element: null,\n    checked: false,\n};\n\nQ.style = (function () {\n    function applyStyles() {\n        if (!glob_styles.checked) {\n            glob_styles.element = document.getElementById('qlib-root-styles') || createStyleElement();\n            glob_styles.checked = true;\n        }\n\n        const finalStyles = `:root {${glob_styles.root}}\\n${glob_styles.styles}`.replace(/(\\r\\n|\\n|\\r|\\t|)/gm, '');\n        glob_styles.element.textContent = finalStyles;\n    }\n\n    function createStyleElement() {\n        const styleElement = document.createElement('style');\n        styleElement.id = 'qlib-root-styles';\n        document.head.insertBefore(styleElement, document.head.firstChild);\n        return styleElement;\n    }\n\n    window.addEventListener('load', () => {\n        console.log('Styles plugin loaded.');\n        delete Q.style;\n        delete glob_styles;\n    }, { once: true });\n\n    return function (styles) {\n        if (typeof styles === 'string') {\n            const rootContentMatch = styles.match(/:root\\s*{([^}]*)}/);\n            if (rootContentMatch) {\n                styles = styles.replace(rootContentMatch[0], '');\n                const rootContent = rootContentMatch[1].split(';').map(item => item.trim()).filter(item => item);\n                glob_styles.root += rootContent.join(';') + ';';\n            }\n            glob_styles.styles += styles.trim();\n        } else {\n            console.error('Invalid styles parameter. Expected a string.');\n        }\n        applyStyles();\n    };\n})();"
+    },
+    "Task": {
+        "Name": "Task",
+        "Method": "Plugin",
+        "Desc": "Provides methods to run tasks asynchronously and handle their completion or failure. Basically a Promise wrapper, but with more control.",
+        "variant": "plugin",
+        "Dependencies": [],
+        "Type": "Plugin",
+        "Example": "var task = Q.Task('task1', () => console.log('Task 1'), () => console.log('Task 2')); task.Run();",
+        "Script": "Q.Task = (function () {\n    const tasks = {};\n    const runningTasks = {};\n\n    function createTask(id) {\n        if (!tasks[id]) {\n            tasks[id] = [];\n        }\n    }\n\n    function addTask(id, ...functions) {\n        if (!tasks[id]) {\n            createTask(id);\n        }\n        tasks[id].push(...functions);\n    }\n\n    async function runTask(id) {\n        if (!tasks[id] || tasks[id].length === 0) {\n            console.error(`No tasks found with ID: ${id}`);\n            return;\n        }\n\n        runningTasks[id] = {\n            doneCallback: null,\n            failCallback: null,\n            timeout: 20000, \n            timeoutCallback: null,\n        };\n\n        const { timeout, timeoutCallback } = runningTasks[id];\n        const timeoutPromise = new Promise((_, reject) => {\n            const timer = setTimeout(() => {\n                abortTask(id);\n                reject(new Error(`Task with ID: ${id} timed out after ${timeout / 1000} seconds`));\n            }, timeout);\n\n            runningTasks[id].timeoutClear = () => clearTimeout(timer);\n        });\n\n        try {\n            await Promise.race([\n                (async () => {\n                    for (const task of tasks[id]) {\n                        await new Promise((resolve, reject) => {\n                            try {\n                                const result = task();\n                                if (result instanceof Promise) {\n                                    result.then(resolve).catch(reject);\n                                } else {\n                                    resolve();\n                                }\n                            } catch (error) {\n                                reject(error);\n                            }\n                        });\n                    }\n                })(),\n                timeoutPromise\n            ]);\n\n            if (runningTasks[id]?.doneCallback) {\n                runningTasks[id].doneCallback();\n            }\n        } catch (error) {\n            console.error(`Task with ID: ${id} failed with error:`, error);\n            if (runningTasks[id]?.failCallback) {\n                runningTasks[id].failCallback(error);\n            }\n        } finally {\n            if (runningTasks[id]?.timeoutClear) {\n                runningTasks[id].timeoutClear();\n            }\n            delete runningTasks[id];\n        }\n    }\n\n    function abortTask(id) {\n        if (runningTasks[id]) {\n            delete runningTasks[id];\n            console.log(`Task with ID: ${id} has been aborted.`);\n        }\n    }\n\n    function taskDone(id, callback) {\n        if (runningTasks[id]) {\n            runningTasks[id].doneCallback = callback;\n        }\n    }\n\n    function taskFail(id, callback) {\n        if (runningTasks[id]) {\n            runningTasks[id].failCallback = callback;\n        }\n    }\n\n    function setTimeoutForTask(id, seconds) {\n        if (runningTasks[id]) {\n            runningTasks[id].timeout = seconds * 1000;\n        }\n    }\n\n    function setTimeoutCallback(id, callback) {\n        if (runningTasks[id]) {\n            runningTasks[id].timeoutCallback = callback;\n        }\n    }\n\n    return function (id, ...functions) {\n        if (functions.length > 0) {\n            addTask(id, ...functions);\n        }\n        return {\n            Run: () => runTask(id),\n            Abort: () => abortTask(id),\n            Done: callback => taskDone(id, callback),\n            Fail: callback => taskFail(id, callback),\n            Timeout: (seconds) => setTimeoutForTask(id, seconds),\n            TimeoutCallback: (callback) => setTimeoutCallback(id, callback),\n        };\n    };\n})();"
+    },
+    "Timer": {
+        "Name": "Timer",
+        "Method": "Plugin",
+        "Desc": "Provides a timer implementation with automatic stop and interrupt. Useful for running tasks at intervals or for a specific duration.",
+        "variant": "plugin",
+        "Dependencies": [],
+        "Type": "Plugin",
+        "Example": "Q.Timer(() => console.log('Tick'), 'timer1', { tick: 5, delay: 1000, interrupt: true });",
+        "Script": "Q.Timer = function (callback, id, options = {}) {\n    const defaultOptions = {\n        tick: 1,\n        delay: 1000,\n        interrupt: false\n    };\n\n    options = { ...defaultOptions, ...options };\n    let tickCount = 0;\n    let intervalId = null;\n\n    if (!Q.Timer.activeTimers) {\n        Q.Timer.activeTimers = new Map();\n    }\n\n    if (options.interrupt && Q.Timer.activeTimers.has(id)) {\n        clearInterval(Q.Timer.activeTimers.get(id));\n    }\n\n    intervalId = setInterval(() => {\n        callback();\n\n        tickCount++;\n        if (options.tick > 0 && tickCount >= options.tick) {\n            clearInterval(intervalId);\n            Q.Timer.activeTimers.delete(id);\n        }\n    }, options.delay);\n\n    Q.Timer.activeTimers.set(id, intervalId);\n\n    return intervalId;\n};\n\nQ.Timer.stop = function (id) {\n    if (Q.Timer.activeTimers && Q.Timer.activeTimers.has(id)) {\n        clearInterval(Q.Timer.activeTimers.get(id));\n        Q.Timer.activeTimers.delete(id);\n    }\n};\n\nQ.Timer.stopAll = function () {\n    if (Q.Timer.activeTimers) {\n        for (let intervalId of Q.Timer.activeTimers.values()) {\n            clearInterval(intervalId);\n        }\n        Q.Timer.activeTimers.clear();\n    }\n};"
     }
 };
 
-function Highlight(code) {
+        function Highlight(code) {
 
-//get all texts between "" and safe escape all special html characters"
-code = code.replace(/\"(.*?)\"/g, (match, p1) => {
-    return `"${p1.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}"`;
-});
-
-
-//first Q is the class name which should be colored
-code = code.replace(/Q\(/g, "<span class='class'>Q</span>(");
-
-// Q. is the object property which should be colored
-code = code.replace(/Q\./g, "<span class='object'>Q.</span>");
+            //get all texts between "" and safe escape all special html characters"
+            code = code.replace(/\"(.*?)\"/g, (match, p1) => {
+                return `"${p1.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}"`;
+            });
 
 
-// Replace text within parentheses
-code = code.replace(/\((.*?)\)/g, "(<span class='bracket_inner'>$1</span>)");
+            //first Q is the class name which should be colored
+            code = code.replace(/Q\(/g, "<span class='class'>Q</span>(");
 
-// Replace text within curly braces
-code = code.replace(/\{(.*?)\}/g, "{<span class='bracket_inner'>$1</span>}");
-
-// Replace text within square brackets
-code = code.replace(/\[(.*?)\]/g, "[<span class='bracket_inner'>$1</span>]");
-
-// color the following characters: {}, (), []
-code = code.replace(/\{|\}|\(|\)|\[|\]/g, "<span class='bracket'>$&</span>");
+            // Q. is the object property which should be colored
+            code = code.replace(/Q\./g, "<span class='object'>Q.</span>");
 
 
+            // Replace text within parentheses
+            code = code.replace(/\((.*?)\)/g, "(<span class='bracket_inner'>$1</span>)");
+
+            // Replace text within curly braces
+            code = code.replace(/\{(.*?)\}/g, "{<span class='bracket_inner'>$1</span>}");
+
+            // Replace text within square brackets
+            code = code.replace(/\[(.*?)\]/g, "[<span class='bracket_inner'>$1</span>]");
+
+            // color the following characters: {}, (), []
+            code = code.replace(/\{|\}|\(|\)|\[|\]/g, "<span class='bracket'>$&</span>");
 
 
 
-// color the following keywords: function, return, if, else, for, while, const, let, var
-code = code.replace(/\b(function|return|if|else|for|while|const|let|var)\b/g, "<span class='keyword'>$1</span>");
-
-// mark the strings.
-code = code.replace(/\"(.*?)\"/g, "<span class='string'>\"$1\"</span>");
-
-// mark the numbers.
-// code = code.replace(/\b(\d+)\b/g, "<span class='number'>$1</span>");
-
-return code;
-}
 
 
-function minify(code) {
+            // color the following keywords: function, return, if, else, for, while, const, let, var
+            code = code.replace(/\b(function|return|if|else|for|while|const|let|var)\b/g, "<span class='keyword'>$1</span>");
 
-//remove all leading spaces
-code = code.replace(/^\s*/gm, "");
+            // mark the strings.
+            code = code.replace(/\"(.*?)\"/g, "<span class='string'>\"$1\"</span>");
 
+            // mark the numbers.
+            // code = code.replace(/\b(\d+)\b/g, "<span class='number'>$1</span>");
 
-//remove all new lines
-code = code.replace(/\n/g, "");
-
-return code;
-}
-
-function CalculateSizeKB(code) {
-return (new Blob([code]).size / 1024).toFixed(2) + " KB";
-}
+            return code;
+        }
 
 
-function BuildCode() {
+        function minify(code) {
 
-//get the current year also separated date and time for build
-let date = new Date();
-let license = `
+            //remove all leading spaces
+            code = code.replace(/^\s*/gm, "");
+
+
+            //remove all new lines
+            code = code.replace(/\n/g, "");
+
+            return code;
+        }
+
+        function CalculateSizeKB(code) {
+            return (new Blob([code]).size / 1024).toFixed(2) + " KB";
+        }
+
+
+        function BuildCode() {
+
+            //get the current year also separated date and time for build
+            let date = new Date();
+            let license = `
 // VulpiniQ Utility Library
 // (c) ${date.getFullYear()} VulpiniQ
 // Build: ${date.toLocaleString()}
 // License: MIT
 `;
 
-let genCode = document.querySelector(".gen_code");
-let minified = document.querySelector(".minified");
+            let genCode = document.querySelector(".gen_code");
+            let minified = document.querySelector(".minified");
 
-let gen_size = document.querySelector(".gen_code_size");
-let minified_size = document.querySelector(".minified_size");
+            let gen_size = document.querySelector(".gen_code_size");
+            let minified_size = document.querySelector(".minified_size");
 
-//get all .card_active and collect all data-name into an array
-let activeCards = document.querySelectorAll(".card_active");
-let code = [];
-activeCards.forEach(card => {
-    code.push(methods[card.dataset.name].Script);
-});
+            //get all .card_active and collect all data-name into an array
+            let activeCards = document.querySelectorAll(".card_active");
+            let code = [];
+            activeCards.forEach(card => {
+                code.push(methods[card.dataset.name].Script);
+            });
 
-let finalCode = source.replace("//METHODS//", code.join("\n\n")).replace("//EXTENSIONS//", "");
-finalCode = finalCode.replace(/^\s*[\r\n]/gm, "");
-let minifiedCode = minify(finalCode);
+            let finalCode = source.replace("//METHODS//", code.join("\n\n")).replace("//EXTENSIONS//", "");
+            finalCode = finalCode.replace(/^\s*[\r\n]/gm, "");
+            let minifiedCode = minify(finalCode);
 
-gen_size.textContent = "Total size of this build: " + CalculateSizeKB(finalCode);
-minified_size.textContent = "Total size of this build: " + CalculateSizeKB(minifiedCode);
-
-
-
-genCode.value = license + finalCode;
-minified.value = license + minifiedCode;
-}
-
-
-document.addEventListener("DOMContentLoaded", function () {
-let container = document.querySelector(".container");
-container.innerHTML = "";
-
-const createCollection = (type) => {
-    const collection = document.createElement("div");
-    collection.classList.add("collection");
-    collection.dataset.type = type;
-    const title = document.createElement("div");
-    title.classList.add("collection_title");
-    title.textContent = type;
-    collection.appendChild(title);
-    const content = document.createElement("div");
-    content.classList.add("collection_content");
-    collection.appendChild(content);
-    return collection;
-};
-
-const createCard = (name, desc, example) => {
-    const card = document.createElement("div");
-    card.classList.add("card");
-    card.dataset.name = name;
-
-    const header = document.createElement("div");
-    header.classList.add("card_header");
-    header.textContent = name;
-    card.appendChild(header);
-
-    const description = document.createElement("div");
-    description.classList.add("card_description");
-    description.textContent = desc;
-    card.appendChild(description);
-
-    const cardExample = document.createElement("div");
-    cardExample.classList.add("card_example");
-    cardExample.innerHTML = Highlight(example);
-    card.appendChild(cardExample);
-
-    card.onclick = () => {
-        card.classList.toggle("card_active");
-        BuildCode();
-    };
-
-    return card;
-};
-
-const addToCollection = (collection, card) => {
-    //select collection with data-type attribute. if not exists, create it.
-    let collectionElement = document.querySelector(`.collection[data-type="${collection}"]`);
-    if (!collectionElement) {
-        collectionElement = createCollection(collection);
-        container.appendChild(collectionElement);
-    }
-    collectionElement.querySelector(".collection_content").appendChild(card);
-};
-
-Object.entries(methods).forEach(([key, value]) => {
-    const card = createCard(value.Name, value.Desc, value.Example);
-    addToCollection(value.Type, card);
-});
+            gen_size.textContent = "Total size of this build: " + CalculateSizeKB(finalCode);
+            minified_size.textContent = "Total size of this build: " + CalculateSizeKB(minifiedCode);
 
 
 
-});
+            genCode.value = license + finalCode;
+            minified.value = license + minifiedCode;
+        }
 
 
-</script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let container = document.querySelector(".container");
+            container.innerHTML = "";
+
+            const createCollection = (type) => {
+                const collection = document.createElement("div");
+                collection.classList.add("collection");
+                collection.dataset.type = type;
+                const title = document.createElement("div");
+                title.classList.add("collection_title");
+                title.textContent = type;
+                collection.appendChild(title);
+                const content = document.createElement("div");
+                content.classList.add("collection_content");
+                collection.appendChild(content);
+                return collection;
+            };
+
+            const createCard = (name, desc, example, deps) => {
+                const card = document.createElement("div");
+                card.classList.add("card");
+                card.dataset.name = name;
+
+                const header = document.createElement("div");
+                header.classList.add("card_header");
+                header.textContent = name;
+                card.appendChild(header);
+
+                const description = document.createElement("div");
+                description.classList.add("card_description");
+                description.textContent = desc;
+                card.appendChild(description);
+
+                const cardExample = document.createElement("div");
+                cardExample.classList.add("card_example");
+                cardExample.innerHTML = Highlight(example);
+                card.appendChild(cardExample);
+
+                const Dependencies = document.createElement("div");
+                Dependencies.classList.add("card_dependencies");
+
+                deps.forEach(dep => {
+                    const tag = document.createElement("div");
+                    tag.classList.add("dependency_tag");
+                    tag.textContent = dep;
+                    Dependencies.appendChild(tag);
+                });
+
+                card.appendChild(Dependencies);
+
+                card.onclick = () => {
+                    card.classList.toggle("card_active");
+                    BuildCode();
+                };
+
+                return card;
+            };
+
+            const addToCollection = (collection, card) => {
+                //select collection with data-type attribute. if not exists, create it.
+                let collectionElement = document.querySelector(`.collection[data-type="${collection}"]`);
+                if (!collectionElement) {
+                    collectionElement = createCollection(collection);
+                    container.appendChild(collectionElement);
+                }
+                collectionElement.querySelector(".collection_content").appendChild(card);
+            };
+
+            Object.entries(methods).forEach(([key, value]) => {
+                const card = createCard(value.Name, value.Desc, value.Example, value.Dependencies);
+                addToCollection(value.Type, card);
+            });
+
+
+
+        });
+
+
+    </script>
 
 
 </head>
 
 <body>
 
-<div class="container"></div>
+    <div class="container"></div>
 
-<div class="generated">
-<h2>Your personalised VulpiniQ</h2>
-<div class="gen_code_size" readonly></div>
-<textarea class="gen_code" readonly></textarea>
-</div>
+    <div class="generated">
+        <h2>Your personalised VulpiniQ</h2>
+        <div class="gen_code_size" readonly></div>
+        <textarea class="gen_code" readonly></textarea>
+    </div>
 
-<div class="generated">
-<h2>Minified version</h2>
-<div class="minified_size" readonly></div>
-<textarea class="gen_code minified" readonly></textarea>
-</div>
+    <div class="generated">
+        <h2>Minified version</h2>
+        <div class="minified_size" readonly></div>
+        <textarea class="gen_code minified" readonly></textarea>
+    </div>
 
 </body>
 

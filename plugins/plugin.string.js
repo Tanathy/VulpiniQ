@@ -1,3 +1,8 @@
+// Name: String
+// Method: Plugin
+// Desc: Provides methods to manipulate strings.
+// Type: Plugin
+// Example: Q.String('hello').capitalize(); // returns 'Hello'
 Q.String = function (string) {
     if (!(this instanceof Q.String)) {
         return new Q.String(string);

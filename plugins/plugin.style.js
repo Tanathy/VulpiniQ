@@ -1,3 +1,8 @@
+// Name: Style
+// Method: Plugin
+// Desc: Provides methods to apply global styles to the document. It's useful for applying CSS variables from JavaScript. Q.style will be removed after the styles are applied on the document ready event.
+// Type: Plugin
+// Example: Q.style(':root { --color: red; } body { background-color: var(--color); }');
 var glob_styles = {
     styles: '',
     root: '',

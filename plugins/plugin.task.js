@@ -1,3 +1,8 @@
+// Name: Task
+// Method: Plugin
+// Desc: Provides methods to run tasks asynchronously and handle their completion or failure. Basically a Promise wrapper, but with more control.
+// Type: Plugin
+// Example: var task = Q.Task('task1', () => console.log('Task 1'), () => console.log('Task 2')); task.Run();
 Q.Task = (function () {
     const tasks = {};
     const runningTasks = {};
