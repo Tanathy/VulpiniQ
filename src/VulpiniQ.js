@@ -40,7 +40,6 @@ const Q = (() => {
                         }
                     });
                 }
-
                 if (directProps) {
                     this.nodes.forEach(el => {
                         for (const prop of directProps) {
@@ -55,6 +54,7 @@ const Q = (() => {
         }
     }
     // Name: addClass
+// Method: Prototype
 // Desc: Adds one or more classes to each node.
 // Type: Class Manipulation
 // Example: Q(selector).addClass("class1 class2");
@@ -63,6 +63,7 @@ Q.prototype.addClass = function (classes) {
     return this.each(el => this.nodes[el].classList.add(...classList));
 };
 // Name: animate
+// Method: Prototype
 // Desc: Animates each node with specific CSS properties.
 // Type: Animation
 // Example: Q(selector).animate(duration, { opacity: 0, left: "50px" }, callback);
@@ -82,6 +83,7 @@ Q.prototype.animate = function (duration, properties, callback) {
     }), this;
 };
 // Name: append
+// Method: Prototype
 // Desc: Appends child nodes or HTML to each node.
 // Type: DOM Manipulation
 // Example: Q(selector).append("<div>Appended</div>");
@@ -102,6 +104,7 @@ Q.prototype.append = function (...nodes) {
     });
 };
 // Name: attr
+// Method: Prototype
 // Desc: Gets or sets attributes on the nodes. Can handle multiple attributes if provided as an object.
 // Type: Attribute Manipulation
 // Example: Q(selector).attr(attribute, value);
@@ -923,6 +926,5 @@ Q.Resize = (function () {
     };
 })();
     //EXTENSIONS//
-
     return Q;
 })();

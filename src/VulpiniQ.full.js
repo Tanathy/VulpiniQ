@@ -40,7 +40,6 @@ const Q = (() => {
                         }
                     });
                 }
-
                 if (directProps) {
                     this.nodes.forEach(el => {
                         for (const prop of directProps) {
@@ -55,6 +54,7 @@ const Q = (() => {
         }
     }
     // Name: addClass
+// Method: Prototype
 // Desc: Adds one or more classes to each node.
 // Type: Class Manipulation
 // Example: Q(selector).addClass("class1 class2");
@@ -63,6 +63,7 @@ Q.prototype.addClass = function (classes) {
     return this.each(el => this.nodes[el].classList.add(...classList));
 };
 // Name: animate
+// Method: Prototype
 // Desc: Animates each node with specific CSS properties.
 // Type: Animation
 // Example: Q(selector).animate(duration, { opacity: 0, left: "50px" }, callback);
@@ -82,6 +83,7 @@ Q.prototype.animate = function (duration, properties, callback) {
     }), this;
 };
 // Name: append
+// Method: Prototype
 // Desc: Appends child nodes or HTML to each node.
 // Type: DOM Manipulation
 // Example: Q(selector).append("<div>Appended</div>");
@@ -102,6 +104,7 @@ Q.prototype.append = function (...nodes) {
     });
 };
 // Name: attr
+// Method: Prototype
 // Desc: Gets or sets attributes on the nodes. Can handle multiple attributes if provided as an object.
 // Type: Attribute Manipulation
 // Example: Q(selector).attr(attribute, value);
@@ -922,7 +925,13 @@ Q.Resize = (function () {
         callbacks.push(callback);
     };
 })();
-    Q.Container = function (options = {}) {
+    // Name: Container
+// Method: Plugin
+// Desc: Useful to create tabbed containers.
+// Type: Plugin
+// Example: var containers = Q.Container();
+// Dependencies: Q.style, addClass, removeClass, on, append, each, find, scrollTop, scrollLeft
+Q.Container = function (options = {}) {
     let style = `
         :root {
   	--svg_arrow-down: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 134.49459 62.707709"><path d="M 100.93685,31.353867 C 82.480099,48.598492 67.319803,62.707709 67.247301,62.707709 c -0.0725,0 -15.232809,-14.109215 -33.689561,-31.353842 L 3.5365448e-8,6.6845858e-7 H 67.247301 134.4946 Z"/></svg>');
@@ -1183,6 +1192,56 @@ Q.Resize = (function () {
 
 
 };
+// Name: Cookie
+// Method: Plugin
+// Desc: Provides methods to store and retrieve data from the browser cookies.
+// Type: Plugin
+// Example: Q.Cookie('key', 'value to store'); Q.Cookie('key'); // returns 'value to store'
+Q.Cookie = function (key, value, options = {}) {
+    function _serialize(options) {
+        const { days, path, domain, secure } = options;
+        let cookieString = '';
+
+        if (days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            cookieString += `expires=${date.toUTCString()}; `;
+        }
+        if (path) {
+            cookieString += `path=${path}; `;
+        }
+        if (domain) {
+            cookieString += `domain=${domain}; `;
+        }
+        if (secure) {
+            cookieString += 'secure; ';
+        }
+        return cookieString;
+    }
+
+    function _parse(cookieString) {
+        return cookieString.split(';').reduce((cookies, cookie) => {
+            const [name, value] = cookie.split('=').map(c => c.trim());
+            cookies[name] = value;
+            return cookies;
+        }, {});
+    }
+
+    if (arguments.length === 2) { 
+        if (value === null || value === '') { 
+            value = ''; 
+            options = { ...options, days: -1 }; 
+        }
+        return document.cookie = `${key}=${value}; ${_serialize(options)}`; 
+    } else if (arguments.length === 1) { 
+        return _parse(document.cookie)[key]; 
+    }
+};
+// Name: fetch
+// Method: Plugin
+// Desc: Fetches data from a URL and returns it to a callback function. Supports retries, timeouts, and custom response validation.
+// Type: Plugin
+// Example: Q.fetch('https://api.example.com/data', (error, data) => console.log(error, data));
 Q.fetch = function (url, callback, options = {}) {
     const {
         method = 'GET',
@@ -1248,6 +1307,12 @@ Q.fetch = function (url, callback, options = {}) {
     };
 };
 
+// Name: Form
+// Method: Plugin
+// Desc: Form is a simple library for creating forms and windows in the browser. It provides a set of methods for creating form elements, windows, and other UI components.
+// Type: Plugin
+// Example: var containers = Q.Form()
+// Dependencies: Q.style, addClass, removeClass, on, append, each, find, scrollTop, scrollLeft
 Q.Form = function (options = {}) {
     let style = `
            :root {
@@ -1601,6 +1666,55 @@ Q.Form = function (options = {}) {
                display: flex;
                justify-content: flex-end;
            }
+
+           .q_form_tags {
+                display: flex;
+                flex-wrap: wrap;
+}
+
+.q_form_tag {
+    display: flex;
+    align-items: center;
+    border: 1px solid #333;
+    color: #fff;
+overflow: hidden;
+    margin: 2px;
+    border-radius: 5px;
+}
+
+        .q_form_tag_rating {
+    display: flex;
+    background-color: #333;
+    padding: 2px 5px;
+    align-items: center;
+            }
+
+            .q_form_tag_icon {
+                width: 10px;
+                height: 10px;
+}
+
+.q_form_tag_icon_small {
+    width: 5px;
+    height: 5px;
+}
+
+.q_form_tag_name {
+    padding: 2px 8px;
+}
+
+.q_form_tag_current_value {
+    padding: 0 5px;       
+}
+
+.q_form_tag_close {
+    padding: 0 5px;
+    cursor: pointer;
+    background-color: #333;
+    height: auto;
+}
+
+
     `;
 
     let createIcon = function (icon) {
@@ -1649,6 +1763,9 @@ Q.Form = function (options = {}) {
         'q_window_close': 'q_window_close',
         'q_window_minimize': 'q_window_minimize',
         'q_window_maximize': 'q_window_maximize',
+
+
+
     };
 
     //replace all classes with the new random ones
@@ -1667,6 +1784,101 @@ Q.Form = function (options = {}) {
     }
 
     return {
+
+
+        Tag: function (data, options = {}) {
+
+            let defaultOptions = {
+                min: 0,
+                max: 10,
+                step: 1,
+                value: 0,
+                disabled: false,
+                removable: true,
+                votes: true,
+                readonly: false,
+                placeholder: ''
+            };
+            options = Object.assign(defaultOptions, options);
+
+            if (typeof data[0] === 'string') {
+                data = data.map(tag => {
+                    return { tag: tag, value: 0 };
+                });
+            }
+
+            let tag_container = Q('<div>', { class: 'q_form_tags' });
+            let input = Q('<input>', { class: 'q_form_input' });
+
+
+            const appendTags = function (tags) {
+                tags.forEach(tag => {
+                    let tagElement = Q('<div>', { class: 'q_form_tag' });
+                    let tagValue = Q('<div>', { class: 'q_form_tag_name' });
+
+                    if (options.votes) {
+                        let tagRate = Q('<div>', { class: 'q_form_tag_rating' });
+                        let upvote = Q('<div>', { class: 'q_form_tag_icon q_form_tag_upvote' });
+                        let currentValue = Q('<div>', { class: 'q_form_tag_current_value' });
+                        let downvote = Q('<div>', { class: 'q_form_tag_icon q_form_tag_downvote' });
+                        upvote.html(createIcon('arrow-up'));
+                        downvote.html(createIcon('arrow-down'));
+                        currentValue.text(tag.value);
+                        tagRate.append(upvote, currentValue, downvote);
+                        tagElement.append(tagRate);
+
+                        upvote.on('click', function () {
+
+                            if(tag.value >= options.max) return;
+
+                            tag.value++;
+                            currentValue.text(tag.value);
+                            let index = data.findIndex(t => t.tag === tag.tag);
+                            data[index].value = tag.value;
+                        });
+
+                        downvote.on('click', function () {
+                            if(tag.value <= options.min) return;
+                            tag.value--;
+                            currentValue.text(tag.value);
+                            let index = data.findIndex(t => t.tag === tag.tag);
+                            data[index].value = tag.value;
+                        });
+
+                    }
+
+                    tagValue.text(tag.tag);
+                    tagElement.append(tagValue);
+
+                    if (options.removable) {
+                        let close = Q('<div>', { class: 'q_form_tag_icon_small q_form_tag_close' });
+                        close.html(createIcon('window-close'));
+                        tagElement.append(close);
+
+                        close.on('click', function () {
+                            data = data.filter(t => t.tag !== tag.tag);
+                            let index = data.findIndex(t => t.tag === tag.tag);
+                            delete data[index];
+                            tagElement.remove();
+                        });
+                    }
+
+
+
+                    tag_container.append(tagElement);
+                });
+            };
+
+
+            appendTags(data);
+
+
+
+
+            return tag_container;
+        },
+
+
 
         // Datepicker is work in progress yet
         DatePicker: function (value = '', locale = window.navigator.language, range = false) {
@@ -1735,7 +1947,7 @@ Q.Form = function (options = {}) {
             let dateInput = Q('<input type="date">');
             let button_ok = this.Button('OK');
             let button_today = this.Button('Today');
-            footer.append(button_today,button_ok);
+            footer.append(button_today, button_ok);
             body.append(weekdays, days_wrapper);
             wrapper.append(header, body, footer);
 
@@ -1754,9 +1966,9 @@ Q.Form = function (options = {}) {
                 });
             }
 
-            container_months.on('click',function () {
+            container_months.on('click', function () {
 
-                
+
 
             });
 
@@ -2618,6 +2830,11 @@ Q.Form = function (options = {}) {
     };
 
 };
+// Name: JSON
+// Method: Plugin
+// Desc: Provides methods to parse, deflate, and inflate, modify JSON objects.
+// Type: Plugin
+// Example: var json = Q.JSON({ key: 'value' }); json.Parse({ modify: true, recursive: true }, (key, value) => value + ' modified');
 Q.JSON = function (json) {
     if (!(this instanceof Q.JSON)) {
         return new Q.JSON(json);
@@ -2710,7 +2927,12 @@ Q.JSON.prototype.inflate = function (deflatedJson) {
     restoreRecursive(inflatedData);
     return inflatedData;
 };
-Q.socket = function (url, onMessage, onStatus, options = {}) {
+// Name: Socket
+// Method: Plugin
+// Desc: Provides a WebSocket implementation with automatic reconnection and status callbacks.
+// Type: Plugin
+// Example: var socket = Q.Socket('ws://localhost:8080', console.log, console.log);
+Q.Socket = function (url, onMessage, onStatus, options = {}) {
     const { retries = 5, delay = 1000, protocols = [] } = options;
     let socket, attempts = 0;
 
@@ -2736,7 +2958,12 @@ Q.socket = function (url, onMessage, onStatus, options = {}) {
         close: () => socket.close()
     };
 };
-Q.Store = function (key, value) {
+// Name: Storage
+// Method: Plugin
+// Desc: Provides methods to store and retrieve data from the local storage.
+// Type: Plugin
+// Example: Q.Storage('key', 'value to store'); Q.Storage('key'); // returns 'value to store'
+Q.Storage = function (key, value) {
     if (arguments.length === 2) { 
         if (value === null || value === '') { 
             localStorage.removeItem(key); 
@@ -2753,46 +2980,12 @@ Q.Store = function (key, value) {
     }
 };
 
-Q.Cookie = function (key, value, options = {}) {
-    function _serialize(options) {
-        const { days, path, domain, secure } = options;
-        let cookieString = '';
 
-        if (days) {
-            const date = new Date();
-            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-            cookieString += `expires=${date.toUTCString()}; `;
-        }
-        if (path) {
-            cookieString += `path=${path}; `;
-        }
-        if (domain) {
-            cookieString += `domain=${domain}; `;
-        }
-        if (secure) {
-            cookieString += 'secure; ';
-        }
-        return cookieString;
-    }
-
-    function _parse(cookieString) {
-        return cookieString.split(';').reduce((cookies, cookie) => {
-            const [name, value] = cookie.split('=').map(c => c.trim());
-            cookies[name] = value;
-            return cookies;
-        }, {});
-    }
-
-    if (arguments.length === 2) { 
-        if (value === null || value === '') { 
-            value = ''; 
-            options = { ...options, days: -1 }; 
-        }
-        return document.cookie = `${key}=${value}; ${_serialize(options)}`; 
-    } else if (arguments.length === 1) { 
-        return _parse(document.cookie)[key]; 
-    }
-};
+// Name: String
+// Method: Plugin
+// Desc: Provides methods to manipulate strings.
+// Type: Plugin
+// Example: Q.String('hello').capitalize(); // returns 'Hello'
 Q.String = function (string) {
     if (!(this instanceof Q.String)) {
         return new Q.String(string);
@@ -2827,6 +3020,11 @@ Q.String.prototype.find = function (stringOrRegex) {
 Q.String.prototype.replaceAll = function (stringOrRegex, replacement) {
     return this.string.replace(new RegExp(stringOrRegex, 'g'), replacement);
 };
+// Name: Style
+// Method: Plugin
+// Desc: Provides methods to apply global styles to the document. It's useful for applying CSS variables from JavaScript. Q.style will be removed after the styles are applied on the document ready event.
+// Type: Plugin
+// Example: Q.style(':root { --color: red; } body { background-color: var(--color); }');
 var glob_styles = {
     styles: '',
     root: '',
@@ -2873,6 +3071,11 @@ Q.style = (function () {
         applyStyles();
     };
 })();
+// Name: Task
+// Method: Plugin
+// Desc: Provides methods to run tasks asynchronously and handle their completion or failure. Basically a Promise wrapper, but with more control.
+// Type: Plugin
+// Example: var task = Q.Task('task1', () => console.log('Task 1'), () => console.log('Task 2')); task.Run();
 Q.Task = (function () {
     const tasks = {};
     const runningTasks = {};
@@ -2995,6 +3198,11 @@ Q.Task = (function () {
         };
     };
 })();
+// Name: Timer
+// Method: Plugin
+// Desc: Provides a timer implementation with automatic stop and interrupt. Useful for running tasks at intervals or for a specific duration.
+// Type: Plugin
+// Example: Q.Timer(() => console.log('Tick'), 'timer1', { tick: 5, delay: 1000, interrupt: true });
 Q.Timer = function (callback, id, options = {}) {
     const defaultOptions = {
         tick: 1,
@@ -3044,6 +3252,5 @@ Q.Timer.stopAll = function () {
         Q.Timer.activeTimers.clear();
     }
 };
-
     return Q;
 })();
