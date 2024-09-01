@@ -519,6 +519,9 @@ overflow: hidden;
                         tagElement.append(tagRate);
 
                         upvote.on('click', function () {
+
+                            if(tag.value >= options.max) return;
+
                             tag.value++;
                             currentValue.text(tag.value);
                             let index = data.findIndex(t => t.tag === tag.tag);
@@ -526,8 +529,11 @@ overflow: hidden;
                         });
 
                         downvote.on('click', function () {
+                            if(tag.value <= options.min) return;
                             tag.value--;
                             currentValue.text(tag.value);
+                            let index = data.findIndex(t => t.tag === tag.tag);
+                            data[index].value = tag.value;
                         });
 
                     }
