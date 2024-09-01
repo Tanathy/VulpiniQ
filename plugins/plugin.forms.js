@@ -357,6 +357,55 @@ Q.Form = function (options = {}) {
                display: flex;
                justify-content: flex-end;
            }
+
+           .q_form_tags {
+                display: flex;
+                flex-wrap: wrap;
+}
+
+.q_form_tag {
+    display: flex;
+    align-items: center;
+    border: 1px solid #333;
+    color: #fff;
+overflow: hidden;
+    margin: 2px;
+    border-radius: 5px;
+}
+
+        .q_form_tag_rating {
+    display: flex;
+    background-color: #333;
+    padding: 2px 5px;
+    align-items: center;
+            }
+
+            .q_form_tag_icon {
+                width: 10px;
+                height: 10px;
+}
+
+.q_form_tag_icon_small {
+    width: 5px;
+    height: 5px;
+}
+
+.q_form_tag_name {
+    padding: 2px 8px;
+}
+
+.q_form_tag_current_value {
+    padding: 0 5px;       
+}
+
+.q_form_tag_close {
+    padding: 0 5px;
+    cursor: pointer;
+    background-color: #333;
+    height: auto;
+}
+
+
     `;
 
     let createIcon = function (icon) {
@@ -405,6 +454,9 @@ Q.Form = function (options = {}) {
         'q_window_close': 'q_window_close',
         'q_window_minimize': 'q_window_minimize',
         'q_window_maximize': 'q_window_maximize',
+
+
+
     };
 
     //replace all classes with the new random ones
@@ -423,6 +475,95 @@ Q.Form = function (options = {}) {
     }
 
     return {
+
+
+        Tag: function (data, options = {}) {
+
+            let defaultOptions = {
+                min: 0,
+                max: 10,
+                step: 1,
+                value: 0,
+                disabled: false,
+                removable: true,
+                votes: true,
+                readonly: false,
+                placeholder: ''
+            };
+            options = Object.assign(defaultOptions, options);
+
+            if (typeof data[0] === 'string') {
+                data = data.map(tag => {
+                    return { tag: tag, value: 0 };
+                });
+            }
+
+            let tag_container = Q('<div>', { class: 'q_form_tags' });
+            let input = Q('<input>', { class: 'q_form_input' });
+
+
+            const appendTags = function (tags) {
+                tags.forEach(tag => {
+                    let tagElement = Q('<div>', { class: 'q_form_tag' });
+                    let tagValue = Q('<div>', { class: 'q_form_tag_name' });
+
+                    if (options.votes) {
+                        let tagRate = Q('<div>', { class: 'q_form_tag_rating' });
+                        let upvote = Q('<div>', { class: 'q_form_tag_icon q_form_tag_upvote' });
+                        let currentValue = Q('<div>', { class: 'q_form_tag_current_value' });
+                        let downvote = Q('<div>', { class: 'q_form_tag_icon q_form_tag_downvote' });
+                        upvote.html(createIcon('arrow-up'));
+                        downvote.html(createIcon('arrow-down'));
+                        currentValue.text(tag.value);
+                        tagRate.append(upvote, currentValue, downvote);
+                        tagElement.append(tagRate);
+
+                        upvote.on('click', function () {
+                            tag.value++;
+                            currentValue.text(tag.value);
+                            let index = data.findIndex(t => t.tag === tag.tag);
+                            data[index].value = tag.value;
+                        });
+
+                        downvote.on('click', function () {
+                            tag.value--;
+                            currentValue.text(tag.value);
+                        });
+
+                    }
+
+                    tagValue.text(tag.tag);
+                    tagElement.append(tagValue);
+
+                    if (options.removable) {
+                        let close = Q('<div>', { class: 'q_form_tag_icon_small q_form_tag_close' });
+                        close.html(createIcon('window-close'));
+                        tagElement.append(close);
+
+                        close.on('click', function () {
+                            data = data.filter(t => t.tag !== tag.tag);
+                            let index = data.findIndex(t => t.tag === tag.tag);
+                            delete data[index];
+                            tagElement.remove();
+                        });
+                    }
+
+
+
+                    tag_container.append(tagElement);
+                });
+            };
+
+
+            appendTags(data);
+
+
+
+
+            return tag_container;
+        },
+
+
 
         // Datepicker is work in progress yet
         DatePicker: function (value = '', locale = window.navigator.language, range = false) {
@@ -491,7 +632,7 @@ Q.Form = function (options = {}) {
             let dateInput = Q('<input type="date">');
             let button_ok = this.Button('OK');
             let button_today = this.Button('Today');
-            footer.append(button_today,button_ok);
+            footer.append(button_today, button_ok);
             body.append(weekdays, days_wrapper);
             wrapper.append(header, body, footer);
 
@@ -510,9 +651,9 @@ Q.Form = function (options = {}) {
                 });
             }
 
-            container_months.on('click',function () {
+            container_months.on('click', function () {
 
-                
+
 
             });
 

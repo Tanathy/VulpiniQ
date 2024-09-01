@@ -87,6 +87,12 @@
             margin: 1px;
         }
 
+        .dependent {
+            background-color: rgba(197, 146, 231, 0.178);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.4);
+            color: #b9b9b9;
+        }
+
 
         .bracket {
             color: #e7e192;
@@ -801,14 +807,14 @@ var methods = {
         "variant": "plugin",
         "Dependencies": [
             "Q.style",
-            " addClass",
-            " removeClass",
-            " on",
-            " append",
-            " each",
-            " find",
-            " scrollTop",
-            " scrollLeft"
+            "addClass",
+            "removeClass",
+            "on",
+            "append",
+            "each",
+            "find",
+            "scrollTop",
+            "scrollLeft"
         ],
         "Type": "Plugin",
         "Example": "var containers = Q.Container();",
@@ -841,14 +847,14 @@ var methods = {
         "variant": "plugin",
         "Dependencies": [
             "Q.style",
-            " addClass",
-            " removeClass",
-            " on",
-            " append",
-            " each",
-            " find",
-            " scrollTop",
-            " scrollLeft"
+            "addClass",
+            "removeClass",
+            "on",
+            "append",
+            "each",
+            "find",
+            "scrollTop",
+            "scrollLeft"
         ],
         "Type": "Plugin",
         "Example": "var containers = Q.Form()",
@@ -988,7 +994,7 @@ var methods = {
 
 
         function BuildCode() {
-
+            let depends = [];
             //get the current year also separated date and time for build
             let date = new Date();
             let license = `
@@ -997,6 +1003,20 @@ var methods = {
 // Build: ${date.toLocaleString()}
 // License: MIT
 `;
+
+            const markDependencies = (deps) => {
+                document.querySelectorAll(".dependent").forEach(dep => {
+                    dep.classList.remove("dependent");
+                });
+
+                document.querySelectorAll(".card").forEach(card => {
+                    let dataName = card.getAttribute("data-name");
+                    if (deps.includes(dataName)) {
+                        console.log(dataName, card);
+                        card.classList.add("dependent");
+                    }
+                });
+            }
 
             let genCode = document.querySelector(".gen_code");
             let minified = document.querySelector(".minified");
@@ -1009,6 +1029,9 @@ var methods = {
             let code = [];
             activeCards.forEach(card => {
                 code.push(methods[card.dataset.name].Script);
+                if (methods[card.dataset.name].Dependencies) {
+                    depends = depends.concat(methods[card.dataset.name].Dependencies);
+                }
             });
 
             let finalCode = source.replace("//METHODS//", code.join("\n\n")).replace("//EXTENSIONS//", "");
@@ -1018,10 +1041,13 @@ var methods = {
             gen_size.textContent = "Total size of this build: " + CalculateSizeKB(finalCode);
             minified_size.textContent = "Total size of this build: " + CalculateSizeKB(minifiedCode);
 
-
+            markDependencies(depends);
 
             genCode.value = license + finalCode;
             minified.value = license + minifiedCode;
+
+
+
         }
 
 
