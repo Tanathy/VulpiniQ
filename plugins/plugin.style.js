@@ -3,22 +3,25 @@
 // Desc: Provides methods to apply global styles to the document. It's useful for applying CSS variables from JavaScript. Q.style will be removed after the styles are applied on the document ready event.
 // Type: Plugin
 // Example: Q.style(':root { --color: red; } body { background-color: var(--color); }');
-var glob_styles = {
-    styles: '',
-    root: '',
-    element: null,
-    checked: false,
-};
-
 Q.style = (function () {
+    let styleData = {
+        styles: '',
+        root: '',
+        element: null,
+        checked: false,
+    };
+    const sID = (length = 4) => '_' + Math.random().toString(16).substr(2, length);
+
+
     function applyStyles() {
-        if (!glob_styles.checked) {
-            glob_styles.element = document.getElementById('qlib-root-styles') || createStyleElement();
-            glob_styles.checked = true;
+        if (!styleData.init) {
+            styleData.element = document.getElementById('qlib-root-styles') || createStyleElement();
+            styleData.init = true;
         }
 
-        const finalStyles = `:root {${glob_styles.root}}\n${glob_styles.styles}`.replace(/(\r\n|\n|\r|\t|)/gm, '');
-        glob_styles.element.textContent = finalStyles;
+        const finalStyles = `:root {${styleData.root}}\n${styleData.gen}`.replace(/(\r\n|\n|\r|\t|)/gm, '');
+        // const finalStyles = `:root {${styleData.root}}\n${styleData.gen}`;
+        styleData.element.textContent = finalStyles;
     }
 
     function createStyleElement() {
@@ -30,22 +33,41 @@ Q.style = (function () {
 
     window.addEventListener('load', () => {
         console.log('Styles plugin loaded.');
+
+        //we should destroy the Q.style function after the document is loaded to prevent further usage.
         delete Q.style;
-        delete glob_styles;
+
     }, { once: true });
 
-    return function (styles) {
+    return function (styles, mapping = null, disableObfuscation = false) {
         if (typeof styles === 'string') {
             const rootContentMatch = styles.match(/:root\s*{([^}]*)}/);
             if (rootContentMatch) {
                 styles = styles.replace(rootContentMatch[0], '');
                 const rootContent = rootContentMatch[1].split(';').map(item => item.trim()).filter(item => item);
-                glob_styles.root += rootContent.join(';') + ';';
+                styleData.root += rootContent.join(';') + ';';
             }
-            glob_styles.styles += styles.trim();
+
+            if (!disableObfuscation && Object.keys(mapping).length === 0) {
+                const generatedKeys = new Set();
+                mapping = Object.keys(mapping).reduce((acc, key) => {
+                    let newKey;
+                    do {
+                        newKey = sID(5);
+                    } while (generatedKeys.has(newKey));
+
+                    generatedKeys.add(newKey);
+                    acc[key] = newKey;
+                    styles = styles.replace(new RegExp(`\\b${key}\\b`, 'gm'), acc[key]);
+                    return acc;
+                }, {});
+            }
+            styleData.gen += styles.trim();
+
+            applyStyles();
+                return mapping;
         } else {
             console.error('Invalid styles parameter. Expected a string.');
         }
-        applyStyles();
     };
 })();

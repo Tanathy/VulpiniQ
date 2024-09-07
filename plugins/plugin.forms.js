@@ -5,7 +5,14 @@
 // Example: var containers = Q.Form()
 // Dependencies: Q.style, addClass, removeClass, on, append, each, find, scrollTop, scrollLeft
 Q.Form = function (options = {}) {
-    let style = `
+
+    let Icon = function (icon) {
+        let iconElement = Q('<div>');
+        iconElement.addClass('svg_' + icon + ' form_icon');
+        return iconElement;
+    }
+
+    let classes = Q.style(`
            :root {
                --svg_window-close: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 2.8176856,98.903421 -4.0360052e-7,96.085741 22.611458,73.473146 45.222917,50.860554 22.611458,28.247962 -4.0360052e-7,5.6353711 2.8176856,2.8176851 5.6353716,-9.1835591e-7 28.247963,22.611458 50.860555,45.222916 73.473147,22.611458 96.085743,-9.1835591e-7 98.903423,2.8176851 101.72111,5.6353711 79.109651,28.247962 56.498193,50.860554 79.109651,73.473146 101.72111,96.085741 98.903423,98.903421 96.085743,101.72111 73.473147,79.109651 50.860555,56.498192 28.247963,79.109651 5.6353716,101.72111 Z"/></svg>');
                --svg_window-full: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 H 50.860555 84.417403 V 50.860554 84.417401 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z"/></svg>');
@@ -50,6 +57,7 @@ Q.Form = function (options = {}) {
                height: 100%;
                color: #fff;
                /* Default color */
+               pointer-events: none;
            }
 
 
@@ -358,12 +366,24 @@ Q.Form = function (options = {}) {
                justify-content: flex-end;
            }
 
-           .q_form_tags {
+
+
+
+
+
+
+
+
+
+
+
+           .tag_container {
                 display: flex;
                 flex-wrap: wrap;
 }
 
-.q_form_tag {
+
+.tag_tag {
     display: flex;
     align-items: center;
     border: 1px solid #333;
@@ -373,58 +393,57 @@ overflow: hidden;
     border-radius: 5px;
 }
 
-        .q_form_tag_rating {
+        .tag_rating {
     display: flex;
     background-color: #333;
     padding: 2px 5px;
     align-items: center;
             }
 
-            .q_form_tag_icon {
+            .tag_icon {
                 width: 10px;
                 height: 10px;
+                
 }
 
-.q_form_tag_icon_small {
+.tag_icon_small {
     width: 5px;
     height: 5px;
 }
 
-.q_form_tag_name {
+.tag_name {
     padding: 2px 8px;
 }
 
-.q_form_tag_current_value {
-    padding: 0 5px;       
+.tag_value {
+    padding: 0 5px;
+    user-select: none;   
 }
 
-.q_form_tag_close {
-    padding: 0 5px;
+.tag_close {
     cursor: pointer;
     background-color: #333;
     height: auto;
+    width: 20px;
 }
 
+.tag_input {
+width: content;
+    border: 0;
+    margin:0;
+    background-color: transparent;
+    color: #fff;
+}
 
-    `;
+.tag_name[contenteditable="true"] {
+    cursor: text;
+}
 
-    let createIcon = function (icon) {
-        let iconElement = Q('<div>');
-        iconElement.addClass('svg_' + icon + ' form_icon');
-        return iconElement;
-    }
+.tag_name[contenteditable="true"]:focus {
+    outline: 0;
+}
 
-    let randomletters = function (length) {
-        let result = '';
-        let characters = 'abcdef0123456789';
-        let charactersLength = characters.length;
-        for (let i = 0; i < length; i++) {
-            result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        }
-        return '_' + result;
-    }
-
-    let classes = {
+    `, {
         'q_form': 'q_form',
         'q_form_disabled': 'q_form_disabled',
         'q_form_checkbox': 'q_form_checkbox',
@@ -455,123 +474,155 @@ overflow: hidden;
         'q_window_minimize': 'q_window_minimize',
         'q_window_maximize': 'q_window_maximize',
 
-
-
-    };
-
-    //replace all classes with the new random ones
-    // classes = Object.keys(classes).reduce((acc, key) => {
-    //     acc[key] = randomletters(6);
-
-    //     //find and replace all class names in the style
-    //     style = style.replace(new RegExp(`\\b${key}\\b`, 'gm'), acc[key]);
-    //     return acc;
-    // }, {});
-
-    Q.style(style);
-
-    if (options.classes) {
-        classes = Object.assign(classes, options.classes);
-    }
+        'tag_name': 'tag_name',
+        'tag_input': 'tag_input',
+        'tag_close': 'tag_close',
+        'tag_value': 'tag_value',
+        'tag_icon_small': 'tag_icon_small',
+        'tag_rating': 'tag_rating',
+        'tag_container': 'tag_container',
+        'tag_tag': 'tag_tag',
+        'tag_icon': 'tag_icon',
+        'tag_up': 'tag_up',
+        'tag_down': 'tag_down',
+    });
 
     return {
 
 
-        Tag: function (data, options = {}) {
-
-            let defaultOptions = {
+        Tag: function (options = {}) {
+            const defaultOptions = {
                 min: 0,
                 max: 10,
                 step: 1,
                 value: 0,
+                digit: 3,
+                flood: 500,
                 disabled: false,
                 removable: true,
                 votes: true,
                 readonly: false,
                 placeholder: ''
             };
-            options = Object.assign(defaultOptions, options);
-
-            if (typeof data[0] === 'string') {
-                data = data.map(tag => {
-                    return { tag: tag, value: 0 };
-                });
+        
+            // Merge defaultOptions with passed options using destructuring
+            let { min, max, step, digit, votes, removable, flood } = { ...defaultOptions, ...options };
+        
+            if (step.toString().includes('.')) {
+                digit = step.toString().split('.')[1].length;
             }
+        
+            let data = [];
+            let changeCallback = null; // Store the callback function here
+            let timer = null; // Timer for debounce
+            const tagContainer = Q('<div>', { class: classes.tag_container });
+            const input = Q('<input>', { class: classes.tag_input });
+            const malformFix = Q('<input>', { class: classes.tag_input });
+        
+            // Debounce function to control the rate of triggering the callback
+            function floodControl(callback) {
 
-            let tag_container = Q('<div>', { class: 'q_form_tags' });
-            let input = Q('<input>', { class: 'q_form_input' });
+                if(flood === 0) {
+                    callback(data);
+                    return;
+                }
 
-
-            const appendTags = function (tags) {
+                if (timer) clearTimeout(timer);
+                
+                timer = setTimeout(() => {
+                    if (callback) callback(data);
+                }, flood);
+            }
+        
+            // Function to handle vote changes (common for both upvote and downvote)
+            const changeTagValue = (tag, delta, currentValue) => {
+                let newValue = tag.value + delta;
+                newValue = Math.min(Math.max(newValue, min), max);
+                tag.value = parseFloat(newValue.toFixed(digit));
+                currentValue.text(tag.value);
+                data = data.map(t => (t.tag === tag.tag ? { ...t, value: tag.value } : t));
+        
+                // Trigger the change callback with debounce (flood control)
+                if (changeCallback) floodControl(changeCallback);
+            };
+        
+            const appendTags = tags => {
                 tags.forEach(tag => {
-                    let tagElement = Q('<div>', { class: 'q_form_tag' });
-                    let tagValue = Q('<div>', { class: 'q_form_tag_name' });
-
-                    if (options.votes) {
-                        let tagRate = Q('<div>', { class: 'q_form_tag_rating' });
-                        let upvote = Q('<div>', { class: 'q_form_tag_icon q_form_tag_upvote' });
-                        let currentValue = Q('<div>', { class: 'q_form_tag_current_value' });
-                        let downvote = Q('<div>', { class: 'q_form_tag_icon q_form_tag_downvote' });
-                        upvote.html(createIcon('arrow-up'));
-                        downvote.html(createIcon('arrow-down'));
-                        currentValue.text(tag.value);
-                        tagRate.append(upvote, currentValue, downvote);
+                    const tagElement = Q('<div>', { class: classes.tag_tag });
+                    let tagValue = Q('<div>', { class: classes.tag_name }).text(tag.tag);
+        
+                    if (votes) {
+                        const tagRate = Q('<div>', { class: classes.tag_rating });
+                        const upvote = Q('<div>', { class: [classes.tag_icon, classes.tag_up] }).html(Icon('arrow-up'));
+                        const currentValue = Q('<div>', { class: classes.tag_value }).text(tag.value);
+                        const downvote = Q('<div>', { class: [classes.tag_icon, classes.tag_down] }).html(Icon('arrow-down'));
+        
+                        tagRate.append(downvote, currentValue, upvote);
                         tagElement.append(tagRate);
-
-                        upvote.on('click', function () {
-
-                            if(tag.value >= options.max) return;
-
-                            tag.value++;
-                            currentValue.text(tag.value);
-                            let index = data.findIndex(t => t.tag === tag.tag);
-                            data[index].value = tag.value;
-                        });
-
-                        downvote.on('click', function () {
-                            if(tag.value <= options.min) return;
-                            tag.value--;
-                            currentValue.text(tag.value);
-                            let index = data.findIndex(t => t.tag === tag.tag);
-                            data[index].value = tag.value;
-                        });
-
+        
+                        upvote.on('click', () => changeTagValue(tag, step, currentValue));
+                        downvote.on('click', () => changeTagValue(tag, -step, currentValue));
                     }
-
-                    tagValue.text(tag.tag);
+        
+                    if (!defaultOptions.readonly) {
+                        tagValue.attr('contenteditable', true);
+        
+                        tagValue.on('input', function () {
+                            malformFix.val(tagValue.text());
+                            tagValue.text(malformFix.val());
+                            tag.tag = malformFix.val();
+        
+                            // Trigger the change callback with debounce (flood control)
+                            if (changeCallback) floodControl(changeCallback);
+                        });
+                    }
+        
                     tagElement.append(tagValue);
-
-                    if (options.removable) {
-                        let close = Q('<div>', { class: 'q_form_tag_icon_small q_form_tag_close' });
-                        close.html(createIcon('window-close'));
-                        tagElement.append(close);
-
-                        close.on('click', function () {
+        
+                    if (removable) {
+                        const close = Q('<div>', { class: [classes.tag_icon_small, classes.tag_close] }).html(Icon('window-close'));
+                        close.on('click', () => {
                             data = data.filter(t => t.tag !== tag.tag);
-                            let index = data.findIndex(t => t.tag === tag.tag);
-                            delete data[index];
                             tagElement.remove();
+        
+                            // Trigger the change callback with debounce (flood control)
+                            if (changeCallback) floodControl(changeCallback);
                         });
+                        tagElement.append(close);
                     }
-
-
-
-                    tag_container.append(tagElement);
+        
+                    tagContainer.append(tagElement);
                 });
             };
-
-
-            appendTags(data);
-
-
-
-
-            return tag_container;
+        
+            tagContainer.add = function (taglist) {
+                tagContainer.empty();
+        
+                if (!Array.isArray(taglist)) {
+                    taglist = [taglist];
+                }
+        
+                taglist = taglist.map(tag => (typeof tag === 'string' ? { tag, value: 0 } : tag));
+                data = [...data, ...taglist];
+        
+                appendTags(data);
+            };
+        
+            tagContainer.get = function () {
+                return data;
+            };
+        
+            // Method to set the change callback
+            tagContainer.change = function (callback) {
+                changeCallback = callback;
+            };
+        
+            return tagContainer;
         },
 
 
 
-        // Datepicker is work in progress yet
+        // NOT FINISHED - Datepicker is work in progress yet
         DatePicker: function (value = '', locale = window.navigator.language, range = false) {
 
             let getFirstDayOfWeek = () => {
@@ -757,6 +808,7 @@ overflow: hidden;
             return wrapper;
         },
 
+        // NOT FINISHED - Progressbar is work in progress yet
         ProgressBar: function (value = 0, min = 0, max = 100, autoKill = 0) {
             let timer = null;
             const progress = Q('<div class="' + classes.q_form + ' ' + classes.q_form_progress + '">');
@@ -809,6 +861,8 @@ overflow: hidden;
 
             return progress;
         },
+
+        // NOT FINISHED - Checkbox is work in progress yet
         Button: function (text = '') {
             const button = Q(`<div class="${classes.q_form} ${classes.q_form_button}">${text}</div>`);
 
@@ -835,6 +889,8 @@ overflow: hidden;
 
             return button;
         },
+
+        // NOT FINISHED - Checkbox is work in progress yet
         File: function (text = '', accept = '*', multiple = false) {
             const container = Q('<div class="' + classes.q_form + ' ' + classes.q_form_file + ' ' + classes.q_form_button + '">');
             const input = Q(`<input type="file" accept="${accept}" ${multiple ? 'multiple' : ''}>`);
@@ -898,6 +954,8 @@ overflow: hidden;
 
             return container;
         },
+
+
         DropDown: function (data) {
             let wrapper = Q('<div class="' + classes.q_form + ' ' + classes.q_form_dropdown + '">');
             let selected = Q('<div class="' + classes.q_form_dropdown_selected + '">');
@@ -1002,6 +1060,8 @@ overflow: hidden;
 
             return wrapper;
         },
+
+
         Slider: function (min = 0, max = 100, value = 50) {
             const slider = Q('<input type="range" class="' + classes.q_form_slider + '">');
             slider.attr('min', min);
@@ -1086,9 +1146,9 @@ overflow: hidden;
             let minimize = Q('<div class="' + classes.q_window_button + ' ' + classes.q_window_minimize + '">');
             let maximize = Q('<div class="' + classes.q_window_button + ' ' + classes.q_window_maximize + '">');
 
-            close.append(createIcon('window-close'));
-            minimize.html(createIcon('window-minimize'));
-            maximize.html(createIcon('window-full'));
+            close.append(Icon('window-close'));
+            minimize.html(Icon('window-minimize'));
+            maximize.html(Icon('window-full'));
 
             content.append(data);
             titletext.text(title);
@@ -1158,7 +1218,7 @@ overflow: hidden;
 
                 if (maximized) {
                     maximized = false;
-                    maximize.html(createIcon('window-full'));
+                    maximize.html(Icon('window-full'));
                     window_wrapper.animate(animation_speed, {
                         width: dimensions.width + 'px',
                         height: dimensions.height + 'px',
@@ -1170,7 +1230,7 @@ overflow: hidden;
                 }
 
                 if (minimized) {
-                    minimize.html(createIcon('window-minimize'));
+                    minimize.html(Icon('window-minimize'));
                     window_wrapper.css({
                         height: dimensions.height + 'px'
                     });
@@ -1178,7 +1238,7 @@ overflow: hidden;
                     handleResize();
 
                 } else {
-                    minimize.html(createIcon('window-windowed'));
+                    minimize.html(Icon('window-windowed'));
                     window_wrapper.css({
                         height: titlebar.height() + 'px'
                     });
@@ -1189,7 +1249,7 @@ overflow: hidden;
             maximize.on('click', function () {
 
                 if (minimized) {
-                    minimize.html(createIcon('window-minimize'));
+                    minimize.html(Icon('window-minimize'));
                     minimized = false;
                     if (!content.is(':visible')) {
                         content.toggle();
@@ -1198,7 +1258,7 @@ overflow: hidden;
 
                 if (maximized) {
                     maximized = false;
-                    maximize.html(createIcon('window-full'));
+                    maximize.html(Icon('window-full'));
                     window_wrapper.animate(animation_speed, {
                         width: dimensions.width + 'px',
                         height: dimensions.height + 'px',
@@ -1211,7 +1271,7 @@ overflow: hidden;
 
                 } else {
                     maximized = true;
-                    maximize.html(createIcon('window-windowed'));
+                    maximize.html(Icon('window-windowed'));
                     window_wrapper.animate(animation_speed, {
                         width: '100%',
                         height: '100%',
@@ -1350,6 +1410,7 @@ overflow: hidden;
 
             return window_wrapper;
         },
+
         CheckBox: function (checked = false, text = '') {
             let ID = '_' + Q.ID();
             const container = Q('<div class="' + classes.q_form + ' ' + classes.q_form_checkbox + '">');
@@ -1389,6 +1450,7 @@ overflow: hidden;
             return container;
 
         },
+
         TextBox: function (type = 'text', value = '', placeholder = '') {
             const input = Q(`<input class="${classes.q_form} ${classes.q_form_input}" type="${type}" placeholder="${placeholder}" value="${value}">`);
 
@@ -1415,6 +1477,7 @@ overflow: hidden;
 
             return input;
         },
+
         TextArea: function (value = '', placeholder = '') {
             const textarea = Q(`<textarea class="${classes.q_form} ${classes.q_form_textarea}" placeholder="${placeholder}">${value}</textarea>`);
 

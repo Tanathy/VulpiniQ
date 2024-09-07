@@ -1,31 +1,31 @@
 const Q = (() => {
     'use strict';
 
-    function Q(selector, attributes, directProps) {
+    function Q(identifier, attributes, props) {
         if (!(this instanceof Q)) {
-            return new Q(selector, attributes, directProps);
+            return new Q(identifier, attributes, props);
         }
-        else if (selector instanceof HTMLElement || selector instanceof Node) {
-            this.nodes = [selector];
+        else if (identifier instanceof HTMLElement || identifier instanceof Node) {
+            this.nodes = [identifier];
             return;
         }
-        else if (selector instanceof Q) {
-            this.nodes = selector.nodes;
+        else if (identifier instanceof Q) {
+            this.nodes = identifier.nodes;
             return;
         }
-        else if (selector instanceof NodeList) {
-            this.nodes = Array.from(selector);
+        else if (identifier instanceof NodeList) {
+            this.nodes = Array.from(identifier);
             return;
         }
-        else if (typeof selector === 'string') {
-            const isCreating = selector.includes('<');
+        else if (typeof identifier === 'string') {
+            let isCreating = !!attributes || identifier.includes('<');
 
             if (isCreating) {
                 const fragment = document.createDocumentFragment();
-                const pseudoElement = document.createElement('div');
-                pseudoElement.innerHTML = selector;
-                while (pseudoElement.firstChild) {
-                    fragment.appendChild(pseudoElement.firstChild);
+                const pseudo = document.createElement('div');
+                pseudo.innerHTML = identifier;
+                while (pseudo.firstChild) {
+                    fragment.appendChild(pseudo.firstChild);
                 }
                 this.nodes = Array.from(fragment.childNodes);
 
@@ -33,22 +33,29 @@ const Q = (() => {
                     this.nodes.forEach(el => {
                         for (const [attr, value] of Object.entries(attributes)) {
                             if (attr === 'class') {
-                                el.classList.add(...value.split(' '));
+
+                                if (Array.isArray(value)) {
+                                    el.classList.add(...value);
+                                }
+                                else {
+
+                                    el.classList.add(...value.split(/\s+/));
+                                }
                             } else {
                                 el.setAttribute(attr, value);
                             }
                         }
                     });
                 }
-                if (directProps) {
+                if (props) {
                     this.nodes.forEach(el => {
-                        for (const prop of directProps) {
+                        for (const prop of props) {
                             el[prop] = true;
                         }
                     });
                 }
             } else {
-                let elem = document.querySelectorAll(selector);
+                let elem = document.querySelectorAll(identifier);
                 this.nodes = Array.from(elem);
             }
         }

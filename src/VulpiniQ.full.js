@@ -1,31 +1,31 @@
 const Q = (() => {
     'use strict';
 
-    function Q(selector, attributes, directProps) {
+    function Q(identifier, attributes, props) {
         if (!(this instanceof Q)) {
-            return new Q(selector, attributes, directProps);
+            return new Q(identifier, attributes, props);
         }
-        else if (selector instanceof HTMLElement || selector instanceof Node) {
-            this.nodes = [selector];
+        else if (identifier instanceof HTMLElement || identifier instanceof Node) {
+            this.nodes = [identifier];
             return;
         }
-        else if (selector instanceof Q) {
-            this.nodes = selector.nodes;
+        else if (identifier instanceof Q) {
+            this.nodes = identifier.nodes;
             return;
         }
-        else if (selector instanceof NodeList) {
-            this.nodes = Array.from(selector);
+        else if (identifier instanceof NodeList) {
+            this.nodes = Array.from(identifier);
             return;
         }
-        else if (typeof selector === 'string') {
-            const isCreating = selector.includes('<');
+        else if (typeof identifier === 'string') {
+            let isCreating = !!attributes || identifier.includes('<');
 
             if (isCreating) {
                 const fragment = document.createDocumentFragment();
-                const pseudoElement = document.createElement('div');
-                pseudoElement.innerHTML = selector;
-                while (pseudoElement.firstChild) {
-                    fragment.appendChild(pseudoElement.firstChild);
+                const pseudo = document.createElement('div');
+                pseudo.innerHTML = identifier;
+                while (pseudo.firstChild) {
+                    fragment.appendChild(pseudo.firstChild);
                 }
                 this.nodes = Array.from(fragment.childNodes);
 
@@ -33,22 +33,29 @@ const Q = (() => {
                     this.nodes.forEach(el => {
                         for (const [attr, value] of Object.entries(attributes)) {
                             if (attr === 'class') {
-                                el.classList.add(...value.split(' '));
+
+                                if (Array.isArray(value)) {
+                                    el.classList.add(...value);
+                                }
+                                else {
+
+                                    el.classList.add(...value.split(/\s+/));
+                                }
                             } else {
                                 el.setAttribute(attr, value);
                             }
                         }
                     });
                 }
-                if (directProps) {
+                if (props) {
                     this.nodes.forEach(el => {
-                        for (const prop of directProps) {
+                        for (const prop of props) {
                             el[prop] = true;
                         }
                     });
                 }
             } else {
-                let elem = document.querySelectorAll(selector);
+                let elem = document.querySelectorAll(identifier);
                 this.nodes = Array.from(elem);
             }
         }
@@ -932,7 +939,14 @@ Q.Resize = (function () {
 // Example: var containers = Q.Container();
 // Dependencies: Q.style, addClass, removeClass, on, append, each, find, scrollTop, scrollLeft
 Q.Container = function (options = {}) {
-    let style = `
+
+    let Icon = function (icon) {
+        let iconElement = Q('<div>');
+        iconElement.addClass('svg_' + icon + ' container_icon');
+        return iconElement;
+    };
+
+    let classes = Q.style(`
         :root {
   	--svg_arrow-down: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 134.49459 62.707709"><path d="M 100.93685,31.353867 C 82.480099,48.598492 67.319803,62.707709 67.247301,62.707709 c -0.0725,0 -15.232809,-14.109215 -33.689561,-31.353842 L 3.5365448e-8,6.6845858e-7 H 67.247301 134.4946 Z"/></svg>');
 	--svg_arrow-left: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62.707704 134.4946"><path d="M 31.353844,100.93685 C 14.109219,82.480099 1.6018623e-6,67.319803 1.6018623e-6,67.247301 1.6018623e-6,67.174801 14.109217,52.014492 31.353844,33.55774 L 62.70771,0 V 67.247301 134.4946 Z"/></svg>');
@@ -976,6 +990,8 @@ Q.Container = function (options = {}) {
              width: 100%;
              height: 100%;
              color: #777; /* Default color */
+             pointer-events: none;
+             z-index: 1;
          }
 
           .tab_navigation_buttons {
@@ -1045,84 +1061,52 @@ Q.Container = function (options = {}) {
             background-color: #333;
             color: #555;
         }
-
- `;
-
-    let createIcon = function (icon) {
-        let iconElement = Q('<div>');
-        iconElement.addClass('svg_' + icon + ' container_icon');
-        return iconElement;
-    }
-
-    let randomletters = function (length) {
-        let result = '';
-        let characters = 'abcdef0123456789';
-        let charactersLength = characters.length;
-        for (let i = 0; i < length; i++) {
-            result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        }
-        return '_' + result;
-    }
-
-    let classes = {
-        'tab_navigation_buttons': 'tab_navigation_buttons',
-        'tab_navigation_buttons_vertical': 'tab_navigation_buttons_vertical',
-        'tab_container': 'tab_container',
-        'tab_container_vertical': 'tab_container_vertical',
-        'tab_navigation_header': 'tab_navigation_header',
-        'tab_navigation_header_vertical': 'tab_navigation_header_vertical',
-        'tab_navigation_tabs': 'tab_navigation_tabs',
-        'tab_navigation_tabs_vertical': 'tab_navigation_tabs_vertical',
-        'tab_active': 'tab_active',
-        'tab': 'tab',
-        'tab_disabled': 'tab_disabled'
-    };
-
-    classes = Object.keys(classes).reduce((acc, key) => {
-        acc[key] = randomletters(6);
-
-        //find and replace all class names in the style
-        style = style.replace(new RegExp(`\\b${key}\\b`, 'gm'), acc[key]);
-        return acc;
-    }, {});
-
-    Q.style(style);
-
-    if (options.classes) {
-        classes = Object.assign(classes, options.classes);
-    }
+ `,
+        {
+            'tab_navigation_buttons': 'tab_navigation_buttons',
+            'tab_navigation_buttons_vertical': 'tab_navigation_buttons_vertical',
+            'tab_container': 'tab_container',
+            'tab_container_vertical': 'tab_container_vertical',
+            'tab_navigation_header': 'tab_navigation_header',
+            'tab_navigation_header_vertical': 'tab_navigation_header_vertical',
+            'tab_navigation_tabs': 'tab_navigation_tabs',
+            'tab_navigation_tabs_vertical': 'tab_navigation_tabs_vertical',
+            'tab_active': 'tab_active',
+            'tab': 'tab',
+            'tab_disabled': 'tab_disabled'
+        });
 
     return {
         Tab: function (data, horizontal = true) {
+            let wrapper = Q('<div>', { class: classes.tab_container });
+            let tabs_wrapper = Q('<div>', { class: classes.tab_navigation_header });
+            let tabs_nav_left = Q('<div>', { class: classes.tab_navigation_buttons });
+            let tabs_nav_right = Q('<div>', { class: classes.tab_navigation_buttons });
+            let tabs = Q('<div>', { class: classes.tab_navigation_tabs });
 
-            let wrapper = Q('<div class="' + classes.tab_container + '">');
-            let tabs_wrapper = Q('<div class="' + classes.tab_navigation_header + '">');
-            let tabs_nav_left = Q('<div class="' + classes.tab_navigation_buttons + '">');
-            let tabs_nav_right = Q('<div class="' + classes.tab_navigation_buttons + '">');
-            let tabs = Q('<div class="' + classes.tab_navigation_tabs + '">');
             tabs_wrapper.append(tabs_nav_left, tabs, tabs_nav_right);
-            let content = Q('<div">');
+            
+            let content = Q('<div>');
             wrapper.append(tabs_wrapper, content);
-
             if (!horizontal) {
                 wrapper.addClass(classes.tab_container_vertical);
                 tabs.addClass(classes.tab_navigation_tabs_vertical);
                 tabs_wrapper.addClass(classes.tab_navigation_header_vertical);
                 tabs_nav_left.addClass(classes.tab_navigation_buttons_vertical);
                 tabs_nav_right.addClass(classes.tab_navigation_buttons_vertical);
-                tabs_nav_left.append(createIcon('arrow-up'));
-                tabs_nav_right.append(createIcon('arrow-down'));
+                tabs_nav_left.append(Icon('arrow-up'));
+                tabs_nav_right.append(Icon('arrow-down'));
             }
             else {
-                tabs_nav_left.append(createIcon('arrow-left'));
-                tabs_nav_right.append(createIcon('arrow-right'));
+                tabs_nav_left.append(Icon('arrow-left'));
+                tabs_nav_right.append(Icon('arrow-right'));
             }
 
             let data_tabs = {};
             let data_contents = {};
 
             data.forEach((item) => {
-                const tab = Q(`<div class="${classes.tab}" data-value="${item.value}">${item.title}</div>`);
+                const tab = Q('<div>', { class: classes.tab, 'data-value': item.value }).text(item.title);
                 if (item.disabled) {
                     tab.addClass(classes.tab_disabled);
                 }
@@ -1314,7 +1298,14 @@ Q.fetch = function (url, callback, options = {}) {
 // Example: var containers = Q.Form()
 // Dependencies: Q.style, addClass, removeClass, on, append, each, find, scrollTop, scrollLeft
 Q.Form = function (options = {}) {
-    let style = `
+
+    let Icon = function (icon) {
+        let iconElement = Q('<div>');
+        iconElement.addClass('svg_' + icon + ' form_icon');
+        return iconElement;
+    }
+
+    let classes = Q.style(`
            :root {
                --svg_window-close: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 2.8176856,98.903421 -4.0360052e-7,96.085741 22.611458,73.473146 45.222917,50.860554 22.611458,28.247962 -4.0360052e-7,5.6353711 2.8176856,2.8176851 5.6353716,-9.1835591e-7 28.247963,22.611458 50.860555,45.222916 73.473147,22.611458 96.085743,-9.1835591e-7 98.903423,2.8176851 101.72111,5.6353711 79.109651,28.247962 56.498193,50.860554 79.109651,73.473146 101.72111,96.085741 98.903423,98.903421 96.085743,101.72111 73.473147,79.109651 50.860555,56.498192 28.247963,79.109651 5.6353716,101.72111 Z"/></svg>');
                --svg_window-full: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 H 50.860555 84.417403 V 50.860554 84.417401 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z"/></svg>');
@@ -1359,6 +1350,7 @@ Q.Form = function (options = {}) {
                height: 100%;
                color: #fff;
                /* Default color */
+               pointer-events: none;
            }
 
 
@@ -1667,12 +1659,24 @@ Q.Form = function (options = {}) {
                justify-content: flex-end;
            }
 
-           .q_form_tags {
+
+
+
+
+
+
+
+
+
+
+
+           .tag_container {
                 display: flex;
                 flex-wrap: wrap;
 }
 
-.q_form_tag {
+
+.tag_tag {
     display: flex;
     align-items: center;
     border: 1px solid #333;
@@ -1682,58 +1686,57 @@ overflow: hidden;
     border-radius: 5px;
 }
 
-        .q_form_tag_rating {
+        .tag_rating {
     display: flex;
     background-color: #333;
     padding: 2px 5px;
     align-items: center;
             }
 
-            .q_form_tag_icon {
+            .tag_icon {
                 width: 10px;
                 height: 10px;
+                
 }
 
-.q_form_tag_icon_small {
+.tag_icon_small {
     width: 5px;
     height: 5px;
 }
 
-.q_form_tag_name {
+.tag_name {
     padding: 2px 8px;
 }
 
-.q_form_tag_current_value {
-    padding: 0 5px;       
+.tag_value {
+    padding: 0 5px;
+    user-select: none;   
 }
 
-.q_form_tag_close {
-    padding: 0 5px;
+.tag_close {
     cursor: pointer;
     background-color: #333;
     height: auto;
+    width: 20px;
 }
 
+.tag_input {
+width: content;
+    border: 0;
+    margin:0;
+    background-color: transparent;
+    color: #fff;
+}
 
-    `;
+.tag_name[contenteditable="true"] {
+    cursor: text;
+}
 
-    let createIcon = function (icon) {
-        let iconElement = Q('<div>');
-        iconElement.addClass('svg_' + icon + ' form_icon');
-        return iconElement;
-    }
+.tag_name[contenteditable="true"]:focus {
+    outline: 0;
+}
 
-    let randomletters = function (length) {
-        let result = '';
-        let characters = 'abcdef0123456789';
-        let charactersLength = characters.length;
-        for (let i = 0; i < length; i++) {
-            result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        }
-        return '_' + result;
-    }
-
-    let classes = {
+    `, {
         'q_form': 'q_form',
         'q_form_disabled': 'q_form_disabled',
         'q_form_checkbox': 'q_form_checkbox',
@@ -1764,123 +1767,155 @@ overflow: hidden;
         'q_window_minimize': 'q_window_minimize',
         'q_window_maximize': 'q_window_maximize',
 
-
-
-    };
-
-    //replace all classes with the new random ones
-    // classes = Object.keys(classes).reduce((acc, key) => {
-    //     acc[key] = randomletters(6);
-
-    //     //find and replace all class names in the style
-    //     style = style.replace(new RegExp(`\\b${key}\\b`, 'gm'), acc[key]);
-    //     return acc;
-    // }, {});
-
-    Q.style(style);
-
-    if (options.classes) {
-        classes = Object.assign(classes, options.classes);
-    }
+        'tag_name': 'tag_name',
+        'tag_input': 'tag_input',
+        'tag_close': 'tag_close',
+        'tag_value': 'tag_value',
+        'tag_icon_small': 'tag_icon_small',
+        'tag_rating': 'tag_rating',
+        'tag_container': 'tag_container',
+        'tag_tag': 'tag_tag',
+        'tag_icon': 'tag_icon',
+        'tag_up': 'tag_up',
+        'tag_down': 'tag_down',
+    });
 
     return {
 
 
-        Tag: function (data, options = {}) {
-
-            let defaultOptions = {
+        Tag: function (options = {}) {
+            const defaultOptions = {
                 min: 0,
                 max: 10,
                 step: 1,
                 value: 0,
+                digit: 3,
+                flood: 500,
                 disabled: false,
                 removable: true,
                 votes: true,
                 readonly: false,
                 placeholder: ''
             };
-            options = Object.assign(defaultOptions, options);
-
-            if (typeof data[0] === 'string') {
-                data = data.map(tag => {
-                    return { tag: tag, value: 0 };
-                });
+        
+            // Merge defaultOptions with passed options using destructuring
+            let { min, max, step, digit, votes, removable, flood } = { ...defaultOptions, ...options };
+        
+            if (step.toString().includes('.')) {
+                digit = step.toString().split('.')[1].length;
             }
+        
+            let data = [];
+            let changeCallback = null; // Store the callback function here
+            let timer = null; // Timer for debounce
+            const tagContainer = Q('<div>', { class: classes.tag_container });
+            const input = Q('<input>', { class: classes.tag_input });
+            const malformFix = Q('<input>', { class: classes.tag_input });
+        
+            // Debounce function to control the rate of triggering the callback
+            function floodControl(callback) {
 
-            let tag_container = Q('<div>', { class: 'q_form_tags' });
-            let input = Q('<input>', { class: 'q_form_input' });
+                if(flood === 0) {
+                    callback(data);
+                    return;
+                }
 
-
-            const appendTags = function (tags) {
+                if (timer) clearTimeout(timer);
+                
+                timer = setTimeout(() => {
+                    if (callback) callback(data);
+                }, flood);
+            }
+        
+            // Function to handle vote changes (common for both upvote and downvote)
+            const changeTagValue = (tag, delta, currentValue) => {
+                let newValue = tag.value + delta;
+                newValue = Math.min(Math.max(newValue, min), max);
+                tag.value = parseFloat(newValue.toFixed(digit));
+                currentValue.text(tag.value);
+                data = data.map(t => (t.tag === tag.tag ? { ...t, value: tag.value } : t));
+        
+                // Trigger the change callback with debounce (flood control)
+                if (changeCallback) floodControl(changeCallback);
+            };
+        
+            const appendTags = tags => {
                 tags.forEach(tag => {
-                    let tagElement = Q('<div>', { class: 'q_form_tag' });
-                    let tagValue = Q('<div>', { class: 'q_form_tag_name' });
-
-                    if (options.votes) {
-                        let tagRate = Q('<div>', { class: 'q_form_tag_rating' });
-                        let upvote = Q('<div>', { class: 'q_form_tag_icon q_form_tag_upvote' });
-                        let currentValue = Q('<div>', { class: 'q_form_tag_current_value' });
-                        let downvote = Q('<div>', { class: 'q_form_tag_icon q_form_tag_downvote' });
-                        upvote.html(createIcon('arrow-up'));
-                        downvote.html(createIcon('arrow-down'));
-                        currentValue.text(tag.value);
-                        tagRate.append(upvote, currentValue, downvote);
+                    const tagElement = Q('<div>', { class: classes.tag_tag });
+                    let tagValue = Q('<div>', { class: classes.tag_name }).text(tag.tag);
+        
+                    if (votes) {
+                        const tagRate = Q('<div>', { class: classes.tag_rating });
+                        const upvote = Q('<div>', { class: [classes.tag_icon, classes.tag_up] }).html(Icon('arrow-up'));
+                        const currentValue = Q('<div>', { class: classes.tag_value }).text(tag.value);
+                        const downvote = Q('<div>', { class: [classes.tag_icon, classes.tag_down] }).html(Icon('arrow-down'));
+        
+                        tagRate.append(downvote, currentValue, upvote);
                         tagElement.append(tagRate);
-
-                        upvote.on('click', function () {
-
-                            if(tag.value >= options.max) return;
-
-                            tag.value++;
-                            currentValue.text(tag.value);
-                            let index = data.findIndex(t => t.tag === tag.tag);
-                            data[index].value = tag.value;
-                        });
-
-                        downvote.on('click', function () {
-                            if(tag.value <= options.min) return;
-                            tag.value--;
-                            currentValue.text(tag.value);
-                            let index = data.findIndex(t => t.tag === tag.tag);
-                            data[index].value = tag.value;
-                        });
-
+        
+                        upvote.on('click', () => changeTagValue(tag, step, currentValue));
+                        downvote.on('click', () => changeTagValue(tag, -step, currentValue));
                     }
-
-                    tagValue.text(tag.tag);
+        
+                    if (!defaultOptions.readonly) {
+                        tagValue.attr('contenteditable', true);
+        
+                        tagValue.on('input', function () {
+                            malformFix.val(tagValue.text());
+                            tagValue.text(malformFix.val());
+                            tag.tag = malformFix.val();
+        
+                            // Trigger the change callback with debounce (flood control)
+                            if (changeCallback) floodControl(changeCallback);
+                        });
+                    }
+        
                     tagElement.append(tagValue);
-
-                    if (options.removable) {
-                        let close = Q('<div>', { class: 'q_form_tag_icon_small q_form_tag_close' });
-                        close.html(createIcon('window-close'));
-                        tagElement.append(close);
-
-                        close.on('click', function () {
+        
+                    if (removable) {
+                        const close = Q('<div>', { class: [classes.tag_icon_small, classes.tag_close] }).html(Icon('window-close'));
+                        close.on('click', () => {
                             data = data.filter(t => t.tag !== tag.tag);
-                            let index = data.findIndex(t => t.tag === tag.tag);
-                            delete data[index];
                             tagElement.remove();
+        
+                            // Trigger the change callback with debounce (flood control)
+                            if (changeCallback) floodControl(changeCallback);
                         });
+                        tagElement.append(close);
                     }
-
-
-
-                    tag_container.append(tagElement);
+        
+                    tagContainer.append(tagElement);
                 });
             };
-
-
-            appendTags(data);
-
-
-
-
-            return tag_container;
+        
+            tagContainer.add = function (taglist) {
+                tagContainer.empty();
+        
+                if (!Array.isArray(taglist)) {
+                    taglist = [taglist];
+                }
+        
+                taglist = taglist.map(tag => (typeof tag === 'string' ? { tag, value: 0 } : tag));
+                data = [...data, ...taglist];
+        
+                appendTags(data);
+            };
+        
+            tagContainer.get = function () {
+                return data;
+            };
+        
+            // Method to set the change callback
+            tagContainer.change = function (callback) {
+                changeCallback = callback;
+            };
+        
+            return tagContainer;
         },
 
 
 
-        // Datepicker is work in progress yet
+        // NOT FINISHED - Datepicker is work in progress yet
         DatePicker: function (value = '', locale = window.navigator.language, range = false) {
 
             let getFirstDayOfWeek = () => {
@@ -2066,6 +2101,7 @@ overflow: hidden;
             return wrapper;
         },
 
+        // NOT FINISHED - Progressbar is work in progress yet
         ProgressBar: function (value = 0, min = 0, max = 100, autoKill = 0) {
             let timer = null;
             const progress = Q('<div class="' + classes.q_form + ' ' + classes.q_form_progress + '">');
@@ -2118,6 +2154,8 @@ overflow: hidden;
 
             return progress;
         },
+
+        // NOT FINISHED - Checkbox is work in progress yet
         Button: function (text = '') {
             const button = Q(`<div class="${classes.q_form} ${classes.q_form_button}">${text}</div>`);
 
@@ -2144,6 +2182,8 @@ overflow: hidden;
 
             return button;
         },
+
+        // NOT FINISHED - Checkbox is work in progress yet
         File: function (text = '', accept = '*', multiple = false) {
             const container = Q('<div class="' + classes.q_form + ' ' + classes.q_form_file + ' ' + classes.q_form_button + '">');
             const input = Q(`<input type="file" accept="${accept}" ${multiple ? 'multiple' : ''}>`);
@@ -2207,6 +2247,8 @@ overflow: hidden;
 
             return container;
         },
+
+
         DropDown: function (data) {
             let wrapper = Q('<div class="' + classes.q_form + ' ' + classes.q_form_dropdown + '">');
             let selected = Q('<div class="' + classes.q_form_dropdown_selected + '">');
@@ -2311,6 +2353,8 @@ overflow: hidden;
 
             return wrapper;
         },
+
+
         Slider: function (min = 0, max = 100, value = 50) {
             const slider = Q('<input type="range" class="' + classes.q_form_slider + '">');
             slider.attr('min', min);
@@ -2395,9 +2439,9 @@ overflow: hidden;
             let minimize = Q('<div class="' + classes.q_window_button + ' ' + classes.q_window_minimize + '">');
             let maximize = Q('<div class="' + classes.q_window_button + ' ' + classes.q_window_maximize + '">');
 
-            close.append(createIcon('window-close'));
-            minimize.html(createIcon('window-minimize'));
-            maximize.html(createIcon('window-full'));
+            close.append(Icon('window-close'));
+            minimize.html(Icon('window-minimize'));
+            maximize.html(Icon('window-full'));
 
             content.append(data);
             titletext.text(title);
@@ -2467,7 +2511,7 @@ overflow: hidden;
 
                 if (maximized) {
                     maximized = false;
-                    maximize.html(createIcon('window-full'));
+                    maximize.html(Icon('window-full'));
                     window_wrapper.animate(animation_speed, {
                         width: dimensions.width + 'px',
                         height: dimensions.height + 'px',
@@ -2479,7 +2523,7 @@ overflow: hidden;
                 }
 
                 if (minimized) {
-                    minimize.html(createIcon('window-minimize'));
+                    minimize.html(Icon('window-minimize'));
                     window_wrapper.css({
                         height: dimensions.height + 'px'
                     });
@@ -2487,7 +2531,7 @@ overflow: hidden;
                     handleResize();
 
                 } else {
-                    minimize.html(createIcon('window-windowed'));
+                    minimize.html(Icon('window-windowed'));
                     window_wrapper.css({
                         height: titlebar.height() + 'px'
                     });
@@ -2498,7 +2542,7 @@ overflow: hidden;
             maximize.on('click', function () {
 
                 if (minimized) {
-                    minimize.html(createIcon('window-minimize'));
+                    minimize.html(Icon('window-minimize'));
                     minimized = false;
                     if (!content.is(':visible')) {
                         content.toggle();
@@ -2507,7 +2551,7 @@ overflow: hidden;
 
                 if (maximized) {
                     maximized = false;
-                    maximize.html(createIcon('window-full'));
+                    maximize.html(Icon('window-full'));
                     window_wrapper.animate(animation_speed, {
                         width: dimensions.width + 'px',
                         height: dimensions.height + 'px',
@@ -2520,7 +2564,7 @@ overflow: hidden;
 
                 } else {
                     maximized = true;
-                    maximize.html(createIcon('window-windowed'));
+                    maximize.html(Icon('window-windowed'));
                     window_wrapper.animate(animation_speed, {
                         width: '100%',
                         height: '100%',
@@ -2659,6 +2703,7 @@ overflow: hidden;
 
             return window_wrapper;
         },
+
         CheckBox: function (checked = false, text = '') {
             let ID = '_' + Q.ID();
             const container = Q('<div class="' + classes.q_form + ' ' + classes.q_form_checkbox + '">');
@@ -2698,6 +2743,7 @@ overflow: hidden;
             return container;
 
         },
+
         TextBox: function (type = 'text', value = '', placeholder = '') {
             const input = Q(`<input class="${classes.q_form} ${classes.q_form_input}" type="${type}" placeholder="${placeholder}" value="${value}">`);
 
@@ -2724,6 +2770,7 @@ overflow: hidden;
 
             return input;
         },
+
         TextArea: function (value = '', placeholder = '') {
             const textarea = Q(`<textarea class="${classes.q_form} ${classes.q_form_textarea}" placeholder="${placeholder}">${value}</textarea>`);
 
@@ -3025,22 +3072,25 @@ Q.String.prototype.replaceAll = function (stringOrRegex, replacement) {
 // Desc: Provides methods to apply global styles to the document. It's useful for applying CSS variables from JavaScript. Q.style will be removed after the styles are applied on the document ready event.
 // Type: Plugin
 // Example: Q.style(':root { --color: red; } body { background-color: var(--color); }');
-var glob_styles = {
-    styles: '',
-    root: '',
-    element: null,
-    checked: false,
-};
-
 Q.style = (function () {
+    let styleData = {
+        styles: '',
+        root: '',
+        element: null,
+        checked: false,
+    };
+    const sID = (length = 4) => '_' + Math.random().toString(16).substr(2, length);
+
+
     function applyStyles() {
-        if (!glob_styles.checked) {
-            glob_styles.element = document.getElementById('qlib-root-styles') || createStyleElement();
-            glob_styles.checked = true;
+        if (!styleData.init) {
+            styleData.element = document.getElementById('qlib-root-styles') || createStyleElement();
+            styleData.init = true;
         }
 
-        const finalStyles = `:root {${glob_styles.root}}\n${glob_styles.styles}`.replace(/(\r\n|\n|\r|\t|)/gm, '');
-        glob_styles.element.textContent = finalStyles;
+        const finalStyles = `:root {${styleData.root}}\n${styleData.gen}`.replace(/(\r\n|\n|\r|\t|)/gm, '');
+        // const finalStyles = `:root {${styleData.root}}\n${styleData.gen}`;
+        styleData.element.textContent = finalStyles;
     }
 
     function createStyleElement() {
@@ -3052,23 +3102,42 @@ Q.style = (function () {
 
     window.addEventListener('load', () => {
         console.log('Styles plugin loaded.');
+
+        //we should destroy the Q.style function after the document is loaded to prevent further usage.
         delete Q.style;
-        delete glob_styles;
+
     }, { once: true });
 
-    return function (styles) {
+    return function (styles, mapping = null, disableObfuscation = false) {
         if (typeof styles === 'string') {
             const rootContentMatch = styles.match(/:root\s*{([^}]*)}/);
             if (rootContentMatch) {
                 styles = styles.replace(rootContentMatch[0], '');
                 const rootContent = rootContentMatch[1].split(';').map(item => item.trim()).filter(item => item);
-                glob_styles.root += rootContent.join(';') + ';';
+                styleData.root += rootContent.join(';') + ';';
             }
-            glob_styles.styles += styles.trim();
+
+            if (!disableObfuscation && Object.keys(mapping).length === 0) {
+                const generatedKeys = new Set();
+                mapping = Object.keys(mapping).reduce((acc, key) => {
+                    let newKey;
+                    do {
+                        newKey = sID(5);
+                    } while (generatedKeys.has(newKey));
+
+                    generatedKeys.add(newKey);
+                    acc[key] = newKey;
+                    styles = styles.replace(new RegExp(`\\b${key}\\b`, 'gm'), acc[key]);
+                    return acc;
+                }, {});
+            }
+            styleData.gen += styles.trim();
+
+            applyStyles();
+                return mapping;
         } else {
             console.error('Invalid styles parameter. Expected a string.');
         }
-        applyStyles();
     };
 })();
 // Name: Task

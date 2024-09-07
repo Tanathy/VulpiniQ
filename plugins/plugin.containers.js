@@ -5,7 +5,14 @@
 // Example: var containers = Q.Container();
 // Dependencies: Q.style, addClass, removeClass, on, append, each, find, scrollTop, scrollLeft
 Q.Container = function (options = {}) {
-    let style = `
+
+    let Icon = function (icon) {
+        let iconElement = Q('<div>');
+        iconElement.addClass('svg_' + icon + ' container_icon');
+        return iconElement;
+    };
+
+    let classes = Q.style(`
         :root {
   	--svg_arrow-down: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 134.49459 62.707709"><path d="M 100.93685,31.353867 C 82.480099,48.598492 67.319803,62.707709 67.247301,62.707709 c -0.0725,0 -15.232809,-14.109215 -33.689561,-31.353842 L 3.5365448e-8,6.6845858e-7 H 67.247301 134.4946 Z"/></svg>');
 	--svg_arrow-left: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62.707704 134.4946"><path d="M 31.353844,100.93685 C 14.109219,82.480099 1.6018623e-6,67.319803 1.6018623e-6,67.247301 1.6018623e-6,67.174801 14.109217,52.014492 31.353844,33.55774 L 62.70771,0 V 67.247301 134.4946 Z"/></svg>');
@@ -49,6 +56,8 @@ Q.Container = function (options = {}) {
              width: 100%;
              height: 100%;
              color: #777; /* Default color */
+             pointer-events: none;
+             z-index: 1;
          }
 
           .tab_navigation_buttons {
@@ -118,84 +127,52 @@ Q.Container = function (options = {}) {
             background-color: #333;
             color: #555;
         }
-
- `;
-
-    let createIcon = function (icon) {
-        let iconElement = Q('<div>');
-        iconElement.addClass('svg_' + icon + ' container_icon');
-        return iconElement;
-    }
-
-    let randomletters = function (length) {
-        let result = '';
-        let characters = 'abcdef0123456789';
-        let charactersLength = characters.length;
-        for (let i = 0; i < length; i++) {
-            result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        }
-        return '_' + result;
-    }
-
-    let classes = {
-        'tab_navigation_buttons': 'tab_navigation_buttons',
-        'tab_navigation_buttons_vertical': 'tab_navigation_buttons_vertical',
-        'tab_container': 'tab_container',
-        'tab_container_vertical': 'tab_container_vertical',
-        'tab_navigation_header': 'tab_navigation_header',
-        'tab_navigation_header_vertical': 'tab_navigation_header_vertical',
-        'tab_navigation_tabs': 'tab_navigation_tabs',
-        'tab_navigation_tabs_vertical': 'tab_navigation_tabs_vertical',
-        'tab_active': 'tab_active',
-        'tab': 'tab',
-        'tab_disabled': 'tab_disabled'
-    };
-
-    classes = Object.keys(classes).reduce((acc, key) => {
-        acc[key] = randomletters(6);
-
-        //find and replace all class names in the style
-        style = style.replace(new RegExp(`\\b${key}\\b`, 'gm'), acc[key]);
-        return acc;
-    }, {});
-
-    Q.style(style);
-
-    if (options.classes) {
-        classes = Object.assign(classes, options.classes);
-    }
+ `,
+        {
+            'tab_navigation_buttons': 'tab_navigation_buttons',
+            'tab_navigation_buttons_vertical': 'tab_navigation_buttons_vertical',
+            'tab_container': 'tab_container',
+            'tab_container_vertical': 'tab_container_vertical',
+            'tab_navigation_header': 'tab_navigation_header',
+            'tab_navigation_header_vertical': 'tab_navigation_header_vertical',
+            'tab_navigation_tabs': 'tab_navigation_tabs',
+            'tab_navigation_tabs_vertical': 'tab_navigation_tabs_vertical',
+            'tab_active': 'tab_active',
+            'tab': 'tab',
+            'tab_disabled': 'tab_disabled'
+        });
 
     return {
         Tab: function (data, horizontal = true) {
+            let wrapper = Q('<div>', { class: classes.tab_container });
+            let tabs_wrapper = Q('<div>', { class: classes.tab_navigation_header });
+            let tabs_nav_left = Q('<div>', { class: classes.tab_navigation_buttons });
+            let tabs_nav_right = Q('<div>', { class: classes.tab_navigation_buttons });
+            let tabs = Q('<div>', { class: classes.tab_navigation_tabs });
 
-            let wrapper = Q('<div class="' + classes.tab_container + '">');
-            let tabs_wrapper = Q('<div class="' + classes.tab_navigation_header + '">');
-            let tabs_nav_left = Q('<div class="' + classes.tab_navigation_buttons + '">');
-            let tabs_nav_right = Q('<div class="' + classes.tab_navigation_buttons + '">');
-            let tabs = Q('<div class="' + classes.tab_navigation_tabs + '">');
             tabs_wrapper.append(tabs_nav_left, tabs, tabs_nav_right);
-            let content = Q('<div">');
+            
+            let content = Q('<div>');
             wrapper.append(tabs_wrapper, content);
-
             if (!horizontal) {
                 wrapper.addClass(classes.tab_container_vertical);
                 tabs.addClass(classes.tab_navigation_tabs_vertical);
                 tabs_wrapper.addClass(classes.tab_navigation_header_vertical);
                 tabs_nav_left.addClass(classes.tab_navigation_buttons_vertical);
                 tabs_nav_right.addClass(classes.tab_navigation_buttons_vertical);
-                tabs_nav_left.append(createIcon('arrow-up'));
-                tabs_nav_right.append(createIcon('arrow-down'));
+                tabs_nav_left.append(Icon('arrow-up'));
+                tabs_nav_right.append(Icon('arrow-down'));
             }
             else {
-                tabs_nav_left.append(createIcon('arrow-left'));
-                tabs_nav_right.append(createIcon('arrow-right'));
+                tabs_nav_left.append(Icon('arrow-left'));
+                tabs_nav_right.append(Icon('arrow-right'));
             }
 
             let data_tabs = {};
             let data_contents = {};
 
             data.forEach((item) => {
-                const tab = Q(`<div class="${classes.tab}" data-value="${item.value}">${item.title}</div>`);
+                const tab = Q('<div>', { class: classes.tab, 'data-value': item.value }).text(item.title);
                 if (item.disabled) {
                     tab.addClass(classes.tab_disabled);
                 }
