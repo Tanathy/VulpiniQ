@@ -3436,7 +3436,6 @@ Q.JSON.prototype.inflate = function (deflatedJson) {
     restoreRecursive(inflatedData);
     return inflatedData;
 };
-
 // Name: Socket
 // Method: Plugin
 // Desc: Provides a WebSocket implementation with automatic reconnection and status callbacks.
