@@ -3,6 +3,7 @@
 // Desc: Provides methods to apply global styles to the document. It's useful for applying CSS variables from JavaScript. Q.style will be removed after the styles are applied on the document ready event.
 // Type: Plugin
 // Example: Q.style(':root { --color: red; } body { background-color: var(--color); }');
+// Dependencies: ID
 Q.style = (function () {
     let styleData = {
         styles: '',
@@ -10,8 +11,6 @@ Q.style = (function () {
         element: null,
         checked: false,
     };
-    const sID = (length = 4) => '_' + Math.random().toString(16).substr(2, length);
-
 
     function applyStyles() {
         if (!styleData.init) {
@@ -53,7 +52,7 @@ Q.style = (function () {
                 mapping = Object.keys(mapping).reduce((acc, key) => {
                     let newKey;
                     do {
-                        newKey = sID(5);
+                        newKey = ID(5,'_');
                     } while (generatedKeys.has(newKey));
 
                     generatedKeys.add(newKey);

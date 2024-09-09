@@ -1,6 +1,9 @@
 const Q = (() => {
     'use strict';
 
+    var GLOBAL = {};
+
+
     function Q(identifier, attributes, props) {
         if (!(this instanceof Q)) {
             return new Q(identifier, attributes, props);
@@ -418,7 +421,7 @@ Q.prototype.html = function (...content) {
 // Name: index
 // Method: Prototype
 // Desc: Returns the index of the first node, or moves the node to a specific index within its parent.
-// Type: Traversal/DOM Manipulation
+// Type: Traversal
 // Example: Q(selector).index(index);
 Q.prototype.index = function (index) {
     if (index === undefined) {
@@ -661,7 +664,7 @@ Q.prototype.removeTransition = function () {
 // Name: scrollHeight
 // Method: Prototype
 // Desc: Returns the scroll height of the first node.
-// Type: Dimensions
+// Type: Scroll Manipulation
 // Example: Q(selector).scrollHeight();
 Q.prototype.scrollHeight = function () {
     return this.nodes[0].scrollHeight;
@@ -687,7 +690,7 @@ Q.prototype.scrollLeft = function (value, increment = false) {
 // Name: scrollTop
 // Method: Prototype
 // Desc: Gets or sets the vertical scroll position of the first node, with an option to increment.
-// Type: Dimensions
+// Type: Scroll Manipulation
 // Example: Q(selector).scrollTop(value, increment);
 Q.prototype.scrollTop = function (value, increment = false) {
     if (value === undefined) {
@@ -860,6 +863,19 @@ Q.prototype.zIndex = function (value) {
     }
     return this.each(el => this.nodes[el].style.zIndex = value);
 };
+// Name: Debounce
+// Method: Static
+// Desc: Debounces a function to only be called after a certain amount of time has passed since the last call avoiding multiple calls in a short period of time.
+// Type: Event Handling
+// Example: Q.Debounce('myFunction', 500, myFunction);
+Q.Debounce = function (id, time, callback) {
+    GLOBAL = GLOBAL || {};
+    GLOBAL.Flood = GLOBAL.Flood || {};
+    if (GLOBAL.Flood[id]) {
+        clearTimeout(GLOBAL.Flood[id]);
+    }
+    GLOBAL.Flood[id] = time ? setTimeout(callback, time) : callback();
+};
 // Name: Done
 // Method: Static
 // Desc: Registers callbacks to be executed when the window has fully loaded.
@@ -874,14 +890,43 @@ Q.Done = (function () {
         callbacks.push(callback);
     };
 })();
+// Name: HSL2RGB
+// Method: Static
+// Desc: Converts HSL to RGB.
+// Type: Utility
+// Example: Q.HSL2RGB(0, 0, 1); // [255, 255, 255]
+Q.HSL2RGB = function (h, s, l) {
+    let r, g, b;
+    if (s === 0) {
+        r = g = b = l; // achromatic
+    } else {
+        let hue2rgb = function (p, q, t) {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+        };
+
+        let q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        let p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1 / 3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1 / 3);
+    }
+
+    return [r * 255, g * 255, b * 255];
+};
 // Name: ID
 // Method: Static
-// Desc: Generates a random alphanumeric ID of specified length.
+// Desc: Generates a random hexadecimal ID with a specified length and optional prefix.
 // Type: Utility
-// Example: Q.ID(10); // "A1b2C3d4E5"
-Q.ID = function (length = 8) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+// Example: Q.ID(8, 'user-'); // user-1a2b3c4d
+Q.ID = function (length = 8, prefix = '') {
+    return prefix + [...Array(length)]
+        .map(() => Math.floor(Math.random() * 16).toString(16))
+        .join('');
 };
 // Name: Leaving
 // Method: Static
@@ -932,6 +977,31 @@ Q.Resize = (function () {
         callbacks.push(callback);
     };
 })();
+// Name: RGB2HSL
+// Method: Static
+// Desc: Converts RGB to HSL.
+// Type: Utility
+// Example: Q.RGB2HSL(255, 255, 255); // [0, 0, 1]
+Q.RGB2HSL = function (r, g, b) {
+    r /= 255, g /= 255, b /= 255;
+    let max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+
+    if (max === min) {
+        h = s = 0; // achromatic
+    } else {
+        let d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+    }
+
+    return [h, s, l];
+};
     //EXTENSIONS//
     return Q;
 })();

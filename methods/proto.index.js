@@ -1,7 +1,7 @@
 // Name: index
 // Method: Prototype
 // Desc: Returns the index of the first node, or moves the node to a specific index within its parent.
-// Type: Traversal/DOM Manipulation
+// Type: Traversal
 // Example: Q(selector).index(index);
 Q.prototype.index = function (index) {
     if (index === undefined) {

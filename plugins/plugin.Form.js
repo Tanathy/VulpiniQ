@@ -3,7 +3,7 @@
 // Desc: Form is a simple library for creating forms and windows in the browser. It provides a set of methods for creating form elements, windows, and other UI components.
 // Type: Plugin
 // Example: var containers = Q.Form()
-// Dependencies: Q.style, addClass, removeClass, on, append, each, find, scrollTop, scrollLeft
+// Dependencies: Style, addClass, removeClass, on, append, each, find, scrollTop, scrollLeft, hasClass, text, html, val, click, closest, empty, show, hide, css, attr, prop, remove, add
 Q.Form = function (options = {}) {
 
     let Icon = function (icon) {
@@ -514,25 +514,12 @@ width: content;
         
             let data = [];
             let changeCallback = null; // Store the callback function here
-            let timer = null; // Timer for debounce
             const tagContainer = Q('<div>', { class: classes.tag_container });
             const input = Q('<input>', { class: classes.tag_input });
             const malformFix = Q('<input>', { class: classes.tag_input });
+            let ID = Q.ID(5, '_');
         
             // Debounce function to control the rate of triggering the callback
-            function floodControl(callback) {
-
-                if(flood === 0) {
-                    callback(data);
-                    return;
-                }
-
-                if (timer) clearTimeout(timer);
-                
-                timer = setTimeout(() => {
-                    if (callback) callback(data);
-                }, flood);
-            }
         
             // Function to handle vote changes (common for both upvote and downvote)
             const changeTagValue = (tag, delta, currentValue) => {
@@ -543,7 +530,7 @@ width: content;
                 data = data.map(t => (t.tag === tag.tag ? { ...t, value: tag.value } : t));
         
                 // Trigger the change callback with debounce (flood control)
-                if (changeCallback) floodControl(changeCallback);
+                if (changeCallback) Q.Debounce(ID, flood, changeCallback);
             };
         
             const appendTags = tags => {
@@ -573,7 +560,7 @@ width: content;
                             tag.tag = malformFix.val();
         
                             // Trigger the change callback with debounce (flood control)
-                            if (changeCallback) floodControl(changeCallback);
+                            if (changeCallback) Q.Debounce(ID, flood, changeCallback);
                         });
                     }
         
@@ -586,7 +573,7 @@ width: content;
                             tagElement.remove();
         
                             // Trigger the change callback with debounce (flood control)
-                            if (changeCallback) floodControl(changeCallback);
+                            if (changeCallback) Q.Debounce(ID, flood, changeCallback);
                         });
                         tagElement.append(close);
                     }

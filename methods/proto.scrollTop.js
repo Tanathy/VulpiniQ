@@ -1,7 +1,7 @@
 // Name: scrollTop
 // Method: Prototype
 // Desc: Gets or sets the vertical scroll position of the first node, with an option to increment.
-// Type: Dimensions
+// Type: Scroll Manipulation
 // Example: Q(selector).scrollTop(value, increment);
 Q.prototype.scrollTop = function (value, increment = false) {
     if (value === undefined) {

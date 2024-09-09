@@ -1,9 +1,10 @@
 // Name: ID
 // Method: Static
-// Desc: Generates a random alphanumeric ID of specified length.
+// Desc: Generates a random hexadecimal ID with a specified length and optional prefix.
 // Type: Utility
-// Example: Q.ID(10); // "A1b2C3d4E5"
-Q.ID = function (length = 8) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+// Example: Q.ID(8, 'user-'); // user-1a2b3c4d
+Q.ID = function (length = 8, prefix = '') {
+    return prefix + [...Array(length)]
+        .map(() => Math.floor(Math.random() * 16).toString(16))
+        .join('');
 };
