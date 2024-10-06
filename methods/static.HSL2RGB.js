@@ -1,7 +1,7 @@
 // Name: HSL2RGB
 // Method: Static
 // Desc: Converts HSL to RGB.
-// Type: Utility
+// Type: Color
 // Example: Q.HSL2RGB(0, 0, 1); // [255, 255, 255]
 Q.HSL2RGB = function (h, s, l) {
     let r, g, b;

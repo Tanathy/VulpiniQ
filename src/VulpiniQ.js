@@ -44,7 +44,27 @@ const Q = (() => {
 
                                     el.classList.add(...value.split(/\s+/));
                                 }
-                            } else {
+                            }
+
+                            else if (attr === 'style') {
+                                if (typeof value === 'object') {
+                                    for (const [key, val] of Object.entries(value)) {
+                                        el.style[key] = val;
+                                    }
+                                }
+                                else {
+                                    el.style.cssText = value;
+                                }
+                            }
+                            else if (attr === 'text') {
+                                el.textContent = value;
+                            }
+
+                            else if (attr === 'html') {
+                                el.innerHTML = value;
+                            }
+
+                            else {
                                 el.setAttribute(attr, value);
                             }
                         }
@@ -418,6 +438,18 @@ Q.prototype.html = function (...content) {
         });
     });
 };
+// Name: id
+// Method: Prototype
+// Desc: Gets or sets the id attribute of the first node.
+// Type: Attributes
+// Example: Q(selector).id(); or Q(selector).id('new-id');
+Q.prototype.id = function (id) {
+    if (id === undefined) {
+        return this.nodes[0].id;
+    }
+
+    return this.nodes[0].id = id;
+};
 // Name: index
 // Method: Prototype
 // Desc: Returns the index of the first node, or moves the node to a specific index within its parent.
@@ -498,12 +530,19 @@ Q.prototype.is = function (selector) {
 };
 
 // Name: isExists
-// Method: Prototype
+// Method: Prototype and Static
 // Desc: Checks if the first node exists in the DOM.
 // Type: Utilities
-// Example: Q(selector).isExists();
+// Example: Q(selector).isExists(); or Q.isExists('.ok')
+
+// Prototype method
 Q.prototype.isExists = function () {
     return document.body.contains(this.nodes[0]);
+};
+
+// Static method
+Q.isExists = function (selector) {
+    return document.querySelector(selector) !== null;
 };
 // Name: last
 // Method: Prototype
@@ -811,6 +850,34 @@ Q.prototype.val = function (value) {
     }
     return this.each(el => this.nodes[el].value = value);
 };
+// Name: Wait
+// Method: Prototype
+// Desc: Returns a promise that resolves after a given time. Useful for delaying actions.
+// Type: Utility
+// Example: Q('.text').wait(1000).text('Hello, World!');
+Q.prototype.wait = function (ms) {
+    // Store the current instance of Q
+    const qInstance = this;
+
+    // Return a new promise that resolves after the wait period
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve(qInstance); // Resolve with the current instance to keep chaining
+        }, ms);
+    });
+};
+// Name: walk
+// Method: Prototype
+// Desc: Walks through all nodes in the Q object and executes a callback on each node, passing the current node as a Q object or raw element based on the boolean parameter.
+// Type: Iteration
+// Example: Q(selector).walk((node) => console.log(node), true); // Passes Q object
+Q.prototype.walk = function (callback, useQObject = true) {
+    this.nodes.forEach((el, index) => {
+        const node = useQObject ? Q(el) : el;
+        callback.call(el, node, index);
+    });
+    return this;
+};
 // Name: width
 // Method: Prototype
 // Desc: Gets or sets the width of the first node.
@@ -863,6 +930,69 @@ Q.prototype.zIndex = function (value) {
     }
     return this.each(el => this.nodes[el].style.zIndex = value);
 };
+// Name: ColorBrightness
+// Method: Static
+// Desc: Adjusts the brightness of a color by a percentage.
+// Type: Color
+// Example: Q.ColorBrightness('#000000', 50); // #7f7f7f (black +50%)
+Q.ColorBrightness = function (color, percent) {
+    let r, g, b, a = 1;
+    let hex = false;
+
+    // Early return for unsupported color formats
+    if (!color.startsWith('#') && !color.startsWith('rgb')) {
+        throw new Error('Unsupported color format');
+    }
+
+    // Parse hex color
+    if (color.startsWith('#')) {
+        color = color.replace(/^#/, '');
+        if (color.length === 3) {
+            r = parseInt(color[0] + color[0], 16);
+            g = parseInt(color[1] + color[1], 16);
+            b = parseInt(color[2] + color[2], 16);
+        }
+        if (color.length === 6) {
+            r = parseInt(color.substring(0, 2), 16);
+            g = parseInt(color.substring(2, 4), 16);
+            b = parseInt(color.substring(4, 6), 16);
+        }
+        hex = true;
+    }
+
+    // Parse rgb/rgba color
+    if (color.startsWith('rgb')) {
+        const rgba = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(\.\d+)?))?\)/);
+        if (rgba) {
+            r = parseInt(rgba[1]);
+            g = parseInt(rgba[2]);
+            b = parseInt(rgba[3]);
+            if (rgba[4]) {
+                a = parseFloat(rgba[4]);
+            }
+        }
+    }
+
+    // Adjust each color component
+    r = Math.min(255, Math.max(0, r + (r * percent / 100)));
+    g = Math.min(255, Math.max(0, g + (g * percent / 100)));
+    b = Math.min(255, Math.max(0, b + (b * percent / 100)));
+
+    // Convert back to the appropriate format and return
+    if (hex) {
+        return '#' +
+            ('0' + Math.round(r).toString(16)).slice(-2) +
+            ('0' + Math.round(g).toString(16)).slice(-2) +
+            ('0' + Math.round(b).toString(16)).slice(-2);
+    } else if (color.startsWith('rgb')) {
+        if (a === 1) {
+            return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+        } else {
+            return `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${a})`;
+        }
+    }
+}
+
 // Name: Debounce
 // Method: Static
 // Desc: Debounces a function to only be called after a certain amount of time has passed since the last call avoiding multiple calls in a short period of time.
@@ -893,7 +1023,7 @@ Q.Done = (function () {
 // Name: HSL2RGB
 // Method: Static
 // Desc: Converts HSL to RGB.
-// Type: Utility
+// Type: Color
 // Example: Q.HSL2RGB(0, 0, 1); // [255, 255, 255]
 Q.HSL2RGB = function (h, s, l) {
     let r, g, b;
@@ -928,6 +1058,57 @@ Q.ID = function (length = 8, prefix = '') {
         .map(() => Math.floor(Math.random() * 16).toString(16))
         .join('');
 };
+// Name: isDarkColor
+// Method: Static
+// Desc: Determines if a color is dark or light.
+// Type: Color
+// Example: Q.isDarkColor('#000000'); // true (black)
+Q.isDarkColor = function (color, margin = 20, threshold = 100) {
+    let r, g, b;
+
+    // Parse hex color
+    if (color.startsWith('#')) {
+        color = color.replace(/^#/, '');
+        if (color.length === 3) {
+            r = parseInt(color[0] + color[0], 16);
+            g = parseInt(color[1] + color[1], 16);
+            b = parseInt(color[2] + color[2], 16);
+        } else if (color.length === 6) {
+            r = parseInt(color.substring(0, 2), 16);
+            g = parseInt(color.substring(2, 4), 16);
+            b = parseInt(color.substring(4, 6), 16);
+        } else {
+            throw new Error('Invalid hex color format');
+        }
+    }
+
+    // Parse rgb/rgba color
+    else if (color.startsWith('rgb')) {
+        const rgba = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(\.\d+)?))?\)/);
+        if (rgba) {
+            r = parseInt(rgba[1]);
+            g = parseInt(rgba[2]);
+            b = parseInt(rgba[3]);
+        } else {
+            throw new Error('Invalid rgb/rgba color format');
+        }
+    } else {
+        throw new Error('Unsupported color format');
+    }
+
+    // Calculate HSP value
+    let hsp = Math.sqrt(
+        0.299 * (r * r) +
+        0.587 * (g * g) +
+        0.114 * (b * b)
+    );
+
+    // Adjust brightness by ±20
+    hsp += margin;
+
+    // Determine if the color is dark
+    return hsp < threshold;
+}
 // Name: Leaving
 // Method: Static
 // Desc: Registers callbacks to be executed when the window is about to be unloaded.
@@ -980,7 +1161,7 @@ Q.Resize = (function () {
 // Name: RGB2HSL
 // Method: Static
 // Desc: Converts RGB to HSL.
-// Type: Utility
+// Type: Color
 // Example: Q.RGB2HSL(255, 255, 255); // [0, 0, 1]
 Q.RGB2HSL = function (r, g, b) {
     r /= 255, g /= 255, b /= 255;

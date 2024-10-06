@@ -6,7 +6,7 @@
 // Dependencies: ID
 Q.style = (function () {
     let styleData = {
-        styles: '',
+        gen: "",
         root: '',
         element: null,
         checked: false,
@@ -18,8 +18,15 @@ Q.style = (function () {
             styleData.init = true;
         }
 
-        const finalStyles = `:root {${styleData.root}}\n${styleData.gen}`.replace(/(\r\n|\n|\r|\t|)/gm, '');
-        // const finalStyles = `:root {${styleData.root}}\n${styleData.gen}`;
+        let finalStyles = '';
+
+        if (styleData.root) {
+            //add only root styles if they exist
+            finalStyles = `:root {${styleData.root}}\n`;
+        }
+
+        finalStyles += styleData.gen;
+
         styleData.element.textContent = finalStyles;
     }
 
@@ -38,7 +45,7 @@ Q.style = (function () {
 
     }, { once: true });
 
-    return function (styles, mapping = null, disableObfuscation = false) {
+    return function (styles, mapping = null, obfuscate = false) {
         if (typeof styles === 'string') {
             const rootContentMatch = styles.match(/:root\s*{([^}]*)}/);
             if (rootContentMatch) {
@@ -47,21 +54,41 @@ Q.style = (function () {
                 styleData.root += rootContent.join(';') + ';';
             }
 
-            if (!disableObfuscation && Object.keys(mapping).length === 0) {
-                const generatedKeys = new Set();
-                mapping = Object.keys(mapping).reduce((acc, key) => {
-                    let newKey;
-                    do {
-                        newKey = ID(5,'_');
-                    } while (generatedKeys.has(newKey));
+            // if (!disableObfuscation && Object.keys(mapping).length === 0) {
+            //     const generatedKeys = new Set();
+            //     mapping = Object.keys(mapping).reduce((acc, key) => {
+            //         let newKey;
+            //         do {
+            //             newKey = ID(5,'_');
+            //         } while (generatedKeys.has(newKey));
 
-                    generatedKeys.add(newKey);
-                    acc[key] = newKey;
-                    styles = styles.replace(new RegExp(`\\b${key}\\b`, 'gm'), acc[key]);
-                    return acc;
-                }, {});
+            //         generatedKeys.add(newKey);
+            //         acc[key] = newKey;
+            //         styles = styles.replace(new RegExp(`\\b${key}\\b`, 'gm'), acc[key]);
+            //         return acc;
+            //     }, {});
+            // }
+
+
+            //obfuscate the class and id names using the mapping object. mapping object may contain . and #.
+            if (obfuscate && mapping) {
+                const keys = Object.keys(mapping);
+                keys.forEach((key) => {
+                    let newKey = Q.ID(5, '_');
+
+                    //replace all occurrences of the key in the styles string and update the mapping object value.
+                    styles = styles.replace(new RegExp(`\\b${key}\\b`, 'gm'), newKey);
+                    //replace the value of the key in the mapping object as well.
+                    mapping[key] = mapping[key].replace(key, newKey);
+
+
+
+                });
             }
-            styleData.gen += styles.trim();
+
+
+
+            styleData.gen += styles;
 
             applyStyles();
                 return mapping;
