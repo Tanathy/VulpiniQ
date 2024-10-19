@@ -3,7 +3,7 @@
 // Desc: Converts RGB to HSL.
 // Type: Color
 // Example: Q.RGB2HSL(255, 255, 255); // [0, 0, 1]
-// Variables: r, g, b, maximum, min, h, s, l, d
+// Variables: min, maximum
 Q.RGB2HSL = function (r, g, b) {
     r /= 255, g /= 255, b /= 255;
     let maximum = Math.max(r, g, b), minimum = Math.min(r, g, b);

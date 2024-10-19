@@ -4,7 +4,7 @@
 // Type: Form Manipulation
 // Example: Q(selector).val(value);
 // Variables: val, el
-Q.Ext('val', val => {
+Q.Ext('val', function(val){
     if (val === undefined) {
         return this.nodes[0]?.value || null;
     }

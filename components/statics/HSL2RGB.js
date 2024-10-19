@@ -3,7 +3,7 @@
 // Desc: Converts HSL to RGB.
 // Type: Color
 // Example: Q.HSL2RGB(0, 0, 1); // [255, 255, 255]
-// Variables: h, s, l, r, g, b, hue2rgb, q, p
+// Variables: hue2rgb
 Q.HSL2RGB = function (h, s, l) {
     let r, g, b;
     if (s === 0) {

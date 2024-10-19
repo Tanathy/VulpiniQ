@@ -3,10 +3,11 @@
 // Desc: Appends child nodes or HTML to each node.
 // Type: DOM Manipulation
 // Example: Q(selector).append("<div>Appended</div>");
-// Variables: allNodes, parent, child, subchild, el
-Q.Ext('append', (...allNodes) => {
+// Variables: allNodes, parent, child, subchild
+Q.Ext('append', function(...allNodes) {
     return this.each(el => {
         const parent = this.nodes[el];
+
 
         allNodes.forEach(child => {
 

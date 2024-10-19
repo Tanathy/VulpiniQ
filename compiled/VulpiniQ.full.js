@@ -75,7 +75,7 @@ const _ob = Object, _ar = Array, _ma = Math, _ac = AbortController, _as = AbortS
         }
     }
     Q.Ext = (n, o) => (Q.prototype[n] = o, Q);
-    Q.Ext('addClass', a => {
+    Q.Ext('addClass', a => { 
     const b = a.split(' ');
     return this.each(c => this.nodes[c].classList.add(...b));
 });
@@ -94,9 +94,9 @@ Q.Ext('animate', (a, b, e) => {
         }
     }), this;
 });
-Q.Ext('append', (...a) => {
-    return this.each(e => {
-        const b = this.nodes[e];
+Q.Ext('append', function(...a) {
+    return this.each(el => {
+        const b = this.nodes[el];
         a.forEach(c => {
             if (typeof c === 'string') {
                 b.insertAdjacentHTML('beforeend', c);
@@ -108,7 +108,7 @@ Q.Ext('append', (...a) => {
         });
     });
 });
-Q.Ext('attr', (a, b) => {
+Q.Ext('attr', function(a, b){
     if (typeof a === 'object') {
         return this.each(d => {
             for (let c in a) {
@@ -147,22 +147,22 @@ Q.Ext('children', () => {
     return new Q(this.nodes[0].children);
 });
 Q.Ext('click', () => {
-    return this.each(a => this.nodes[a].click());
+    return this.each(el => this.nodes[el].click());
 });
 Q.Ext('clone', () => {
     return new Q(this.nodes[0].cloneNode(true));
 });
-Q.Ext('closest', a => {
+Q.Ext('closest', selector => {
     let b = this.nodes[0];
     while (b) {
-        if (b.matches && b.matches(a)) {
+        if (b.matches && b.matches(selector)) {
             return new Q(b);
         }
         b = b.parentElement;
     }
     return _n;
 });
-Q.Ext('css', (a, b) => {
+Q.Ext('css', function(a, b){
     if (typeof a === 'object') {
         return this.each(d => {
             for (let c in a) {
@@ -184,15 +184,15 @@ Q.Ext('data', (a, b) => {
     }
     return this.each(c => this.nodes[c].dataset[a] = b);
 });
-Q.Ext('each', a => {
-    this.nodes.forEach((b, c) => a.call(b, c, b));
+Q.Ext('each', function(callback) {
+    this.nodes.forEach((b, c) => callback.call(b, c, b));
     return this;
 });
 Q.Ext('empty', () => {
     return this.each(a => this.nodes[a].innerHTML = '');
 });
-Q.Ext('eq', a => {
-    return new Q(this.nodes[a]);
+Q.Ext('eq', index => {
+    return new Q(this.nodes[index]);
 });
 Q.Ext('fadeIn', (a = 400, b) => {
     return this.each(c => {
@@ -206,7 +206,7 @@ Q.Ext('fadeIn', (a = 400, b) => {
         }, a);
     });
 });
-Q.Ext('fadeOut', (a, b) => {
+Q.Ext('fadeOut', function(a, b) {
     return this.each(c => {
         this.nodes[c].style.transition = `opacity ${a}ms`;
         this.nodes[c].style.opacity = 0;
@@ -217,11 +217,11 @@ Q.Ext('fadeOut', (a, b) => {
         }, a);
     });
 });
-Q.Ext('fadeTo', (a, b, c) => {
+Q.Ext('fadeTo', (opacity, b, c) => {
     return this.each(d => {
-        this.nodes[d].style.transition = `a ${b}ms`;
+        this.nodes[d].style.transition = `opacity ${b}ms`;
         this.nodes[d].offsetHeight;
-        this.nodes[d].style.a = a;
+        this.nodes[d].style.opacity = opacity;
         _st(() => {
             this.nodes[d].style.transition = '';
             if (c) c();
@@ -237,9 +237,9 @@ Q.Ext('fadeToggle', (a, b) => {
         }
     });
 });
-Q.Ext('find', b => {
-    const a = this.nodes[0].querySelectorAll(b);
-    return a.length ? Q(a) : _n;
+Q.Ext('find', function(b){
+    const foundNodes = this.nodes[0].querySelectorAll(b);
+    return foundNodes.length ? Q(foundNodes) : _n;
 });
 Q.Ext('first', () => {
     return new Q(this.nodes[0]);
@@ -247,8 +247,8 @@ Q.Ext('first', () => {
 Q.Ext('focus', () => {
     return this.each(a => this.nodes[a].focus());
 });
-Q.Ext('hasClass', a => {
-    return this.nodes[0]?.classList.contains(a) || false;
+Q.Ext('hasClass', className => {
+    return this.nodes[0]?.classList.contains(className) || false;
 });
 Q.Ext('height', a => {
     if (a === _un) {
@@ -256,14 +256,14 @@ Q.Ext('height', a => {
     }
     return this.each(b => this.nodes[b].style.height = a);
 });
-Q.Ext('hide', (a = 0, b) => {
+Q.Ext('hide', (duration = 0, b) => {
     return this.each(e => {
         const c = this.nodes[e];
-        if (a === 0) {
+        if (duration === 0) {
             c.style.display = 'none';
             if (b) b();
         } else {
-            c.style.transition = `opacity ${a}ms`;
+            c.style.transition = `opacity ${duration}ms`;
             c.style.opacity = 1;
             _st(() => {
                 c.style.opacity = 0;
@@ -277,8 +277,8 @@ Q.Ext('hide', (a = 0, b) => {
         }
     });
 });
-Q.Ext('html', a => {
-    if (a.length === 0) {
+Q.Ext('html', function(a){
+    if (a === _un) {
         return this.nodes[0]?.innerHTML || _n;
     }
     return this.each(c => {
@@ -297,22 +297,22 @@ Q.Ext('html', a => {
         });
     });
 });
-Q.Ext('id', a => {
+Q.Ext('id', function(a){
     if (a === _un) {
         return this.nodes[0].id;
     }
     return this.nodes[0].id = a;
 });
-Q.Ext('a', a => {
-    if (a === _un) {
+Q.Ext('index', index => {
+    if (index === _un) {
         return _ar.from(this.nodes[0].parentNode.children).indexOf(this.nodes[0]);
     }
     return this.each(f => {
         const b = this.nodes[f].parentNode;
         const c = _ar.from(b.children);
         const d = c.indexOf(f);
-        const e = c.splice(a, 1)[0];
-        if (d < a) {
+        const e = c.splice(index, 1)[0];
+        if (d < index) {
             b.insertBefore(e, f);
         } else {
             b.insertBefore(e, this.nodes[f].nextSibling);
@@ -322,14 +322,14 @@ Q.Ext('a', a => {
 Q.Ext('inside', a => {
     return this.nodes[0]?.closest(a) !== _n;
 });
-Q.Ext('is', a => {
+Q.Ext('is', selector => {
     const b = this.nodes[0];
     if (!b) return false;
-    if (typeof a === 'function') {
-        return a.call(b, 0, b);
+    if (typeof selector === 'function') {
+        return selector.call(b, 0, b);
     }
-    if (typeof a === 'string') {
-        switch (a) {
+    if (typeof selector === 'string') {
+        switch (selector) {
             case ':visible':
                 return b.offsetWidth > 0 && b.offsetHeight > 0;
             case ':hidden':
@@ -349,21 +349,23 @@ Q.Ext('is', a => {
             case ':enabled':
                 return !b.disabled;
             default:
-                return b.matches(a);
+                return b.matches(selector);
         }
     }
-    if (a?.nodeType === 1 || a?.nodeType != _n) {
-        return b === a;
+    if (selector?.nodeType === 1 || selector?.nodeType != _n) {
+        return b === selector;
     }
-    if (a instanceof Q) {
-        return b === a.nodes[0];
+    if (selector instanceof Q) {
+        return b === selector.nodes[0];
     }
     return false;
 });
 Q.Ext('isExists', () => {
     return document.body.contains(this.nodes[0]);
 });
-Q.isExists = (a) => document.querySelector(a) !== _n;
+Q.isExists = function (a) {
+    return document.querySelector(a) !== _n;
+};
 Q.Ext('last', () => {
     return new Q(this.nodes[this.nodes.length - 1]);
 });
@@ -385,7 +387,7 @@ Q.Ext('offset', () => {
         left: a.left + window.scrollX
     };
 });
-Q.Ext('on', (a, b, c) => {
+Q.Ext('on', function (a, b, c) {
     const d = {
         capture: false,
         once: false,
@@ -419,15 +421,15 @@ Q.Ext('prepend', (...a) => {
         });
     });
 });
-Q.Ext('prop', (a, b) => {
+Q.Ext('prop', (property, b) => {
     if (b === _un) {
-        return this.nodes[0]?.[a] || _n;
+        return this.nodes[0]?.[property] || _n;
     }
-    return this.each((d, c) => {
-        c[a] = b;
+    return this.each(function (d, c) {
+        c[property] = b;
     });
 });
-Q.Ext('remove', () => {
+Q.Ext('remove', function() {
     return this.each(a => this.nodes[a].remove());
 });
 Q.Ext('removeAttr', a => {
@@ -437,11 +439,11 @@ Q.Ext('removeClass', a => {
     const b = a.split(' ');
     return this.each(c => this.nodes[c].classList.remove(...b));
 });
-Q.Ext('removeData', a => {
-    return this.each(b => delete this.nodes[b].dataset[a]);
+Q.Ext('removeData', key => {
+    return this.each(b => delete this.nodes[b].dataset[key]);
 });
-Q.Ext('removeProp', a => {
-    return this.each(b => delete this.nodes[b][a]);
+Q.Ext('removeProp', property => {
+    return this.each(b => delete this.nodes[b][property]);
 });
 Q.Ext('removeTransition', () => {
     return this.each(a => this.nodes[a].style.transition = '');
@@ -478,14 +480,14 @@ Q.Ext('scrollTop', (a, b) => {
 Q.Ext('scrollWidth', () => {
     return this.nodes[0].scrollWidth;
 });
-Q.Ext('show', (a = 0, b) => {
+Q.Ext('show', (duration = 0, b) => {
     return this.each(e => {
         const c = this.nodes[e];
-        if (a === 0) {
+        if (duration === 0) {
             c.style.display = '';
             if (b) b();
         } else {
-            c.style.transition = `opacity ${a}ms`;
+            c.style.transition = `opacity ${duration}ms`;
             c.style.opacity = 0;
             c.style.display = '';
             _st(() => {
@@ -505,7 +507,7 @@ Q.Ext('size', () => {
         height: this.nodes[0].offsetHeight
     };
 });
-Q.Ext('text', a => {
+Q.Ext('text', function(a){
     if (a === _un) {
         return this.nodes[0]?.textContent || _n;
     }
@@ -514,12 +516,12 @@ Q.Ext('text', a => {
 Q.Ext('toggle', () => {
     return this.each(a => this.nodes[a].style.display = this.nodes[a].style.display === 'none' ? '' : 'none');
 });
-Q.Ext('toggleClass', a => {
-    return this.each(b => this.nodes[b].classList.toggle(a));
+Q.Ext('toggleClass', className => {
+    return this.each(b => this.nodes[b].classList.toggle(className));
 });
-Q.Ext('trigger', a => {
-    return this.each((c, b) => {
-        b.dispatchEvent(new _ev(a));
+Q.Ext('trigger', event => {
+    return this.each(function (c, b) {
+        b.dispatchEvent(new _ev(event));
     });
 });
 Q.Ext('unwrap', () => {
@@ -530,24 +532,24 @@ Q.Ext('unwrap', () => {
         }
     });
 });
-Q.Ext('a', a => {
+Q.Ext('a', function(a){
     if (a === _un) {
         return this.nodes[0]?.value || _n;
     }
     return this.each(b => this.nodes[b].value = a);
 });
-Q.Ext('wait', a => {
+Q.Ext('wait', ms => {
     const b = this;
     return new _pr((resolve) => {
         _st(() => {
             resolve(b);
-        }, a);
+        }, ms);
     });
 });
-Q.Ext('walk', (a, b = false) => {
+Q.Ext('walk', function(callback, b = false){
     this.nodes.forEach((e, d) => {
         const c = b ? Q(e) : e;
-        a.call(e, c, d);
+        callback.call(e, c, d);
     });
     return this;
 });
@@ -565,10 +567,10 @@ Q.Ext('wrap', c => {
         b.appendChild(this.nodes[d]);
     });
 });
-Q.Ext('wrapAll', a => {
+Q.Ext('wrapAll', wrapper => {
     return this.each(e => {
         const b = this.nodes[e].parentNode;
-        const c = typeof a === 'string' ? document.createElement(a) : a;
+        const c = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;
         b.insertBefore(c, this.nodes[0]);
         this.nodes.forEach(d => c.appendChild(d));
     });
@@ -583,127 +585,30 @@ Q.Ext('zIndex', a => {
     }
     return this.each(c => this.nodes[c].style.zIndex = a);
 });
-Q.ColorBrightness = (f, e) => {
-    let c, d, e, f = 1;
-    let g = false;
-    if (!f.startsWith('#') && !f.startsWith('rgb')) {
-        throw new _er('Unsupported f format');
-    }
-    if (f.startsWith('#')) {
-        f = f.replace(/^#/, '');
-        if (f.length === 3) {
-            c = parseInt(f[0] + f[0], 16);
-            d = parseInt(f[1] + f[1], 16);
-            e = parseInt(f[2] + f[2], 16);
-        }
-        if (f.length === 6) {
-            c = parseInt(f.substring(0, 2), 16);
-            d = parseInt(f.substring(2, 4), 16);
-            e = parseInt(f.substring(4, 6), 16);
-        }
-        g = true;
-    }
-    if (f.startsWith('rgb')) {
-        const h = f.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(\.\d+)?))?\)/);
-        if (h) {
-            c = parseInt(h[1]);
-            d = parseInt(h[2]);
-            e = parseInt(h[3]);
-            if (h[4]) {
-                f = parseFloat(h[4]);
-            }
-        }
-    }
-    c = _ma.min(255, _ma.max(0, c + (c * e / 100)));
-    d = _ma.min(255, _ma.max(0, d + (d * e / 100)));
-    e = _ma.min(255, _ma.max(0, e + (e * e / 100)));
-    if (g) {
-        return '#' +
-            ('0' + _ma.round(c).toString(16)).slice(-2) +
-            ('0' + _ma.round(d).toString(16)).slice(-2) +
-            ('0' + _ma.round(e).toString(16)).slice(-2);
-    } else if (f.startsWith('rgb')) {
-        if (f === 1) {
-            return `rgb(${_ma.round(c)}, ${_ma.round(d)}, ${_ma.round(e)})`;
-        } else {
-            return `rgba(${_ma.round(c)}, ${_ma.round(d)}, ${_ma.round(e)}, ${f})`;
-        }
-    }
-}
-Q.Debounce = (a, b, c) => {
-    GLOBAL = GLOBAL || {};
-    GLOBAL.Flood = GLOBAL.Flood || {};
-    if (GLOBAL.Flood[a]) {
-        _ct(GLOBAL.Flood[a]);
-    }
-    GLOBAL.Flood[a] = b ? _st(c, b) : c();
-};
-Q.Done = (() => {
+Q.Done = (function () {
     const a = [];
     window.addEventListener('load', () => {
         a.forEach(b => b());
     });
-    return (b) => {
+    return function (b) {
         a.push(b);
     };
 })();
-Q.HSL2RGB = (a, f, c) => {
-    let d, e, f;
-    if (f === 0) {
-        d = e = f = c;
-    } else {
-        let g = (i, h, t) => {
-            if (t < 0) t += 1;
-            if (t > 1) t -= 1;
-            if (t < 1 / 6) return i + (h - i) * 6 * t;
-            if (t < 1 / 2) return h;
-            if (t < 2 / 3) return i + (h - i) * (2 / 3 - t) * 6;
-            return i;
-        };
-        let h = c < 0.5 ? c * (1 + f) : c + f - c * f;
-        let i = 2 * c - h;
-        d = g(i, h, a + 1 / 3);
-        e = g(i, h, a);
-        f = g(i, h, a - 1 / 3);
-    }
-    return [d * 255, e * 255, f * 255];
-};
-Q.ID = (a = 8, b = '') => b + [..._ar(a)]
-        .map(() => _ma.floor(_ma.random() * 16).toString(16))
-        .join('');
-Q.Leaving = (() => {
+Q.Leaving = (function () {
     const a = [];
     window.addEventListener('beforeunload', (b) => {
         a.forEach(c => c(b));
     });
-    return (c) => {
+    return function (c) {
         a.push(c);
     };
 })();
-Q.RGB2HSL = (a, c, c) => {
-    a /= 255, c /= 255, c /= 255;
-    let i = _ma.max(a, c, c), minimum = _ma.e(a, c, c);
-    let f, g, h = (i + minimum) / 2;
-    if (i === minimum) {
-        f = g = 0;
-    } else {
-        let i = i - minimum;
-        g = h > 0.5 ? i / (2 - i - minimum) : i / (i + minimum);
-        switch (i) {
-            case a: f = (c - c) / i + (c < c ? 6 : 0); break;
-            case c: f = (c - a) / i + 2; break;
-            case c: f = (a - c) / i + 4; break;
-        }
-        f /= 6;
-    }
-    return [f, g, h];
-};
-Q.Ready = (() => {
+Q.Ready = (function () {
     const a = [];
     document.addEventListener('DOMContentLoaded', () => {
         a.forEach(b => b());
     }, { once: true });
-    return (b) => {
+    return function (b) {
         if (document.readyState === 'loading') {
             a.push(b);
         } else {
@@ -711,56 +616,155 @@ Q.Ready = (() => {
         }
     };
 })();
-Q.Resize = (() => {
+Q.Resize = (function () {
     const a = [];
     window.addEventListener('resize', () => {
         const b = window.innerWidth;
         const c = window.innerHeight;
         a.forEach(d => d(b, c));
     });
-    return (d) => {
+    return function (d) {
         a.push(d);
     };
 })();
-Q.isDarkColor = (a, f = 20, c = 100) => {
-    let d, e, f;
-    const g = (i) => {
-        if (i.length === 3) {
+Q.ColorBrightness = function (c, percent) {
+    let r, g, b, a = 1;
+    let hex = false;
+    if (!c.startsWith('#') && !c.startsWith('rgb')) {
+        throw new _er('Unsupported c format');
+    }
+    if (c.startsWith('#')) {
+        c = c.replace(/^#/, '');
+        if (c.length === 3) {
+            r = parseInt(c[0] + c[0], 16);
+            g = parseInt(c[1] + c[1], 16);
+            b = parseInt(c[2] + c[2], 16);
+        }
+        if (c.length === 6) {
+            r = parseInt(c.substring(0, 2), 16);
+            g = parseInt(c.substring(2, 4), 16);
+            b = parseInt(c.substring(4, 6), 16);
+        }
+        hex = true;
+    }
+    if (c.startsWith('rgb')) {
+        const alphaColor = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(\.\d+)?))?\)/);
+        if (alphaColor) {
+            r = parseInt(alphaColor[1]);
+            g = parseInt(alphaColor[2]);
+            b = parseInt(alphaColor[3]);
+            if (alphaColor[4]) {
+                a = parseFloat(alphaColor[4]);
+            }
+        }
+    }
+    r = _ma.min(255, _ma.max(0, r + (r * percent / 100)));
+    g = _ma.min(255, _ma.max(0, g + (g * percent / 100)));
+    b = _ma.min(255, _ma.max(0, b + (b * percent / 100)));
+    if (hex) {
+        return '#' +
+            ('0' + _ma.round(r).toString(16)).slice(-2) +
+            ('0' + _ma.round(g).toString(16)).slice(-2) +
+            ('0' + _ma.round(b).toString(16)).slice(-2);
+    } else if (c.startsWith('rgb')) {
+        if (a === 1) {
+            return `rgb(${_ma.round(r)}, ${_ma.round(g)}, ${_ma.round(b)})`;
+        } else {
+            return `rgba(${_ma.round(r)}, ${_ma.round(g)}, ${_ma.round(b)}, ${a})`;
+        }
+    }
+}
+Q.Debounce = function (id, b, c) {
+    GLOBAL = GLOBAL || {};
+    GLOBAL.Flood = GLOBAL.Flood || {};
+    if (GLOBAL.Flood[id]) {
+        _ct(GLOBAL.Flood[id]);
+    }
+    GLOBAL.Flood[id] = b ? _st(c, b) : c();
+};
+Q.HSL2RGB = function (h, s, l) {
+    let r, g, b;
+    if (s === 0) {
+        r = g = b = l;
+    } else {
+        let a = function (p, q, t) {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+        };
+        let q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        let p = 2 * l - q;
+        r = a(p, q, h + 1 / 3);
+        g = a(p, q, h);
+        b = a(p, q, h - 1 / 3);
+    }
+    return [r * 255, g * 255, b * 255];
+};
+Q.ID = function (length = 8, b = '') {
+    return b + [..._ar(length)]
+        .map(() => _ma.floor(_ma.random() * 16).toString(16))
+        .join('');
+};
+Q.RGB2HSL = function (r, g, b) {
+    r /= 255, g /= 255, b /= 255;
+    let maximum = _ma.max(r, g, b), minimum = _ma.a(r, g, b);
+    let h, s, l = (maximum + minimum) / 2;
+    if (maximum === minimum) {
+        h = s = 0;
+    } else {
+        let d = maximum - minimum;
+        s = l > 0.5 ? d / (2 - maximum - minimum) : d / (maximum + minimum);
+        switch (maximum) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+    }
+    return [h, s, l];
+};
+Q.isDarkColor = (color, margin = 20, c = 100) => {
+    let r, g, b;
+    const parseHex = (f) => {
+        if (f.length === 3) {
             return [
-                parseInt(i[0] + i[0], 16),
-                parseInt(i[1] + i[1], 16),
-                parseInt(i[2] + i[2], 16),
+                parseInt(f[0] + f[0], 16),
+                parseInt(f[1] + f[1], 16),
+                parseInt(f[2] + f[2], 16),
             ];
-        } else if (i.length === 6) {
+        } else if (f.length === 6) {
             return [
-                parseInt(i.slice(0, 2), 16),
-                parseInt(i.slice(2, 4), 16),
-                parseInt(i.slice(4, 6), 16),
+                parseInt(f.slice(0, 2), 16),
+                parseInt(f.slice(2, 4), 16),
+                parseInt(f.slice(4, 6), 16),
             ];
         }
-        throw new _er('Invalid i a format');
+        throw new _er('Invalid f color format');
     };
-    if (a[0] === '#') {
-        [d, e, f] = g(a.slice(1));
-    } else if (a.startsWith('rgb')) {
-        const j = a.match(/\d+/e);
-        if (j && j.length >= 3) {
-            [d, e, f] = j.map(_nu);
+    if (color[0] === '#') {
+        [r, g, b] = parseHex(color.slice(1));
+    } else if (color.startsWith('rgb')) {
+        const rgba = color.match(/\d+/g);
+        if (rgba && rgba.length >= 3) {
+            [r, g, b] = rgba.map(_nu);
         } else {
-            throw new _er('Invalid a format');
+            throw new _er('Invalid color format');
         }
     } else {
-        throw new _er('Unsupported a format');
+        throw new _er('Unsupported color format');
     }
-    const h = _ma.sqrt(
-        0.299 * (d ** 2) +
-        0.587 * (e ** 2) +
-        0.114 * (f ** 2)
-    ) + f;
-    return h < c;
+    const e = _ma.sqrt(
+        0.299 * (r ** 2) +
+        0.587 * (g ** 2) +
+        0.114 * (b ** 2)
+    ) + margin;
+    return e < c;
 };
-Q.Container = (options = {}) => {
-    let Icon = (icon) => {
+Q.Container = function (options = {}) {
+    let Icon = function (icon) {
         let iconElement = Q('<div>');
         iconElement.addClass('svg_' + icon + ' container_icon');
         return iconElement;
@@ -844,7 +848,7 @@ Q.Container = (options = {}) => {
             'tab_disabled': 'tab_disabled'
         });
     return {
-        Tab: (data, horizontal = true) => {
+        Tab: function (data, horizontal = true) {
             let wrapper = Q('<div>', { class: classes.tab_container });
             let tabs_wrapper = Q('<div>', { class: classes.tab_navigation_header });
             let tabs_nav_left = Q('<div>', { class: classes.tab_navigation_buttons });
@@ -875,7 +879,7 @@ Q.Container = (options = {}) => {
                 }
                 data_tabs[item.value] = tab;
                 data_contents[item.value] = item.content;
-                tab.on('click', () => {
+                tab.on('click', function () {
                     if (item.disabled) {
                         return;
                     }
@@ -888,28 +892,28 @@ Q.Container = (options = {}) => {
                 });
                 tabs.append(tab);
             });
-            tabs_nav_left.on('click', () => {
+            tabs_nav_left.on('click', function () {
                 if (!horizontal) {
                     tabs.scrollTop(-tabs.height(), true);
                 } else {
                     tabs.scrollLeft(-tabs.width(), true);
                 }
             });
-            tabs_nav_right.on('click', () => {
+            tabs_nav_right.on('click', function () {
                 if (!horizontal) {
                     tabs.scrollTop(tabs.height(), true);
                 } else {
                     tabs.scrollLeft(tabs.width(), true);
                 }
             });
-            wrapper.select = (value) => {
+            wrapper.select = function (value) {
                 data_tabs.forEach(tab => {
                     if (tab.data('value') === value) {
                         tab.click();
                     }
                 });
             };
-            wrapper.disabled = (value, state) => {
+            wrapper.disabled = function (value, state) {
                 if (data_tabs[value]) {
                     if (state) {
                         data_tabs[value].addClass(classes.tab_disabled);
@@ -922,9 +926,9 @@ Q.Container = (options = {}) => {
         }
     };
 };
-Q.Cookie = (a, b, c = {}) => { 
-    function h(c) {
-        const { d, e, f, g } = c;
+Q.Cookie = function (a, b, options = {}) { 
+    function h(options) {
+        const { d, e, f, g } = options;
         let j = '';
         if (d) {
             const k = new _da();
@@ -952,14 +956,14 @@ Q.Cookie = (a, b, c = {}) => {
     if (arguments.length === 2) { 
         if (b === _n || b === '') { 
             b = ''; 
-            c = { ...c, d: -1 }; 
+            options = { ...options, d: -1 }; 
         }
-        return document.cookie = `${a}=${b}; ${h(c)}`; 
+        return document.cookie = `${a}=${b}; ${h(options)}`; 
     } else if (arguments.length === 1) { 
         return i(document.cookie)[a]; 
     }
 };
-Q.Fetch = (a, b, c = {}) => {
+Q.Fetch = function (url, b, c = {}) {
     const { 
         method = 'GET',
         headers = {},
@@ -977,7 +981,7 @@ Q.Fetch = (a, b, c = {}) => {
     const { e } = d;
     const g = (f) => {
         const h = timeout ? _st(() => d.abort(), timeout) : _n;
-        _f(a, { method, headers, body, credentials, e })
+        _f(url, { method, headers, body, credentials, e })
             .then(i => {
                 if (!i.ok) {
                     throw new _er(`Network i was not ok: ${i.statusText}`);
@@ -1012,8 +1016,8 @@ Q.Fetch = (a, b, c = {}) => {
         abort: () => d.abort()
     };
 };
-Q.Form = (options = {}) => {
-    let Icon = (icon) => {
+Q.Form = function (options = {}) {
+    let Icon = function (icon) {
         let iconElement = Q('<div>');
         iconElement.addClass('svg_' + icon + ' form_icon');
         return iconElement;
@@ -1382,7 +1386,7 @@ width: content;
         'tag_down': 'tag_down',
     });
     return {
-        Tag: (options = {}) => {
+        Tag: function (options = {}) {
             const defaultOptions = {
                 min: 0,
                 max: 10,
@@ -1430,7 +1434,7 @@ width: content;
                     }
                     if (!defaultOptions.readonly) {
                         tagValue.attr('contenteditable', true);
-                        tagValue.on('input', () => {
+                        tagValue.on('input', function () {
                             malformFix.val(tagValue.text());
                             tagValue.text(malformFix.val());
                             tag.tag = malformFix.val();
@@ -1450,7 +1454,7 @@ width: content;
                     tagContainer.append(tagElement);
                 });
             };
-            tagContainer.add = (taglist) => {
+            tagContainer.add = function (taglist) {
                 tagContainer.empty();
                 if (!_ar.isArray(taglist)) {
                     taglist = [taglist];
@@ -1459,13 +1463,15 @@ width: content;
                 data = [...data, ...taglist];
                 appendTags(data);
             };
-            tagContainer.get = () => data;
-            tagContainer.change = (callback) => {
+            tagContainer.get = function () {
+                return data;
+            };
+            tagContainer.change = function (callback) {
                 changeCallback = callback;
             };
             return tagContainer;
         },
-        DatePicker: (value = '', locale = window.navigator.language, range = false) => {
+        DatePicker: function (value = '', locale = window.navigator.language, range = false) {
             let getFirstDayOfWeek = () => {
                 let startDate = new _da();
                 let dayOfWeek = startDate.getDay();
@@ -1526,13 +1532,13 @@ width: content;
             if (wrapper.inside(classes.q_window)) {
                 let button_cancel = this.Button('Cancel');
                 footer.append(button_cancel);
-                button_cancel.click(() => {
+                button_cancel.click(function () {
                     wrapper.closest('.' + classes.q_window).hide(200);
                 });
             }
-            container_months.on('click', () => {
+            container_months.on('click', function () {
             });
-            button_today.click(() => {
+            button_today.click(function () {
                 date = new _da();
                 day = date.getDate();
                 month = date.getMonth() + 1;
@@ -1543,12 +1549,12 @@ width: content;
                 populateDays(month, year, day);
                 populateHeader(month, year, day);
             });
-            const populateHeader = (month, year, day) => {
+            const populateHeader = function (month, year, day) {
                 let months = monthsLocale(false);
                 container_months.text(months[month - 1]);
                 container_years.text(year);
             }
-            let populateDays = (month, year, day) => {
+            let populateDays = function (month, year, day) {
                 days_wrapper.empty();
                 let daysInPrevMonth = new _da(year, month - 1, 0).getDate();
                 let prevMonthDays = [];
@@ -1580,7 +1586,7 @@ width: content;
             weekdays.append(...dayNames);
             populateDays(month, year, day);
             populateHeader(month, year, day);
-            days_wrapper.on('click', (e) => {
+            days_wrapper.on('click', function (e) {
                 let target = Q(e.target);
                 if (target.hasClass('days')) {
                     let day = parseInt(target.text());
@@ -1606,7 +1612,7 @@ width: content;
             });
             return wrapper;
         },
-        ProgressBar: (value = 0, min = 0, max = 100, autoKill = 0) => {
+        ProgressBar: function (value = 0, min = 0, max = 100, autoKill = 0) {
             let timer = _n;
             const progress = Q('<div class="' + classes.q_form + ' ' + classes.q_form_progress + '">');
             const bar = Q('<div class="' + classes.q_form_progress_bar + '">');
@@ -1625,7 +1631,7 @@ width: content;
                     }, autoKill);
                 }
             }
-            progress.value = (value) => {
+            progress.value = function (value) {
                 const range = max - min;
                 const newWidth = ((value - min) / range) * 100 + '%';
                 if (bar.css('width') !== newWidth) {
@@ -1635,27 +1641,27 @@ width: content;
                 clearAutoKillTimer();
                 setAutoKillTimer();
             };
-            progress.min = (value) => {
+            progress.min = function (value) {
                 min = value;
                 progress.value(value);
             };
-            progress.max = (value) => {
+            progress.max = function (value) {
                 max = value;
                 progress.value(value);
             };
-            progress.autoKill = (delay) => {
+            progress.autoKill = function (delay) {
                 autoKill = delay;
                 setAutoKillTimer();
             };
             progress.value(value);
             return progress;
         },
-        Button: (text = '') => {
+        Button: function (text = '') {
             const button = Q(`<div class="${classes.q_form} ${classes.q_form_button}">${text}</div>`);
-            button.click = (callback) => {
+            button.click = function (callback) {
                 button.on('click', callback);
             };
-            button.disabled = (state) => {
+            button.disabled = function (state) {
                 if (state) {
                     button.addClass(classes.q_form_disabled);
                 }
@@ -1663,20 +1669,20 @@ width: content;
                     button.removeClass(classes.q_form_disabled);
                 }
             };
-            button.text = (text) => {
+            button.text = function (text) {
                 button.text(text);
             };
-            button.remove = () => {
+            button.remove = function () {
                 button.remove();
             };
             return button;
         },
-        File: (text = '', accept = '*', multiple = false) => {
+        File: function (text = '', accept = '*', multiple = false) {
             const container = Q('<div class="' + classes.q_form + ' ' + classes.q_form_file + ' ' + classes.q_form_button + '">');
             const input = Q(`<input type="file" accept="${accept}" ${multiple ? 'multiple' : ''}>`);
             const label = Q(`<div>${text}</div>`);
             container.append(input, label);
-            input.disabled = (state) => {
+            input.disabled = function (state) {
                 input.prop('disabled', state);
                 if (state) {
                     container.addClass(classes.q_form_disabled);
@@ -1684,12 +1690,12 @@ width: content;
                     container.removeClass(classes.q_form_disabled);
                 }
             };
-            container.change = (callback) => {
+            container.change = function (callback) {
                 input.on('change', function () {
                     callback(this.files);
                 });
             };
-            container.image = (processText = '', size, callback) => {
+            container.image = function (processText = '', size, callback) {
                 input.on('change', function () {
                     label.text(processText);
                     let files = this.files;
@@ -1700,9 +1706,9 @@ width: content;
                             continue;
                         }
                         fileReaders[i] = new FileReader();
-                        fileReaders[i].onload = (e) => {
+                        fileReaders[i].onload = function (e) {
                             let img = new Image();
-                            img.onload = () => {
+                            img.onload = function () {
                                 if (size !== 'original') {
                                     let canvas = document.createElement('canvas');
                                     let ctx = canvas.getContext('2d');
@@ -1728,7 +1734,7 @@ width: content;
             };
             return container;
         },
-        DropDown: (data) => {
+        DropDown: function (data) {
             let wrapper = Q('<div class="' + classes.q_form + ' ' + classes.q_form_dropdown + '">');
             let selected = Q('<div class="' + classes.q_form_dropdown_selected + '">');
             let options = Q('<div class="' + classes.q_form_dropdown_options + '">');
@@ -1751,7 +1757,7 @@ width: content;
                 document.removeEventListener('click', deselect);
             }
             options.find('.' + classes.q_form_dropdown_option).first().addClass(classes.q_form_dropdown_active);
-            options.on('click', (e) => {
+            options.on('click', function (e) {
                 let target = Q(e.target);
                 if (target.hasClass(classes.q_form_dropdown_option) && !target.hasClass(classes.q_form_disabled)) {
                     selected.html(target.html());
@@ -1761,7 +1767,7 @@ width: content;
                     target.addClass(classes.q_form_dropdown_active);
                 }
             });
-            selected.on('click', (e) => {
+            selected.on('click', function (e) {
                 e.stopPropagation();
                 options.toggle();
                 if (options.is(':visible')) {
@@ -1770,7 +1776,7 @@ width: content;
                     document.removeEventListener('click', deselect);
                 }
             });
-            wrapper.change = (callback) => {
+            wrapper.change = function (callback) {
                 options.on('click', function (e) {
                     let target = Q(e.target);
                     if (target.hasClass(classes.q_form_dropdown_option) && !target.hasClass(classes.q_form_disabled)) {
@@ -1778,7 +1784,7 @@ width: content;
                     }
                 });
             };
-            wrapper.select = (value) => {
+            wrapper.select = function (value) {
                 options.find('.' + classes.q_form_dropdown_option).each(function () {
                     let option = Q(this);
                     if (valueMap.get(option) === value) {
@@ -1790,7 +1796,7 @@ width: content;
                     }
                 });
             };
-            wrapper.disabled = (value, state) => {
+            wrapper.disabled = function (value, state) {
                 options.find('.' + classes.q_form_dropdown_option).each(function () {
                     let option = Q(this);
                     if (valueMap.get(option) === value) {
@@ -1803,7 +1809,7 @@ width: content;
                     }
                 });
             };
-            wrapper.remove = (value) => {
+            wrapper.remove = function (value) {
                 options.find('.' + classes.q_form_dropdown_option).each(function () {
                     let option = Q(this);
                     if (valueMap.get(option) === value) {
@@ -1812,10 +1818,12 @@ width: content;
                     }
                 });
             };
-            wrapper.value = () => selectedValue;
+            wrapper.value = function () {
+                return selectedValue;
+            };
             return wrapper;
         },
-        Slider: (min = 0, max = 100, value = 50) => {
+        Slider: function (min = 0, max = 100, value = 50) {
             const slider = Q('<input type="range" class="' + classes.q_form_slider + '">');
             slider.attr('min', min);
             slider.attr('max', max);
@@ -1829,23 +1837,23 @@ width: content;
                     width: percent + '%'
                 });
             };
-            slider.on('input', () => {
+            slider.on('input', function () {
                 slider_width();
             });
             slider_width();
-            slider_wrapper.change = (callback) => {
+            slider_wrapper.change = function (callback) {
                 slider.on('input', function () {
                     callback(this.value);
                 });
             };
-            slider_wrapper.value = (value) => {
+            slider_wrapper.value = function (value) {
                 if (value !== _un) {
                     slider.val(value);
                     slider.trigger('input');
                 }
                 return slider.val();
             };
-            slider_wrapper.disabled = (state) => {
+            slider_wrapper.disabled = function (state) {
                 slider.prop('disabled', state);
                 if (state) {
                     slider_wrapper.addClass(classes.q_form_disabled);
@@ -1853,26 +1861,26 @@ width: content;
                     slider_wrapper.removeClass(classes.q_form_disabled);
                 }
             };
-            slider_wrapper.min = (value) => {
+            slider_wrapper.min = function (value) {
                 if (value !== _un) {
                     slider.attr('min', value);
                     slider.trigger('input');
                 }
                 return slider.attr('min');
             };
-            slider_wrapper.max = (value) => {
+            slider_wrapper.max = function (value) {
                 if (value !== _un) {
                     slider.attr('max', value);
                     slider.trigger('input');
                 }
                 return slider.attr('max');
             };
-            slider_wrapper.remove = () => {
+            slider_wrapper.remove = function () {
                 slider_wrapper.remove();
             };
             return slider_wrapper;
         },
-        Window: (title = '', data, width = 300, height = 300, x = 100, y = 10) => {
+        Window: function (title = '', data, width = 300, height = 300, x = 100, y = 10) {
             let dimensions = { width, height, x, y };
             let minimized = false;
             let maximized = false;
@@ -1907,7 +1915,7 @@ width: content;
             });
             function debounce(func, wait) {
                 let timeout;
-                return (...args) => {
+                return function (...args) {
                     _ct(timeout);
                     timeout = _st(() => func.apply(this, args), wait);
                 };
@@ -1929,15 +1937,15 @@ width: content;
                 });
             }
             window.addEventListener('resize', debounce(handleResize, 300));
-            close.on('click', () => {
+            close.on('click', function () {
                 window_wrapper.animate(200, {
                     opacity: 0,
                     transform: 'scale(0.8)'
-                }, () => {
+                }, function () {
                     window_wrapper.hide();
                 });
             });
-            minimize.on('click', () => {
+            minimize.on('click', function () {
                 content.toggle();
                 if (maximized) {
                     maximized = false;
@@ -1947,7 +1955,7 @@ width: content;
                         height: dimensions.height + 'px',
                         left: dimensions.x + 'px',
                         top: dimensions.y + 'px'
-                    }, () => {
+                    }, function () {
                         window_wrapper.removeTransition();
                     });
                 }
@@ -1966,7 +1974,7 @@ width: content;
                     minimized = true;
                 }
             });
-            maximize.on('click', () => {
+            maximize.on('click', function () {
                 if (minimized) {
                     minimize.html(Icon('window-minimize'));
                     minimized = false;
@@ -1982,7 +1990,7 @@ width: content;
                         height: dimensions.height + 'px',
                         left: dimensions.x + 'px',
                         top: dimensions.y + 'px'
-                    }, () => {
+                    }, function () {
                         window_wrapper.removeTransition();
                         handleResize();
                     });
@@ -1995,14 +2003,14 @@ width: content;
                         left: 0,
                         top: 0,
                         borderRadius: 0
-                    }, () => {
+                    }, function () {
                         window_wrapper.removeTransition();
                     });
                 }
             });
             const zindex = () => {
                 let highestZIndex = 0;
-                Q('.q_window').each(() => {
+                Q('.q_window').each(function () {
                     let zIndex = parseInt(Q(this).css('z-index'));
                     if (zIndex > highestZIndex) {
                         highestZIndex = zIndex;
@@ -2010,14 +2018,14 @@ width: content;
                 });
                 return highestZIndex + 1;
             };
-            titlebar.on('pointerdown', (e) => {
+            titlebar.on('pointerdown', function (e) {
                 let offset = window_wrapper.position();
                 let x = e.clientX - offset.left;
                 let y = e.clientY - offset.top;
                 window_wrapper.css({
                     'z-index': zindex()
                 });
-                const pointerMoveHandler = (e) => {
+                const pointerMoveHandler = function (e) {
                     let left = e.clientX - x;
                     let top = e.clientY - y;
                     left = _ma.max(0, left);
@@ -2033,14 +2041,14 @@ width: content;
                         top: dimensions.y + 'px'
                     });
                 };
-                const pointerUpHandler = () => {
+                const pointerUpHandler = function () {
                     Q(document).off('pointermove', pointerMoveHandler);
                     Q(document).off('pointerup', pointerUpHandler);
                 };
                 Q(document).on('pointermove', pointerMoveHandler);
                 Q(document).on('pointerup', pointerUpHandler);
             });
-            window_wrapper.show = () => {
+            window_wrapper.show = function () {
                 if (window_wrapper.isExists()) {
                     window_wrapper.fadeIn(200);
                 }
@@ -2048,35 +2056,35 @@ width: content;
                     Q('body').append(window_wrapper);
                 }
             };
-            window_wrapper.hide = () => {
+            window_wrapper.hide = function () {
                 window_wrapper.fadeOut(200);
             };
-            window_wrapper.title = (newTitle) => {
+            window_wrapper.title = function (newTitle) {
                 if (newTitle !== _un) {
                     titletext.text(newTitle);
                 }
                 return titletext.text();
             };
-            window_wrapper.content = (newContent) => {
+            window_wrapper.content = function (newContent) {
                 if (newContent !== _un) {
                     content.html(newContent);
                 }
             };
-            window_wrapper.close = () => {
+            window_wrapper.close = function () {
                 close.click();
             };
-            window_wrapper.minimize = () => {
+            window_wrapper.minimize = function () {
                 minimize.click();
             };
-            window_wrapper.maximize = () => {
+            window_wrapper.maximize = function () {
                 maximize.click();
             };
-            window_wrapper.remove = () => {
+            window_wrapper.remove = function () {
                 window_wrapper.remove();
             };
             return window_wrapper;
         },
-        CheckBox: (checked = false, text = '') => {
+        CheckBox: function (checked = false, text = '') {
             let ID = '_' + Q.ID();
             const container = Q('<div class="' + classes.q_form + ' ' + classes.q_form_checkbox + '">');
             const checkbox_container = Q('<div class="' + classes.q_form_cb + '">');
@@ -2085,18 +2093,18 @@ width: content;
             const labeltext = Q(`<div class="label">${text}</div>`);
             checkbox_container.append(input, label);
             container.append(checkbox_container, labeltext);
-            container.checked = (state) => {
+            container.checked = function (state) {
                 input.prop('checked', state);
                 if (state) {
                     input.trigger('change');
                 }
             };
-            container.change = (callback) => {
+            container.change = function (callback) {
                 input.on('change', function () {
                     callback(this.checked);
                 });
             };
-            container.disabled = (state) => {
+            container.disabled = function (state) {
                 input.prop('disabled', state);
                 if (state) {
                     container.addClass(classes.q_form_disabled);
@@ -2104,17 +2112,17 @@ width: content;
                     container.removeClass(classes.q_form_disabled);
                 }
             };
-            container.text = (text) => {
+            container.text = function (text) {
                 labeltext.text(text);
             };
             return container;
         },
-        TextBox: (type = 'text', value = '', placeholder = '') => {
+        TextBox: function (type = 'text', value = '', placeholder = '') {
             const input = Q(`<input class="${classes.q_form} ${classes.q_form_input}" type="${type}" placeholder="${placeholder}" value="${value}">`);
-            input.placeholder = (text) => {
+            input.placeholder = function (text) {
                 input.attr('placeholder', text);
             };
-            input.disabled = (state) => {
+            input.disabled = function (state) {
                 input.prop('disabled', state);
                 if (state) {
                     input.addClass(classes.q_form_disabled);
@@ -2122,22 +2130,22 @@ width: content;
                     input.removeClass(classes.q_form_disabled);
                 }
             };
-            input.reset = () => {
+            input.reset = function () {
                 input.val('');
             };
-            input.change = (callback) => {
+            input.change = function (callback) {
                 input.on('change', function () {
                     callback(this.value);
                 });
             };
             return input;
         },
-        TextArea: (value = '', placeholder = '') => {
+        TextArea: function (value = '', placeholder = '') {
             const textarea = Q(`<textarea class="${classes.q_form} ${classes.q_form_textarea}" placeholder="${placeholder}">${value}</textarea>`);
-            textarea.placeholder = (text) => {
+            textarea.placeholder = function (text) {
                 textarea.attr('placeholder', text);
             };
-            textarea.disabled = (state) => {
+            textarea.disabled = function (state) {
                 textarea.prop('disabled', state);
                 if (state) {
                     textarea.addClass(classes.q_form_disabled);
@@ -2145,17 +2153,17 @@ width: content;
                     textarea.removeClass(classes.q_form_disabled);
                 }
             };
-            textarea.reset = () => {
+            textarea.reset = function () {
                 textarea.val('');
             };
-            textarea.change = (callback) => {
+            textarea.change = function (callback) {
                 textarea.on('change', function () {
                     callback(this.value);
                 });
             };
             return textarea;
         },
-        Radio: (data) => {
+        Radio: function (data) {
             let wrapper = Q('<div class="q_form q_form_radio_wrapper">');
             let radios = [];
             data.forEach((item, index) => {
@@ -2174,7 +2182,7 @@ width: content;
                 container.append(radio_container, labeltext);
                 wrapper.append(container);
             });
-            wrapper.change = (callback) => {
+            wrapper.change = function (callback) {
                 radios.forEach(radio => {
                     radio.input.on('change', function () {
                         if (this.checked) {
@@ -2183,14 +2191,14 @@ width: content;
                     });
                 });
             };
-            wrapper.select = (value) => {
+            wrapper.select = function (value) {
                 radios.forEach(radio => {
                     if (radio.input.val() === value) {
                         radio.input.prop('checked', true).trigger('click');
                     }
                 });
             };
-            wrapper.disabled = (value, state) => {
+            wrapper.disabled = function (value, state) {
                 radios.forEach(radio => {
                     if (radio.input.val() === value) {
                         radio.input.prop('disabled', state);
@@ -2202,24 +2210,24 @@ width: content;
                     }
                 });
             };
-            wrapper.text = (value, text) => {
+            wrapper.text = function (value, text) {
                 radios.forEach(radio => {
                     if (radio.input.val() === value) {
                         radio.labeltext.text(text);
                     }
                 });
             };
-            wrapper.remove = (value) => {
+            wrapper.remove = function (value) {
                 radios.forEach(radio => {
                     if (radio.input.val() === value) {
                         radio.container.remove();
                     }
                 });
             };
-            wrapper.reset = () => {
+            wrapper.reset = function () {
                 radios.forEach(radio => radio.input.prop('checked', false));
             };
-            wrapper.checked = (value, state) => {
+            wrapper.checked = function (value, state) {
                 radios.forEach(radio => {
                     if (radio.input.val() === value) {
                         radio.input.prop('checked', state);
@@ -2230,7 +2238,7 @@ width: content;
         }
     };
 };
-Q.Icons = (data, classes) => {
+Q.Icons = function (data, classes) {
     let classes = Q.style(`
 :root {
     --svg_arrow-down: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 134.49459 62.707709"><path d="M 100.93685,31.353867 C 82.480099,48.598492 67.319803,62.707709 67.247301,62.707709 c -0.0725,0 -15.232809,-14.109215 -33.689561,-31.353842 L 3.5365448e-8,6.6845858e-7 H 67.247301 134.4946 Z"/></svg>');
@@ -2300,7 +2308,7 @@ Q.Icons = (data, classes) => {
 }
      `, {});
 };
-Q.Image = (options) => {
+Q.Image = function (options) {
     let Canvas = Q('<canvas>');
     let canvas_node = Canvas.nodes[0];
     let defaultOptions = {
@@ -2312,34 +2320,34 @@ Q.Image = (options) => {
         quality: 1
     }
     options = _ob.assign(defaultOptions, options);
-    Canvas.Load = (src, callback) => {
+    Canvas.Load = function (src, callback) {
         let img = new Image();
         img.src = src;
-        img.onload = () => {
+        img.onload = function () {
             canvas_node.width = img.width;
             canvas_node.height = img.height;
             canvas_node.getContext('2d').drawImage(img, 0, 0);
             if (callback) callback();
         };
     }
-    Canvas.Get = (format = options.format, quality = options.quality) => {
+    Canvas.Get = function (format = options.format, quality = options.quality) {
         if (format === 'jpeg' || format === 'webp') {
             return canvas_node.toDataURL('image/' + format, quality);
         } else {
             return canvas_node.toDataURL('image/' + format);
         }
     }
-    Canvas.Save = (filename, format = options.format, quality = options.quality) => {
+    Canvas.Save = function (filename, format = options.format, quality = options.quality) {
         let href = Canvas.Get(format, quality);
         let a = Q('<a>', { download: filename, href: href });
         a.click();
     }
-    Canvas.Clear = (fill = options.fill) => {
+    Canvas.Clear = function (fill = options.fill) {
         let ctx = canvas_node.getContext('2d');
         ctx.fillStyle = fill;
         ctx.fillRect(0, 0, canvas_node.width, canvas_node.height);
     }
-    Canvas.Resize = (width, height, size = options.size, keepDimensions = false) => {
+    Canvas.Resize = function (width, height, size = options.size, keepDimensions = false) {
         options.width = width;
         options.height = height;
         options.size = size;
@@ -2396,14 +2404,14 @@ Q.Image = (options) => {
         canvas_node.height = height;
         canvas_node.getContext('2d').drawImage(temp, 0, 0);
     }
-    Canvas.Crop = (x, y, width, height) => {
+    Canvas.Crop = function (x, y, width, height) {
         let temp = Q('<canvas>', { width: width, height: height });
         temp.getContext('2d').drawImage(canvas_node, x, y, width, height, 0, 0, width, height);
         canvas_node.width = width;
         canvas_node.height = height;
         canvas_node.getContext('2d').drawImage(temp, 0, 0);
     }
-    Canvas.Rotate = (degrees) => {
+    Canvas.Rotate = function (degrees) {
         let temp = Q('<canvas>', { width: canvas_node.height, height: canvas_node.width });
         let ctx = temp.getContext('2d');
         ctx.translate(canvas_node.height / 2, canvas_node.width / 2);
@@ -2413,7 +2421,8 @@ Q.Image = (options) => {
         canvas_node.height = temp.height;
         canvas_node.getContext('2d').drawImage(temp, 0, 0);
     }
-    Canvas.Flip = (direction = 'horizontal') => {
+    Canvas.Flip = function (direction = 'horizontal')
+    {
         let temp = Q('<canvas>', { width: canvas_node.width, height: canvas_node.height });
         let ctx = temp.getContext('2d');
         ctx.translate(canvas_node.width, 0);
@@ -2421,7 +2430,7 @@ Q.Image = (options) => {
         ctx.drawImage(canvas_node, 0, 0);
         canvas_node.getContext('2d').drawImage(temp, 0, 0);
     }
-    Canvas.Grayscale = () => {
+    Canvas.Grayscale = function () {
         let data = canvas_node.getContext('2d').getImageData(0, 0, canvas_node.width, canvas_node.height);
         let pixels = data.data;
         for (let i = 0; i < pixels.length; i += 4) {
@@ -2432,7 +2441,7 @@ Q.Image = (options) => {
         }
         canvas_node.getContext('2d').putImageData(data, 0, 0);
     }
-    Canvas.Brightness = (value) => {
+    Canvas.Brightness = function (value) {
         let data = canvas_node.getContext('2d').getImageData(0, 0, canvas_node.width, canvas_node.height);
         let pixels = data.data;
         for (let i = 0; i < pixels.length; i += 4) {
@@ -2442,7 +2451,7 @@ Q.Image = (options) => {
         }
         canvas_node.getContext('2d').putImageData(data, 0, 0);
     }
-    Canvas.Contrast = (value) => {
+    Canvas.Contrast = function (value) {
         let data = canvas_node.getContext('2d').getImageData(0, 0, canvas_node.width, canvas_node.height);
         let pixels = data.data;
         let factor = (259 * (value + 255)) / (255 * (259 - value));
@@ -2453,7 +2462,7 @@ Q.Image = (options) => {
         }
         canvas_node.getContext('2d').putImageData(data, 0, 0);
     }
-    Canvas.Vivid = (value) => {
+    Canvas.Vivid = function (value) {
         let data = canvas_node.getContext('2d').getImageData(0, 0, canvas_node.width, canvas_node.height);
         let pixels = data.data;
         for (let i = 0; i < pixels.length; i += 4) {
@@ -2463,7 +2472,7 @@ Q.Image = (options) => {
         }
         canvas_node.getContext('2d').putImageData(data, 0, 0);
     }
-    Canvas.Hue = (value) => {
+    Canvas.Hue = function (value) {
         let data = canvas_node.getContext('2d').getImageData(0, 0, canvas_node.width, canvas_node.height);
         let pixels = data.data;
         for (let i = 0; i < pixels.length; i += 4) {
@@ -2479,7 +2488,7 @@ Q.Image = (options) => {
         }
         canvas_node.getContext('2d').putImageData(data, 0, 0);
     }
-    Canvas.Sharpen = (options) => {
+    Canvas.Sharpen = function (options) {
         let defaults = {
             amount: 1,
             threshold: 0,
@@ -2532,7 +2541,7 @@ Q.Image = (options) => {
         }
         ctx.putImageData(data, 0, 0);
     }
-    Canvas.Emboss = (options) => {
+    Canvas.Emboss = function (options) {
         let defaults = {
             strength: 1,
             direction: 'top-left',
@@ -2598,7 +2607,7 @@ Q.Image = (options) => {
         }
         ctx.putImageData(data, 0, 0);
     }
-    Canvas.Blur = (options) => {
+    Canvas.Blur = function (options) {
         let defaults = {
             radius: 5, 
             quality: 1 
@@ -2668,7 +2677,7 @@ Q.Image = (options) => {
     }
     return Canvas;
 }
-Q.ImageViewer = () => {
+Q.ImageViewer = function () {
     _c.log('ImageViewer Plugin Loaded');
     let classes = Q.style(`
 .image_viewer_wrapper {
@@ -2812,31 +2821,31 @@ image_viewer_wrapper .image_wrapper {
     }
     let viewer = new Viewer();
     return {
-        selector: (selector) => {
+        selector: function (selector) {
             viewer.setSelector(selector);
             return this;
         },
-        open: (images) => {
+        open: function (images) {
             viewer.open(images);
             return this;
         },
-        close: () => {
+        close: function () {
             viewer.close();
             return this;
         },
-        remove: () => {
+        remove: function () {
             viewer.remove();
             return this;
         }
     };
 }
-Q.JSON = (a) => {
+Q.JSON = function (a) {
     if (!(this instanceof Q.JSON)) {
         return new Q.JSON(a);
     }
     this.json = a;
 };
-Q.JSON.prototype.Parse = (options = { modify: false, recursive: false }, e) => {
+Q.JSON.prototype.Parse = function (options = { modify: false, recursive: false }, e) {
     const process = (b) => {
         if (typeof b === 'object' && b !== _n && !_ar.isArray(b)) {
             for (const c in b) {
@@ -2855,7 +2864,7 @@ Q.JSON.prototype.Parse = (options = { modify: false, recursive: false }, e) => {
     process(this.json);
     return this.json;
 };
-Q.JSON.prototype.deflate = (k) => {
+Q.JSON.prototype.deflate = function (level) {
     const f = {};
     let g = 1;
     function j(h) {
@@ -2864,7 +2873,7 @@ Q.JSON.prototype.deflate = (k) => {
                 if (typeof h[c] === 'object') {
                     j(h[c]);
                 }
-                if (c.length >= k) {
+                if (c.length >= level) {
                     if (!f[c]) {
                         f[c] = `[${g}]`;
                         g++;
@@ -2873,7 +2882,7 @@ Q.JSON.prototype.deflate = (k) => {
                     h[newKey] = h[c];
                     delete h[c];
                 }
-                if (typeof h[c] === 'string' && h[c].length >= k) {
+                if (typeof h[c] === 'string' && h[c].length >= level) {
                     if (!f[h[c]]) {
                         f[h[c]] = `[${g}]`;
                         g++;
@@ -2887,7 +2896,7 @@ Q.JSON.prototype.deflate = (k) => {
     j(i);
     return { b: i, f: f };
 };
-Q.JSON.prototype.inflate = (l) => {
+Q.JSON.prototype.inflate = function (l) {
     const { b, f } = l;
     const m = _ob.fromEntries(_ob.entries(f).f(([k, v]) => [v, k]));
     function p(h) {
@@ -2909,7 +2918,7 @@ Q.JSON.prototype.inflate = (l) => {
     p(q);
     return q;
 };
-Q.NodeBlock = (selector, width, height, options) => {
+Q.NodeBlock = function (selector, width, height, options) {
     let classes = Q.style(`
 .node_preferences {
     position: absolute;
@@ -3990,19 +3999,21 @@ padding: 0 5px;
     appearance = _ob.assign(appearance, options);
     let uml = new UMLCanvas(selector, width, height, appearance, classes);
     return {
-        import: (data) => {
+        import: function (data) {
             uml.import(data);
         },
-        export: () => uml.export(),
-        addBlock: (block) => {
+        export: function () {
+            return uml.export();
+        },
+        addBlock: function (block) {
             uml.addBlock(block);
         },
-        removeBlock: (block) => {
+        removeBlock: function (block) {
             uml.removeBlock(block);
         }
     };
 }
-Q.Socket = (url, onMessage, onStatus, options = {}) => {
+Q.Socket = function (url, onMessage, onStatus, options = {}) {
     const { retries = 5, delay = 1000, protocols = [] } = options;
     let socket, attempts = 0;
     const connect = () => {
@@ -4026,7 +4037,7 @@ Q.Socket = (url, onMessage, onStatus, options = {}) => {
         close: () => socket.close()
     };
 };
-Q.Storage = (key, value) => {
+Q.Storage = function (key, value) {
     if (arguments.length === 2) { 
         if (value === _n || value === '') { 
             localStorage.removeItem(key); 
@@ -4042,14 +4053,16 @@ Q.Storage = (key, value) => {
         }
     }
 };
-Q.String = (string) => {
+Q.String = function (string) {
     if (!(this instanceof Q.String)) {
         return new Q.String(string);
     }
     this.string = string;
 };
-Q.String.prototype.capitalize = () => this.string.charAt(0).toUpperCase() + this.string.slice(1);
-Q.String.prototype.levenshtein = (string) => {
+Q.String.prototype.capitalize = function () {
+    return this.string.charAt(0).toUpperCase() + this.string.slice(1);
+};
+Q.String.prototype.levenshtein = function (string) {
     const a = this.string, b = string;
     const matrix = _ar.from({ length: a.length + 1 }, (_, i) => _ar.from({ length: b.length + 1 }, (_, j) => i || j));
     for (let i = 1; i <= a.length; i++) {
@@ -4063,9 +4076,13 @@ Q.String.prototype.levenshtein = (string) => {
     }
     return matrix[a.length][b.length];
 };
-Q.String.prototype.find = (stringOrRegex) => this.string.match(stringOrRegex);
-Q.String.prototype.replaceAll = (stringOrRegex, replacement) => this.string.replace(new _re(stringOrRegex, 'g'), replacement);
-Q.style = (() => {
+Q.String.prototype.find = function (stringOrRegex) {
+    return this.string.match(stringOrRegex);
+};
+Q.String.prototype.replaceAll = function (stringOrRegex, replacement) {
+    return this.string.replace(new _re(stringOrRegex, 'g'), replacement);
+};
+Q.style = (function () {
     let styleData = {
         gen: "",
         root: '',
@@ -4094,7 +4111,7 @@ Q.style = (() => {
         _c.log('Styles plugin loaded.');
         delete Q.style;
     }, { once: true });
-    return (styles, mapping = _n, obfuscate = false) => {
+    return function (styles, mapping = _n, obfuscate = false) {
         if (typeof styles === 'string') {
             const rootContentMatch = styles.match(/:root\s*{([^}]*)}/);
             if (rootContentMatch) {
@@ -4118,7 +4135,7 @@ Q.style = (() => {
         }
     };
 })();
-Q.Task = (() => {
+Q.Task = (function () {
     const tasks = {};
     const runningTasks = {};
     function createTask(id) {
@@ -4212,7 +4229,7 @@ Q.Task = (() => {
             runningTasks[id].timeoutCallback = callback;
         }
     }
-    return (id, ...functions) => {
+    return function (id, ...functions) {
         if (functions.length > 0) {
             addTask(id, ...functions);
         }
@@ -4226,7 +4243,7 @@ Q.Task = (() => {
         };
     };
 })();
-Q.Timer = (callback, id, options = {}) => {
+Q.Timer = function (callback, id, options = {}) {
     const defaultOptions = {
         tick: 1,
         delay: 1000,
@@ -4252,13 +4269,13 @@ Q.Timer = (callback, id, options = {}) => {
     Q.Timer.activeTimers.set(id, intervalId);
     return intervalId;
 };
-Q.Timer.stop = (id) => {
+Q.Timer.stop = function (id) {
     if (Q.Timer.activeTimers && Q.Timer.activeTimers.has(id)) {
         clearInterval(Q.Timer.activeTimers.get(id));
         Q.Timer.activeTimers.delete(id);
     }
 };
-Q.Timer.stopAll = () => {
+Q.Timer.stopAll = function () {
     if (Q.Timer.activeTimers) {
         for (let intervalId of Q.Timer.activeTimers.values()) {
             clearInterval(intervalId);

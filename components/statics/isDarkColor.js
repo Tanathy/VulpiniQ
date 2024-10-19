@@ -3,7 +3,7 @@
 // Desc: Determines if a color is dark or light based on HSP.
 // Type: Color
 // Example: Q.isDarkColor('#000000'); or Q.isDarkColor('#000000', 20, 100); // 20 is margin, 100 is threshold
-// Variables: color, margin, threshold, r, g, b, parseHex, hsp, hex, rgba
+// Variables: color, margin, threshold, parseHex, hsp, hex, rgba
 Q.isDarkColor = (color, margin = 20, threshold = 100) => {
     let r, g, b;
 

@@ -4,7 +4,7 @@
 // Type: Iteration
 // Example: Q(selector).each((index, element) => console.log(index, element));
 // Variables: callback, el, index
-Q.Ext('each', callback => {
+Q.Ext('each', function(callback) {
     this.nodes.forEach((el, index) => callback.call(el, index, el));
     return this;
 });

@@ -4,6 +4,6 @@
 // Type: DOM Manipulation
 // Example: Q(selector).remove();
 // Variables: el
-Q.Ext('remove', () => {
+Q.Ext('remove', function() {
     return this.each(el => this.nodes[el].remove());
 });

@@ -3,7 +3,7 @@
 // Desc: Adjusts the brightness of a color by a percentage.
 // Type: Color
 // Example: Q.ColorBrightness('#000000', 50); // #7f7f7f (black +50%)
-// Variables: color, percent, r, g, b, a, hex, alphaColor
+// Variables: hex, alphaColor, color, percent
 Q.ColorBrightness = function (color, percent) {
     let r, g, b, a = 1;
     let hex = false;

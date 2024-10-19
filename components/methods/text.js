@@ -4,7 +4,7 @@
 // Type: Content Manipulation
 // Example: Q(selector).text(string);
 // Variables: content, el
-Q.Ext('text', content => {
+Q.Ext('text', function(content){
     if (content === undefined) {
         return this.nodes[0]?.textContent || null;
     }

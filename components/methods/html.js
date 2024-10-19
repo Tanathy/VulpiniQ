@@ -4,8 +4,8 @@
 // Type: Content Manipulation
 // Example: Q(selector).html(string);
 // Variables: content, child, el, node, subchild
-Q.Ext('html', content => {
-    if (content.length === 0) {
+Q.Ext('html', function(content){
+    if (content === undefined) {
         return this.nodes[0]?.innerHTML || null;
     }
     return this.each(el => {

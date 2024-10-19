@@ -4,7 +4,7 @@
 // Type: Attributes
 // Example: Q(selector).id(); or Q(selector).id('new-id');
 // Variables: ident
-Q.Ext('id', ident => {
+Q.Ext('id', function(ident){
     if (ident === undefined) {
         return this.nodes[0].id;
     }

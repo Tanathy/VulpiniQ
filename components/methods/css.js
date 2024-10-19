@@ -4,7 +4,7 @@
 // Type: Style Manipulation
 // Example: Q(selector).css(property, value);
 // Variables: property, value, key, el
-Q.Ext('css', (property, value) => {
+Q.Ext('css', function(property, value){
     if (typeof property === 'object') {
         return this.each(el => {
             for (let key in property) {

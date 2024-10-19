@@ -75,7 +75,7 @@ const _ob = Object, _ar = Array, _ma = Math, _ac = AbortController, _as = AbortS
         }
     }
     Q.Ext = (n, o) => (Q.prototype[n] = o, Q);
-    Q.Ext('addClass', a => {
+    Q.Ext('addClass', a => { 
     const b = a.split(' ');
     return this.each(c => this.nodes[c].classList.add(...b));
 });
@@ -94,9 +94,9 @@ Q.Ext('animate', (a, b, e) => {
         }
     }), this;
 });
-Q.Ext('append', (...a) => {
-    return this.each(e => {
-        const b = this.nodes[e];
+Q.Ext('append', function(...a) {
+    return this.each(el => {
+        const b = this.nodes[el];
         a.forEach(c => {
             if (typeof c === 'string') {
                 b.insertAdjacentHTML('beforeend', c);
@@ -108,7 +108,7 @@ Q.Ext('append', (...a) => {
         });
     });
 });
-Q.Ext('attr', (a, b) => {
+Q.Ext('attr', function(a, b){
     if (typeof a === 'object') {
         return this.each(d => {
             for (let c in a) {
@@ -147,22 +147,22 @@ Q.Ext('children', () => {
     return new Q(this.nodes[0].children);
 });
 Q.Ext('click', () => {
-    return this.each(a => this.nodes[a].click());
+    return this.each(el => this.nodes[el].click());
 });
 Q.Ext('clone', () => {
     return new Q(this.nodes[0].cloneNode(true));
 });
-Q.Ext('closest', a => {
+Q.Ext('closest', selector => {
     let b = this.nodes[0];
     while (b) {
-        if (b.matches && b.matches(a)) {
+        if (b.matches && b.matches(selector)) {
             return new Q(b);
         }
         b = b.parentElement;
     }
     return _n;
 });
-Q.Ext('css', (a, b) => {
+Q.Ext('css', function(a, b){
     if (typeof a === 'object') {
         return this.each(d => {
             for (let c in a) {
@@ -184,15 +184,15 @@ Q.Ext('data', (a, b) => {
     }
     return this.each(c => this.nodes[c].dataset[a] = b);
 });
-Q.Ext('each', a => {
-    this.nodes.forEach((b, c) => a.call(b, c, b));
+Q.Ext('each', function(callback) {
+    this.nodes.forEach((b, c) => callback.call(b, c, b));
     return this;
 });
 Q.Ext('empty', () => {
     return this.each(a => this.nodes[a].innerHTML = '');
 });
-Q.Ext('eq', a => {
-    return new Q(this.nodes[a]);
+Q.Ext('eq', index => {
+    return new Q(this.nodes[index]);
 });
 Q.Ext('fadeIn', (a = 400, b) => {
     return this.each(c => {
@@ -206,7 +206,7 @@ Q.Ext('fadeIn', (a = 400, b) => {
         }, a);
     });
 });
-Q.Ext('fadeOut', (a, b) => {
+Q.Ext('fadeOut', function(a, b) {
     return this.each(c => {
         this.nodes[c].style.transition = `opacity ${a}ms`;
         this.nodes[c].style.opacity = 0;
@@ -217,11 +217,11 @@ Q.Ext('fadeOut', (a, b) => {
         }, a);
     });
 });
-Q.Ext('fadeTo', (a, b, c) => {
+Q.Ext('fadeTo', (opacity, b, c) => {
     return this.each(d => {
-        this.nodes[d].style.transition = `a ${b}ms`;
+        this.nodes[d].style.transition = `opacity ${b}ms`;
         this.nodes[d].offsetHeight;
-        this.nodes[d].style.a = a;
+        this.nodes[d].style.opacity = opacity;
         _st(() => {
             this.nodes[d].style.transition = '';
             if (c) c();
@@ -237,9 +237,9 @@ Q.Ext('fadeToggle', (a, b) => {
         }
     });
 });
-Q.Ext('find', b => {
-    const a = this.nodes[0].querySelectorAll(b);
-    return a.length ? Q(a) : _n;
+Q.Ext('find', function(b){
+    const foundNodes = this.nodes[0].querySelectorAll(b);
+    return foundNodes.length ? Q(foundNodes) : _n;
 });
 Q.Ext('first', () => {
     return new Q(this.nodes[0]);
@@ -247,8 +247,8 @@ Q.Ext('first', () => {
 Q.Ext('focus', () => {
     return this.each(a => this.nodes[a].focus());
 });
-Q.Ext('hasClass', a => {
-    return this.nodes[0]?.classList.contains(a) || false;
+Q.Ext('hasClass', className => {
+    return this.nodes[0]?.classList.contains(className) || false;
 });
 Q.Ext('height', a => {
     if (a === _un) {
@@ -256,14 +256,14 @@ Q.Ext('height', a => {
     }
     return this.each(b => this.nodes[b].style.height = a);
 });
-Q.Ext('hide', (a = 0, b) => {
+Q.Ext('hide', (duration = 0, b) => {
     return this.each(e => {
         const c = this.nodes[e];
-        if (a === 0) {
+        if (duration === 0) {
             c.style.display = 'none';
             if (b) b();
         } else {
-            c.style.transition = `opacity ${a}ms`;
+            c.style.transition = `opacity ${duration}ms`;
             c.style.opacity = 1;
             _st(() => {
                 c.style.opacity = 0;
@@ -277,8 +277,8 @@ Q.Ext('hide', (a = 0, b) => {
         }
     });
 });
-Q.Ext('html', a => {
-    if (a.length === 0) {
+Q.Ext('html', function(a){
+    if (a === _un) {
         return this.nodes[0]?.innerHTML || _n;
     }
     return this.each(c => {
@@ -297,22 +297,22 @@ Q.Ext('html', a => {
         });
     });
 });
-Q.Ext('id', a => {
+Q.Ext('id', function(a){
     if (a === _un) {
         return this.nodes[0].id;
     }
     return this.nodes[0].id = a;
 });
-Q.Ext('a', a => {
-    if (a === _un) {
+Q.Ext('index', index => {
+    if (index === _un) {
         return _ar.from(this.nodes[0].parentNode.children).indexOf(this.nodes[0]);
     }
     return this.each(f => {
         const b = this.nodes[f].parentNode;
         const c = _ar.from(b.children);
         const d = c.indexOf(f);
-        const e = c.splice(a, 1)[0];
-        if (d < a) {
+        const e = c.splice(index, 1)[0];
+        if (d < index) {
             b.insertBefore(e, f);
         } else {
             b.insertBefore(e, this.nodes[f].nextSibling);
@@ -322,14 +322,14 @@ Q.Ext('a', a => {
 Q.Ext('inside', a => {
     return this.nodes[0]?.closest(a) !== _n;
 });
-Q.Ext('is', a => {
+Q.Ext('is', selector => {
     const b = this.nodes[0];
     if (!b) return false;
-    if (typeof a === 'function') {
-        return a.call(b, 0, b);
+    if (typeof selector === 'function') {
+        return selector.call(b, 0, b);
     }
-    if (typeof a === 'string') {
-        switch (a) {
+    if (typeof selector === 'string') {
+        switch (selector) {
             case ':visible':
                 return b.offsetWidth > 0 && b.offsetHeight > 0;
             case ':hidden':
@@ -349,21 +349,23 @@ Q.Ext('is', a => {
             case ':enabled':
                 return !b.disabled;
             default:
-                return b.matches(a);
+                return b.matches(selector);
         }
     }
-    if (a?.nodeType === 1 || a?.nodeType != _n) {
-        return b === a;
+    if (selector?.nodeType === 1 || selector?.nodeType != _n) {
+        return b === selector;
     }
-    if (a instanceof Q) {
-        return b === a.nodes[0];
+    if (selector instanceof Q) {
+        return b === selector.nodes[0];
     }
     return false;
 });
 Q.Ext('isExists', () => {
     return document.body.contains(this.nodes[0]);
 });
-Q.isExists = (a) => document.querySelector(a) !== _n;
+Q.isExists = function (a) {
+    return document.querySelector(a) !== _n;
+};
 Q.Ext('last', () => {
     return new Q(this.nodes[this.nodes.length - 1]);
 });
@@ -385,7 +387,7 @@ Q.Ext('offset', () => {
         left: a.left + window.scrollX
     };
 });
-Q.Ext('on', (a, b, c) => {
+Q.Ext('on', function (a, b, c) {
     const d = {
         capture: false,
         once: false,
@@ -419,15 +421,15 @@ Q.Ext('prepend', (...a) => {
         });
     });
 });
-Q.Ext('prop', (a, b) => {
+Q.Ext('prop', (property, b) => {
     if (b === _un) {
-        return this.nodes[0]?.[a] || _n;
+        return this.nodes[0]?.[property] || _n;
     }
-    return this.each((d, c) => {
-        c[a] = b;
+    return this.each(function (d, c) {
+        c[property] = b;
     });
 });
-Q.Ext('remove', () => {
+Q.Ext('remove', function() {
     return this.each(a => this.nodes[a].remove());
 });
 Q.Ext('removeAttr', a => {
@@ -437,11 +439,11 @@ Q.Ext('removeClass', a => {
     const b = a.split(' ');
     return this.each(c => this.nodes[c].classList.remove(...b));
 });
-Q.Ext('removeData', a => {
-    return this.each(b => delete this.nodes[b].dataset[a]);
+Q.Ext('removeData', key => {
+    return this.each(b => delete this.nodes[b].dataset[key]);
 });
-Q.Ext('removeProp', a => {
-    return this.each(b => delete this.nodes[b][a]);
+Q.Ext('removeProp', property => {
+    return this.each(b => delete this.nodes[b][property]);
 });
 Q.Ext('removeTransition', () => {
     return this.each(a => this.nodes[a].style.transition = '');
@@ -478,14 +480,14 @@ Q.Ext('scrollTop', (a, b) => {
 Q.Ext('scrollWidth', () => {
     return this.nodes[0].scrollWidth;
 });
-Q.Ext('show', (a = 0, b) => {
+Q.Ext('show', (duration = 0, b) => {
     return this.each(e => {
         const c = this.nodes[e];
-        if (a === 0) {
+        if (duration === 0) {
             c.style.display = '';
             if (b) b();
         } else {
-            c.style.transition = `opacity ${a}ms`;
+            c.style.transition = `opacity ${duration}ms`;
             c.style.opacity = 0;
             c.style.display = '';
             _st(() => {
@@ -505,7 +507,7 @@ Q.Ext('size', () => {
         height: this.nodes[0].offsetHeight
     };
 });
-Q.Ext('text', a => {
+Q.Ext('text', function(a){
     if (a === _un) {
         return this.nodes[0]?.textContent || _n;
     }
@@ -514,12 +516,12 @@ Q.Ext('text', a => {
 Q.Ext('toggle', () => {
     return this.each(a => this.nodes[a].style.display = this.nodes[a].style.display === 'none' ? '' : 'none');
 });
-Q.Ext('toggleClass', a => {
-    return this.each(b => this.nodes[b].classList.toggle(a));
+Q.Ext('toggleClass', className => {
+    return this.each(b => this.nodes[b].classList.toggle(className));
 });
-Q.Ext('trigger', a => {
-    return this.each((c, b) => {
-        b.dispatchEvent(new _ev(a));
+Q.Ext('trigger', event => {
+    return this.each(function (c, b) {
+        b.dispatchEvent(new _ev(event));
     });
 });
 Q.Ext('unwrap', () => {
@@ -530,24 +532,24 @@ Q.Ext('unwrap', () => {
         }
     });
 });
-Q.Ext('a', a => {
+Q.Ext('a', function(a){
     if (a === _un) {
         return this.nodes[0]?.value || _n;
     }
     return this.each(b => this.nodes[b].value = a);
 });
-Q.Ext('wait', a => {
+Q.Ext('wait', ms => {
     const b = this;
     return new _pr((resolve) => {
         _st(() => {
             resolve(b);
-        }, a);
+        }, ms);
     });
 });
-Q.Ext('walk', (a, b = false) => {
+Q.Ext('walk', function(callback, b = false){
     this.nodes.forEach((e, d) => {
         const c = b ? Q(e) : e;
-        a.call(e, c, d);
+        callback.call(e, c, d);
     });
     return this;
 });
@@ -565,10 +567,10 @@ Q.Ext('wrap', c => {
         b.appendChild(this.nodes[d]);
     });
 });
-Q.Ext('wrapAll', a => {
+Q.Ext('wrapAll', wrapper => {
     return this.each(e => {
         const b = this.nodes[e].parentNode;
-        const c = typeof a === 'string' ? document.createElement(a) : a;
+        const c = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;
         b.insertBefore(c, this.nodes[0]);
         this.nodes.forEach(d => c.appendChild(d));
     });
@@ -583,5 +585,183 @@ Q.Ext('zIndex', a => {
     }
     return this.each(c => this.nodes[c].style.zIndex = a);
 });
+Q.Done = (function () {
+    const a = [];
+    window.addEventListener('load', () => {
+        a.forEach(b => b());
+    });
+    return function (b) {
+        a.push(b);
+    };
+})();
+Q.Leaving = (function () {
+    const a = [];
+    window.addEventListener('beforeunload', (b) => {
+        a.forEach(c => c(b));
+    });
+    return function (c) {
+        a.push(c);
+    };
+})();
+Q.Ready = (function () {
+    const a = [];
+    document.addEventListener('DOMContentLoaded', () => {
+        a.forEach(b => b());
+    }, { once: true });
+    return function (b) {
+        if (document.readyState === 'loading') {
+            a.push(b);
+        } else {
+            b();
+        }
+    };
+})();
+Q.Resize = (function () {
+    const a = [];
+    window.addEventListener('resize', () => {
+        const b = window.innerWidth;
+        const c = window.innerHeight;
+        a.forEach(d => d(b, c));
+    });
+    return function (d) {
+        a.push(d);
+    };
+})();
+Q.ColorBrightness = function (c, percent) {
+    let r, g, b, a = 1;
+    let hex = false;
+    if (!c.startsWith('#') && !c.startsWith('rgb')) {
+        throw new _er('Unsupported c format');
+    }
+    if (c.startsWith('#')) {
+        c = c.replace(/^#/, '');
+        if (c.length === 3) {
+            r = parseInt(c[0] + c[0], 16);
+            g = parseInt(c[1] + c[1], 16);
+            b = parseInt(c[2] + c[2], 16);
+        }
+        if (c.length === 6) {
+            r = parseInt(c.substring(0, 2), 16);
+            g = parseInt(c.substring(2, 4), 16);
+            b = parseInt(c.substring(4, 6), 16);
+        }
+        hex = true;
+    }
+    if (c.startsWith('rgb')) {
+        const alphaColor = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(\.\d+)?))?\)/);
+        if (alphaColor) {
+            r = parseInt(alphaColor[1]);
+            g = parseInt(alphaColor[2]);
+            b = parseInt(alphaColor[3]);
+            if (alphaColor[4]) {
+                a = parseFloat(alphaColor[4]);
+            }
+        }
+    }
+    r = _ma.min(255, _ma.max(0, r + (r * percent / 100)));
+    g = _ma.min(255, _ma.max(0, g + (g * percent / 100)));
+    b = _ma.min(255, _ma.max(0, b + (b * percent / 100)));
+    if (hex) {
+        return '#' +
+            ('0' + _ma.round(r).toString(16)).slice(-2) +
+            ('0' + _ma.round(g).toString(16)).slice(-2) +
+            ('0' + _ma.round(b).toString(16)).slice(-2);
+    } else if (c.startsWith('rgb')) {
+        if (a === 1) {
+            return `rgb(${_ma.round(r)}, ${_ma.round(g)}, ${_ma.round(b)})`;
+        } else {
+            return `rgba(${_ma.round(r)}, ${_ma.round(g)}, ${_ma.round(b)}, ${a})`;
+        }
+    }
+}
+Q.Debounce = function (id, b, c) {
+    GLOBAL = GLOBAL || {};
+    GLOBAL.Flood = GLOBAL.Flood || {};
+    if (GLOBAL.Flood[id]) {
+        _ct(GLOBAL.Flood[id]);
+    }
+    GLOBAL.Flood[id] = b ? _st(c, b) : c();
+};
+Q.HSL2RGB = function (h, s, l) {
+    let r, g, b;
+    if (s === 0) {
+        r = g = b = l;
+    } else {
+        let a = function (p, q, t) {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+        };
+        let q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        let p = 2 * l - q;
+        r = a(p, q, h + 1 / 3);
+        g = a(p, q, h);
+        b = a(p, q, h - 1 / 3);
+    }
+    return [r * 255, g * 255, b * 255];
+};
+Q.ID = function (length = 8, b = '') {
+    return b + [..._ar(length)]
+        .map(() => _ma.floor(_ma.random() * 16).toString(16))
+        .join('');
+};
+Q.RGB2HSL = function (r, g, b) {
+    r /= 255, g /= 255, b /= 255;
+    let maximum = _ma.max(r, g, b), minimum = _ma.a(r, g, b);
+    let h, s, l = (maximum + minimum) / 2;
+    if (maximum === minimum) {
+        h = s = 0;
+    } else {
+        let d = maximum - minimum;
+        s = l > 0.5 ? d / (2 - maximum - minimum) : d / (maximum + minimum);
+        switch (maximum) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+    }
+    return [h, s, l];
+};
+Q.isDarkColor = (color, margin = 20, c = 100) => {
+    let r, g, b;
+    const parseHex = (f) => {
+        if (f.length === 3) {
+            return [
+                parseInt(f[0] + f[0], 16),
+                parseInt(f[1] + f[1], 16),
+                parseInt(f[2] + f[2], 16),
+            ];
+        } else if (f.length === 6) {
+            return [
+                parseInt(f.slice(0, 2), 16),
+                parseInt(f.slice(2, 4), 16),
+                parseInt(f.slice(4, 6), 16),
+            ];
+        }
+        throw new _er('Invalid f color format');
+    };
+    if (color[0] === '#') {
+        [r, g, b] = parseHex(color.slice(1));
+    } else if (color.startsWith('rgb')) {
+        const rgba = color.match(/\d+/g);
+        if (rgba && rgba.length >= 3) {
+            [r, g, b] = rgba.map(_nu);
+        } else {
+            throw new _er('Invalid color format');
+        }
+    } else {
+        throw new _er('Unsupported color format');
+    }
+    const e = _ma.sqrt(
+        0.299 * (r ** 2) +
+        0.587 * (g ** 2) +
+        0.114 * (b ** 2)
+    ) + margin;
+    return e < c;
+};
 return Q;
 })();
