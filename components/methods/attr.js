@@ -4,7 +4,7 @@
 // Type: Attribute Manipulation
 // Example: Q(selector).attr(attribute, value);
 // Variables: attribute, value, key, el
-Q.Ext('attr', function(attribute, value){
+Q.Ext('attr', function (attribute, value) {
     if (typeof attribute === 'object') {
         return this.each(el => {
             for (let key in attribute) {

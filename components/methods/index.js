@@ -4,7 +4,7 @@
 // Type: Traversal
 // Example: Q(selector).index(index);
 // Variables: index, parent, siblings, position, target, el
-Q.Ext('index', index => {
+Q.Ext('index', function (index) {
     if (index === undefined) {
         return Array.from(this.nodes[0].parentNode.children).indexOf(this.nodes[0]);
     }

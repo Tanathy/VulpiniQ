@@ -4,7 +4,7 @@
 // Type: Animation
 // Example: Q(selector).animate(duration, { opacity: 0, left: "50px" }, callback);
 // Variables: duration, properties, transitionProperties, prop, callback, element, el
-Q.Ext('animate', (duration, properties, callback) => {
+Q.Ext('animate', function (duration, properties, callback) {
     return this.each(el => {
         const element = this.nodes[el];
         const transitionProperties = Object.keys(properties).map(prop => `${prop} ${duration}ms`).join(', ');

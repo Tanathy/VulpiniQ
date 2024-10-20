@@ -4,7 +4,7 @@
 // Type: Dimensions
 // Example: Q(selector).width(value);
 // Variables: value, el
-Q.Ext('width', value => {
+Q.Ext('width', function (value) {
     if (value === undefined) {
         return this.nodes[0].offsetWidth;
     }

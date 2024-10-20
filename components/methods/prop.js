@@ -4,7 +4,7 @@
 // Type: Property Manipulation
 // Example: Q(selector).prop(property, value);
 // Variables: property, value, el, index
-Q.Ext('prop', (property, value) => {
+Q.Ext('prop', function (property, value) {
     if (value === undefined) {
         return this.nodes[0]?.[property] || null;
     }

@@ -4,6 +4,6 @@
 // Type: Form Manipulation
 // Example: Q(selector).focus();
 // Variables: el
-Q.Ext('focus', () => {
+Q.Ext('focus', function () {
     return this.each(el => this.nodes[el].focus());
 });

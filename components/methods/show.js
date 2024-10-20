@@ -4,7 +4,7 @@
 // Type: Display
 // Example: Q(selector).show(duration, callback);
 // Variables: duration, callback, element, handler, el
-Q.Ext('show', (duration = 0, callback) => {
+Q.Ext('show', function (duration = 0, callback) {
     return this.each(el => {
         const element = this.nodes[el];
         if (duration === 0) {

@@ -5,7 +5,7 @@
 // Example: Q(selector).isExists(); or Q.isExists('.ok')
 // Variables: selector
 // Prototype method
-Q.Ext('isExists', () => {
+Q.Ext('isExists', function () {
     return document.body.contains(this.nodes[0]);
 });
 

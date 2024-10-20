@@ -4,6 +4,6 @@
 // Type: Class Manipulation
 // Example: Q(selector).hasClass(className);
 // Variables: className
-Q.Ext('hasClass', className => {
+Q.Ext('hasClass', function (className) {
     return this.nodes[0]?.classList.contains(className) || false;
 });

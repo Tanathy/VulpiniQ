@@ -4,6 +4,6 @@
 // Type: Class Manipulation
 // Example: Q(selector).toggleClass(className);
 // Variables: className, el
-Q.Ext('toggleClass', className => {
+Q.Ext('toggleClass', function (className) {
     return this.each(el => this.nodes[el].classList.toggle(className));
 });

@@ -4,6 +4,6 @@
 // Type: Attribute Manipulation
 // Example: Q(selector).removeAttr(attribute);
 // Variables: attribute, el
-Q.Ext('removeAttr', attribute => {
+Q.Ext('removeAttr', function (attribute) {
     return this.each(el => this.nodes[el].removeAttribute(attribute));
 });

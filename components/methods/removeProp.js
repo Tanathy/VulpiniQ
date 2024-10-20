@@ -4,6 +4,6 @@
 // Type: Property Manipulation
 // Example: Q(selector).removeProp(property);
 // Variables: property, el
-Q.Ext('removeProp', property => {
+Q.Ext('removeProp', function (property) {
     return this.each(el => delete this.nodes[el][property]);
 });

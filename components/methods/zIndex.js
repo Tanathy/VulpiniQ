@@ -4,7 +4,7 @@
 // Type: Display
 // Example: Q(selector).zIndex(value);
 // Variables: value, Index, el
-Q.Ext('zIndex', value => {
+Q.Ext('zIndex', function (value) {
     if (value === undefined) {
         let Index = this.nodes[0].style.zIndex;
         if (!Index) {

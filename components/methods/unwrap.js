@@ -4,7 +4,7 @@
 // Type: DOM Manipulation
 // Example: Q(selector).unwrap();
 // Variables: parent, el
-Q.Ext('unwrap', () => {
+Q.Ext('unwrap', function () {
     return this.each(el => {
         const parent = this.nodes[el].parentNode;
         if (parent !== document.body) {

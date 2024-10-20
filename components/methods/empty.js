@@ -4,6 +4,6 @@
 // Type: Content Manipulation
 // Example: Q(selector).empty();
 // Variables: el
-Q.Ext('empty', () => {
+Q.Ext('empty', function () {
     return this.each(el => this.nodes[el].innerHTML = '');
 });

@@ -4,6 +4,6 @@
 // Type: Display
 // Example: Q(selector).removeTransition();
 // Variables: el
-Q.Ext('removeTransition', () => {
+Q.Ext('removeTransition', function () {
     return this.each(el => this.nodes[el].style.transition = '');
 });

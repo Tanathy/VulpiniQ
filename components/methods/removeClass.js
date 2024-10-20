@@ -4,7 +4,7 @@
 // Type: Class Manipulation
 // Example: Q(selector).removeClass("class1 class2");
 // Variables: classes, list, el
-Q.Ext('removeClass', classes => {
+Q.Ext('removeClass', function (classes) {
     const list = classes.split(' ');
     return this.each(el => this.nodes[el].classList.remove(...list));
 });

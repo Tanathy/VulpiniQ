@@ -4,7 +4,7 @@
 // Type: Event Handling
 // Example: Q(selector).trigger("click");
 // Variables: event, el, index
-Q.Ext('trigger', event => {
+Q.Ext('trigger', function (event) {
     return this.each(function (index, el) {
         el.dispatchEvent(new Event(event));
     });

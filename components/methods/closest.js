@@ -4,7 +4,7 @@
 // Type: Traversal
 // Example: Q(selector).closest(".parent");
 // Variables: selector, el
-Q.Ext('closest', selector => {
+Q.Ext('closest', function (selector) {
     let el = this.nodes[0];
     while (el) {
         if (el.matches && el.matches(selector)) {

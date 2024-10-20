@@ -4,7 +4,7 @@
 // Type: Scroll Manipulation
 // Example: Q(selector).scrollTop(value, increment);
 // Variables: value, increment, maxScrollTop, el
-Q.Ext('scrollTop', (value, increment) => {
+Q.Ext('scrollTop', function (value, increment) {
     if (value === undefined) {
         return this.nodes[0].scrollTop;
     }

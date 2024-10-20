@@ -4,7 +4,7 @@
 // Type: DOM Manipulation
 // Example: Q(selector).wrap("<div class='wrapper'></div>");
 // Variables: parent, newParent, wrapper, el
-Q.Ext('wrap', wrapper => {
+Q.Ext('wrap', function (wrapper) {
     return this.each(el => {
         const parent = this.nodes[el].parentNode;
         const newParent = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;

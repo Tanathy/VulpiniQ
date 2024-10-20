@@ -4,7 +4,7 @@
 // Type: DOM Manipulation
 // Example: Q(selector).append("<div>Appended</div>");
 // Variables: allNodes, parent, child, subchild
-Q.Ext('append', function(...allNodes) {
+Q.Ext('append', function (...allNodes) {
     return this.each(el => {
         const parent = this.nodes[el];
 

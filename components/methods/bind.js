@@ -4,7 +4,7 @@
 // Type: Event Handling
 // Example: Q(selector).bind("click", () => console.log("Clicked"));
 // Variables: event, handler, el, _eventDelegation
-Q.Ext('bind', (event, handler) => {
+Q.Ext('bind', function (event, handler) {
     if (!this._eventDelegation) {
         this._eventDelegation = {};
     }

@@ -4,7 +4,7 @@
 // Type: DOM Manipulation
 // Example: Q(selector).prepend("<div>Prepended</div>");
 // Variables: nodes, parent, child, subchild, el
-Q.Ext('prepend', (...nodes) => {
+Q.Ext('prepend', function (...nodes) {
     return this.each(el => {
         const parent = this.nodes[el];
 

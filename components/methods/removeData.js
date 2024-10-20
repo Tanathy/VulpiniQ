@@ -4,6 +4,6 @@
 // Type: Data Manipulation
 // Example: Q(selector).removeData(key);
 // Variables: key, el
-Q.Ext('removeData', key => {
+Q.Ext('removeData', function (key) {
     return this.each(el => delete this.nodes[el].dataset[key]);
 });

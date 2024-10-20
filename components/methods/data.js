@@ -4,7 +4,7 @@
 // Type: Data Manipulation
 // Example: Q(selector).data(key, value);
 // Variables: key, value, el
-Q.Ext('data', (key, value) => {
+Q.Ext('data', function (key, value) {
     if (value === undefined) {
         return this.nodes[0]?.dataset[key] || null;
     }

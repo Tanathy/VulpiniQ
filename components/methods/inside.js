@@ -4,6 +4,6 @@
 // Type: Traversal
 // Example: Q(selector).inside(".parent");
 // Variables: selector
-Q.Ext('inside', selector => {
+Q.Ext('inside', function (selector) {
     return this.nodes[0]?.closest(selector) !== null;
 });

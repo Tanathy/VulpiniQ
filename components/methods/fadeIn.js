@@ -4,7 +4,7 @@
 // Type: Display
 // Example: Q(selector).fadeIn(duration, callback);
 // Variables: duration, callback, el
-Q.Ext('fadeIn', (duration = 400, callback) => {
+Q.Ext('fadeIn', function (duration = 400, callback) {
     return this.each(el => {
         this.nodes[el].style.display = '';
         this.nodes[el].style.transition = `opacity ${duration}ms`;

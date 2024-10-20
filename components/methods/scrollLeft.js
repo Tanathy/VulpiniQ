@@ -4,7 +4,7 @@
 // Type: Scroll Manipulation
 // Example: Q(selector).scrollLeft(value, increment);
 // Variables: value, increment, maxScrollLeft, el
-Q.Ext('scrollLeft', (value, increment) => {
+Q.Ext('scrollLeft', function (value, increment) {
     if (value === undefined) {
         return this.nodes[0].scrollLeft;
     }

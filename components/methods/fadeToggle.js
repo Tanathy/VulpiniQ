@@ -4,7 +4,7 @@
 // Type: Display
 // Example: Q(selector).fadeToggle(duration, callback);
 // Variables: duration, callback, el
-Q.Ext('fadeToggle', (duration, callback) => {
+Q.Ext('fadeToggle', function (duration, callback) {
     return this.each(el => {
         if (window.getComputedStyle(this.nodes[el]).opacity === '0') {
             this.fadeIn(duration, callback);

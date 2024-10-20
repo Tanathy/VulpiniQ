@@ -4,7 +4,7 @@
 // Type: Iteration
 // Example: Q(selector).walk((node) => console.log(node), true); // Passes Q object
 // Variables: callback, useQObject, node, index, el
-Q.Ext('walk', function(callback, useQObject = false){
+Q.Ext('walk', function (callback, useQObject = false) {
     this.nodes.forEach((el, index) => {
         const node = useQObject ? Q(el) : el;
         callback.call(el, node, index);

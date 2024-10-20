@@ -4,6 +4,6 @@
 // Type: Event Handling
 // Example: Q(selector).click();
 // Variables: el
-Q.Ext('click', () => {
+Q.Ext('click', function () {
     return this.each(el => this.nodes[el].click());
 });

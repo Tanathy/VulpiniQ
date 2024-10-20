@@ -4,7 +4,7 @@
 // Type: Utilities
 // Example: Q(selector).is(":visible");
 // Variables: selector, node
-Q.Ext('is', selector => {
+Q.Ext('is', function (selector) {
     const node = this.nodes[0];
 
     if (!node) return false;

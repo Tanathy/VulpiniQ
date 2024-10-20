@@ -75,11 +75,11 @@ const _ob = Object, _ar = Array, _ma = Math, _ac = AbortController, _as = AbortS
         }
     }
     Q.Ext = (n, o) => (Q.prototype[n] = o, Q);
-    Q.Ext('addClass', a => { 
+    Q.Ext('addClass', function (a) {
     const b = a.split(' ');
     return this.each(c => this.nodes[c].classList.add(...b));
 });
-Q.Ext('animate', (a, b, e) => {
+Q.Ext('animate', function (a, b, e) {
     return this.each(g => {
         const f = this.nodes[g];
         const c = _ob.keys(b).map(d => `${d} ${a}ms`).join(', ');
@@ -94,7 +94,7 @@ Q.Ext('animate', (a, b, e) => {
         }
     }), this;
 });
-Q.Ext('append', function(...a) {
+Q.Ext('append', function (...a) {
     return this.each(el => {
         const b = this.nodes[el];
         a.forEach(c => {
@@ -108,7 +108,7 @@ Q.Ext('append', function(...a) {
         });
     });
 });
-Q.Ext('attr', function(a, b){
+Q.Ext('attr', function (a, b) {
     if (typeof a === 'object') {
         return this.each(d => {
             for (let c in a) {
@@ -124,7 +124,7 @@ Q.Ext('attr', function(a, b){
         return this.each(d => this.nodes[d].setAttribute(a, b));
     }
 });
-Q.Ext('bind', (a, b) => {
+Q.Ext('bind', function (a, b) {
     if (!this.d) {
         this.d = {};
     }
@@ -140,19 +140,19 @@ Q.Ext('bind', (a, b) => {
     }
     return this;
 });
-Q.Ext('blur', () => {
+Q.Ext('blur', function () {
     return this.each(a => this.nodes[a].blur());
 });
-Q.Ext('children', () => {
+Q.Ext('children', function () {
     return new Q(this.nodes[0].children);
 });
-Q.Ext('click', () => {
+Q.Ext('click', function () {
     return this.each(el => this.nodes[el].click());
 });
-Q.Ext('clone', () => {
+Q.Ext('clone', function () {
     return new Q(this.nodes[0].cloneNode(true));
 });
-Q.Ext('closest', selector => {
+Q.Ext('closest', function (selector) {
     let b = this.nodes[0];
     while (b) {
         if (b.matches && b.matches(selector)) {
@@ -178,23 +178,23 @@ Q.Ext('css', function(a, b){
         return this.each(d => this.nodes[d].style[a] = b);
     }
 });
-Q.Ext('data', (a, b) => {
+Q.Ext('data', function (a, b) {
     if (b === _un) {
         return this.nodes[0]?.dataset[a] || _n;
     }
     return this.each(c => this.nodes[c].dataset[a] = b);
 });
-Q.Ext('each', function(callback) {
+Q.Ext('each', function (callback) {
     this.nodes.forEach((b, c) => callback.call(b, c, b));
     return this;
 });
-Q.Ext('empty', () => {
+Q.Ext('empty', function () {
     return this.each(a => this.nodes[a].innerHTML = '');
 });
-Q.Ext('eq', index => {
+Q.Ext('eq', function (index) {
     return new Q(this.nodes[index]);
 });
-Q.Ext('fadeIn', (a = 400, b) => {
+Q.Ext('fadeIn', function (a = 400, b) {
     return this.each(c => {
         this.nodes[c].style.display = '';
         this.nodes[c].style.transition = `opacity ${a}ms`;
@@ -206,7 +206,7 @@ Q.Ext('fadeIn', (a = 400, b) => {
         }, a);
     });
 });
-Q.Ext('fadeOut', function(a, b) {
+Q.Ext('fadeOut', function (a, b) {
     return this.each(c => {
         this.nodes[c].style.transition = `opacity ${a}ms`;
         this.nodes[c].style.opacity = 0;
@@ -217,7 +217,7 @@ Q.Ext('fadeOut', function(a, b) {
         }, a);
     });
 });
-Q.Ext('fadeTo', (opacity, b, c) => {
+Q.Ext('fadeTo', function (opacity, b, c) {
     return this.each(d => {
         this.nodes[d].style.transition = `opacity ${b}ms`;
         this.nodes[d].offsetHeight;
@@ -228,7 +228,7 @@ Q.Ext('fadeTo', (opacity, b, c) => {
         }, b);
     });
 });
-Q.Ext('fadeToggle', (a, b) => {
+Q.Ext('fadeToggle', function (a, b) {
     return this.each(c => {
         if (window.getComputedStyle(this.nodes[c]).opacity === '0') {
             this.fadeIn(a, b);
@@ -237,26 +237,26 @@ Q.Ext('fadeToggle', (a, b) => {
         }
     });
 });
-Q.Ext('find', function(b){
+Q.Ext('find', function (b) {
     const foundNodes = this.nodes[0].querySelectorAll(b);
     return foundNodes.length ? Q(foundNodes) : _n;
 });
-Q.Ext('first', () => {
+Q.Ext('first', function () {
     return new Q(this.nodes[0]);
 });
-Q.Ext('focus', () => {
+Q.Ext('focus', function () {
     return this.each(a => this.nodes[a].focus());
 });
-Q.Ext('hasClass', className => {
+Q.Ext('hasClass', function (className) {
     return this.nodes[0]?.classList.contains(className) || false;
 });
-Q.Ext('height', a => {
+Q.Ext('height', function (a) {
     if (a === _un) {
         return this.nodes[0].offsetHeight;
     }
     return this.each(b => this.nodes[b].style.height = a);
 });
-Q.Ext('hide', (duration = 0, b) => {
+Q.Ext('hide', function (duration = 0, b) {
     return this.each(e => {
         const c = this.nodes[e];
         if (duration === 0) {
@@ -277,7 +277,7 @@ Q.Ext('hide', (duration = 0, b) => {
         }
     });
 });
-Q.Ext('html', function(a){
+Q.Ext('html', function (a) {
     if (a === _un) {
         return this.nodes[0]?.innerHTML || _n;
     }
@@ -297,13 +297,13 @@ Q.Ext('html', function(a){
         });
     });
 });
-Q.Ext('id', function(a){
+Q.Ext('id', function (a) {
     if (a === _un) {
         return this.nodes[0].id;
     }
     return this.nodes[0].id = a;
 });
-Q.Ext('index', index => {
+Q.Ext('index', function (index) {
     if (index === _un) {
         return _ar.from(this.nodes[0].parentNode.children).indexOf(this.nodes[0]);
     }
@@ -319,10 +319,10 @@ Q.Ext('index', index => {
         }
     });
 });
-Q.Ext('inside', a => {
+Q.Ext('inside', function (a) {
     return this.nodes[0]?.closest(a) !== _n;
 });
-Q.Ext('is', selector => {
+Q.Ext('is', function (selector) {
     const b = this.nodes[0];
     if (!b) return false;
     if (typeof selector === 'function') {
@@ -360,16 +360,16 @@ Q.Ext('is', selector => {
     }
     return false;
 });
-Q.Ext('isExists', () => {
+Q.Ext('isExists', function () {
     return document.body.contains(this.nodes[0]);
 });
 Q.isExists = function (a) {
     return document.querySelector(a) !== _n;
 };
-Q.Ext('last', () => {
+Q.Ext('last', function () {
     return new Q(this.nodes[this.nodes.length - 1]);
 });
-Q.Ext('off', (a, b, c) => {
+Q.Ext('off', function (a, b, c) {
     const d = {
         capture: false,
         once: false,
@@ -380,7 +380,7 @@ Q.Ext('off', (a, b, c) => {
         a.split(' ').forEach(e => this.nodes[f].removeEventListener(e, b, c));
     });
 });
-Q.Ext('offset', () => {
+Q.Ext('offset', function () {
     const a = this.nodes[0].getBoundingClientRect();
     return {
         top: a.top + window.scrollY,
@@ -398,16 +398,16 @@ Q.Ext('on', function (a, b, c) {
         a.split(' ').forEach(f => this.nodes[e].addEventListener(f, b, c));
     });
 });
-Q.Ext('parent', () => {
+Q.Ext('parent', function () {
     return new Q(this.nodes[0].parentNode);
 });
-Q.Ext('position', () => {
+Q.Ext('position', function () {
     return {
         top: this.nodes[0].offsetTop,
         left: this.nodes[0].offsetLeft
     };
 });
-Q.Ext('prepend', (...a) => {
+Q.Ext('prepend', function (...a) {
     return this.each(e => {
         const b = this.a[e];
         a.forEach(c => {
@@ -421,7 +421,7 @@ Q.Ext('prepend', (...a) => {
         });
     });
 });
-Q.Ext('prop', (property, b) => {
+Q.Ext('prop', function (property, b) {
     if (b === _un) {
         return this.nodes[0]?.[property] || _n;
     }
@@ -432,26 +432,26 @@ Q.Ext('prop', (property, b) => {
 Q.Ext('remove', function() {
     return this.each(a => this.nodes[a].remove());
 });
-Q.Ext('removeAttr', a => {
+Q.Ext('removeAttr', function (a) {
     return this.each(b => this.nodes[b].removeAttribute(a));
 });
-Q.Ext('removeClass', a => {
+Q.Ext('removeClass', function (a) {
     const b = a.split(' ');
     return this.each(c => this.nodes[c].classList.remove(...b));
 });
-Q.Ext('removeData', key => {
+Q.Ext('removeData', function (key) {
     return this.each(b => delete this.nodes[b].dataset[key]);
 });
-Q.Ext('removeProp', property => {
+Q.Ext('removeProp', function (property) {
     return this.each(b => delete this.nodes[b][property]);
 });
-Q.Ext('removeTransition', () => {
+Q.Ext('removeTransition', function () {
     return this.each(a => this.nodes[a].style.transition = '');
 });
-Q.Ext('scrollHeight', () => {
+Q.Ext('scrollHeight', function () {
     return this.nodes[0].scrollHeight;
 });
-Q.Ext('scrollLeft', (a, b) => {
+Q.Ext('scrollLeft', function (a, b) {
     if (a === _un) {
         return this.nodes[0].scrollLeft;
     }
@@ -464,7 +464,7 @@ Q.Ext('scrollLeft', (a, b) => {
         }
     });
 });
-Q.Ext('scrollTop', (a, b) => {
+Q.Ext('scrollTop', function (a, b) {
     if (a === _un) {
         return this.nodes[0].scrollTop;
     }
@@ -477,10 +477,10 @@ Q.Ext('scrollTop', (a, b) => {
         }
     });
 });
-Q.Ext('scrollWidth', () => {
+Q.Ext('scrollWidth', function () {
     return this.nodes[0].scrollWidth;
 });
-Q.Ext('show', (duration = 0, b) => {
+Q.Ext('show', function (duration = 0, b) {
     return this.each(e => {
         const c = this.nodes[e];
         if (duration === 0) {
@@ -501,30 +501,30 @@ Q.Ext('show', (duration = 0, b) => {
         }
     });
 });
-Q.Ext('size', () => {
+Q.Ext('size', function () {
     return {
         width: this.nodes[0].offsetWidth,
         height: this.nodes[0].offsetHeight
     };
 });
-Q.Ext('text', function(a){
+Q.Ext('text', function (a) {
     if (a === _un) {
         return this.nodes[0]?.textContent || _n;
     }
     return this.each(b => this.nodes[b].textContent = a);
 });
-Q.Ext('toggle', () => {
+Q.Ext('toggle', function () {
     return this.each(a => this.nodes[a].style.display = this.nodes[a].style.display === 'none' ? '' : 'none');
 });
-Q.Ext('toggleClass', className => {
+Q.Ext('toggleClass', function (className) {
     return this.each(b => this.nodes[b].classList.toggle(className));
 });
-Q.Ext('trigger', event => {
+Q.Ext('trigger', function (event) {
     return this.each(function (c, b) {
         b.dispatchEvent(new _ev(event));
     });
 });
-Q.Ext('unwrap', () => {
+Q.Ext('unwrap', function () {
     return this.each(b => {
         const a = this.nodes[b].parentNode;
         if (a !== document.body) {
@@ -532,13 +532,13 @@ Q.Ext('unwrap', () => {
         }
     });
 });
-Q.Ext('a', function(a){
+Q.Ext('a', function (a) {
     if (a === _un) {
         return this.nodes[0]?.value || _n;
     }
     return this.each(b => this.nodes[b].value = a);
 });
-Q.Ext('wait', ms => {
+Q.Ext('wait', function (ms) {
     const b = this;
     return new _pr((resolve) => {
         _st(() => {
@@ -546,20 +546,20 @@ Q.Ext('wait', ms => {
         }, ms);
     });
 });
-Q.Ext('walk', function(callback, b = false){
+Q.Ext('walk', function (callback, b = false) {
     this.nodes.forEach((e, d) => {
         const c = b ? Q(e) : e;
         callback.call(e, c, d);
     });
     return this;
 });
-Q.Ext('width', a => {
+Q.Ext('width', function (a) {
     if (a === _un) {
         return this.nodes[0].offsetWidth;
     }
     return this.each(b => this.nodes[b].style.width = a);
 });
-Q.Ext('wrap', c => {
+Q.Ext('wrap', function (c) {
     return this.each(d => {
         const a = this.nodes[d].parentNode;
         const b = typeof c === 'string' ? document.createElement(c) : c;
@@ -567,7 +567,7 @@ Q.Ext('wrap', c => {
         b.appendChild(this.nodes[d]);
     });
 });
-Q.Ext('wrapAll', wrapper => {
+Q.Ext('wrapAll', function (wrapper) {
     return this.each(e => {
         const b = this.nodes[e].parentNode;
         const c = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;
@@ -575,7 +575,7 @@ Q.Ext('wrapAll', wrapper => {
         this.nodes.forEach(d => c.appendChild(d));
     });
 });
-Q.Ext('zIndex', a => {
+Q.Ext('zIndex', function (a) {
     if (a === _un) {
         let b = this.nodes[0].style.zIndex;
         if (!b) {
