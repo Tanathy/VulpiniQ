@@ -237,9 +237,9 @@ Q.Ext('fadeToggle', function (a, b) {
         }
     });
 });
-Q.Ext('find', function (b) {
-    const foundNodes = this.nodes[0].querySelectorAll(b);
-    return foundNodes.length ? Q(foundNodes) : _n;
+Q.Ext('find', function (selector) {
+    const b = this.nodes[0].querySelectorAll(selector);
+    return b.length ? Q(b) : _n;
 });
 Q.Ext('first', function () {
     return new Q(this.nodes[0]);
