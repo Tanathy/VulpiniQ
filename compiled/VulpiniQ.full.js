@@ -1,7 +1,7 @@
 const Q = (() => {
     'use strict';
 const _ob = Object, _ar = Array, _ma = Math, _ac = AbortController, _as = AbortSignal, _bo = Boolean, _da = Date, _er = Error, _ev = Event, _pr = Promise, _nu = Number, _re = RegExp, _st = setTimeout, _un = undefined, _n = null, _nl = NodeList, _el = Element, _si = setInterval, _c = console, _f = fetch, _ct = clearTimeout;
-    var GLOBAL = {};
+    let GLOBAL = {};
     function Q(a, b, c) {
         if (!(this instanceof Q)) {
             return new Q(a, b, c);
@@ -75,14 +75,21 @@ const _ob = Object, _ar = Array, _ma = Math, _ac = AbortController, _as = AbortS
         }
     }
     Q.Ext = (n, o) => (Q.prototype[n] = o, Q);
-    Q.Ext('addClass', function (a) {
-    const b = a.split(' ');
+    Q.getGLOBAL = function (i)
+    {
+        return GLOBAL[i];
+    };
+    Q.setGLOBAL = function (h) {
+        GLOBAL = { ...GLOBAL, ...h };
+    };
+    Q.Ext('addClass', function (classes) {
+    const b = classes.split(' ');
     return this.each(c => this.nodes[c].classList.add(...b));
 });
-Q.Ext('animate', function (a, b, e) {
+Q.Ext('animate', function (duration, b, e) {
     return this.each(g => {
         const f = this.nodes[g];
-        const c = _ob.keys(b).map(d => `${d} ${a}ms`).join(', ');
+        const c = _ob.keys(b).map(d => `${d} ${duration}ms`).join(', ');
         f.style.transition = c;
         for (const d in b) {
             f.style[d] = b[d];
@@ -90,14 +97,14 @@ Q.Ext('animate', function (a, b, e) {
         if (typeof e === 'function') {
             _st(() => {
                 if (e) e.call(f);
-            }, a);
+            }, duration);
         }
     }), this;
 });
-Q.Ext('append', function (...a) {
+Q.Ext('append', function (...allNodes) {
     return this.each(el => {
         const b = this.nodes[el];
-        a.forEach(c => {
+        allNodes.forEach(c => {
             if (typeof c === 'string') {
                 b.insertAdjacentHTML('beforeend', c);
             } else if (c?.nodeType === 1 || c instanceof Q) {
@@ -108,20 +115,20 @@ Q.Ext('append', function (...a) {
         });
     });
 });
-Q.Ext('attr', function (a, b) {
-    if (typeof a === 'object') {
+Q.Ext('attr', function (attribute, b) {
+    if (typeof attribute === 'object') {
         return this.each(d => {
-            for (let c in a) {
-                if (a.hasOwnProperty(c)) {
-                    this.nodes[d].setAttribute(c, a[c]);
+            for (let c in attribute) {
+                if (attribute.hasOwnProperty(c)) {
+                    this.nodes[d].setAttribute(c, attribute[c]);
                 }
             }
         });
     } else {
         if (b === _un) {
-            return this.nodes[0]?.getAttribute(a) || _n;
+            return this.nodes[0]?.getAttribute(attribute) || _n;
         }
-        return this.each(d => this.nodes[d].setAttribute(a, b));
+        return this.each(d => this.nodes[d].setAttribute(attribute, b));
     }
 });
 Q.Ext('bind', function (a, b) {
@@ -153,36 +160,36 @@ Q.Ext('clone', function () {
     return new Q(this.nodes[0].cloneNode(true));
 });
 Q.Ext('closest', function (selector) {
-    let b = this.nodes[0];
-    while (b) {
-        if (b.matches && b.matches(selector)) {
-            return new Q(b);
+    let el = this.nodes[0];
+    while (el) {
+        if (el.matches && el.matches(selector)) {
+            return new Q(el);
         }
-        b = b.parentElement;
+        el = el.parentElement;
     }
     return _n;
 });
-Q.Ext('css', function(a, b){
-    if (typeof a === 'object') {
+Q.Ext('css', function(property, b) {
+    if (typeof property === 'object') {
         return this.each(d => {
-            for (let c in a) {
-                if (a.hasOwnProperty(c)) {
-                    this.nodes[d].style[c] = a[c];
+            for (let c in property) {
+                if (property.hasOwnProperty(c)) {
+                    this.nodes[d].style[c] = property[c];
                 }
             }
         });
     } else {
         if (b === _un) {
-            return getComputedStyle(this.nodes[0])[a];
+            return getComputedStyle(this.nodes[0])[property];
         }
-        return this.each(d => this.nodes[d].style[a] = b);
+        return this.each(d => this.nodes[d].style[property] = b);
     }
 });
-Q.Ext('data', function (a, b) {
+Q.Ext('data', function (key, b) {
     if (b === _un) {
-        return this.nodes[0]?.dataset[a] || _n;
+        return this.nodes[0]?.dataset[key] || _n;
     }
-    return this.each(c => this.nodes[c].dataset[a] = b);
+    return this.each(c => this.nodes[c].dataset[key] = b);
 });
 Q.Ext('each', function (callback) {
     this.nodes.forEach((b, c) => callback.call(b, c, b));
@@ -277,14 +284,14 @@ Q.Ext('hide', function (duration = 0, b) {
         }
     });
 });
-Q.Ext('html', function (a) {
-    if (a === _un) {
+Q.Ext('html', function (content) {
+    if (content === _un) {
         return this.nodes[0]?.innerHTML || _n;
     }
     return this.each(c => {
         c = this.nodes[c];
         c.innerHTML = '';
-        a.forEach(b => {
+        content.forEach(b => {
             if (typeof b === 'string') {
                 c.insertAdjacentHTML('beforeend', b);
             } else if (b instanceof Q) {
@@ -297,11 +304,11 @@ Q.Ext('html', function (a) {
         });
     });
 });
-Q.Ext('id', function (a) {
-    if (a === _un) {
+Q.Ext('id', function (ident) {
+    if (ident === _un) {
         return this.nodes[0].id;
     }
-    return this.nodes[0].id = a;
+    return this.nodes[0].id = ident;
 });
 Q.Ext('index', function (index) {
     if (index === _un) {
@@ -319,8 +326,8 @@ Q.Ext('index', function (index) {
         }
     });
 });
-Q.Ext('inside', function (a) {
-    return this.nodes[0]?.closest(a) !== _n;
+Q.Ext('inside', function (selector) {
+    return this.nodes[0]?.closest(selector) !== _n;
 });
 Q.Ext('is', function (selector) {
     const b = this.nodes[0];
@@ -368,6 +375,11 @@ Q.isExists = function (a) {
 };
 Q.Ext('last', function () {
     return new Q(this.nodes[this.nodes.length - 1]);
+});
+Q.Ext('map', function (callback) {
+    let b = [];
+    this.each(c => b.push(callback(Q(c))));
+    return b;
 });
 Q.Ext('off', function (a, b, c) {
     const d = {
@@ -532,7 +544,7 @@ Q.Ext('unwrap', function () {
         }
     });
 });
-Q.Ext('a', function (a) {
+Q.Ext('val', function (a) {
     if (a === _un) {
         return this.nodes[0]?.value || _n;
     }
@@ -553,11 +565,11 @@ Q.Ext('walk', function (callback, b = false) {
     });
     return this;
 });
-Q.Ext('width', function (a) {
-    if (a === _un) {
+Q.Ext('width', function (value) {
+    if (value === _un) {
         return this.nodes[0].offsetWidth;
     }
-    return this.each(b => this.nodes[b].style.width = a);
+    return this.each(b => this.nodes[b].style.width = value);
 });
 Q.Ext('wrap', function (c) {
     return this.each(d => {
@@ -575,42 +587,42 @@ Q.Ext('wrapAll', function (wrapper) {
         this.nodes.forEach(d => c.appendChild(d));
     });
 });
-Q.Ext('zIndex', function (a) {
-    if (a === _un) {
+Q.Ext('zIndex', function (value) {
+    if (value === _un) {
         let b = this.nodes[0].style.zIndex;
         if (!b) {
             b = window.getComputedStyle(this.nodes[0]).zIndex;
         }
         return b;
     }
-    return this.each(c => this.nodes[c].style.zIndex = a);
+    return this.each(c => this.nodes[c].style.zIndex = value);
 });
 Q.Done = (function () {
-    const a = [];
+    const callbacks = [];
     window.addEventListener('load', () => {
-        a.forEach(b => b());
+        callbacks.forEach(b => b());
     });
     return function (b) {
-        a.push(b);
+        callbacks.push(b);
     };
 })();
 Q.Leaving = (function () {
-    const a = [];
+    const callbacks = [];
     window.addEventListener('beforeunload', (b) => {
-        a.forEach(c => c(b));
+        callbacks.forEach(c => c(b));
     });
     return function (c) {
-        a.push(c);
+        callbacks.push(c);
     };
 })();
 Q.Ready = (function () {
-    const a = [];
+    const callbacks = [];
     document.addEventListener('DOMContentLoaded', () => {
-        a.forEach(b => b());
+        callbacks.forEach(b => b());
     }, { once: true });
     return function (b) {
         if (document.readyState === 'loading') {
-            a.push(b);
+            callbacks.push(b);
         } else {
             b();
         }
@@ -675,12 +687,11 @@ Q.ColorBrightness = function (c, percent) {
     }
 }
 Q.Debounce = function (id, b, c) {
-    GLOBAL = GLOBAL || {};
-    GLOBAL.Flood = GLOBAL.Flood || {};
-    if (GLOBAL.Flood[id]) {
-        _ct(GLOBAL.Flood[id]);
+    let glob = Q.getGLOBAL('Debounce');
+    if (glob && glob[id]) {
+        _ct(glob[id]);
     }
-    GLOBAL.Flood[id] = b ? _st(c, b) : c();
+    Q.setGLOBAL({ Debounce: { ...glob, [id]: _st(c, b) } });
 };
 Q.HSL2RGB = function (h, s, l) {
     let r, g, b;
@@ -710,7 +721,7 @@ Q.ID = function (length = 8, b = '') {
 };
 Q.RGB2HSL = function (r, g, b) {
     r /= 255, g /= 255, b /= 255;
-    let maximum = _ma.max(r, g, b), minimum = _ma.a(r, g, b);
+    let maximum = _ma.max(r, g, b), minimum = _ma.min(r, g, b);
     let h, s, l = (maximum + minimum) / 2;
     if (maximum === minimum) {
         h = s = 0;
@@ -2238,75 +2249,50 @@ width: content;
         }
     };
 };
-Q.Icons = function (data, classes) {
-    let classes = Q.style(`
-:root {
-    --svg_arrow-down: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 134.49459 62.707709"><path d="M 100.93685,31.353867 C 82.480099,48.598492 67.319803,62.707709 67.247301,62.707709 c -0.0725,0 -15.232809,-14.109215 -33.689561,-31.353842 L 3.5365448e-8,6.6845858e-7 H 67.247301 134.4946 Z"/></svg>');
-    --svg_arrow-left: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62.707704 134.4946"><path d="M 31.353844,100.93685 C 14.109219,82.480099 1.6018623e-6,67.319803 1.6018623e-6,67.247301 1.6018623e-6,67.174801 14.109217,52.014492 31.353844,33.55774 L 62.70771,0 V 67.247301 134.4946 Z"/></svg>');
-    --svg_arrow-right: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62.707704 134.4946"><path d="m 31.353868,33.55775 c 17.244625,18.456749 31.353842,33.617045 31.353842,33.689547 0,0.0725 -14.109215,15.232809 -31.353842,33.689563 L 1.6018623e-6,134.4946 V 67.247297 0 Z"/></svg>');
-    --svg_arrow-up: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 134.49459 62.707709"><path d="M 33.55775,31.353843 C 52.014499,14.109218 67.174795,6.6845858e-7 67.247297,6.6845858e-7 67.319797,6.6845858e-7 82.480106,14.109216 100.93686,31.353843 L 134.4946,62.707709 H 67.247297 3.5365448e-8 Z"/></svg>');
-    --svg_window-close: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 2.8176856,98.903421 -4.0360052e-7,96.085741 22.611458,73.473146 45.222917,50.860554 22.611458,28.247962 -4.0360052e-7,5.6353711 2.8176856,2.8176851 5.6353716,-9.1835591e-7 28.247963,22.611458 50.860555,45.222916 73.473147,22.611458 96.085743,-9.1835591e-7 98.903423,2.8176851 101.72111,5.6353711 79.109651,28.247962 56.498193,50.860554 79.109651,73.473146 101.72111,96.085741 98.903423,98.903421 96.085743,101.72111 73.473147,79.109651 50.860555,56.498192 28.247963,79.109651 5.6353716,101.72111 Z"/></svg>');
-    --svg_window-full: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 H 50.860555 84.417403 V 50.860554 84.417401 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z"/></svg>');
-    --svg_window-minimize: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 0.5252846,83.893071 V 79.698469 H 50.860555 101.19582 v 4.194602 4.19461 H 50.860555 0.5252846 Z"/></svg>');
-    --svg_window-windowed: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 h 8.389212 8.389212 V 8.9144961 0.52528408 H 67.638978 101.19582 V 34.082131 67.638977 h -8.389207 -8.38921 v 8.389212 8.389212 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z M 92.806613,34.082131 V 8.9144961 H 67.638978 42.471343 v 4.1946059 4.194606 h 20.973029 20.973031 v 20.973029 20.973029 h 4.1946 4.19461 z"/></svg>');
+Q.Icons = function () {
+  let glob = Q.getGLOBAL('icons');
+  let classes = {};
+  if (glob && glob.icons) {
+    classes = glob.icons;
+  }
+  else {
+    classes = Q.style(`:root {
+	--svg_arrow-down: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 134.49459 62.707709"><path d="M 100.93685,31.353867 C 82.480099,48.598492 67.319803,62.707709 67.247301,62.707709 c -0.0725,0 -15.232809,-14.109215 -33.689561,-31.353842 L 3.5365448e-8,6.6845858e-7 H 67.247301 134.4946 Z"/></svg>');
+	--svg_arrow-left: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62.707704 134.4946"><path d="M 31.353844,100.93685 C 14.109219,82.480099 1.6018623e-6,67.319803 1.6018623e-6,67.247301 1.6018623e-6,67.174801 14.109217,52.014492 31.353844,33.55774 L 62.70771,0 V 67.247301 134.4946 Z"/></svg>');
+	--svg_arrow-right: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62.707704 134.4946"><path d="m 31.353868,33.55775 c 17.244625,18.456749 31.353842,33.617045 31.353842,33.689547 0,0.0725 -14.109215,15.232809 -31.353842,33.689563 L 1.6018623e-6,134.4946 V 67.247297 0 Z"/></svg>');
+	--svg_arrow-up: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 134.49459 62.707709"><path d="M 33.55775,31.353843 C 52.014499,14.109218 67.174795,6.6845858e-7 67.247297,6.6845858e-7 67.319797,6.6845858e-7 82.480106,14.109216 100.93686,31.353843 L 134.4946,62.707709 H 67.247297 3.5365448e-8 Z"/></svg>');
+	--svg_navigation-close: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2666.6667 2666.6667"><path d="M 1276.6667,2434.5485 C 950.24325,2418.4963 647.60291,2257.2797 449.65648,1994.0001 360.09366,1874.8766 294.54616,1735.7649 260.06678,1591.6333 c -40.82486,-170.6571 -40.82486,-347.2761 0,-517.9332 71.52438,-298.98806 268.8554,-557.46223 540.12266,-707.48002 258.68606,-143.06006 568.06486,-175.54075 852.57376,-89.50899 276.927,83.73908 511.1437,274.85672 650.2832,530.62227 168.8614,310.40014 177.2264,688.09064 22.2995,1006.84964 -77.0037,158.4335 -189.7203,295.013 -331.3458,401.4939 -205.303,154.3568 -458.4668,231.6017 -717.3334,218.8716 z m 130.2294,-151.2014 c 229.6976,-18.6692 437.2639,-114.273 599.1754,-275.9766 47.6541,-47.593 83.7471,-91.4686 120.133,-146.0371 91.2885,-136.9067 142.8941,-286.0616 157.3086,-454.6667 3.0513,-35.6912 3.0513,-112.3088 0,-148 -9.7543,-114.0948 -35.6813,-216.2096 -79.956,-314.91095 C 2140.8657,803.99837 2044.7703,680.42081 1924.6667,585.10582 1705.8186,411.42656 1421.4281,342.88551 1146,397.43913 961.28159,434.02604 793.07082,524.16769 658.61926,658.61926 508.15954,809.07897 413.50356,1001.5246 386.76219,1211.3334 c -5.50464,43.1886 -7.16468,71.3013 -7.16468,121.3333 0,50.0321 1.66004,78.1448 7.16468,121.3333 31.40785,246.4213 158.34097,471.0271 353.9045,626.2276 118.14734,93.7625 258.15376,158.5796 405.33331,187.6524 50.7995,10.0346 91.5353,14.8142 153.3334,17.9909 18.4799,0.95 83.6306,-0.5787 107.5627,-2.5238 z m 134.7679,-630.3487 -208.3296,-208.3296 -207.9982,207.9951 -207.99834,207.9951 -54.66892,-54.6567 c -30.0679,-30.0612 -54.66892,-55.2602 -54.66892,-55.9978 0,-0.7375 93.30001,-94.6396 207.33338,-208.6711 l 207.3333,-207.3301 -206.6689,-206.6721 -206.66886,-206.67213 55.00599,-54.99402 55.006,-54.99402 206.66127,206.66447 206.6613,206.6646 207.6661,-207.6629 207.666,-207.66288 55.3378,55.32571 55.3378,55.32571 -207.6673,207.67046 -207.6673,207.6705 208.3339,208.3372 208.334,208.3371 -55.0055,54.9935 -55.0054,54.9935 z"/></svg>');
+	--svg_navigation-left: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 682.66669 682.66669"><path d="M 312.95615,622.51118 C 282.12556,619.5403 247.03663,609.52248 218.00001,595.4014 129.37889,552.30321 70.013661,466.90205 60.059145,368.19207 51.577814,284.09034 83.346262,198.0417 144.85111,138.52292 212.10881,73.437059 306.81846,45.865772 398.4674,64.691724 519.45153,89.543525 610.11296,190.57708 622.60754,314.47462 c 8.48133,84.10173 -23.28712,170.15036 -84.79196,229.66914 -59.89864,57.96444 -141.4913,86.4009 -224.85943,78.36742 z m 71.04386,-40.49085 c 101.01231,-18.37977 179.6848,-97.26565 198.14953,-198.68699 3.46591,-19.0372 3.48193,-65.25956 0.0291,-84 -18.78642,-101.96514 -96.94357,-180.11939 -198.8453,-198.83796 -18.89894,-3.471598 -65.10105,-3.471598 -84,0 C 197.45585,119.2095 119.27,197.39245 100.48802,299.33334 c -3.452807,18.74044 -3.436783,64.9628 0.0291,84 16.64224,91.4109 82.13775,165.12641 170.46427,191.85833 8.26023,2.49995 21.0186,5.49414 28.35193,6.65376 7.33334,1.15962 14.83334,2.3709 16.66667,2.69173 8.26494,1.44635 55.91079,-0.31712 68,-2.51683 z M 320.66668,412.53122 c -36.66667,-38.4534 -66.66667,-70.49248 -66.66667,-71.19795 0,-0.70547 30.15,-32.79758 67,-71.31579 l 67,-70.03311 v 141.34115 c 0,77.73764 -0.15,141.29162 -0.33333,141.23108 -0.18334,-0.0605 -30.33334,-31.57197 -67,-70.02538 z"/></svg>');
+	--svg_navigation-right: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 682.66669 682.66669"><path d="M 312.95615,622.51118 C 103.83077,602.35954 -10.876679,362.01744 104.94177,186.66667 225.81958,3.6559506 499.6699,21.151057 595.4014,218.00001 691.73222,416.0813 532.80292,643.69595 312.95615,622.51118 Z m 71.04386,-40.49085 C 527.6749,555.87785 617.23885,410.16562 575.1842,270.98141 536.24285,142.10102 399.55264,68.634561 270.98141,107.48249 119.67709,153.19925 50.784795,329.22352 130.9177,465.35432 c 35.94209,61.05887 100.57273,105.76313 168.41564,116.49111 7.33334,1.15962 14.83334,2.3709 16.66667,2.69173 8.26494,1.44635 55.91079,-0.31712 68,-2.51683 z M 294.66668,341.34179 V 199.98437 l 67,70.03311 c 36.85,38.51821 67,70.60056 67,71.2941 0,0.69354 -30.15,32.78948 -67,71.32431 l -67,70.06332 z"/></svg>');
+	--svg_window-close: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 2.8176856,98.903421 -4.0360052e-7,96.085741 22.611458,73.473146 45.222917,50.860554 22.611458,28.247962 -4.0360052e-7,5.6353711 2.8176856,2.8176851 5.6353716,-9.1835591e-7 28.247963,22.611458 50.860555,45.222916 73.473147,22.611458 96.085743,-9.1835591e-7 98.903423,2.8176851 101.72111,5.6353711 79.109651,28.247962 56.498193,50.860554 79.109651,73.473146 101.72111,96.085741 98.903423,98.903421 96.085743,101.72111 73.473147,79.109651 50.860555,56.498192 28.247963,79.109651 5.6353716,101.72111 Z"/></svg>');
+	--svg_window-full: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 H 50.860555 84.417403 V 50.860554 84.417401 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z"/></svg>');
+	--svg_window-minimize: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 0.5252846,83.893071 V 79.698469 H 50.860555 101.19582 v 4.194602 4.19461 H 50.860555 0.5252846 Z"/></svg>');
+	--svg_window-windowed: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 h 8.389212 8.389212 V 8.9144961 0.52528408 H 67.638978 101.19582 V 34.082131 67.638977 h -8.389207 -8.38921 v 8.389212 8.389212 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z M 92.806613,34.082131 V 8.9144961 H 67.638978 42.471343 v 4.1946059 4.194606 h 20.973029 20.973031 v 20.973029 20.973029 h 4.1946 4.19461 z"/></svg>');
 }
-.svg_window-close {
-    -webkit-mask: var(--svg_window-close) no-repeat center;
-    mask: var(--svg_window-close) no-repeat center;
-    background-color: currentColor;
-    -webkit-mask-size: contain;
-    mask-size: contain;
-}
-.svg_window-full {
-    -webkit-mask: var(--svg_window-full) no-repeat center;
-    mask: var(--svg_window-full) no-repeat center;
-    background-color: currentColor;
-    -webkit-mask-size: contain;
-    mask-size: contain;
-}
-.svg_window-minimize {
-    -webkit-mask: var(--svg_window-minimize) no-repeat center;
-    mask: var(--svg_window-minimize) no-repeat center;
-    background-color: currentColor;
-    -webkit-mask-size: contain;
-    mask-size: contain;
-}
-.svg_window-windowed {
-    -webkit-mask: var(--svg_window-windowed) no-repeat center;
-    mask: var(--svg_window-windowed) no-repeat center;
-    background-color: currentColor;
-    -webkit-mask-size: contain;
-    mask-size: contain;
-}
-.svg_arrow-down {
-    -webkit-mask: var(--svg_arrow-down) no-repeat center;
-    mask: var(--svg_arrow-down) no-repeat center;
-    background-color: currentColor;
-    -webkit-mask-size: contain;
-    mask-size: contain;
-}
-.svg_arrow-left {
-    -webkit-mask: var(--svg_arrow-left) no-repeat center;
-    mask: var(--svg_arrow-left) no-repeat center;
-    background-color: currentColor;
-    -webkit-mask-size: contain;
-    mask-size: contain;
-}
-.svg_arrow-right {
-    -webkit-mask: var(--svg_arrow-right) no-repeat center;
-    mask: var(--svg_arrow-right) no-repeat center;
-    background-color: currentColor;
-    -webkit-mask-size: contain;
-    mask-size: contain;
-}
-.svg_arrow-up {
-    -webkit-mask: var(--svg_arrow-up) no-repeat center;
-    mask: var(--svg_arrow-up) no-repeat center;
-    background-color: currentColor;
-    -webkit-mask-size: contain;
-    mask-size: contain;
-}
-     `, {});
+.svg-icon {-webkit-mask-size: cover;mask-size: cover;-webkit-mask-repeat: no-repeat;mask-repeat: no-repeat;-webkit-mask-position: center;mask-position: center;background-color: currentColor; width:100%; height:100%;}
+.svg_arrow-down { mask-image: var(--svg_arrow-down);}.svg_arrow-left { mask-image: var(--svg_arrow-left);}.svg_arrow-right { mask-image: var(--svg_arrow-right);}.svg_arrow-up { mask-image: var(--svg_arrow-up);}.svg_navigation-close { mask-image: var(--svg_navigation-close);}.svg_navigation-left { mask-image: var(--svg_navigation-left);}.svg_navigation-right { mask-image: var(--svg_navigation-right);}.svg_window-close { mask-image: var(--svg_window-close);}.svg_window-full { mask-image: var(--svg_window-full);}.svg_window-minimize { mask-image: var(--svg_window-minimize);}.svg_window-windowed { mask-image: var(--svg_window-windowed);}`
+,{
+  "svg_arrow-down": "svg_arrow-down",
+  "svg_arrow-left": "svg_arrow-left",
+  "svg_arrow-right": "svg_arrow-right",
+  "svg_arrow-up": "svg_arrow-up",
+  "svg_navigation-close": "svg_navigation-close",
+  "svg_navigation-left": "svg_navigation-left",
+  "svg_navigation-right": "svg_navigation-right",
+  "svg_window-close": "svg_window-close",
+  "svg_window-full": "svg_window-full",
+  "svg_window-minimize": "svg_window-minimize",
+  "svg_window-windowed": "svg_window-windowed"
+});
+    Q.setGLOBAL({
+      icons: classes
+    });
+  }
+  return {
+    get: function (name) {
+      return Q('<div class="svg-icon svg_' + name + '"></div>');
+    }
+  }
 };
 Q.Image = function (options) {
     let Canvas = Q('<canvas>');
@@ -2678,77 +2664,132 @@ Q.Image = function (options) {
     return Canvas;
 }
 Q.ImageViewer = function () {
-    _c.log('ImageViewer Plugin Loaded');
     let classes = Q.style(`
 .image_viewer_wrapper {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     background: rgba(0,0,0,0.8);
     justify-content: center;
     align-items: center;
     z-index: 9999;
 }
-image_viewer_wrapper .image_wrapper {
+.image_panel {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.image_wrapper {
+    width: 100%;
+    height: 100%;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transform: scale(0.9);
+    transition: all 0.15s;
+    animation: fadeInScale 0.3s forwards;
+}
+@keyframes fadeInScale {
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+image_viewer_wrapper .image_panel {
     position: relative;
-    width: 80%;
-    height: 80%;
     display: flex;
     justify-content: center;
     align-items: center;
 }
-.left_button, .right_button, .close_button {
-    position: absolute;
-    background: rgba(255,255,255,0.5);
-    border: none;
+.side_left, .side_right {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    width: 80px;
+    }
+.viewer_left_button, .viewer_right_button, .viewer_close_button {
+    width: 40px;
+    height: 40px;
+    z-index: 10000;
     cursor: pointer;
-    padding: 10px;
+    color: white;
+    opacity: 0.5;
 }
-.left_button {
-    left: 10px;
+.viewer_left_button:hover, .viewer_right_button:hover, .viewer_close_button:hover {
+    opacity: 1;
 }
-.right_button {
-    right: 10px;
-}
-.close_button {
+.viewer_close_button {
+    width: 30px;
+    height: 30px;
+    position: absolute;
     top: 10px;
     right: 10px;
 }
     `, {
-        'image_viewer_wrapper': 'image_viewer_wrapper'
+        'image_viewer_wrapper': 'image_viewer_wrapper',
+        'image_viewer_pseudo': 'image_viewer_pseudo',
     });
     class Viewer {
         constructor() {
             this.selector = _n;
-            this.images = []; 
+            this.images = [];
             this.currentIndex = 0;
-            this.construct();
             this.eventHandler = this.handleClick.bind(this);
             this.eventListenerActive = false;
             this.addEventListener();
+            this.loaded = false;
+            this.icons = Q.Icons();
+            this.resizing = false;
         }
         construct() {
-            this.wrapper = Q('<div>', { class: classes.image_viewer_wrapper });
+            this.image_viewer = Q('<div>', { class: classes.image_viewer_wrapper });
+            this.image_panel = Q('<div>', { class: 'image_panel' });
             this.image_wrapper = Q('<div>', { class: 'image_wrapper' });
-            this.left_button = Q('<button>', { class: 'left_button', text: 'Prev' });
-            this.right_button = Q('<button>', { class: 'right_button', text: 'Next' });
-            this.close_button = Q('<button>', { class: 'close_button', text: 'Close' });
-            this.wrapper.append(this.left_button, this.image_wrapper, this.right_button, this.close_button);
+            this.side_left = Q('<div>', { class: 'side_left' });
+            this.side_right = Q('<div>', { class: 'side_right' });
+            this.left_button = Q('<div>', { class: 'viewer_left_button'});
+            this.right_button = Q('<div>', { class: 'viewer_right_button'}); 
+            this.close_button = Q('<div>', { class: 'viewer_close_button'});
+            this.left_button.append(this.icons.get('navigation-left'));
+            this.right_button.append(this.icons.get('navigation-right'));
+            this.close_button.append(this.icons.get('navigation-close'));
+            this.side_left.append(this.left_button);
+            this.side_right.append(this.right_button);
+            this.image_panel.append(this.side_left, this.image_wrapper, this.side_right);
+            this.image_viewer.append( this.image_panel, this.close_button);
             this.left_button.on('click', () => this.prev());
             this.right_button.on('click', () => this.next());
             this.close_button.on('click', () => this.close());
-            this.left_button.hide();
-            this.right_button.hide();
         }
         handleClick(e) {
             if (e.target.closest(this.selector)) {
-                const src = e.target.src;
-                if (src) {
-                    this.open([src]);
+                const images = Q(this.selector).find('img');
+                if (!images.nodes.length) {
+                    return;
                 }
+                images.each((index,el) => {
+                    this.images[index] = el.src;
+                });
+                this.currentIndex = images.nodes.indexOf(e.target);
+                    this.open();
             }
+        }
+        handleResize() {
+            if (!this.resizing) {
+                this.resizing = true;
+                this.image_wrapper.css({ filter: 'blur(5px)', transition: 'all 0.5s ease-in-out' });
+            }
+            Q.Debounce('img_viewer', 500, () => {
+            this.updateImage();
+            this.resizing = false;
+            this.image_wrapper.css({ filter: 'none', transition: '' });
+            });
         }
         addEventListener() {
             if (!this.eventListenerActive) {
@@ -2762,16 +2803,16 @@ image_viewer_wrapper .image_wrapper {
                 this.eventListenerActive = false;
             }
         }
-        open(images) {
-            this.construct(); 
-            this.images = images;
-            this.currentIndex = 0; 
+        open() {
+            this.construct();
             this.updateImage();
             this.updateNavigation();
-            Q('body').append(this.wrapper);
+            Q('body').append(this.image_viewer);
+            window.addEventListener('resize', this.handleResize.bind(this));
         }
         close() {
-            this.wrapper.remove();
+            window.removeEventListener('resize', this.handleResize.bind(this));
+            this.image_viewer.remove();
         }
         prev() {
             if (this.currentIndex > 0) {
@@ -2788,10 +2829,37 @@ image_viewer_wrapper .image_wrapper {
             }
         }
         updateImage() {
+            this.window_width = window.innerWidth;
+            this.window_height = window.innerHeight;
             const src = this.images[this.currentIndex];
-            this.image_wrapper.empty();
-            const img = Q('<img>', { src: src});
-            this.image_wrapper.append(img);
+            const img = new Image();
+            const isAnimated = /\.(webm|apng|gif)$/i.test(src);
+            img.onload = () => {
+                if (isAnimated) {
+                    this.image_wrapper.css({'background-image': `url(${src})`});
+                    return;
+                }
+                const aspectRatio = img.width / img.height;
+                let width = this.window_width;
+                let height = this.window_height;
+                if (width / height > aspectRatio) {
+                    width = height * aspectRatio;
+                } else {
+                    height = width / aspectRatio;
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                try {
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const dataURL = canvas.toDataURL();
+                    this.image_wrapper.css({'background-image': `url(${dataURL})`});
+                } catch (error) {
+                    this.image_wrapper.css({'background-image': `url(${src})`});
+                }
+            };
+            img.src = src;
         }
         updateNavigation() {
             if (this.images.length > 1) {
@@ -2816,7 +2884,7 @@ image_viewer_wrapper .image_wrapper {
         }
         remove() {
             this.removeEventListener();
-            this.wrapper.remove();
+            this.image_viewer.remove();
         }
     }
     let viewer = new Viewer();

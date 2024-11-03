@@ -1,8 +1,8 @@
 // Name: HSL2RGB
-// Method: Static
-// Desc: Converts HSL to RGB.
+// Method: Utility
+// Desc: Converts HSL (Hue, Saturation, Lightness) color values to RGB (Red, Green, Blue) format. <br> This function is essential for applications that require color transformations, allowing developers to switch between different color representations easily. <br> Understanding color models is key in design, and this utility helps bridge the gap between HSL, which is often more intuitive for humans, and RGB, which is commonly used in digital displays.
 // Type: Color
-// Example: Q.HSL2RGB(0, 0, 1); // [255, 255, 255]
+// Example: Q.HSL2RGB(0, 0, 1); // [255, 255, 255] <br> Q.HSL2RGB(0, 1, 0.5); // [255, 0, 0] <br> Q.HSL2RGB(0.33, 1, 0.5); // [0, 255, 0]
 // Variables: hue2rgb
 Q.HSL2RGB = function (h, s, l) {
     let r, g, b;

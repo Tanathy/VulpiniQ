@@ -1,8 +1,8 @@
 // Name: ColorBrightness
-// Method: Static
-// Desc: Adjusts the brightness of a color by a percentage.
+// Method: Utility
+// Desc: Adjusts the brightness of a given color by a specified percentage, making the color lighter or darker. <br> This function can be used to dynamically change colors for various UI elements, providing visual feedback or creating color schemes with different shades. <br> It supports both hexadecimal and RGB/RGBA color formats, making it flexible for different use cases in web design or graphics.
 // Type: Color
-// Example: Q.ColorBrightness('#000000', 50); // #7f7f7f (black +50%)
+// Example: Q.ColorBrightness('#000000', 50); // #7f7f7f (black +50%) <br> Q.ColorBrightness('rgb(255, 0, 0)', -30); // rgb(178, 0, 0) (red -30%) <br> Q.ColorBrightness('rgba(0, 0, 255, 0.5)', 20); // rgba(51, 51, 255, 0.5) (blue +20%)
 // Variables: hex, alphaColor, color, percent
 Q.ColorBrightness = function (color, percent) {
     let r, g, b, a = 1;

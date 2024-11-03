@@ -6,89 +6,165 @@
 // Dependencies: Style, Icons
 // Status: Experimental, Unstable
 Q.ImageViewer = function () {
-    console.log('ImageViewer Plugin Loaded');
     let classes = Q.style(`
 .image_viewer_wrapper {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     background: rgba(0,0,0,0.8);
     justify-content: center;
     align-items: center;
     z-index: 9999;
 }
 
-image_viewer_wrapper .image_wrapper {
+.image_panel {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.image_wrapper {
+    width: 100%;
+    height: 100%;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transform: scale(0.9);
+    transition: all 0.15s;
+    animation: fadeInScale 0.3s forwards;
+}
+
+@keyframes fadeInScale {
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+image_viewer_wrapper .image_panel {
     position: relative;
-    width: 80%;
-    height: 80%;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-.left_button, .right_button, .close_button {
-    position: absolute;
-    background: rgba(255,255,255,0.5);
-    border: none;
+.side_left, .side_right {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    width: 80px;
+    }
+
+.viewer_left_button, .viewer_right_button, .viewer_close_button {
+    width: 40px;
+    height: 40px;
+    z-index: 10000;
     cursor: pointer;
-    padding: 10px;
+    color: white;
+    opacity: 0.5;
 }
 
-.left_button {
-    left: 10px;
+.viewer_left_button:hover, .viewer_right_button:hover, .viewer_close_button:hover {
+    opacity: 1;
 }
 
-.right_button {
-    right: 10px;
-}
-
-.close_button {
+.viewer_close_button {
+    width: 30px;
+    height: 30px;
+    position: absolute;
     top: 10px;
     right: 10px;
 }
     `, {
-        'image_viewer_wrapper': 'image_viewer_wrapper'
+        'image_viewer_wrapper': 'image_viewer_wrapper',
+        'image_viewer_pseudo': 'image_viewer_pseudo',
     });
 
     class Viewer {
         constructor() {
             this.selector = null;
-            this.images = []; 
+            this.images = [];
             this.currentIndex = 0;
-            this.construct();
+            // this.construct();
             this.eventHandler = this.handleClick.bind(this);
             this.eventListenerActive = false;
             this.addEventListener();
+            this.loaded = false;
+            this.icons = Q.Icons();
+            this.resizing = false;
         }
 
         construct() {
-            this.wrapper = Q('<div>', { class: classes.image_viewer_wrapper });
+            this.image_viewer = Q('<div>', { class: classes.image_viewer_wrapper });
+            this.image_panel = Q('<div>', { class: 'image_panel' });
             this.image_wrapper = Q('<div>', { class: 'image_wrapper' });
-            this.left_button = Q('<button>', { class: 'left_button', text: 'Prev' });
-            this.right_button = Q('<button>', { class: 'right_button', text: 'Next' });
-            this.close_button = Q('<button>', { class: 'close_button', text: 'Close' });
 
-            this.wrapper.append(this.left_button, this.image_wrapper, this.right_button, this.close_button);
+            this.side_left = Q('<div>', { class: 'side_left' });
+            this.side_right = Q('<div>', { class: 'side_right' });
+
+            this.left_button = Q('<div>', { class: 'viewer_left_button'});
+            this.right_button = Q('<div>', { class: 'viewer_right_button'}); 
+            this.close_button = Q('<div>', { class: 'viewer_close_button'});
+
+            this.left_button.append(this.icons.get('navigation-left'));
+            this.right_button.append(this.icons.get('navigation-right'));
+            this.close_button.append(this.icons.get('navigation-close'));
+
+            this.side_left.append(this.left_button);
+            this.side_right.append(this.right_button);
+
+            this.image_panel.append(this.side_left, this.image_wrapper, this.side_right);
+            this.image_viewer.append( this.image_panel, this.close_button);
 
 
             this.left_button.on('click', () => this.prev());
             this.right_button.on('click', () => this.next());
             this.close_button.on('click', () => this.close());
 
-            this.left_button.hide();
-            this.right_button.hide();
+            // this.left_button.hide();
+            // this.right_button.hide();
         }
 
         handleClick(e) {
             if (e.target.closest(this.selector)) {
-                const src = e.target.src;
-                if (src) {
-                    this.open([src]);
+
+                // get images from selector
+                const images = Q(this.selector).find('img');
+
+                if (!images.nodes.length) {
+                    return;
                 }
+
+                images.each((index,el) => {
+                    this.images[index] = el.src;
+                });
+
+                this.currentIndex = images.nodes.indexOf(e.target);
+                    this.open();
             }
+        }
+
+        handleResize() {
+
+            if (!this.resizing) {
+                //add blur to image
+                this.resizing = true;
+                this.image_wrapper.css({ filter: 'blur(5px)', transition: 'all 0.5s ease-in-out' });
+            }
+
+            Q.Debounce('img_viewer', 500, () => {
+            this.updateImage();
+            this.resizing = false;
+            //remove blur from image
+            this.image_wrapper.css({ filter: 'none', transition: '' });
+            });
+
         }
 
         addEventListener() {
@@ -105,18 +181,17 @@ image_viewer_wrapper .image_wrapper {
             }
         }
 
-        open(images) {
-            this.construct(); 
-            this.images = images;
-            this.currentIndex = 0; 
-
+        open() {
+            this.construct();
             this.updateImage();
             this.updateNavigation();
-            Q('body').append(this.wrapper);
+            Q('body').append(this.image_viewer);
+            window.addEventListener('resize', this.handleResize.bind(this));
         }
 
         close() {
-            this.wrapper.remove();
+            window.removeEventListener('resize', this.handleResize.bind(this));
+            this.image_viewer.remove();
         }
 
         prev() {
@@ -136,10 +211,47 @@ image_viewer_wrapper .image_wrapper {
         }
 
         updateImage() {
+            this.window_width = window.innerWidth;
+            this.window_height = window.innerHeight;
+        
             const src = this.images[this.currentIndex];
-            this.image_wrapper.empty();
-            const img = Q('<img>', { src: src});
-            this.image_wrapper.append(img);
+            const img = new Image();
+        
+            // Check the file extension to determine if the image is animated
+            const isAnimated = /\.(webm|apng|gif)$/i.test(src);
+        
+            img.onload = () => {
+                if (isAnimated) {
+                    // If the image is animated, set it directly without resizing
+                    this.image_wrapper.css({'background-image': `url(${src})`});
+                    return;
+                }
+        
+                const aspectRatio = img.width / img.height;
+                let width = this.window_width;
+                let height = this.window_height;
+        
+                if (width / height > aspectRatio) {
+                    width = height * aspectRatio;
+                } else {
+                    height = width / aspectRatio;
+                }
+        
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+        
+                try {
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const dataURL = canvas.toDataURL();
+                    this.image_wrapper.css({'background-image': `url(${dataURL})`});
+                } catch (error) {
+                    // console.error('Canvas operation failed:', error);
+                    this.image_wrapper.css({'background-image': `url(${src})`});
+                }
+            };
+            img.src = src;
         }
 
         updateNavigation() {
@@ -168,7 +280,7 @@ image_viewer_wrapper .image_wrapper {
 
         remove() {
             this.removeEventListener();
-            this.wrapper.remove();
+            this.image_viewer.remove();
         }
     }
 

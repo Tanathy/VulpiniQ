@@ -1,8 +1,8 @@
 // Name: RGB2HSL
-// Method: Static
-// Desc: Converts RGB to HSL.
+// Method: Utility
+// Desc: Converts RGB color values to HSL format, providing a different way to represent colors that can be more intuitive for artists and designers. <br> HSL stands for Hue, Saturation, and Lightness, making it easier to manipulate colors based on human perception. <br> This conversion is essential for applications requiring color manipulation, such as image editing or web design, where understanding color relationships is crucial.
 // Type: Color
-// Example: Q.RGB2HSL(255, 255, 255); // [0, 0, 1]
+// Example: Q.RGB2HSL(255, 255, 255); // [0, 0, 1] <br> Q.RGB2HSL(0, 0, 0); // [0, 0, 0] <br> Q.RGB2HSL(255, 0, 0); // [0, 1, 0.5]
 // Variables: min, maximum
 Q.RGB2HSL = function (r, g, b) {
     r /= 255, g /= 255, b /= 255;

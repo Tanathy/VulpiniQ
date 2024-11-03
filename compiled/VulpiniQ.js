@@ -1,7 +1,7 @@
 const Q = (() => {
     'use strict';
 const _ob = Object, _ar = Array, _ma = Math, _ac = AbortController, _as = AbortSignal, _bo = Boolean, _da = Date, _er = Error, _ev = Event, _pr = Promise, _nu = Number, _re = RegExp, _st = setTimeout, _un = undefined, _n = null, _nl = NodeList, _el = Element, _si = setInterval, _c = console, _f = fetch, _ct = clearTimeout;
-    var GLOBAL = {};
+    let GLOBAL = {};
     function Q(a, b, c) {
         if (!(this instanceof Q)) {
             return new Q(a, b, c);
@@ -75,14 +75,21 @@ const _ob = Object, _ar = Array, _ma = Math, _ac = AbortController, _as = AbortS
         }
     }
     Q.Ext = (n, o) => (Q.prototype[n] = o, Q);
-    Q.Ext('addClass', function (a) {
-    const b = a.split(' ');
+    Q.getGLOBAL = function (i)
+    {
+        return GLOBAL[i];
+    };
+    Q.setGLOBAL = function (h) {
+        GLOBAL = { ...GLOBAL, ...h };
+    };
+    Q.Ext('addClass', function (classes) {
+    const b = classes.split(' ');
     return this.each(c => this.nodes[c].classList.add(...b));
 });
-Q.Ext('animate', function (a, b, e) {
+Q.Ext('animate', function (duration, b, e) {
     return this.each(g => {
         const f = this.nodes[g];
-        const c = _ob.keys(b).map(d => `${d} ${a}ms`).join(', ');
+        const c = _ob.keys(b).map(d => `${d} ${duration}ms`).join(', ');
         f.style.transition = c;
         for (const d in b) {
             f.style[d] = b[d];
@@ -90,14 +97,14 @@ Q.Ext('animate', function (a, b, e) {
         if (typeof e === 'function') {
             _st(() => {
                 if (e) e.call(f);
-            }, a);
+            }, duration);
         }
     }), this;
 });
-Q.Ext('append', function (...a) {
+Q.Ext('append', function (...allNodes) {
     return this.each(el => {
         const b = this.nodes[el];
-        a.forEach(c => {
+        allNodes.forEach(c => {
             if (typeof c === 'string') {
                 b.insertAdjacentHTML('beforeend', c);
             } else if (c?.nodeType === 1 || c instanceof Q) {
@@ -108,20 +115,20 @@ Q.Ext('append', function (...a) {
         });
     });
 });
-Q.Ext('attr', function (a, b) {
-    if (typeof a === 'object') {
+Q.Ext('attr', function (attribute, b) {
+    if (typeof attribute === 'object') {
         return this.each(d => {
-            for (let c in a) {
-                if (a.hasOwnProperty(c)) {
-                    this.nodes[d].setAttribute(c, a[c]);
+            for (let c in attribute) {
+                if (attribute.hasOwnProperty(c)) {
+                    this.nodes[d].setAttribute(c, attribute[c]);
                 }
             }
         });
     } else {
         if (b === _un) {
-            return this.nodes[0]?.getAttribute(a) || _n;
+            return this.nodes[0]?.getAttribute(attribute) || _n;
         }
-        return this.each(d => this.nodes[d].setAttribute(a, b));
+        return this.each(d => this.nodes[d].setAttribute(attribute, b));
     }
 });
 Q.Ext('bind', function (a, b) {
@@ -153,36 +160,36 @@ Q.Ext('clone', function () {
     return new Q(this.nodes[0].cloneNode(true));
 });
 Q.Ext('closest', function (selector) {
-    let b = this.nodes[0];
-    while (b) {
-        if (b.matches && b.matches(selector)) {
-            return new Q(b);
+    let el = this.nodes[0];
+    while (el) {
+        if (el.matches && el.matches(selector)) {
+            return new Q(el);
         }
-        b = b.parentElement;
+        el = el.parentElement;
     }
     return _n;
 });
-Q.Ext('css', function(a, b){
-    if (typeof a === 'object') {
+Q.Ext('css', function(property, b) {
+    if (typeof property === 'object') {
         return this.each(d => {
-            for (let c in a) {
-                if (a.hasOwnProperty(c)) {
-                    this.nodes[d].style[c] = a[c];
+            for (let c in property) {
+                if (property.hasOwnProperty(c)) {
+                    this.nodes[d].style[c] = property[c];
                 }
             }
         });
     } else {
         if (b === _un) {
-            return getComputedStyle(this.nodes[0])[a];
+            return getComputedStyle(this.nodes[0])[property];
         }
-        return this.each(d => this.nodes[d].style[a] = b);
+        return this.each(d => this.nodes[d].style[property] = b);
     }
 });
-Q.Ext('data', function (a, b) {
+Q.Ext('data', function (key, b) {
     if (b === _un) {
-        return this.nodes[0]?.dataset[a] || _n;
+        return this.nodes[0]?.dataset[key] || _n;
     }
-    return this.each(c => this.nodes[c].dataset[a] = b);
+    return this.each(c => this.nodes[c].dataset[key] = b);
 });
 Q.Ext('each', function (callback) {
     this.nodes.forEach((b, c) => callback.call(b, c, b));
@@ -277,14 +284,14 @@ Q.Ext('hide', function (duration = 0, b) {
         }
     });
 });
-Q.Ext('html', function (a) {
-    if (a === _un) {
+Q.Ext('html', function (content) {
+    if (content === _un) {
         return this.nodes[0]?.innerHTML || _n;
     }
     return this.each(c => {
         c = this.nodes[c];
         c.innerHTML = '';
-        a.forEach(b => {
+        content.forEach(b => {
             if (typeof b === 'string') {
                 c.insertAdjacentHTML('beforeend', b);
             } else if (b instanceof Q) {
@@ -297,11 +304,11 @@ Q.Ext('html', function (a) {
         });
     });
 });
-Q.Ext('id', function (a) {
-    if (a === _un) {
+Q.Ext('id', function (ident) {
+    if (ident === _un) {
         return this.nodes[0].id;
     }
-    return this.nodes[0].id = a;
+    return this.nodes[0].id = ident;
 });
 Q.Ext('index', function (index) {
     if (index === _un) {
@@ -319,8 +326,8 @@ Q.Ext('index', function (index) {
         }
     });
 });
-Q.Ext('inside', function (a) {
-    return this.nodes[0]?.closest(a) !== _n;
+Q.Ext('inside', function (selector) {
+    return this.nodes[0]?.closest(selector) !== _n;
 });
 Q.Ext('is', function (selector) {
     const b = this.nodes[0];
@@ -368,6 +375,11 @@ Q.isExists = function (a) {
 };
 Q.Ext('last', function () {
     return new Q(this.nodes[this.nodes.length - 1]);
+});
+Q.Ext('map', function (callback) {
+    let b = [];
+    this.each(c => b.push(callback(Q(c))));
+    return b;
 });
 Q.Ext('off', function (a, b, c) {
     const d = {
@@ -532,7 +544,7 @@ Q.Ext('unwrap', function () {
         }
     });
 });
-Q.Ext('a', function (a) {
+Q.Ext('val', function (a) {
     if (a === _un) {
         return this.nodes[0]?.value || _n;
     }
@@ -553,11 +565,11 @@ Q.Ext('walk', function (callback, b = false) {
     });
     return this;
 });
-Q.Ext('width', function (a) {
-    if (a === _un) {
+Q.Ext('width', function (value) {
+    if (value === _un) {
         return this.nodes[0].offsetWidth;
     }
-    return this.each(b => this.nodes[b].style.width = a);
+    return this.each(b => this.nodes[b].style.width = value);
 });
 Q.Ext('wrap', function (c) {
     return this.each(d => {
@@ -575,42 +587,42 @@ Q.Ext('wrapAll', function (wrapper) {
         this.nodes.forEach(d => c.appendChild(d));
     });
 });
-Q.Ext('zIndex', function (a) {
-    if (a === _un) {
+Q.Ext('zIndex', function (value) {
+    if (value === _un) {
         let b = this.nodes[0].style.zIndex;
         if (!b) {
             b = window.getComputedStyle(this.nodes[0]).zIndex;
         }
         return b;
     }
-    return this.each(c => this.nodes[c].style.zIndex = a);
+    return this.each(c => this.nodes[c].style.zIndex = value);
 });
 Q.Done = (function () {
-    const a = [];
+    const callbacks = [];
     window.addEventListener('load', () => {
-        a.forEach(b => b());
+        callbacks.forEach(b => b());
     });
     return function (b) {
-        a.push(b);
+        callbacks.push(b);
     };
 })();
 Q.Leaving = (function () {
-    const a = [];
+    const callbacks = [];
     window.addEventListener('beforeunload', (b) => {
-        a.forEach(c => c(b));
+        callbacks.forEach(c => c(b));
     });
     return function (c) {
-        a.push(c);
+        callbacks.push(c);
     };
 })();
 Q.Ready = (function () {
-    const a = [];
+    const callbacks = [];
     document.addEventListener('DOMContentLoaded', () => {
-        a.forEach(b => b());
+        callbacks.forEach(b => b());
     }, { once: true });
     return function (b) {
         if (document.readyState === 'loading') {
-            a.push(b);
+            callbacks.push(b);
         } else {
             b();
         }
@@ -675,12 +687,11 @@ Q.ColorBrightness = function (c, percent) {
     }
 }
 Q.Debounce = function (id, b, c) {
-    GLOBAL = GLOBAL || {};
-    GLOBAL.Flood = GLOBAL.Flood || {};
-    if (GLOBAL.Flood[id]) {
-        _ct(GLOBAL.Flood[id]);
+    let glob = Q.getGLOBAL('Debounce');
+    if (glob && glob[id]) {
+        _ct(glob[id]);
     }
-    GLOBAL.Flood[id] = b ? _st(c, b) : c();
+    Q.setGLOBAL({ Debounce: { ...glob, [id]: _st(c, b) } });
 };
 Q.HSL2RGB = function (h, s, l) {
     let r, g, b;
@@ -710,7 +721,7 @@ Q.ID = function (length = 8, b = '') {
 };
 Q.RGB2HSL = function (r, g, b) {
     r /= 255, g /= 255, b /= 255;
-    let maximum = _ma.max(r, g, b), minimum = _ma.a(r, g, b);
+    let maximum = _ma.max(r, g, b), minimum = _ma.min(r, g, b);
     let h, s, l = (maximum + minimum) / 2;
     if (maximum === minimum) {
         h = s = 0;

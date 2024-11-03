@@ -1,8 +1,9 @@
 // Name: is
 // Method: Prototype
-// Desc: Checks if the first node matches a specific selector.
+// Desc: Checks if the first node matches a specific selector or condition, allowing for dynamic queries and element comparisons.
+// Long Desc: This method verifies if the first selected node corresponds to the specified selector or condition. It supports various selectors such as ":visible", ":hidden", ":hover", and allows function-based conditions. The method returns a boolean indicating whether the condition holds true for the selected node, enabling flexible checks against DOM elements.
 // Type: Utilities
-// Example: Q(selector).is(":visible");
+// Example: Q(selector).is(":visible"); // Checks if the element is currently visible <br> Q(selector).is(":checked"); // Checks if a checkbox or radio button is checked <br> Q(selector).is(anotherElement); // Compares the first node with another DOM element <br> Q(selector).is(":hover"); // Checks if the element is currently being hovered over
 // Variables: selector, node
 Q.Ext('is', function (selector) {
     const node = this.nodes[0];

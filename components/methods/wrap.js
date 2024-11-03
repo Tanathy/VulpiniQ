@@ -1,6 +1,7 @@
 // Name: wrap
 // Method: Prototype
 // Desc: Wraps each node with the specified wrapper element.
+// Long Desc: The wrap() method wraps each element in the set of matched elements with the specified wrapper element.
 // Type: DOM Manipulation
 // Example: Q(selector).wrap("<div class='wrapper'></div>");
 // Variables: parent, newParent, wrapper, el
