@@ -2257,40 +2257,54 @@ Q.Icons = function () {
   }
   else {
     classes = Q.style(`:root {
-	--svg_arrow-down: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 134.49459 62.707709"><path d="M 100.93685,31.353867 C 82.480099,48.598492 67.319803,62.707709 67.247301,62.707709 c -0.0725,0 -15.232809,-14.109215 -33.689561,-31.353842 L 3.5365448e-8,6.6845858e-7 H 67.247301 134.4946 Z"/></svg>');
-	--svg_arrow-left: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62.707704 134.4946"><path d="M 31.353844,100.93685 C 14.109219,82.480099 1.6018623e-6,67.319803 1.6018623e-6,67.247301 1.6018623e-6,67.174801 14.109217,52.014492 31.353844,33.55774 L 62.70771,0 V 67.247301 134.4946 Z"/></svg>');
-	--svg_arrow-right: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62.707704 134.4946"><path d="m 31.353868,33.55775 c 17.244625,18.456749 31.353842,33.617045 31.353842,33.689547 0,0.0725 -14.109215,15.232809 -31.353842,33.689563 L 1.6018623e-6,134.4946 V 67.247297 0 Z"/></svg>');
-	--svg_arrow-up: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 134.49459 62.707709"><path d="M 33.55775,31.353843 C 52.014499,14.109218 67.174795,6.6845858e-7 67.247297,6.6845858e-7 67.319797,6.6845858e-7 82.480106,14.109216 100.93686,31.353843 L 134.4946,62.707709 H 67.247297 3.5365448e-8 Z"/></svg>');
-	--svg_navigation-close: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2666.6667 2666.6667"><path d="M 1276.6667,2434.5485 C 950.24325,2418.4963 647.60291,2257.2797 449.65648,1994.0001 360.09366,1874.8766 294.54616,1735.7649 260.06678,1591.6333 c -40.82486,-170.6571 -40.82486,-347.2761 0,-517.9332 71.52438,-298.98806 268.8554,-557.46223 540.12266,-707.48002 258.68606,-143.06006 568.06486,-175.54075 852.57376,-89.50899 276.927,83.73908 511.1437,274.85672 650.2832,530.62227 168.8614,310.40014 177.2264,688.09064 22.2995,1006.84964 -77.0037,158.4335 -189.7203,295.013 -331.3458,401.4939 -205.303,154.3568 -458.4668,231.6017 -717.3334,218.8716 z m 130.2294,-151.2014 c 229.6976,-18.6692 437.2639,-114.273 599.1754,-275.9766 47.6541,-47.593 83.7471,-91.4686 120.133,-146.0371 91.2885,-136.9067 142.8941,-286.0616 157.3086,-454.6667 3.0513,-35.6912 3.0513,-112.3088 0,-148 -9.7543,-114.0948 -35.6813,-216.2096 -79.956,-314.91095 C 2140.8657,803.99837 2044.7703,680.42081 1924.6667,585.10582 1705.8186,411.42656 1421.4281,342.88551 1146,397.43913 961.28159,434.02604 793.07082,524.16769 658.61926,658.61926 508.15954,809.07897 413.50356,1001.5246 386.76219,1211.3334 c -5.50464,43.1886 -7.16468,71.3013 -7.16468,121.3333 0,50.0321 1.66004,78.1448 7.16468,121.3333 31.40785,246.4213 158.34097,471.0271 353.9045,626.2276 118.14734,93.7625 258.15376,158.5796 405.33331,187.6524 50.7995,10.0346 91.5353,14.8142 153.3334,17.9909 18.4799,0.95 83.6306,-0.5787 107.5627,-2.5238 z m 134.7679,-630.3487 -208.3296,-208.3296 -207.9982,207.9951 -207.99834,207.9951 -54.66892,-54.6567 c -30.0679,-30.0612 -54.66892,-55.2602 -54.66892,-55.9978 0,-0.7375 93.30001,-94.6396 207.33338,-208.6711 l 207.3333,-207.3301 -206.6689,-206.6721 -206.66886,-206.67213 55.00599,-54.99402 55.006,-54.99402 206.66127,206.66447 206.6613,206.6646 207.6661,-207.6629 207.666,-207.66288 55.3378,55.32571 55.3378,55.32571 -207.6673,207.67046 -207.6673,207.6705 208.3339,208.3372 208.334,208.3371 -55.0055,54.9935 -55.0054,54.9935 z"/></svg>');
-	--svg_navigation-left: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 682.66669 682.66669"><path d="M 312.95615,622.51118 C 282.12556,619.5403 247.03663,609.52248 218.00001,595.4014 129.37889,552.30321 70.013661,466.90205 60.059145,368.19207 51.577814,284.09034 83.346262,198.0417 144.85111,138.52292 212.10881,73.437059 306.81846,45.865772 398.4674,64.691724 519.45153,89.543525 610.11296,190.57708 622.60754,314.47462 c 8.48133,84.10173 -23.28712,170.15036 -84.79196,229.66914 -59.89864,57.96444 -141.4913,86.4009 -224.85943,78.36742 z m 71.04386,-40.49085 c 101.01231,-18.37977 179.6848,-97.26565 198.14953,-198.68699 3.46591,-19.0372 3.48193,-65.25956 0.0291,-84 -18.78642,-101.96514 -96.94357,-180.11939 -198.8453,-198.83796 -18.89894,-3.471598 -65.10105,-3.471598 -84,0 C 197.45585,119.2095 119.27,197.39245 100.48802,299.33334 c -3.452807,18.74044 -3.436783,64.9628 0.0291,84 16.64224,91.4109 82.13775,165.12641 170.46427,191.85833 8.26023,2.49995 21.0186,5.49414 28.35193,6.65376 7.33334,1.15962 14.83334,2.3709 16.66667,2.69173 8.26494,1.44635 55.91079,-0.31712 68,-2.51683 z M 320.66668,412.53122 c -36.66667,-38.4534 -66.66667,-70.49248 -66.66667,-71.19795 0,-0.70547 30.15,-32.79758 67,-71.31579 l 67,-70.03311 v 141.34115 c 0,77.73764 -0.15,141.29162 -0.33333,141.23108 -0.18334,-0.0605 -30.33334,-31.57197 -67,-70.02538 z"/></svg>');
-	--svg_navigation-right: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 682.66669 682.66669"><path d="M 312.95615,622.51118 C 103.83077,602.35954 -10.876679,362.01744 104.94177,186.66667 225.81958,3.6559506 499.6699,21.151057 595.4014,218.00001 691.73222,416.0813 532.80292,643.69595 312.95615,622.51118 Z m 71.04386,-40.49085 C 527.6749,555.87785 617.23885,410.16562 575.1842,270.98141 536.24285,142.10102 399.55264,68.634561 270.98141,107.48249 119.67709,153.19925 50.784795,329.22352 130.9177,465.35432 c 35.94209,61.05887 100.57273,105.76313 168.41564,116.49111 7.33334,1.15962 14.83334,2.3709 16.66667,2.69173 8.26494,1.44635 55.91079,-0.31712 68,-2.51683 z M 294.66668,341.34179 V 199.98437 l 67,70.03311 c 36.85,38.51821 67,70.60056 67,71.2941 0,0.69354 -30.15,32.78948 -67,71.32431 l -67,70.06332 z"/></svg>');
-	--svg_window-close: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 2.8176856,98.903421 -4.0360052e-7,96.085741 22.611458,73.473146 45.222917,50.860554 22.611458,28.247962 -4.0360052e-7,5.6353711 2.8176856,2.8176851 5.6353716,-9.1835591e-7 28.247963,22.611458 50.860555,45.222916 73.473147,22.611458 96.085743,-9.1835591e-7 98.903423,2.8176851 101.72111,5.6353711 79.109651,28.247962 56.498193,50.860554 79.109651,73.473146 101.72111,96.085741 98.903423,98.903421 96.085743,101.72111 73.473147,79.109651 50.860555,56.498192 28.247963,79.109651 5.6353716,101.72111 Z"/></svg>');
-	--svg_window-full: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 H 50.860555 84.417403 V 50.860554 84.417401 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z"/></svg>');
-	--svg_window-minimize: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 0.5252846,83.893071 V 79.698469 H 50.860555 101.19582 v 4.194602 4.19461 H 50.860555 0.5252846 Z"/></svg>');
-	--svg_window-windowed: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 h 8.389212 8.389212 V 8.9144961 0.52528408 H 67.638978 101.19582 V 34.082131 67.638977 h -8.389207 -8.38921 v 8.389212 8.389212 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z M 92.806613,34.082131 V 8.9144961 H 67.638978 42.471343 v 4.1946059 4.194606 h 20.973029 20.973031 v 20.973029 20.973029 h 4.1946 4.19461 z"/></svg>');
+	--icon_arrow-down: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 134.49459 62.707709"><path d="M 100.93685,31.353867 C 82.480099,48.598492 67.319803,62.707709 67.247301,62.707709 c -0.0725,0 -15.232809,-14.109215 -33.689561,-31.353842 L 3.5365448e-8,6.6845858e-7 H 67.247301 134.4946 Z"/></svg>');
+	--icon_arrow-left: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62.707704 134.4946"><path d="M 31.353844,100.93685 C 14.109219,82.480099 1.6018623e-6,67.319803 1.6018623e-6,67.247301 1.6018623e-6,67.174801 14.109217,52.014492 31.353844,33.55774 L 62.70771,0 V 67.247301 134.4946 Z"/></svg>');
+	--icon_arrow-right: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62.707704 134.4946"><path d="m 31.353868,33.55775 c 17.244625,18.456749 31.353842,33.617045 31.353842,33.689547 0,0.0725 -14.109215,15.232809 -31.353842,33.689563 L 1.6018623e-6,134.4946 V 67.247297 0 Z"/></svg>');
+	--icon_arrow-up: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 134.49459 62.707709"><path d="M 33.55775,31.353843 C 52.014499,14.109218 67.174795,6.6845858e-7 67.247297,6.6845858e-7 67.319797,6.6845858e-7 82.480106,14.109216 100.93686,31.353843 L 134.4946,62.707709 H 67.247297 3.5365448e-8 Z"/></svg>');
+	--icon_navigation-close: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2666.6667 2666.6667"><path d="M 1276.6667,2434.5485 C 950.24325,2418.4963 647.60291,2257.2797 449.65648,1994.0001 360.09366,1874.8766 294.54616,1735.7649 260.06678,1591.6333 c -40.82486,-170.6571 -40.82486,-347.2761 0,-517.9332 71.52438,-298.98806 268.8554,-557.46223 540.12266,-707.48002 258.68606,-143.06006 568.06486,-175.54075 852.57376,-89.50899 276.927,83.73908 511.1437,274.85672 650.2832,530.62227 168.8614,310.40014 177.2264,688.09064 22.2995,1006.84964 -77.0037,158.4335 -189.7203,295.013 -331.3458,401.4939 -205.303,154.3568 -458.4668,231.6017 -717.3334,218.8716 z m 130.2294,-151.2014 c 229.6976,-18.6692 437.2639,-114.273 599.1754,-275.9766 47.6541,-47.593 83.7471,-91.4686 120.133,-146.0371 91.2885,-136.9067 142.8941,-286.0616 157.3086,-454.6667 3.0513,-35.6912 3.0513,-112.3088 0,-148 -9.7543,-114.0948 -35.6813,-216.2096 -79.956,-314.91095 C 2140.8657,803.99837 2044.7703,680.42081 1924.6667,585.10582 1705.8186,411.42656 1421.4281,342.88551 1146,397.43913 961.28159,434.02604 793.07082,524.16769 658.61926,658.61926 508.15954,809.07897 413.50356,1001.5246 386.76219,1211.3334 c -5.50464,43.1886 -7.16468,71.3013 -7.16468,121.3333 0,50.0321 1.66004,78.1448 7.16468,121.3333 31.40785,246.4213 158.34097,471.0271 353.9045,626.2276 118.14734,93.7625 258.15376,158.5796 405.33331,187.6524 50.7995,10.0346 91.5353,14.8142 153.3334,17.9909 18.4799,0.95 83.6306,-0.5787 107.5627,-2.5238 z m 134.7679,-630.3487 -208.3296,-208.3296 -207.9982,207.9951 -207.99834,207.9951 -54.66892,-54.6567 c -30.0679,-30.0612 -54.66892,-55.2602 -54.66892,-55.9978 0,-0.7375 93.30001,-94.6396 207.33338,-208.6711 l 207.3333,-207.3301 -206.6689,-206.6721 -206.66886,-206.67213 55.00599,-54.99402 55.006,-54.99402 206.66127,206.66447 206.6613,206.6646 207.6661,-207.6629 207.666,-207.66288 55.3378,55.32571 55.3378,55.32571 -207.6673,207.67046 -207.6673,207.6705 208.3339,208.3372 208.334,208.3371 -55.0055,54.9935 -55.0054,54.9935 z"/></svg>');
+	--icon_navigation-left: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 682.66669 682.66669"><path d="M 312.95615,622.51118 C 282.12556,619.5403 247.03663,609.52248 218.00001,595.4014 129.37889,552.30321 70.013661,466.90205 60.059145,368.19207 51.577814,284.09034 83.346262,198.0417 144.85111,138.52292 212.10881,73.437059 306.81846,45.865772 398.4674,64.691724 519.45153,89.543525 610.11296,190.57708 622.60754,314.47462 c 8.48133,84.10173 -23.28712,170.15036 -84.79196,229.66914 -59.89864,57.96444 -141.4913,86.4009 -224.85943,78.36742 z m 71.04386,-40.49085 c 101.01231,-18.37977 179.6848,-97.26565 198.14953,-198.68699 3.46591,-19.0372 3.48193,-65.25956 0.0291,-84 -18.78642,-101.96514 -96.94357,-180.11939 -198.8453,-198.83796 -18.89894,-3.471598 -65.10105,-3.471598 -84,0 C 197.45585,119.2095 119.27,197.39245 100.48802,299.33334 c -3.452807,18.74044 -3.436783,64.9628 0.0291,84 16.64224,91.4109 82.13775,165.12641 170.46427,191.85833 8.26023,2.49995 21.0186,5.49414 28.35193,6.65376 7.33334,1.15962 14.83334,2.3709 16.66667,2.69173 8.26494,1.44635 55.91079,-0.31712 68,-2.51683 z M 320.66668,412.53122 c -36.66667,-38.4534 -66.66667,-70.49248 -66.66667,-71.19795 0,-0.70547 30.15,-32.79758 67,-71.31579 l 67,-70.03311 v 141.34115 c 0,77.73764 -0.15,141.29162 -0.33333,141.23108 -0.18334,-0.0605 -30.33334,-31.57197 -67,-70.02538 z"/></svg>');
+	--icon_navigation-right: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 682.66669 682.66669"><path d="M 312.95615,622.51118 C 103.83077,602.35954 -10.876679,362.01744 104.94177,186.66667 225.81958,3.6559506 499.6699,21.151057 595.4014,218.00001 691.73222,416.0813 532.80292,643.69595 312.95615,622.51118 Z m 71.04386,-40.49085 C 527.6749,555.87785 617.23885,410.16562 575.1842,270.98141 536.24285,142.10102 399.55264,68.634561 270.98141,107.48249 119.67709,153.19925 50.784795,329.22352 130.9177,465.35432 c 35.94209,61.05887 100.57273,105.76313 168.41564,116.49111 7.33334,1.15962 14.83334,2.3709 16.66667,2.69173 8.26494,1.44635 55.91079,-0.31712 68,-2.51683 z M 294.66668,341.34179 V 199.98437 l 67,70.03311 c 36.85,38.51821 67,70.60056 67,71.2941 0,0.69354 -30.15,32.78948 -67,71.32431 l -67,70.06332 z"/></svg>');
+	--icon_window-close: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 2.8176856,98.903421 -4.0360052e-7,96.085741 22.611458,73.473146 45.222917,50.860554 22.611458,28.247962 -4.0360052e-7,5.6353711 2.8176856,2.8176851 5.6353716,-9.1835591e-7 28.247963,22.611458 50.860555,45.222916 73.473147,22.611458 96.085743,-9.1835591e-7 98.903423,2.8176851 101.72111,5.6353711 79.109651,28.247962 56.498193,50.860554 79.109651,73.473146 101.72111,96.085741 98.903423,98.903421 96.085743,101.72111 73.473147,79.109651 50.860555,56.498192 28.247963,79.109651 5.6353716,101.72111 Z"/></svg>');
+	--icon_window-full: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 H 50.860555 84.417403 V 50.860554 84.417401 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z"/></svg>');
+	--icon_window-minimize: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 0.5252846,83.893071 V 79.698469 H 50.860555 101.19582 v 4.194602 4.19461 H 50.860555 0.5252846 Z"/></svg>');
+	--icon_window-windowed: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 h 8.389212 8.389212 V 8.9144961 0.52528408 H 67.638978 101.19582 V 34.082131 67.638977 h -8.389207 -8.38921 v 8.389212 8.389212 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z M 92.806613,34.082131 V 8.9144961 H 67.638978 42.471343 v 4.1946059 4.194606 h 20.973029 20.973031 v 20.973029 20.973029 h 4.1946 4.19461 z"/></svg>');
 }
-.svg-icon {-webkit-mask-size: cover;mask-size: cover;-webkit-mask-repeat: no-repeat;mask-repeat: no-repeat;-webkit-mask-position: center;mask-position: center;background-color: currentColor; width:100%; height:100%;}
-.svg_arrow-down { mask-image: var(--svg_arrow-down);}.svg_arrow-left { mask-image: var(--svg_arrow-left);}.svg_arrow-right { mask-image: var(--svg_arrow-right);}.svg_arrow-up { mask-image: var(--svg_arrow-up);}.svg_navigation-close { mask-image: var(--svg_navigation-close);}.svg_navigation-left { mask-image: var(--svg_navigation-left);}.svg_navigation-right { mask-image: var(--svg_navigation-right);}.svg_window-close { mask-image: var(--svg_window-close);}.svg_window-full { mask-image: var(--svg_window-full);}.svg_window-minimize { mask-image: var(--svg_window-minimize);}.svg_window-windowed { mask-image: var(--svg_window-windowed);}`
+.svg_icon {-webkit-mask-size: cover;mask-size: cover;-webkit-mask-repeat: no-repeat;mask-repeat: no-repeat;-webkit-mask-position: center;mask-position: center;background-color: currentColor;}
+.svg_iconsize { width:100%;height:100%; }
+.arrow-down { mask-image: var(--icon_arrow-down);}
+.arrow-left { mask-image: var(--icon_arrow-left);}
+.arrow-right { mask-image: var(--icon_arrow-right);}
+.arrow-up { mask-image: var(--icon_arrow-up);}
+.navigation-close { mask-image: var(--icon_navigation-close);}
+.navigation-left { mask-image: var(--icon_navigation-left);}
+.navigation-right { mask-image: var(--icon_navigation-right);}
+.window-close { mask-image: var(--icon_window-close);}
+.window-full { mask-image: var(--icon_window-full);}
+.window-minimize { mask-image: var(--icon_window-minimize);}
+.window-windowed { mask-image: var(--icon_window-windowed);}
+`
 ,{
-  "svg_arrow-down": "svg_arrow-down",
-  "svg_arrow-left": "svg_arrow-left",
-  "svg_arrow-right": "svg_arrow-right",
-  "svg_arrow-up": "svg_arrow-up",
-  "svg_navigation-close": "svg_navigation-close",
-  "svg_navigation-left": "svg_navigation-left",
-  "svg_navigation-right": "svg_navigation-right",
-  "svg_window-close": "svg_window-close",
-  "svg_window-full": "svg_window-full",
-  "svg_window-minimize": "svg_window-minimize",
-  "svg_window-windowed": "svg_window-windowed"
-});
-    Q.setGLOBAL({
-      icons: classes
-    });
+  "arrow-down": "arrow-down",
+  "arrow-left": "arrow-left",
+  "arrow-right": "arrow-right",
+  "arrow-up": "arrow-up",
+  "navigation-close": "navigation-close",
+  "navigation-left": "navigation-left",
+  "navigation-right": "navigation-right",
+  "window-close": "window-close",
+  "window-full": "window-full",
+  "window-minimize": "window-minimize",
+  "window-windowed": "window-windowed",
+  "svg_icon": "svg_icon",
+  "svg_iconsize": "svg_iconsize"
+}, true);
   }
   return {
-    get: function (name) {
-      return Q('<div class="svg-icon svg_' + name + '"></div>');
+    get: function (name, additional = '') {
+      if (additional === '') {
+        additional = classes['svg_iconsize'];
+      }
+      return Q('<div>', {class: classes['svg_icon'] + ' ' + classes[name] + ' ' + additional});
     }
   }
 };
@@ -2671,10 +2685,11 @@ Q.ImageViewer = function () {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0,0,0,0.5);
     justify-content: center;
     align-items: center;
     z-index: 9999;
+    color: #fff;
 }
 .image_panel {
     width: 100%;
@@ -2690,14 +2705,17 @@ Q.ImageViewer = function () {
     background-position: center;
     background-repeat: no-repeat;
     opacity: 0;
-    transform: scale(0.9);
     transition: all 0.15s;
     animation: fadeInScale 0.3s forwards;
+    margin: 0 1px;
+    display: flex;
+        flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
 }
 @keyframes fadeInScale {
     to {
         opacity: 1;
-        transform: scale(1);
     }
 }
 image_viewer_wrapper .image_panel {
@@ -2706,30 +2724,82 @@ image_viewer_wrapper .image_panel {
     justify-content: center;
     align-items: center;
 }
+.image_top, .image_bottom {
+width: 100%;
+    }
+.image_top {
+text-align: left;
+background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
+    }
 .side_left, .side_right {
+    height: 100%;
+        width: 80px;
+    }
+.image_info {
+    max-width: 500px;
+    padding: 10px;
+    text-shadow: 0 1px 3px #000;
+    }
+.image_title {
+font-size: 18px;
+    font-weight: bold;
+    padding-bottom: 5px;
+    }
+.image_desc {
+font-size: 14px;
+}
+.side_left:hover, .side_right:hover {
+    background: rgba(255,255,255,0.05);
+}
+.viewer_left_button, .viewer_right_button {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 50px;
-    width: 80px;
-    }
-.viewer_left_button, .viewer_right_button, .viewer_close_button {
-    width: 40px;
-    height: 40px;
+    width: 100%;
+    height: 100%;
     z-index: 10000;
     cursor: pointer;
     color: white;
     opacity: 0.5;
 }
+.viewer_navicon {
+    width: 40px;
+    height: 40px;
+    }
 .viewer_left_button:hover, .viewer_right_button:hover, .viewer_close_button:hover {
     opacity: 1;
 }
+.image_thumbs {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+        padding: 1px;
+        width:300px;
+        overflow: hidden;
+    }
+.image_thumb {
+width: 50px;
+    height: 50px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin: 0 5px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.8);
+    transition: all 0.3s;
+    }
+.img_hidden {
+transform: scale(0.5);
+    }
 .viewer_close_button {
     width: 30px;
     height: 30px;
     position: absolute;
     top: 10px;
     right: 10px;
+        z-index: 10000;
+    cursor: pointer;
+    color: white;
+    opacity: 0.5;
 }
     `, {
         'image_viewer_wrapper': 'image_viewer_wrapper',
@@ -2746,26 +2816,38 @@ image_viewer_wrapper .image_panel {
             this.loaded = false;
             this.icons = Q.Icons();
             this.resizing = false;
+            this.thumbs = false;
         }
         construct() {
             this.image_viewer = Q('<div>', { class: classes.image_viewer_wrapper });
             this.image_panel = Q('<div>', { class: 'image_panel' });
             this.image_wrapper = Q('<div>', { class: 'image_wrapper' });
+            this.image_top = Q('<div>', { class: 'image_top' });
+            this.image_bottom = Q('<div>', { class: 'image_bottom' });
+            this.image_info = Q('<div>', { class: 'image_info' });
             this.side_left = Q('<div>', { class: 'side_left' });
             this.side_right = Q('<div>', { class: 'side_right' });
-            this.left_button = Q('<div>', { class: 'viewer_left_button'});
-            this.right_button = Q('<div>', { class: 'viewer_right_button'}); 
-            this.close_button = Q('<div>', { class: 'viewer_close_button'});
-            this.left_button.append(this.icons.get('navigation-left'));
-            this.right_button.append(this.icons.get('navigation-right'));
+            this.left_button = Q('<div>', { class: 'viewer_left_button' });
+            this.right_button = Q('<div>', { class: 'viewer_right_button' });
+            this.close_button = Q('<div>', { class: 'viewer_close_button' });
+            this.left_button.append(this.icons.get('navigation-left', 'viewer_navicon'));
+            this.right_button.append(this.icons.get('navigation-right', 'viewer_navicon'));
             this.close_button.append(this.icons.get('navigation-close'));
             this.side_left.append(this.left_button);
             this.side_right.append(this.right_button);
+            this.image_top.append(this.image_info);
+            this.image_wrapper.append(this.image_top, this.image_bottom);
             this.image_panel.append(this.side_left, this.image_wrapper, this.side_right);
-            this.image_viewer.append( this.image_panel, this.close_button);
+            this.image_viewer.append(this.image_panel, this.close_button);
             this.left_button.on('click', () => this.prev());
             this.right_button.on('click', () => this.next());
             this.close_button.on('click', () => this.close());
+            this.image_top.on('mouseenter', () => {
+                this.image_top.css({ opacity: 1, transition: 'all 0.3s' });
+            });
+            this.image_top.on('mouseleave', () => {
+                this.image_top.css({ opacity: 0, transition: 'all 0.3s', 'transition-delay': '3s' });
+            });
         }
         handleClick(e) {
             if (e.target.closest(this.selector)) {
@@ -2773,22 +2855,33 @@ image_viewer_wrapper .image_panel {
                 if (!images.nodes.length) {
                     return;
                 }
-                images.each((index,el) => {
-                    this.images[index] = el.src;
+                images.each((index, el) => {
+                    let title, desc;
+                    if (el.hasAttribute('data-title')) {
+                        title = el.getAttribute('data-title');
+                    }
+                    if (el.hasAttribute('data-desc')) {
+                        desc = el.getAttribute('data-desc');
+                    }
+                    this.images[index] = {
+                        src: el.src,
+                        title: title,
+                        desc: desc
+                    }
                 });
                 this.currentIndex = images.nodes.indexOf(e.target);
-                    this.open();
+                this.open();
             }
         }
         handleResize() {
             if (!this.resizing) {
                 this.resizing = true;
-                this.image_wrapper.css({ filter: 'blur(5px)', transition: 'all 0.5s ease-in-out' });
+                this.image_wrapper.css({ filter: 'blur(10px)', transition: 'all 0.1s ease-in-out' });
             }
             Q.Debounce('img_viewer', 500, () => {
-            this.updateImage();
-            this.resizing = false;
-            this.image_wrapper.css({ filter: 'none', transition: '' });
+                this.updateImage();
+                this.resizing = false;
+                this.image_wrapper.css({ filter: 'none', transition: '' });
             });
         }
         addEventListener() {
@@ -2803,6 +2896,12 @@ image_viewer_wrapper .image_panel {
                 this.eventListenerActive = false;
             }
         }
+        fadeTitle() {
+            this.image_top.css({ opacity: 1, transition: 'all 0.3s' });
+            Q.Debounce('fade_title', 2000, () => {
+                this.image_top.css({ opacity: 0, transition: 'all 0.3s' });
+            });
+        }
         open() {
             this.construct();
             this.updateImage();
@@ -2811,12 +2910,14 @@ image_viewer_wrapper .image_panel {
             window.addEventListener('resize', this.handleResize.bind(this));
         }
         close() {
+            this.thumbs = false;
             window.removeEventListener('resize', this.handleResize.bind(this));
             this.image_viewer.remove();
         }
         prev() {
             if (this.currentIndex > 0) {
                 this.currentIndex--;
+                this.fadeTitle();
                 this.updateImage();
                 this.updateNavigation();
             }
@@ -2824,6 +2925,7 @@ image_viewer_wrapper .image_panel {
         next() {
             if (this.currentIndex < this.images.length - 1) {
                 this.currentIndex++;
+                this.fadeTitle();
                 this.updateImage();
                 this.updateNavigation();
             }
@@ -2831,21 +2933,33 @@ image_viewer_wrapper .image_panel {
         updateImage() {
             this.window_width = window.innerWidth;
             this.window_height = window.innerHeight;
+            this.image_info.empty();
+            if (this.images[this.currentIndex].title) {
+                this.image_info.append(Q('<div>', { class: "image_title", text: this.images[this.currentIndex].title }));
+            }
+            if (this.images[this.currentIndex].desc) {
+                this.image_info.append(Q('<div>', { class: "image_desc", text: this.images[this.currentIndex].desc }));
+            }
+            this.window_zoom = window.devicePixelRatio;
             const src = this.images[this.currentIndex];
             const img = new Image();
-            const isAnimated = /\.(webm|apng|gif)$/i.test(src);
+            const isAnimated = /\.(webm|apng|gif)$/i.test(src.src);
             img.onload = () => {
                 if (isAnimated) {
-                    this.image_wrapper.css({'background-image': `url(${src})`});
+                    this.image_wrapper.css({ 'background-image': `url(${src.src})` });
                     return;
                 }
                 const aspectRatio = img.width / img.height;
-                let width = this.window_width;
-                let height = this.window_height;
+                let width = this.window_width * this.window_zoom;
+                let height = this.window_height * this.window_zoom;
                 if (width / height > aspectRatio) {
                     width = height * aspectRatio;
                 } else {
                     height = width / aspectRatio;
+                }
+                if (width > img.width && height > img.height) {
+                    this.image_wrapper.css({ 'background-image': `url(${src.src})` });
+                    return;
                 }
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
@@ -2854,12 +2968,12 @@ image_viewer_wrapper .image_panel {
                 try {
                     ctx.drawImage(img, 0, 0, width, height);
                     const dataURL = canvas.toDataURL();
-                    this.image_wrapper.css({'background-image': `url(${dataURL})`});
+                    this.image_wrapper.css({ 'background-image': `url(${dataURL})` });
                 } catch (error) {
-                    this.image_wrapper.css({'background-image': `url(${src})`});
+                    this.image_wrapper.css({ 'background-image': `url(${src.src})` });
                 }
             };
-            img.src = src;
+            img.src = src.src;
         }
         updateNavigation() {
             if (this.images.length > 1) {
@@ -2990,13 +3104,19 @@ Q.NodeBlock = function (selector, width, height, options) {
     let classes = Q.style(`
 .node_preferences {
     position: absolute;
-    width: 350px;
-    max-height: 300px;
     background: #181818;
     overflow: hidden;
-    overflow-y: scroll;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
 }
+.node_preferences_big {
+    width: 350px;
+    max-height: 350px;
+    overflow-y: scroll;
+}
+.node_preferences_small {
+width: 200px;
+overflow-y: auto;
+    }
 .pref_content h1, .pref_content h2, .pref_content h3, .pref_content h4, .pref_content h5, .pref_content h6 {
 line-break: anywhere;
 margin: 0 0 2px 0;
@@ -3116,6 +3236,8 @@ padding: 0 5px;
 }
         `, {
         "node_preferences": "node_preferences",
+        "node_preferences_small": "node_preferences_small",
+        "node_preferences_big": "node_preferences_big",
         "pref_title": "pref_title",
         "pref_content": "pref_content",
         "connection_content": "connection_content",
@@ -3167,33 +3289,50 @@ padding: 0 5px;
             this.t_text = '';
         }
         _processColors() {
-            this.appearance.titleBackground = Q.ColorBrightness(this.appearance.background, this.appearance.factorTitleBackground);
-            const isDark = Q.isDarkColor(this.appearance.background, this.appearance.factorDarkColorMargin, this.appearance.factorDarkColorThreshold);
-            const textColor = isDark ? this.appearance.darkTextColor : this.appearance.lightTextColor;
-            const borderColor = isDark ? Q.ColorBrightness(this.appearance.background, this.appearance.factorLightColors) : Q.ColorBrightness(this.appearance.background, this.appearance.factorDarkColors);
-            this.appearance.titleColor = textColor;
-            this.appearance.connectionTextColor = textColor;
-            this.appearance.textColor = textColor;
-            this.appearance.node_table_color = borderColor;
+            const {
+                background,
+                factorTitleBackground,
+                factorDarkColorMargin,
+                factorDarkColorThreshold,
+                factorLightColors,
+                factorDarkColors,
+                darkTextColor,
+                lightTextColor
+            } = this.appearance;
+            const titleBg = Q.ColorBrightness(background, factorTitleBackground);
+            const isDark = Q.isDarkColor(background, factorDarkColorMargin, factorDarkColorThreshold);
+            const textColor = isDark ? darkTextColor : lightTextColor;
+            const borderColor = Q.ColorBrightness(background, isDark ? factorLightColors : factorDarkColors);
+            _ob.assign(this.appearance, {
+                titleBackground: titleBg,
+                titleColor: textColor,
+                connectionTextColor: textColor,
+                textColor: textColor,
+                node_table_color: borderColor
+            });
         }
         _drawContainer(ctx, x, y, width, height) {
             const { shadowColor, shadowBlur, shadowOffsetX, shadowOffsetY, background, radius } = this.appearance;
-            ctx.shadowColor = shadowColor;
-            ctx.shadowBlur = shadowBlur;
-            ctx.shadowOffsetX = shadowOffsetX;
-            ctx.shadowOffsetY = shadowOffsetY;
-            ctx.fillStyle = background;
+            ctx.save();
+            _ob.assign(ctx, {
+                fillStyle: background,
+                shadowColor,
+                shadowBlur,
+                shadowOffsetX,
+                shadowOffsetY
+            });
             ctx.beginPath();
             ctx.moveTo(x + radius, y);
-            ctx.arcTo(x + width, y, x + width, y + radius, radius); 
-            ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius);
-            ctx.arcTo(x, y + height, x, y + height - radius, radius);
-            ctx.arcTo(x, y, x + radius, y, radius);                
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
             ctx.fill();
-            ctx.shadowColor = 'rgba(0, 0, 0, 0)';
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
+            ctx.restore();
         }
         _drawTitle(ctx, x, y, width, height, title) {
             ctx.fillStyle = this.appearance.titleBackground;
@@ -3499,7 +3638,6 @@ padding: 0 5px;
             this.addBlock(newBlock);
         }
         render_grid() {
-            _c.log('Rendering grid');
             let ctx = this.canvas_context;
             let w = this.width;
             let h = this.height;
@@ -3507,18 +3645,16 @@ padding: 0 5px;
             let grid_color = this.appearance.gridColor;
             ctx.strokeStyle = grid_color;
             ctx.lineWidth = 1;
-            for (let x = 0; x < w; x += grid_size) {
-                ctx.beginPath();
+            ctx.beginPath();
+            for (let x = 0; x <= w; x += grid_size) {
                 ctx.moveTo(x, 0);
                 ctx.lineTo(x, h);
-                ctx.stroke();
             }
-            for (let y = 0; y < h; y += grid_size) {
-                ctx.beginPath();
+            for (let y = 0; y <= h; y += grid_size) {
                 ctx.moveTo(0, y);
                 ctx.lineTo(w, y);
-                ctx.stroke();
             }
+            ctx.stroke();
         }
         render() {
             this.canvas_context.clearRect(0, 0, this.width, this.height);
@@ -3569,45 +3705,34 @@ padding: 0 5px;
             this.blocks.forEach(block => {
                 block.draw(this.canvas_context);
             });
+            this._connection_update();
         }
         _getConnectionColor(block, pointId) {
-            for (let i = 0; i < block.connLeft.length; i++) {
-                if (block.connLeft[i].id === pointId) {
-                    return block.connLeft[i].color;
-                }
-            }
-            for (let i = 0; i < block.connRight.length; i++) {
-                if (block.connRight[i].id === pointId) {
-                    return block.connRight[i].color;
-                }
-            }
+            const connection = [...block.connLeft, ...block.connRight]
+                .find(conn => conn.id === pointId);
+            return connection ? connection.color : _n;
         }
         updateConnections(block) {
-            let preferences = Q('.' + classes.node_preferences);
-            let left = preferences.find('.' + classes.left);
-            let right = preferences.find('.' + classes.right);
-            let leftConnections = block.connLeft;
-            let rightConnections = block.connRight;
-            let newLeftConnections = [];
-            left.find('.' + classes.connection_wrapper).walk((element) => {
-                let id = element.id();
-                let title = element.find('.' + classes.connection).val();
-                let color = element.find('.' + classes.color).val();
-                newLeftConnections.push({ id: id, title: title, color: color });
-            }, true);
-            let newRightConnections = [];
-            right.find('.' + classes.connection_wrapper).walk((element) => {
-                let id = element.id();
-                let title = element.find('.' + classes.connection).val();
-                let color = element.find('.' + classes.color).val();
-                newRightConnections.push({ id: id, title: title, color: color });
-            }, true);
-            let newConnections = [...newLeftConnections, ...newRightConnections];
-            let existingConnections = [...leftConnections, ...rightConnections];
+            const preferences = Q('.' + classes.node_preferences);
+            const collectConnections = (sideClass) => {
+                const side = preferences.find('.' + sideClass);
+                const connections = [];
+                side.find('.' + classes.connection_wrapper).walk((element) => {
+                    const id = element.id();
+                    const title = element.find('.' + classes.connection).val() || '';
+                    const color = element.find('.' + classes.color).val();
+                    connections.push({ id, title, color });
+                }, true);
+                return connections;
+            };
+            const newLeftConnections = collectConnections(classes.left);
+            const newRightConnections = collectConnections(classes.right);
+            const newConnections = [...newLeftConnections, ...newRightConnections];
+            const existingConnections = [...block.connLeft, ...block.connRight];
             newConnections.forEach(newConn => {
-                let existingConn = existingConnections.find(conn => conn.id === newConn.id);
+                const existingConn = existingConnections.find(conn => conn.id === newConn.id);
                 if (existingConn) {
-                    existingConn.title = (newConn.title && newConn.title !== _n) ? newConn.title : '';
+                    existingConn.title = newConn.title;
                     existingConn.color = newConn.color;
                 } else {
                     existingConnections.push(newConn);
@@ -3661,10 +3786,25 @@ padding: 0 5px;
             const mouseX = event.offsetX;
             const mouseY = event.offsetY;
             if (this.draggingBlock) {
-                this.draggingBlock.x = mouseX - this.offsetX;
-                this.draggingBlock.y = mouseY - this.offsetY;
-                this._connection_update();
-                this.render();
+                if (this.appearance.snapToGrid) {
+                    this.draggingBlock.x = _ma.round(this.draggingBlock.x / this.appearance.gridSize) * this.appearance.gridSize;
+                    this.draggingBlock.y = _ma.round(this.draggingBlock.y / this.appearance.gridSize) * this.appearance.gridSize;
+                    if (!this.lastMouseX || _ma.abs(mouseX - this.lastMouseX) >= this.appearance.gridSize || _ma.abs(mouseY - this.lastMouseY) >= this.appearance.gridSize) {
+                        this.draggingBlock.x = mouseX - this.offsetX;
+                        this.draggingBlock.y = mouseY - this.offsetY;
+                        this.render();
+                        this.lastMouseX = mouseX;
+                        this.lastMouseY = mouseY;
+                    }
+                } else {
+                    if (!this.lastMouseX || _ma.abs(mouseX - this.lastMouseX) >= this.appearance.movementResolution || _ma.abs(mouseY - this.lastMouseY) >= this.appearance.movementResolution) {
+                        this.draggingBlock.x = mouseX - this.offsetX;
+                        this.draggingBlock.y = mouseY - this.offsetY;
+                        this.render();
+                        this.lastMouseX = mouseX;
+                        this.lastMouseY = mouseY;
+                    }
+                }
                 return;
             }
             if (this.connection_start && this.connection_end === _n) {
@@ -3702,7 +3842,6 @@ padding: 0 5px;
                 this.isDraggingBlock = false;
                 this.draggingBlock.isDragging = false;
                 this.draggingBlock = _n;
-                this._connection_update();
                 this.render();
             }
             if (this.connection_start && this.connection_end === _n) {
@@ -3741,7 +3880,7 @@ padding: 0 5px;
             }
         }
         _menu_context(x, y) {
-            let div = Q('<div>', { class: [classes.node_preferences], style: { position: 'absolute', left: x + 'px', top: y + 'px' } });
+            let div = Q('<div>', { class: [classes.node_preferences, classes.node_preferences_small], style: { position: 'absolute', left: x + 'px', top: y + 'px' } });
             this.isMenuPreferences = true;
             let add = Q('<div>', { class: ['button_nodes_big'], text: 'Create Block' });
             add.on('click', () => {
@@ -3771,7 +3910,7 @@ padding: 0 5px;
                 this.render();
             }
             for (let i = this.blocks.length - 1; i >= 0; i--) {
-                let block = this.blocks[i];
+                const block = this.blocks[i];
                 if (block.isMouseOver(mouseX, mouseY)) {
                     this._menu_remove();
                     this._menu_preferences(block, mouseX, mouseY);
@@ -3779,7 +3918,7 @@ padding: 0 5px;
                 }
             }
             for (let i = 0; i < this.connections.length; i++) {
-                let conn = this.connections[i];
+                const conn = this.connections[i];
                 if (this._point_line_segment(mouseX, mouseY, conn.start.x, conn.start.y, conn.end.x, conn.end.y)) {
                     const startBlock = this.blocks.find(b => b.id === conn.start.block.id);
                     const endBlock = this.blocks.find(b => b.id === conn.end.block.id);
@@ -3798,7 +3937,6 @@ padding: 0 5px;
             return '_' + _ma.random().toString(36).substr(2, 9);
         }
         _menu_remove() {
-            _c.log(classes.node_preferences);
             Q('.' + classes.node_preferences).remove();
             this.isMenuPreferences = false;
         }
@@ -3911,7 +4049,7 @@ padding: 0 5px;
             return div;
         }
         _menu_preferences(block, x, y) {
-            let div = Q('<div>', { class: [classes.node_preferences], id: block.id });
+            let div = Q('<div>', { class: [classes.node_preferences, classes.node_preferences_big], id: block.id });
             div.css({ position: 'absolute', left: x + 'px', top: y + 'px' });
             let title = this._menu_item_section('Class', this._menu_item_input(classes.name, block.name, 'Class name...'));
             let content = this._menu_item_section('Content', this._menu_item_input(classes.content, block.text, 'Content...'));
@@ -3941,12 +4079,15 @@ padding: 0 5px;
             );
         }
         _connection_exists(startConn, endConn) {
-            return this.connections.some(conn =>
-                (conn.start.block === startConn.block && conn.start.point === startConn.point &&
-                    conn.end.block === endConn.block && conn.end.point === endConn.point) ||
-                (conn.start.block === endConn.block && conn.start.point === endConn.point &&
-                    conn.end.block === startConn.block && conn.end.point === startConn.point)
-            );
+            return this.connections.some(conn => {
+                const isDirectMatch =
+                    conn.start.block === startConn.block && conn.start.point === startConn.point &&
+                    conn.end.block === endConn.block && conn.end.point === endConn.point;
+                const isReverseMatch =
+                    conn.start.block === endConn.block && conn.start.point === endConn.point &&
+                    conn.end.block === startConn.block && conn.end.point === startConn.point;
+                return isDirectMatch || isReverseMatch;
+            });
         }
         _connection_create(startConn, endConn) {
             this.connections.push({
@@ -3959,25 +4100,19 @@ padding: 0 5px;
         }
         _connection_update() {
             this.connections.forEach(conn => {
-                const startCoords = this._point_coords(conn.start.block, conn.start.point);
-                const endCoords = this._point_coords(conn.end.block, conn.end.point);
-                conn.start.x = startCoords.x;
-                conn.start.y = startCoords.y;
-                conn.end.x = endCoords.x;
-                conn.end.y = endCoords.y;
+                _ob.assign(conn.start, this._point_coords(conn.start.block, conn.start.point));
+                _ob.assign(conn.end, this._point_coords(conn.end.block, conn.end.point));
             });
         }
         _point_coords(block, pointId) {
-            const leftCoords = block.leftConnCoords;
-            const rightCoords = block.rightConnCoords;
-            for (let i = 0; i < block.connLeft.length; i++) {
-                if (block.connLeft[i].id === pointId) {
-                    return { x: leftCoords[i].x, y: leftCoords[i].y };
-                }
-            }
-            for (let i = 0; i < block.connRight.length; i++) {
-                if (block.connRight[i].id === pointId) {
-                    return { x: rightCoords[i].x, y: rightCoords[i].y };
+            const connections = [
+                { coords: block.leftConnCoords, conns: block.connLeft },
+                { coords: block.rightConnCoords, conns: block.connRight }
+            ];
+            for (const { coords, conns } of connections) {
+                const index = conns.findIndex(conn => conn.id === pointId);
+                if (index !== -1) {
+                    return { x: coords[index].x, y: coords[index].y };
                 }
             }
             return { x: block.x, y: block.y };
@@ -4009,30 +4144,17 @@ padding: 0 5px;
             return distance <= buffer;
         }
         _point_line_distance(px, py, x1, y1, x2, y2) {
-            const A = px - x1;
-            const B = py - y1;
-            const C = x2 - x1;
-            const D = y2 - y1;
-            const dot = (A * C) + (B * D);
-            const len_sq = (C * C) + (D * D);
-            let param = -1;
-            if (len_sq !== 0) {
-                param = dot / len_sq;
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const lenSq = dx * dx + dy * dy;
+            let t = 0;
+            if (lenSq !== 0) {
+                t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
+                t = _ma.max(0, _ma.min(1, t));
             }
-            let xx, yy;
-            if (param < 0) {
-                xx = x1;
-                yy = y1;
-            } else if (param > 1) {
-                xx = x2;
-                yy = y2;
-            } else {
-                xx = x1 + param * C;
-                yy = y1 + param * D;
-            }
-            const dx = px - xx;
-            const dy = py - yy;
-            return _ma.sqrt((dx * dx) + (dy * dy));
+            const projX = x1 + t * dx;
+            const projY = y1 + t * dy;
+            return _ma.hypot(px - projX, py - projY);
         }
     }
     let appearance = {
@@ -4042,6 +4164,8 @@ padding: 0 5px;
         grid: true,
         gridColor: '#161616',
         gridSize: 20,
+        snapToGrid: false,
+        movementResolution: 3,
         factorTitleBackground: -20,
         factorDarkColors: -30,
         factorLightColors: 80,
@@ -4194,6 +4318,7 @@ Q.style = (function () {
                     styles = styles.replace(new _re(`\\b${key}\\b`, 'gm'), newKey);
                     mapping[key] = mapping[key].replace(key, newKey);
                 });
+                _c.log(mapping);
             }
             styleData.gen += styles;
             applyStyles();

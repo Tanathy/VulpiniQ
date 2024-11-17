@@ -12,13 +12,22 @@ Q.NodeBlock = function (selector, width, height, options) {
 
 .node_preferences {
     position: absolute;
-    width: 350px;
-    max-height: 300px;
     background: #181818;
     overflow: hidden;
-    overflow-y: scroll;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
 }
+
+.node_preferences_big {
+    width: 350px;
+    max-height: 350px;
+    overflow-y: scroll;
+}
+
+.node_preferences_small {
+width: 200px;
+overflow-y: auto;
+    }
 
 .pref_content h1, .pref_content h2, .pref_content h3, .pref_content h4, .pref_content h5, .pref_content h6 {
 line-break: anywhere;
@@ -41,9 +50,6 @@ padding: 0;
 .pref_content th, td { padding: 1px; text-align: left; }
 .pref_content th { background-color: #222; }
 .pref_content tfoot { background-color: #222; }
-
-
-
 
 .pref_title {
     font-size: 12px;
@@ -164,6 +170,8 @@ padding: 0 5px;
 
         `, {
         "node_preferences": "node_preferences",
+        "node_preferences_small": "node_preferences_small",
+        "node_preferences_big": "node_preferences_big",
         "pref_title": "pref_title",
         "pref_content": "pref_content",
         "connection_content": "connection_content",
@@ -207,6 +215,15 @@ padding: 0 5px;
             this.appearance = Object.assign({}, this.appearance, custom_style);
             this.darkText = '#ffffff';
             this.lightText = '#000000';
+
+
+            //render baser of the block
+            this.update = true;
+            this.compiled_render = document.createElement('canvas');
+            this.block_context = this.compiled_render.getContext('2d');
+
+
+
             this._processColors();
         }
 
@@ -218,44 +235,75 @@ padding: 0 5px;
         }
 
         _processColors() {
-            this.appearance.titleBackground = Q.ColorBrightness(this.appearance.background, this.appearance.factorTitleBackground);
-            const isDark = Q.isDarkColor(this.appearance.background, this.appearance.factorDarkColorMargin, this.appearance.factorDarkColorThreshold);
-            const textColor = isDark ? this.appearance.darkTextColor : this.appearance.lightTextColor;
-            const borderColor = isDark ? Q.ColorBrightness(this.appearance.background, this.appearance.factorLightColors) : Q.ColorBrightness(this.appearance.background, this.appearance.factorDarkColors);
-            this.appearance.titleColor = textColor;
-            this.appearance.connectionTextColor = textColor;
-            this.appearance.textColor = textColor;
-            this.appearance.node_table_color = borderColor;
+            const {
+                background,
+                factorTitleBackground,
+                factorDarkColorMargin,
+                factorDarkColorThreshold,
+                factorLightColors,
+                factorDarkColors,
+                darkTextColor,
+                lightTextColor
+            } = this.appearance;
+
+            // Cache color calculations
+            const titleBg = Q.ColorBrightness(background, factorTitleBackground);
+            const isDark = Q.isDarkColor(background, factorDarkColorMargin, factorDarkColorThreshold);
+            const textColor = isDark ? darkTextColor : lightTextColor;
+            const borderColor = Q.ColorBrightness(background, isDark ? factorLightColors : factorDarkColors);
+
+            // Batch updates to appearance
+            Object.assign(this.appearance, {
+                titleBackground: titleBg,
+                titleColor: textColor,
+                connectionTextColor: textColor,
+                textColor: textColor,
+                node_table_color: borderColor
+            });
         }
+
+        // _processColors() {
+        //     this.appearance.titleBackground = Q.ColorBrightness(this.appearance.background, this.appearance.factorTitleBackground);
+        //     const isDark = Q.isDarkColor(this.appearance.background, this.appearance.factorDarkColorMargin, this.appearance.factorDarkColorThreshold);
+        //     const textColor = isDark ? this.appearance.darkTextColor : this.appearance.lightTextColor;
+        //     const borderColor = isDark ? Q.ColorBrightness(this.appearance.background, this.appearance.factorLightColors) : Q.ColorBrightness(this.appearance.background, this.appearance.factorDarkColors);
+        //     this.appearance.titleColor = textColor;
+        //     this.appearance.connectionTextColor = textColor;
+        //     this.appearance.textColor = textColor;
+        //     this.appearance.node_table_color = borderColor;
+        // }
 
 
         _drawContainer(ctx, x, y, width, height) {
-            const { shadowColor, shadowBlur, shadowOffsetX, shadowOffsetY, background, radius } = this.appearance;
+            const { shadowColor, shadowBlur, shadowOffsetX, shadowOffsetY, background, radius, connectionPointSize } = this.appearance;
 
-            // Apply shadow styles
-            ctx.shadowColor = shadowColor;
-            ctx.shadowBlur = shadowBlur;
-            ctx.shadowOffsetX = shadowOffsetX;
-            ctx.shadowOffsetY = shadowOffsetY;
+            // Save current context state
+            ctx.save();
 
-            // Draw rounded rectangle
-            ctx.fillStyle = background;
+            // Set all styles at once
+            Object.assign(ctx, {
+                fillStyle: background,
+                shadowColor,
+                shadowBlur,
+                shadowOffsetX,
+                shadowOffsetY
+            });
+
+            // Draw optimized rounded rectangle
             ctx.beginPath();
-
-            // Top-left corner
             ctx.moveTo(x + radius, y);
-            ctx.arcTo(x + width, y, x + width, y + radius, radius); 
-            ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius);
-            ctx.arcTo(x, y + height, x, y + height - radius, radius);
-            ctx.arcTo(x, y, x + radius, y, radius);                
-
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
             ctx.fill();
 
-            // Reset shadow styles
-            ctx.shadowColor = 'rgba(0, 0, 0, 0)';
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
+            // Restore previous context state
+            ctx.restore();
         }
 
         _drawTitle(ctx, x, y, width, height, title) {
@@ -277,181 +325,166 @@ padding: 0 5px;
             ctx.fillText(title, titleX, titleY);
         }
 
+
         parseHTML2Canvas(html, callback) {
+            const renderElements = () => {
+
+                if (this.t_text == html) {
+                    callback(this.content, this.contentHeight);
+                    return;
+                }
+                this.t_text = html;
+
+                // Create a temporary container to measure the content height
+                let tempContainer = document.createElement('div');
+                tempContainer.style.position = 'absolute';
+                tempContainer.style.visibility = 'hidden';
+                tempContainer.style.width = (this.width - this.appearance.fontSize) + 'px';
+                document.body.appendChild(tempContainer);
+
+                // Apply the same styles to the temporary container
+                let style = document.createElement('style');
+
+                let st = `
+        table {border-collapse: collapse; width: 100%;}
+        table, th, td {padding: 0; margin: 0; font-size: ${(this.appearance.fontSize * 0.9)}px; line-break: anywhere;border: 1px solid ${this.appearance.node_table_color};}
+        th, td {padding: 1px; text-align: left;}
+        th {background-color: ${this.appearance.node_table_color};}
+        tfoot {background-color: ${this.appearance.node_table_color};}
+    
+        h1, h2, h3, h4, h5, h6 {line-break: anywhere; margin: 0 0 2px 0; padding: 0;}
+        h1 {font-size: ${(this.appearance.fontSize * 1.5)}px;}
+        h2 {font-size: ${(this.appearance.fontSize * 1.4)}px;}
+        h3 {font-size: ${(this.appearance.fontSize * 1.3)}px;}
+        h4 {font-size: ${(this.appearance.fontSize * 1.2)}px;}
+        h5 {font-size: ${(this.appearance.fontSize * 1.1)}px;}
+        h6 {font-size: ${(this.appearance.fontSize * 1.0)}px;}
+                        p { margin: 0; padding: 0; color: ${this.appearance.textColor}; }
+                        ul { margin: 5px 5px; padding-left: 15px; color: ${this.appearance.textColor}; }
+                        li { padding: 0px; margin: 0px; }
+                        div {font-family: ${this.appearance.font}, sans-serif; font-size: ${this.appearance.fontSize}px; color: ${this.appearance.textColor}; }
+                    `;
+
+                style.innerHTML = st;
+                document.head.appendChild(style);
+
+                // Insert the HTML content into the temporary container
+                tempContainer.innerHTML = html;
+
+                // Measure the height of the content with styles applied
+                this.contentHeight = tempContainer.offsetHeight + this.appearance.padding;
+
+                // Remove the temporary container and style tag
+                document.body.removeChild(tempContainer);
+                document.head.removeChild(style);
+
+                // Create the canvas with the measured height          
+                this.content = document.createElement('canvas');
+                this.content.width = this.width;
+                this.content.height = this.contentHeight;
+                let ctx = this.content.getContext('2d');
+
+                let data = '<svg xmlns="http://www.w3.org/2000/svg" width="' + (this.width - (this.appearance.padding * 2)) + '" height="' + this.contentHeight + '">' + // Update SVG height
+                    '<foreignObject width="100%" height="100%">' +
+                    '<style>' +
+                    st +
+                    '</style>' +
+                    '<div xmlns="http://www.w3.org/1999/xhtml">' +
+                    html +
+                    '</div>' +
+                    '</foreignObject>' +
+                    '</svg>';
+
+                let DOMURL = window.URL || window.webkitURL || window;
+                let img = new Image();
+                let svg = new Blob([data], { type: 'image/svg+xml;charset=utf-8' });
+                let url = DOMURL.createObjectURL(svg);
+
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0);
+                    DOMURL.revokeObjectURL(url);
+                    callback(this.content, this.contentHeight);
+                };
+
+                img.src = url;
+            };
+
 
             //remove all inline styles from html
             html = html.replace(/style="[^"]*"/g, '');
 
+            let images = [];
+
             // remove all <br> tags
             html = html.replace(/<br>/g, '');
 
-            if (this.t_text == html) {
-                callback(this.content, this.contentHeight);
-                return;
+            //if html contains img tags, load them first
+            if (html.includes('<img')) {
+                let imgTags = html.match(/<img[^>]+>/g);
+
+                imgTags.forEach((imgTag, index) => {
+                    let src = imgTag.match(/src="([^"]*)"/)[1];
+                    let img = new Image();
+                    img.src = src;
+                    img.onload = () => {
+                        images[index] = img;
+                        if (images.length === imgTags.length) {
+                            renderElements();
+                        }
+                    };
+                });
             }
-            this.t_text = html;
+            else {
+                renderElements();
+            }
 
-            // Create a temporary container to measure the content height
-            let tempContainer = document.createElement('div');
-            tempContainer.style.position = 'absolute';
-            tempContainer.style.visibility = 'hidden';
-            tempContainer.style.width = (this.width - this.appearance.fontSize) + 'px';
-            document.body.appendChild(tempContainer);
 
-            // Apply the same styles to the temporary container
-            let style = document.createElement('style');
 
-            let st = `
-            table {border-collapse: collapse; width: 100%;}
-            table, th, td {padding: 0; margin: 0; font-size: ${(this.appearance.fontSize * 0.9)}px; line-break: anywhere;border: 1px solid ${this.appearance.node_table_color};}
-            th, td {padding: 1px; text-align: left;}
-            th {background-color: ${this.appearance.node_table_color};}
-            tfoot {background-color: ${this.appearance.node_table_color};}
-        
-            h1, h2, h3, h4, h5, h6 {line-break: anywhere; margin: 0 0 2px 0; padding: 0;}
-            h1 {font-size: ${(this.appearance.fontSize * 1.5)}px;}
-            h2 {font-size: ${(this.appearance.fontSize * 1.4)}px;}
-            h3 {font-size: ${(this.appearance.fontSize * 1.3)}px;}
-            h4 {font-size: ${(this.appearance.fontSize * 1.2)}px;}
-            h5 {font-size: ${(this.appearance.fontSize * 1.1)}px;}
-            h6 {font-size: ${(this.appearance.fontSize * 1.0)}px;}
-                            p { margin: 0; padding: 0; color: ${this.appearance.textColor}; }
-                            ul { margin: 5px 5px; padding-left: 15px; color: ${this.appearance.textColor}; }
-                            li { padding: 0px; margin: 0px; }
-                            div {font-family: ${this.appearance.font}, sans-serif; font-size: ${this.appearance.fontSize}px; color: ${this.appearance.textColor}; }
-                        `;
-
-            style.innerHTML = st;
-            document.head.appendChild(style);
-
-            // Insert the HTML content into the temporary container
-            tempContainer.innerHTML = html;
-
-            // Measure the height of the content with styles applied
-            this.contentHeight = tempContainer.offsetHeight + this.appearance.padding;
-
-            // Remove the temporary container and style tag
-            document.body.removeChild(tempContainer);
-            document.head.removeChild(style);
-
-            // Create the canvas with the measured height          
-            this.content = document.createElement('canvas');
-            this.content.width = this.width;
-            this.content.height = this.contentHeight;
-            let ctx = this.content.getContext('2d');
-
-            let data = '<svg xmlns="http://www.w3.org/2000/svg" width="' + (this.width - (this.appearance.padding * 2)) + '" height="' + this.contentHeight + '">' + // Update SVG height
-                '<foreignObject width="100%" height="100%">' +
-                '<style>' +
-                st +
-                '</style>' +
-                '<div xmlns="http://www.w3.org/1999/xhtml">' +
-                html +
-                '</div>' +
-                '</foreignObject>' +
-                '</svg>';
-
-            let DOMURL = window.URL || window.webkitURL || window;
-            let img = new Image();
-            let svg = new Blob([data], { type: 'image/svg+xml;charset=utf-8' });
-            let url = DOMURL.createObjectURL(svg);
-
-            img.onload = () => {
-                ctx.drawImage(img, 0, 0);
-                DOMURL.revokeObjectURL(url);
-                callback(this.content, this.contentHeight);
-            };
-
-            img.src = url;
+            // renderElements();
         }
 
-        draw(ctx) {
+        draw(main_context) {
             const TITLE_HEIGHT = this.appearance.fontSizeTitle + (this.appearance.padding * 2);
             const CONNECTION_HEIGHT = this.appearance.padding + TITLE_HEIGHT;
             const CONNECTION_PADDING = (this.appearance.connectionPointSize * 2) + this.appearance.connectionPointPadding;
             const maxConnectionsHeight = Math.max(this.connLeft.length, this.connRight.length) * CONNECTION_PADDING;
 
-            // Helper function to calculate and update container height
-            const updateContainerHeight = (contentHeight) => {
-                this.height = TITLE_HEIGHT + (this.appearance.padding * 2) + maxConnectionsHeight + contentHeight + this.appearance.padding;
-            };
+            if (this.update) {
+                // console.log(this.update);
 
-            const drawImageContent = (img, drawX, drawY, drawWidth, drawHeight) => {
-                const contentHeight = drawHeight + this.appearance.padding;
-                updateContainerHeight(contentHeight);
-                this._drawContainer(ctx, this.x, this.y, this.width, this.height, this.appearance.radius);
-                this._drawTitle(ctx, this.x, this.y, this.width, TITLE_HEIGHT, this.name);
-                ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-                this.drawConnectionPoints(ctx, CONNECTION_HEIGHT, CONNECTION_PADDING);
-            };
 
-            // Helper function to check if the content contains base64
-            const isBase64Image = this.text.includes('base64');
-
-            // Helper function to extract base64 data from text
-            const extractBase64Data = () => {
-                const base64Match = this.text.match(/base64,([^"]*)/);
-                return base64Match && base64Match[1] ? base64Match[1] : null;
-            };
-
-            // If the text contains a base64 image
-            if (isBase64Image) {
-                const base64Data = extractBase64Data();
-                if (!base64Data) return;
-
-                // If the base64 data is already cached, use it to draw the image
-                if (this.base64Data === base64Data.length) {
-                    const imgWidth = this.img.width;
-                    const imgHeight = this.img.height;
-                    const aspectRatio = imgHeight / imgWidth;
-                    const drawWidth = this.width - (this.appearance.padding * 2);
-                    const drawHeight = drawWidth * aspectRatio;
-                    const drawX = this.x + this.appearance.padding;
-                    const drawY = this.y + TITLE_HEIGHT + (this.appearance.padding) + maxConnectionsHeight;
-
-                    drawImageContent(this.img, drawX, drawY, drawWidth, drawHeight);
-                    return;
-                }
-
-                // Load the base64 image and draw it once loaded
-                const unescapedBase64Data = 'data:image/png;base64,' + decodeURIComponent(base64Data);
-                this.img = new Image();
-                this.img.src = unescapedBase64Data;
-                this.base64Data = base64Data.length;
-
-                this.img.onload = () => {
-                    const imgMatch = this.text.match(/<img[^>]+src="([^">]+)"/);
-                    if (imgMatch && imgMatch[1]) {
-                        this.text = `<img src="${imgMatch[1]}"/>`;
-                    }
-
-                    const imgWidth = this.img.width;
-                    const imgHeight = this.img.height;
-                    const aspectRatio = imgHeight / imgWidth;
-                    const drawWidth = this.width - (this.appearance.padding * 2);
-                    const drawHeight = drawWidth * aspectRatio;
-                    const drawX = this.x + this.appearance.padding;
-                    const drawY = this.y + TITLE_HEIGHT + (this.appearance.padding) + maxConnectionsHeight;
-
-                    drawImageContent(this.img, drawX, drawY, drawWidth, drawHeight);
+                // Helper function to calculate and update container height
+                const updateContainerHeight = (contentHeight) => {
+                    this.height = TITLE_HEIGHT + (this.appearance.padding * 2) + maxConnectionsHeight + contentHeight + this.appearance.padding;
+                    this.block_context.canvas.height = this.height;
+                    this.block_context.canvas.width = this.width + (this.appearance.connectionPointSize * 2);
                 };
 
-                return;
-            } else {
-                // If not base64, parse HTML content and render it as a canvas
                 this.parseHTML2Canvas(this.text, (canvas, contentHeight) => {
                     updateContainerHeight(contentHeight);
-                    this._drawContainer(ctx, this.x, this.y, this.width, this.height, this.appearance.radius);
-                    this._drawTitle(ctx, this.x, this.y, this.width, TITLE_HEIGHT, this.name);
-                    ctx.drawImage(canvas, this.x + this.appearance.padding, this.y + TITLE_HEIGHT + this.appearance.padding + maxConnectionsHeight);
-                    this.drawConnectionPoints(ctx, CONNECTION_HEIGHT, CONNECTION_PADDING);
+
+                    //draw the container into compiled_render
+                    this._drawContainer(this.block_context, this.appearance.connectionPointSize, 0, this.width - 5, this.height, this.appearance.radius);
+                    this._drawTitle(this.block_context, this.appearance.connectionPointSize, 0, this.width - this.appearance.connectionPointSize, TITLE_HEIGHT, this.name);
+                    this.block_context.drawImage(canvas, this.appearance.padding, TITLE_HEIGHT + this.appearance.padding + maxConnectionsHeight);
+                    // main_context.drawImage(this.compiled_render, this.x, this.y);
+                    this.drawConnectionPoints(this.block_context, CONNECTION_HEIGHT, CONNECTION_PADDING);
+                    main_context.drawImage(this.compiled_render, this.x, this.y);
                 });
+                //draw the ctx into main_context
+
+                this.update = false;
             }
+            else {
+                this.drawConnectionPoints(this.block_context, CONNECTION_HEIGHT, CONNECTION_PADDING);
+                main_context.drawImage(this.compiled_render, this.x, this.y);
+            }
+            return;
         }
 
 
         drawConnectionPoints(ctx, paddingTop, height) {
-            const connectionY = this.y + paddingTop;
+            const connectionY = paddingTop;
             const font = `bold ${this.appearance.fontSizeConnection}px ${this.appearance.font}`;
             const pointSize = this.appearance.connectionPointSize;
             const connectionPaddingX = this.appearance.connectionTextPaddingX;
@@ -478,11 +511,11 @@ padding: 0 5px;
             };
 
             if (Array.isArray(this.connLeft)) {
-                drawConnectionPoints(this.connLeft, this.leftConnCoords, this.x, (title, baseX) => baseX + connectionPaddingX * 2);
+                drawConnectionPoints(this.connLeft, this.leftConnCoords, this.appearance.connectionPointSize, (title, baseX) => baseX + connectionPaddingX * 2);
             }
 
             if (Array.isArray(this.connRight)) {
-                drawConnectionPoints(this.connRight, this.rightConnCoords, this.x + this.width, (title, baseX) => baseX - ctx.measureText(title).width - connectionPaddingX * 2);
+                drawConnectionPoints(this.connRight, this.rightConnCoords, this.width, (title, baseX) => baseX - ctx.measureText(title).width - connectionPaddingX * 2);
             }
         }
 
@@ -499,9 +532,17 @@ padding: 0 5px;
             return mouseX >= this.x && mouseX <= this.x + this.width && mouseY >= this.y && mouseY <= this.y + this.height;
         }
 
+
         getAllConnectionCoords() {
-            return [...this.leftConnCoords, ...this.rightConnCoords];
+            return [
+                ...this.leftConnCoords.map(coord => ({ x: coord.x + this.x, y: coord.y + this.y })),
+                ...this.rightConnCoords.map(coord => ({ x: coord.x + this.x, y: coord.y + this.y }))
+            ];
         }
+
+        // getAllConnectionCoords() {
+        //     return [...this.leftConnCoords, ...this.rightConnCoords]; 
+        // }
 
         getConnectionCoord(point, index) {
             return point === 'left' ? this.leftConnCoords[index] : this.rightConnCoords[index];
@@ -646,7 +687,6 @@ padding: 0 5px;
         }
 
         render_grid() {
-            console.log('Rendering grid');
             let ctx = this.canvas_context;
             let w = this.width;
             let h = this.height;
@@ -656,19 +696,16 @@ padding: 0 5px;
             ctx.strokeStyle = grid_color;
             ctx.lineWidth = 1;
 
-            for (let x = 0; x < w; x += grid_size) {
-                ctx.beginPath();
+            ctx.beginPath();
+            for (let x = 0; x <= w; x += grid_size) {
                 ctx.moveTo(x, 0);
                 ctx.lineTo(x, h);
-                ctx.stroke();
             }
-
-            for (let y = 0; y < h; y += grid_size) {
-                ctx.beginPath();
+            for (let y = 0; y <= h; y += grid_size) {
                 ctx.moveTo(0, y);
                 ctx.lineTo(w, y);
-                ctx.stroke();
             }
+            ctx.stroke();
         }
 
         render() {
@@ -678,11 +715,12 @@ padding: 0 5px;
             this.render_grid();
 
             // Draw the connections
-
-            // if(this.isDraggingBlock){
             this.connections.forEach(conn => {
-                let startColor = this._getConnectionColor(conn.start.block, conn.start.point);
-                let endColor = this._getConnectionColor(conn.end.block, conn.end.point);
+                let startBlock = conn.start.block;
+                let endBlock = conn.end.block;
+
+                let startColor = this._getConnectionColor(startBlock, conn.start.point);
+                let endColor = this._getConnectionColor(endBlock, conn.end.point);
 
                 this.canvas_context.strokeStyle = 'rgb(150, 150, 150)';
 
@@ -692,18 +730,21 @@ padding: 0 5px;
                 this.canvas_context.lineWidth = 2;
 
                 // Gradient from start to end point using their colors
-                let gradient = this.canvas_context.createLinearGradient(conn.start.x, conn.start.y, conn.end.x, conn.end.y);
+                let gradient = this.canvas_context.createLinearGradient(
+                    startBlock.x + conn.start.x, startBlock.y + conn.start.y,
+                    endBlock.x + conn.end.x, endBlock.y + conn.end.y
+                );
                 gradient.addColorStop(0, startColor);
                 gradient.addColorStop(1, endColor);
                 this.canvas_context.strokeStyle = gradient;
 
-                this.canvas_context.moveTo(conn.start.x, conn.start.y);
-                this.canvas_context.lineTo(conn.end.x, conn.end.y);
+                this.canvas_context.moveTo(startBlock.x + conn.start.x, startBlock.y + conn.start.y);
+                this.canvas_context.lineTo(endBlock.x + conn.end.x, endBlock.y + conn.end.y);
                 this.canvas_context.stroke();
 
                 // Calculate direction vector
-                let dx = conn.end.x - conn.start.x;
-                let dy = conn.end.y - conn.start.y;
+                let dx = (endBlock.x + conn.end.x) - (startBlock.x + conn.start.x);
+                let dy = (endBlock.y + conn.end.y) - (startBlock.y + conn.start.y);
                 let length = Math.sqrt(dx * dx + dy * dy);
                 let unitDx = dx / length;
                 let unitDy = dy / length;
@@ -712,8 +753,8 @@ padding: 0 5px;
                 let arrowLength = 10;
                 let arrowWidth = 5;
                 for (let i = 100; i < length; i += 200) {
-                    let x = conn.start.x + unitDx * i;
-                    let y = conn.start.y + unitDy * i;
+                    let x = (startBlock.x + conn.start.x) + unitDx * i;
+                    let y = (startBlock.y + conn.start.y) + unitDy * i;
 
                     this.canvas_context.beginPath();
                     this.canvas_context.moveTo(x, y);
@@ -727,15 +768,19 @@ padding: 0 5px;
 
             // Draw the connection if dragging
             if (this.connection_start && this.connection_end === null) {
-                let startColor = this._getConnectionColor(this.connection_start.block, this.connection_start.point);
+                let startBlock = this.connection_start.block;
+                let startColor = this._getConnectionColor(startBlock, this.connection_start.point);
 
-                let gradient = this.canvas_context.createLinearGradient(this.connection_start.x, this.connection_start.y, this.mouseX, this.mouseY);
+                let gradient = this.canvas_context.createLinearGradient(
+                    startBlock.x + this.connection_start.x, startBlock.y + this.connection_start.y,
+                    this.mouseX, this.mouseY
+                );
                 gradient.addColorStop(0, startColor);
                 gradient.addColorStop(1, "rgb(150, 150, 150)");
                 this.canvas_context.strokeStyle = gradient;
 
                 this.canvas_context.beginPath();
-                this.canvas_context.moveTo(this.connection_start.x, this.connection_start.y);
+                this.canvas_context.moveTo(startBlock.x + this.connection_start.x, startBlock.y + this.connection_start.y);
                 this.canvas_context.lineTo(this.mouseX, this.mouseY);
                 this.canvas_context.stroke();
             }
@@ -743,63 +788,43 @@ padding: 0 5px;
             this.blocks.forEach(block => {
                 block.draw(this.canvas_context);
             });
+            this._connection_update();
         }
 
         // New method to get the color of a connection point
         _getConnectionColor(block, pointId) {
-            for (let i = 0; i < block.connLeft.length; i++) {
-                if (block.connLeft[i].id === pointId) {
-                    return block.connLeft[i].color;
-                }
-            }
+            // Check both left and right connections simultaneously
+            const connection = [...block.connLeft, ...block.connRight]
+                .find(conn => conn.id === pointId);
 
-            for (let i = 0; i < block.connRight.length; i++) {
-                if (block.connRight[i].id === pointId) {
-                    return block.connRight[i].color;
-                }
-            }
+            return connection ? connection.color : null;
         }
 
         updateConnections(block) {
+            const preferences = Q('.' + classes.node_preferences);
 
-            let preferences = Q('.' + classes.node_preferences);
+            const collectConnections = (sideClass) => {
+                const side = preferences.find('.' + sideClass);
+                const connections = [];
+                side.find('.' + classes.connection_wrapper).walk((element) => {
+                    const id = element.id();
+                    const title = element.find('.' + classes.connection).val() || '';
+                    const color = element.find('.' + classes.color).val();
+                    connections.push({ id, title, color });
+                }, true);
+                return connections;
+            };
 
-            let left = preferences.find('.' + classes.left);
-            let right = preferences.find('.' + classes.right);
+            const newLeftConnections = collectConnections(classes.left);
+            const newRightConnections = collectConnections(classes.right);
 
-            let leftConnections = block.connLeft;
-            let rightConnections = block.connRight;
-
-            // Function to update connections
-
-
-            // Collect new connections
-            let newLeftConnections = [];
-            left.find('.' + classes.connection_wrapper).walk((element) => {
-
-                // left.querySelectorAll('.connection_wrapper').forEach(c => {
-                let id = element.id();
-                let title = element.find('.' + classes.connection).val();
-                let color = element.find('.' + classes.color).val();
-
-                newLeftConnections.push({ id: id, title: title, color: color });
-            }, true);
-
-            let newRightConnections = [];
-            right.find('.' + classes.connection_wrapper).walk((element) => {
-                let id = element.id();
-                let title = element.find('.' + classes.connection).val();
-                let color = element.find('.' + classes.color).val();
-                newRightConnections.push({ id: id, title: title, color: color });
-            }, true);
-
-            let newConnections = [...newLeftConnections, ...newRightConnections];
-            let existingConnections = [...leftConnections, ...rightConnections];
+            const newConnections = [...newLeftConnections, ...newRightConnections];
+            const existingConnections = [...block.connLeft, ...block.connRight];
 
             newConnections.forEach(newConn => {
-                let existingConn = existingConnections.find(conn => conn.id === newConn.id);
+                const existingConn = existingConnections.find(conn => conn.id === newConn.id);
                 if (existingConn) {
-                    existingConn.title = (newConn.title && newConn.title !== null) ? newConn.title : '';
+                    existingConn.title = newConn.title;
                     existingConn.color = newConn.color;
                 } else {
                     existingConnections.push(newConn);
@@ -821,6 +846,7 @@ padding: 0 5px;
             let content = preferences.find('#' + classes.content).html();
             block.name = name;
             block.text = content;
+            block.update = true;
             if (callback) callback(block);
         }
 
@@ -863,10 +889,40 @@ padding: 0 5px;
             const mouseY = event.offsetY;
 
             if (this.draggingBlock) {
-                this.draggingBlock.x = mouseX - this.offsetX;
-                this.draggingBlock.y = mouseY - this.offsetY;
-                this._connection_update();
-                this.render();
+
+
+                if (this.appearance.snapToGrid) {
+                    // Snap the block position to the grid
+                    this.draggingBlock.x = Math.round(this.draggingBlock.x / this.appearance.gridSize) * this.appearance.gridSize;
+                    this.draggingBlock.y = Math.round(this.draggingBlock.y / this.appearance.gridSize) * this.appearance.gridSize;
+
+                    // Check if the mouse has moved by at least the grid size
+                    if (!this.lastMouseX || Math.abs(mouseX - this.lastMouseX) >= this.appearance.gridSize || Math.abs(mouseY - this.lastMouseY) >= this.appearance.gridSize) {
+                        this.draggingBlock.x = mouseX - this.offsetX;
+                        this.draggingBlock.y = mouseY - this.offsetY;
+
+                        // this._connection_update();
+                        this.render();
+
+
+                        // Update the last mouse positions
+                        this.lastMouseX = mouseX;
+                        this.lastMouseY = mouseY;
+                    }
+                } else {
+                    // this._connection_update();
+                    if (!this.lastMouseX || Math.abs(mouseX - this.lastMouseX) >= this.appearance.movementResolution || Math.abs(mouseY - this.lastMouseY) >= this.appearance.movementResolution) {
+
+                        this.draggingBlock.x = mouseX - this.offsetX;
+                        this.draggingBlock.y = mouseY - this.offsetY;
+
+                        this.render();
+                        // this._connection_update();
+                        this.lastMouseX = mouseX;
+                        this.lastMouseY = mouseY;
+                    }
+                }
+
                 return;
             }
 
@@ -885,19 +941,23 @@ padding: 0 5px;
             this.connections.forEach(conn => {
 
                 //check if hovering over a connection. If so, draw a glow
-                if (this._point_line_segment(mouseX, mouseY, conn.start.x, conn.start.y, conn.end.x, conn.end.y)) {
+                if (this._point_line_segment(
+                    mouseX, mouseY,
+                    conn.start.block.x + conn.start.x, conn.start.block.y + conn.start.y,
+                    conn.end.block.x + conn.end.x, conn.end.block.y + conn.end.y
+                )) {
 
                     if (!this.isOverConnection) {
 
                         this.canvas_context.beginPath();
-                        this.canvas_context.arc(conn.start.x, conn.start.y, this.appearance.connectionPointSize + 2, 0, 2 * Math.PI);
+                        this.canvas_context.arc(conn.start.block.x + conn.start.x, conn.start.block.y + conn.start.y, this.appearance.connectionPointSize + 2, 0, 2 * Math.PI);
                         let startColor = this._getConnectionColor(conn.start.block, conn.start.point);
                         this.canvas_context.strokeStyle = startColor;
                         this.canvas_context.lineWidth = 2;
                         this.canvas_context.stroke();
 
                         this.canvas_context.beginPath();
-                        this.canvas_context.arc(conn.end.x, conn.end.y, this.appearance.connectionPointSize + 2, 0, 2 * Math.PI);
+                        this.canvas_context.arc(conn.end.block.x + conn.end.x, conn.end.block.y + conn.end.y, this.appearance.connectionPointSize + 2, 0, 2 * Math.PI);
                         let endColor = this._getConnectionColor(conn.end.block, conn.end.point);
                         this.canvas_context.strokeStyle = endColor;
                         this.canvas_context.lineWidth = 2;
@@ -913,7 +973,7 @@ padding: 0 5px;
                 this.isDraggingBlock = false;
                 this.draggingBlock.isDragging = false;
                 this.draggingBlock = null;
-                this._connection_update();
+                // this._connection_update();
                 this.render();
             }
 
@@ -963,7 +1023,7 @@ padding: 0 5px;
 
 
         _menu_context(x, y) {
-            let div = Q('<div>', { class: [classes.node_preferences], style: { position: 'absolute', left: x + 'px', top: y + 'px' } });
+            let div = Q('<div>', { class: [classes.node_preferences, classes.node_preferences_small], style: { position: 'absolute', left: x + 'px', top: y + 'px' } });
             this.isMenuPreferences = true;
 
             let add = Q('<div>', { class: ['button_nodes_big'], text: 'Create Block' });
@@ -1008,7 +1068,7 @@ padding: 0 5px;
 
             //check if the right click is on a block
             for (let i = this.blocks.length - 1; i >= 0; i--) {
-                let block = this.blocks[i];
+                const block = this.blocks[i];
                 if (block.isMouseOver(mouseX, mouseY)) {
                     this._menu_remove();
                     this._menu_preferences(block, mouseX, mouseY);
@@ -1021,9 +1081,12 @@ padding: 0 5px;
             // Remove any connection that is clicked on
 
             for (let i = 0; i < this.connections.length; i++) {
-                let conn = this.connections[i];
-                if (this._point_line_segment(mouseX, mouseY, conn.start.x, conn.start.y, conn.end.x, conn.end.y)) {
-                    // Remove the connection from the block's connections list
+                const conn = this.connections[i];
+                if (this._point_line_segment(
+                    mouseX, mouseY,
+                    conn.start.block.x + conn.start.x, conn.start.block.y + conn.start.y,
+                    conn.end.block.x + conn.end.x, conn.end.block.y + conn.end.y
+                )) {
                     const startBlock = this.blocks.find(b => b.id === conn.start.block.id);
                     const endBlock = this.blocks.find(b => b.id === conn.end.block.id);
 
@@ -1031,9 +1094,7 @@ padding: 0 5px;
                         startBlock.removeConnection({ id: endBlock.id, point: conn.start.point });
                     }
 
-                    // Remove the connection from the connections list
                     this.connections.splice(i, 1);
-
                     this.render();
                     return;
                 }
@@ -1048,7 +1109,6 @@ padding: 0 5px;
 
 
         _menu_remove() {
-            console.log(classes.node_preferences);
             Q('.' + classes.node_preferences).remove();
             this.isMenuPreferences = false;
         }
@@ -1187,7 +1247,7 @@ padding: 0 5px;
         }
 
         _menu_preferences(block, x, y) {
-            let div = Q('<div>', { class: [classes.node_preferences], id: block.id });
+            let div = Q('<div>', { class: [classes.node_preferences, classes.node_preferences_big], id: block.id });
             div.css({ position: 'absolute', left: x + 'px', top: y + 'px' });
             let title = this._menu_item_section('Class', this._menu_item_input(classes.name, block.name, 'Class name...'));
             let content = this._menu_item_section('Content', this._menu_item_input(classes.content, block.text, 'Content...'));
@@ -1220,12 +1280,15 @@ padding: 0 5px;
         }
 
         _connection_exists(startConn, endConn) {
-            return this.connections.some(conn =>
-                (conn.start.block === startConn.block && conn.start.point === startConn.point &&
-                    conn.end.block === endConn.block && conn.end.point === endConn.point) ||
-                (conn.start.block === endConn.block && conn.start.point === endConn.point &&
-                    conn.end.block === startConn.block && conn.end.point === startConn.point)
-            );
+            return this.connections.some(conn => {
+                const isDirectMatch =
+                    conn.start.block === startConn.block && conn.start.point === startConn.point &&
+                    conn.end.block === endConn.block && conn.end.point === endConn.point;
+                const isReverseMatch =
+                    conn.start.block === endConn.block && conn.start.point === endConn.point &&
+                    conn.end.block === startConn.block && conn.end.point === startConn.point;
+                return isDirectMatch || isReverseMatch;
+            });
         }
 
         _connection_create(startConn, endConn) {
@@ -1233,8 +1296,6 @@ padding: 0 5px;
                 start: { block: startConn.block, point: startConn.point, x: startConn.x, y: startConn.y },
                 end: { block: endConn.block, point: endConn.point, x: endConn.x, y: endConn.y }
             });
-
-            //add to the block's connections
             startConn.block.addConnection({ id: endConn.block.id, point: startConn.point });
             endConn.block.addConnection({ id: startConn.block.id, point: endConn.point });
 
@@ -1243,33 +1304,45 @@ padding: 0 5px;
 
         _connection_update() {
             this.connections.forEach(conn => {
-                const startCoords = this._point_coords(conn.start.block, conn.start.point);
-                const endCoords = this._point_coords(conn.end.block, conn.end.point);
-                conn.start.x = startCoords.x;
-                conn.start.y = startCoords.y;
-                conn.end.x = endCoords.x;
-                conn.end.y = endCoords.y;
+                Object.assign(conn.start, this._point_coords(conn.start.block, conn.start.point));
+                Object.assign(conn.end, this._point_coords(conn.end.block, conn.end.point));
             });
         }
 
+        // _point_coords(block, pointId) {
+
+        //     const connections = [
+        //         { coords: block.leftConnCoords, conns: block.connLeft },
+        //         { coords: block.rightConnCoords, conns: block.connRight }
+        //     ];
+
+        //     console.log(connections);
+
+        //     for (const { coords, conns } of connections) {
+        //         const index = conns.findIndex(conn => conn.id === pointId);
+        //         if (index !== -1) {
+        //             return { x: coords[index].x, y: coords[index].y };
+        //         }
+        //     }
+
+        //     // Return default coordinates if not found
+        //     return { x: block.x, y: block.y };
+        // }
+
         _point_coords(block, pointId) {
-            const leftCoords = block.leftConnCoords;
-            const rightCoords = block.rightConnCoords;
+            const connections = [
+                { coords: block.leftConnCoords, conns: block.connLeft },
+                { coords: block.rightConnCoords, conns: block.connRight }
+            ];
 
-            // Iterate through the connection points to find the matching pointId
-            for (let i = 0; i < block.connLeft.length; i++) {
-                if (block.connLeft[i].id === pointId) {
-                    return { x: leftCoords[i].x, y: leftCoords[i].y };
+            for (const { coords, conns } of connections) {
+                const index = conns.findIndex(conn => conn.id === pointId);
+                if (index !== -1) {
+                    return { x: coords[index].x, y: coords[index].y };
                 }
             }
 
-            for (let i = 0; i < block.connRight.length; i++) {
-                if (block.connRight[i].id === pointId) {
-                    return { x: rightCoords[i].x, y: rightCoords[i].y };
-                }
-            }
-
-            // Return a default coordinate if not found
+            // Return default coordinates if not found
             return { x: block.x, y: block.y };
         }
 
@@ -1279,6 +1352,10 @@ padding: 0 5px;
         }
 
         _point_details(block, x, y) {
+
+            x -= block.x;
+            y -= block.y;
+
             const radius = 5;
             let matchedPoint = null;
 
@@ -1295,44 +1372,38 @@ padding: 0 5px;
                     }
                 });
             }
-
             return matchedPoint;
         }
 
         _point_line_segment(px, py, x1, y1, x2, y2) {
-            const distance = this._point_line_distance(px, py, x1, y1, x2, y2);
-            const buffer = 5;
-            return distance <= buffer;
+            const d1 = Math.hypot(px - x1, py - y1);
+            const d2 = Math.hypot(px - x2, py - y2);
+            const lineLen = Math.hypot(x2 - x1, y2 - y1);
+
+            return d1 + d2 >= lineLen - 0.1 && d1 + d2 <= lineLen + 0.1;
         }
 
+        // _point_line_segment(px, py, x1, y1, x2, y2) {
+        //     const distance = this._point_line_distance(px, py, x1, y1, x2, y2);
+        //     const buffer = 5;
+        //     return distance <= buffer;
+        // }
+
         _point_line_distance(px, py, x1, y1, x2, y2) {
-            const A = px - x1;
-            const B = py - y1;
-            const C = x2 - x1;
-            const D = y2 - y1;
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const lenSq = dx * dx + dy * dy;
 
-            const dot = (A * C) + (B * D);
-            const len_sq = (C * C) + (D * D);
-            let param = -1;
-            if (len_sq !== 0) {
-                param = dot / len_sq;
+            let t = 0;
+            if (lenSq !== 0) {
+                t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
+                t = Math.max(0, Math.min(1, t));
             }
 
-            let xx, yy;
-            if (param < 0) {
-                xx = x1;
-                yy = y1;
-            } else if (param > 1) {
-                xx = x2;
-                yy = y2;
-            } else {
-                xx = x1 + param * C;
-                yy = y1 + param * D;
-            }
+            const projX = x1 + t * dx;
+            const projY = y1 + t * dy;
 
-            const dx = px - xx;
-            const dy = py - yy;
-            return Math.sqrt((dx * dx) + (dy * dy));
+            return Math.hypot(px - projX, py - projY);
         }
     }
 
@@ -1344,6 +1415,9 @@ padding: 0 5px;
         grid: true,
         gridColor: '#161616',
         gridSize: 20,
+        snapToGrid: false,
+
+        movementResolution: 3,
 
         factorTitleBackground: -20,
         factorDarkColors: -30,

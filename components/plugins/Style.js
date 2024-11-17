@@ -82,8 +82,8 @@ Q.style = (function () {
                     mapping[key] = mapping[key].replace(key, newKey);
 
 
-
                 });
+                console.log(mapping);
             }
 
 
