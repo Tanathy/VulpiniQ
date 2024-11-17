@@ -75,8 +75,7 @@ const _ob = Object, _ar = Array, _ma = Math, _ac = AbortController, _as = AbortS
         }
     }
     Q.Ext = (n, o) => (Q.prototype[n] = o, Q);
-    Q.getGLOBAL = function (i)
-    {
+    Q.getGLOBAL = function (i) {
         return GLOBAL[i];
     };
     Q.setGLOBAL = function (h) {
@@ -639,6 +638,52 @@ Q.Resize = (function () {
         a.push(d);
     };
 })();
+Q.AvgColor = function (image, sampleSize, callback) {
+    let img = new Image();
+    img.crossOrigin = 'Anonymous';
+    if (typeof image === 'string') {
+        img.src = image;
+    } else if (image instanceof HTMLCanvasElement) {
+        img.src = image.toDataURL();
+    } else {
+        _c.error("Invalid image source provided.");
+        return;
+    }
+    img.onload = function () {
+        let canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        let ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        let data = ctx.getImageData(0, 0, img.width, img.height).data;
+        let length = data.length / 4;
+        let samplingRate = 1;
+        if (sampleSize === 'auto') {
+            let factor = _ma.ceil(_ma.sqrt(img.width * img.height) / 32);
+            samplingRate = _ma.max(1, factor);
+        } else if (typeof sampleSize === 'number' && sampleSize > 0) {
+            samplingRate = sampleSize;
+        }
+        let color = { r: 0, g: 0, b: 0 };
+        let count = 0;
+        for (let i = 0; i < length; i += samplingRate) {
+            let idx = i * 4; // Convert to RGBA index
+            color.r += data[idx];
+            color.g += data[idx + 1];
+            color.b += data[idx + 2];
+            count++;
+        }
+        color.r = _ma.floor(color.r / count);
+        color.g = _ma.floor(color.g / count);
+        color.b = _ma.floor(color.b / count);
+        if (typeof callback === 'function') {
+            callback(color);
+        }
+    };
+    img.onerror = function () {
+        _c.error("Failed to load image.");
+    };
+};
 Q.ColorBrightness = function (c, percent) {
     let r, g, b, a = 1;
     let hex = false;
@@ -3280,6 +3325,9 @@ padding: 0 5px;
             this.appearance = _ob.assign({}, this.appearance, custom_style);
             this.darkText = '#ffffff';
             this.lightText = '#000000';
+            this.update = true;
+            this.compiled_render = document.createElement('canvas');
+            this.block_context = this.compiled_render.getContext('2d');
             this._processColors();
         }
         _restyle(object) {
@@ -3312,7 +3360,7 @@ padding: 0 5px;
             });
         }
         _drawContainer(ctx, x, y, width, height) {
-            const { shadowColor, shadowBlur, shadowOffsetX, shadowOffsetY, background, radius } = this.appearance;
+            const { shadowColor, shadowBlur, shadowOffsetX, shadowOffsetY, background, radius, connectionPointSize } = this.appearance;
             ctx.save();
             _ob.assign(ctx, {
                 fillStyle: background,
@@ -3351,134 +3399,117 @@ padding: 0 5px;
             ctx.fillText(title, titleX, titleY);
         }
         parseHTML2Canvas(html, callback) {
-            html = html.replace(/style="[^"]*"/g, '');
-            html = html.replace(/<br>/g, '');
-            if (this.t_text == html) {
-                callback(this.content, this.contentHeight);
-                return;
-            }
-            this.t_text = html;
-            let tempContainer = document.createElement('div');
-            tempContainer.style.position = 'absolute';
-            tempContainer.style.visibility = 'hidden';
-            tempContainer.style.width = (this.width - this.appearance.fontSize) + 'px';
-            document.body.appendChild(tempContainer);
-            let style = document.createElement('style');
-            let st = `
-            table {border-collapse: collapse; width: 100%;}
-            table, th, td {padding: 0; margin: 0; font-size: ${(this.appearance.fontSize * 0.9)}px; line-break: anywhere;border: 1px solid ${this.appearance.node_table_color};}
-            th, td {padding: 1px; text-align: left;}
-            th {background-color: ${this.appearance.node_table_color};}
-            tfoot {background-color: ${this.appearance.node_table_color};}
-            h1, h2, h3, h4, h5, h6 {line-break: anywhere; margin: 0 0 2px 0; padding: 0;}
-            h1 {font-size: ${(this.appearance.fontSize * 1.5)}px;}
-            h2 {font-size: ${(this.appearance.fontSize * 1.4)}px;}
-            h3 {font-size: ${(this.appearance.fontSize * 1.3)}px;}
-            h4 {font-size: ${(this.appearance.fontSize * 1.2)}px;}
-            h5 {font-size: ${(this.appearance.fontSize * 1.1)}px;}
-            h6 {font-size: ${(this.appearance.fontSize * 1.0)}px;}
-                            p { margin: 0; padding: 0; color: ${this.appearance.textColor}; }
-                            ul { margin: 5px 5px; padding-left: 15px; color: ${this.appearance.textColor}; }
-                            li { padding: 0px; margin: 0px; }
-                            div {font-family: ${this.appearance.font}, sans-serif; font-size: ${this.appearance.fontSize}px; color: ${this.appearance.textColor}; }
-                        `;
-            style.innerHTML = st;
-            document.head.appendChild(style);
-            tempContainer.innerHTML = html;
-            this.contentHeight = tempContainer.offsetHeight + this.appearance.padding;
-            document.body.removeChild(tempContainer);
-            document.head.removeChild(style);
-            this.content = document.createElement('canvas');
-            this.content.width = this.width;
-            this.content.height = this.contentHeight;
-            let ctx = this.content.getContext('2d');
-            let data = '<svg xmlns="http://www.w3.org/2000/svg" width="' + (this.width - (this.appearance.padding * 2)) + '" height="' + this.contentHeight + '">' + // Update SVG height
-                '<foreignObject width="100%" height="100%">' +
-                '<style>' +
-                st +
-                '</style>' +
-                '<div xmlns="http://www.w3.org/1999/xhtml">' +
-                html +
-                '</div>' +
-                '</foreignObject>' +
-                '</svg>';
-            let DOMURL = window.URL || window.webkitURL || window;
-            let img = new Image();
-            let svg = new Blob([data], { type: 'image/svg+xml;charset=utf-8' });
-            let url = DOMURL.createObjectURL(svg);
-            img.onload = () => {
-                ctx.drawImage(img, 0, 0);
-                DOMURL.revokeObjectURL(url);
-                callback(this.content, this.contentHeight);
+            const renderElements = () => {
+                if (this.t_text == html) {
+                    callback(this.content, this.contentHeight);
+                    return;
+                }
+                this.t_text = html;
+                let tempContainer = document.createElement('div');
+                tempContainer.style.position = 'absolute';
+                tempContainer.style.visibility = 'hidden';
+                tempContainer.style.width = (this.width - this.appearance.fontSize) + 'px';
+                document.body.appendChild(tempContainer);
+                let style = document.createElement('style');
+                let st = `
+        table {border-collapse: collapse; width: 100%;}
+        table, th, td {padding: 0; margin: 0; font-size: ${(this.appearance.fontSize * 0.9)}px; line-break: anywhere;border: 1px solid ${this.appearance.node_table_color};}
+        th, td {padding: 1px; text-align: left;}
+        th {background-color: ${this.appearance.node_table_color};}
+        tfoot {background-color: ${this.appearance.node_table_color};}
+        h1, h2, h3, h4, h5, h6 {line-break: anywhere; margin: 0 0 2px 0; padding: 0;}
+        h1 {font-size: ${(this.appearance.fontSize * 1.5)}px;}
+        h2 {font-size: ${(this.appearance.fontSize * 1.4)}px;}
+        h3 {font-size: ${(this.appearance.fontSize * 1.3)}px;}
+        h4 {font-size: ${(this.appearance.fontSize * 1.2)}px;}
+        h5 {font-size: ${(this.appearance.fontSize * 1.1)}px;}
+        h6 {font-size: ${(this.appearance.fontSize * 1.0)}px;}
+                        p { margin: 0; padding: 0; color: ${this.appearance.textColor}; }
+                        ul { margin: 5px 5px; padding-left: 15px; color: ${this.appearance.textColor}; }
+                        li { padding: 0px; margin: 0px; }
+                        div {font-family: ${this.appearance.font}, sans-serif; font-size: ${this.appearance.fontSize}px; color: ${this.appearance.textColor}; }
+                    `;
+                style.innerHTML = st;
+                document.head.appendChild(style);
+                tempContainer.innerHTML = html;
+                this.contentHeight = tempContainer.offsetHeight + this.appearance.padding;
+                document.body.removeChild(tempContainer);
+                document.head.removeChild(style);
+                this.content = document.createElement('canvas');
+                this.content.width = this.width;
+                this.content.height = this.contentHeight;
+                let ctx = this.content.getContext('2d');
+                let data = '<svg xmlns="http://www.w3.org/2000/svg" width="' + (this.width - (this.appearance.padding * 2)) + '" height="' + this.contentHeight + '">' + // Update SVG height
+                    '<foreignObject width="100%" height="100%">' +
+                    '<style>' +
+                    st +
+                    '</style>' +
+                    '<div xmlns="http://www.w3.org/1999/xhtml">' +
+                    html +
+                    '</div>' +
+                    '</foreignObject>' +
+                    '</svg>';
+                let DOMURL = window.URL || window.webkitURL || window;
+                let img = new Image();
+                let svg = new Blob([data], { type: 'image/svg+xml;charset=utf-8' });
+                let url = DOMURL.createObjectURL(svg);
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0);
+                    DOMURL.revokeObjectURL(url);
+                    callback(this.content, this.contentHeight);
+                };
+                img.src = url;
             };
-            img.src = url;
+            html = html.replace(/style="[^"]*"/g, '');
+            let images = [];
+            html = html.replace(/<br>/g, '');
+            if (html.includes('<img')) {
+                let imgTags = html.match(/<img[^>]+>/g);
+                imgTags.forEach((imgTag, index) => {
+                    let src = imgTag.match(/src="([^"]*)"/)[1];
+                    let img = new Image();
+                    img.src = src;
+                    img.onload = () => {
+                        images[index] = img;
+                        if (images.length === imgTags.length) {
+                            renderElements();
+                        }
+                    };
+                });
+            }
+            else {
+                renderElements();
+            }
         }
-        draw(ctx) {
+        draw(main_context) {
             const TITLE_HEIGHT = this.appearance.fontSizeTitle + (this.appearance.padding * 2);
             const CONNECTION_HEIGHT = this.appearance.padding + TITLE_HEIGHT;
             const CONNECTION_PADDING = (this.appearance.connectionPointSize * 2) + this.appearance.connectionPointPadding;
             const maxConnectionsHeight = _ma.max(this.connLeft.length, this.connRight.length) * CONNECTION_PADDING;
-            const updateContainerHeight = (contentHeight) => {
-                this.height = TITLE_HEIGHT + (this.appearance.padding * 2) + maxConnectionsHeight + contentHeight + this.appearance.padding;
-            };
-            const drawImageContent = (img, drawX, drawY, drawWidth, drawHeight) => {
-                const contentHeight = drawHeight + this.appearance.padding;
-                updateContainerHeight(contentHeight);
-                this._drawContainer(ctx, this.x, this.y, this.width, this.height, this.appearance.radius);
-                this._drawTitle(ctx, this.x, this.y, this.width, TITLE_HEIGHT, this.name);
-                ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-                this.drawConnectionPoints(ctx, CONNECTION_HEIGHT, CONNECTION_PADDING);
-            };
-            const isBase64Image = this.text.includes('base64');
-            const extractBase64Data = () => {
-                const base64Match = this.text.match(/base64,([^"]*)/);
-                return base64Match && base64Match[1] ? base64Match[1] : _n;
-            };
-            if (isBase64Image) {
-                const base64Data = extractBase64Data();
-                if (!base64Data) return;
-                if (this.base64Data === base64Data.length) {
-                    const imgWidth = this.img.width;
-                    const imgHeight = this.img.height;
-                    const aspectRatio = imgHeight / imgWidth;
-                    const drawWidth = this.width - (this.appearance.padding * 2);
-                    const drawHeight = drawWidth * aspectRatio;
-                    const drawX = this.x + this.appearance.padding;
-                    const drawY = this.y + TITLE_HEIGHT + (this.appearance.padding) + maxConnectionsHeight;
-                    drawImageContent(this.img, drawX, drawY, drawWidth, drawHeight);
-                    return;
-                }
-                const unescapedBase64Data = 'data:image/png;base64,' + decodeURIComponent(base64Data);
-                this.img = new Image();
-                this.img.src = unescapedBase64Data;
-                this.base64Data = base64Data.length;
-                this.img.onload = () => {
-                    const imgMatch = this.text.match(/<img[^>]+src="([^">]+)"/);
-                    if (imgMatch && imgMatch[1]) {
-                        this.text = `<img src="${imgMatch[1]}"/>`;
-                    }
-                    const imgWidth = this.img.width;
-                    const imgHeight = this.img.height;
-                    const aspectRatio = imgHeight / imgWidth;
-                    const drawWidth = this.width - (this.appearance.padding * 2);
-                    const drawHeight = drawWidth * aspectRatio;
-                    const drawX = this.x + this.appearance.padding;
-                    const drawY = this.y + TITLE_HEIGHT + (this.appearance.padding) + maxConnectionsHeight;
-                    drawImageContent(this.img, drawX, drawY, drawWidth, drawHeight);
+            if (this.update) {
+                const updateContainerHeight = (contentHeight) => {
+                    this.height = TITLE_HEIGHT + (this.appearance.padding * 2) + maxConnectionsHeight + contentHeight + this.appearance.padding;
+                    this.block_context.canvas.height = this.height;
+                    this.block_context.canvas.width = this.width + (this.appearance.connectionPointSize * 2);
                 };
-                return;
-            } else {
                 this.parseHTML2Canvas(this.text, (canvas, contentHeight) => {
                     updateContainerHeight(contentHeight);
-                    this._drawContainer(ctx, this.x, this.y, this.width, this.height, this.appearance.radius);
-                    this._drawTitle(ctx, this.x, this.y, this.width, TITLE_HEIGHT, this.name);
-                    ctx.drawImage(canvas, this.x + this.appearance.padding, this.y + TITLE_HEIGHT + this.appearance.padding + maxConnectionsHeight);
-                    this.drawConnectionPoints(ctx, CONNECTION_HEIGHT, CONNECTION_PADDING);
+                    this._drawContainer(this.block_context, this.appearance.connectionPointSize, 0, this.width - 5, this.height, this.appearance.radius);
+                    this._drawTitle(this.block_context, this.appearance.connectionPointSize, 0, this.width - this.appearance.connectionPointSize, TITLE_HEIGHT, this.name);
+                    this.block_context.drawImage(canvas, this.appearance.padding, TITLE_HEIGHT + this.appearance.padding + maxConnectionsHeight);
+                    this.drawConnectionPoints(this.block_context, CONNECTION_HEIGHT, CONNECTION_PADDING);
+                    main_context.drawImage(this.compiled_render, this.x, this.y);
                 });
+                this.update = false;
             }
+            else {
+                this.drawConnectionPoints(this.block_context, CONNECTION_HEIGHT, CONNECTION_PADDING);
+                main_context.drawImage(this.compiled_render, this.x, this.y);
+            }
+            return;
         }
         drawConnectionPoints(ctx, paddingTop, height) {
-            const connectionY = this.y + paddingTop;
+            const connectionY = paddingTop;
             const font = `bold ${this.appearance.fontSizeConnection}px ${this.appearance.font}`;
             const pointSize = this.appearance.connectionPointSize;
             const connectionPaddingX = this.appearance.connectionTextPaddingX;
@@ -3499,10 +3530,10 @@ padding: 0 5px;
                 });
             };
             if (_ar.isArray(this.connLeft)) {
-                drawConnectionPoints(this.connLeft, this.leftConnCoords, this.x, (title, baseX) => baseX + connectionPaddingX * 2);
+                drawConnectionPoints(this.connLeft, this.leftConnCoords, this.appearance.connectionPointSize, (title, baseX) => baseX + connectionPaddingX * 2);
             }
             if (_ar.isArray(this.connRight)) {
-                drawConnectionPoints(this.connRight, this.rightConnCoords, this.x + this.width, (title, baseX) => baseX - ctx.measureText(title).width - connectionPaddingX * 2);
+                drawConnectionPoints(this.connRight, this.rightConnCoords, this.width, (title, baseX) => baseX - ctx.measureText(title).width - connectionPaddingX * 2);
             }
         }
         addConnection(conn) {
@@ -3515,7 +3546,10 @@ padding: 0 5px;
             return mouseX >= this.x && mouseX <= this.x + this.width && mouseY >= this.y && mouseY <= this.y + this.height;
         }
         getAllConnectionCoords() {
-            return [...this.leftConnCoords, ...this.rightConnCoords];
+            return [
+                ...this.leftConnCoords.map(coord => ({ x: coord.x + this.x, y: coord.y + this.y })),
+                ...this.rightConnCoords.map(coord => ({ x: coord.x + this.x, y: coord.y + this.y }))
+            ];
         }
         getConnectionCoord(point, index) {
             return point === 'left' ? this.leftConnCoords[index] : this.rightConnCoords[index];
@@ -3660,28 +3694,33 @@ padding: 0 5px;
             this.canvas_context.clearRect(0, 0, this.width, this.height);
             this.render_grid();
             this.connections.forEach(conn => {
-                let startColor = this._getConnectionColor(conn.start.block, conn.start.point);
-                let endColor = this._getConnectionColor(conn.end.block, conn.end.point);
+                let startBlock = conn.start.block;
+                let endBlock = conn.end.block;
+                let startColor = this._getConnectionColor(startBlock, conn.start.point);
+                let endColor = this._getConnectionColor(endBlock, conn.end.point);
                 this.canvas_context.strokeStyle = 'rgb(150, 150, 150)';
                 this.canvas_context.beginPath();
                 this.canvas_context.lineWidth = 2;
-                let gradient = this.canvas_context.createLinearGradient(conn.start.x, conn.start.y, conn.end.x, conn.end.y);
+                let gradient = this.canvas_context.createLinearGradient(
+                    startBlock.x + conn.start.x, startBlock.y + conn.start.y,
+                    endBlock.x + conn.end.x, endBlock.y + conn.end.y
+                );
                 gradient.addColorStop(0, startColor);
                 gradient.addColorStop(1, endColor);
                 this.canvas_context.strokeStyle = gradient;
-                this.canvas_context.moveTo(conn.start.x, conn.start.y);
-                this.canvas_context.lineTo(conn.end.x, conn.end.y);
+                this.canvas_context.moveTo(startBlock.x + conn.start.x, startBlock.y + conn.start.y);
+                this.canvas_context.lineTo(endBlock.x + conn.end.x, endBlock.y + conn.end.y);
                 this.canvas_context.stroke();
-                let dx = conn.end.x - conn.start.x;
-                let dy = conn.end.y - conn.start.y;
+                let dx = (endBlock.x + conn.end.x) - (startBlock.x + conn.start.x);
+                let dy = (endBlock.y + conn.end.y) - (startBlock.y + conn.start.y);
                 let length = _ma.sqrt(dx * dx + dy * dy);
                 let unitDx = dx / length;
                 let unitDy = dy / length;
                 let arrowLength = 10;
                 let arrowWidth = 5;
                 for (let i = 100; i < length; i += 200) {
-                    let x = conn.start.x + unitDx * i;
-                    let y = conn.start.y + unitDy * i;
+                    let x = (startBlock.x + conn.start.x) + unitDx * i;
+                    let y = (startBlock.y + conn.start.y) + unitDy * i;
                     this.canvas_context.beginPath();
                     this.canvas_context.moveTo(x, y);
                     this.canvas_context.lineTo(x - arrowLength * unitDx + arrowWidth * unitDy, y - arrowLength * unitDy - arrowWidth * unitDx);
@@ -3692,13 +3731,17 @@ padding: 0 5px;
                 }
             });
             if (this.connection_start && this.connection_end === _n) {
-                let startColor = this._getConnectionColor(this.connection_start.block, this.connection_start.point);
-                let gradient = this.canvas_context.createLinearGradient(this.connection_start.x, this.connection_start.y, this.mouseX, this.mouseY);
+                let startBlock = this.connection_start.block;
+                let startColor = this._getConnectionColor(startBlock, this.connection_start.point);
+                let gradient = this.canvas_context.createLinearGradient(
+                    startBlock.x + this.connection_start.x, startBlock.y + this.connection_start.y,
+                    this.mouseX, this.mouseY
+                );
                 gradient.addColorStop(0, startColor);
                 gradient.addColorStop(1, "rgb(150, 150, 150)");
                 this.canvas_context.strokeStyle = gradient;
                 this.canvas_context.beginPath();
-                this.canvas_context.moveTo(this.connection_start.x, this.connection_start.y);
+                this.canvas_context.moveTo(startBlock.x + this.connection_start.x, startBlock.y + this.connection_start.y);
                 this.canvas_context.lineTo(this.mouseX, this.mouseY);
                 this.canvas_context.stroke();
             }
@@ -3752,6 +3795,7 @@ padding: 0 5px;
             let content = preferences.find('#' + classes.content).html();
             block.name = name;
             block.text = content;
+            block.update = true;
             if (callback) callback(block);
         }
         _event_pointer_down(event) {
@@ -3818,16 +3862,20 @@ padding: 0 5px;
                 this.render();
             }
             this.connections.forEach(conn => {
-                if (this._point_line_segment(mouseX, mouseY, conn.start.x, conn.start.y, conn.end.x, conn.end.y)) {
+                if (this._point_line_segment(
+                    mouseX, mouseY,
+                    conn.start.block.x + conn.start.x, conn.start.block.y + conn.start.y,
+                    conn.end.block.x + conn.end.x, conn.end.block.y + conn.end.y
+                )) {
                     if (!this.isOverConnection) {
                         this.canvas_context.beginPath();
-                        this.canvas_context.arc(conn.start.x, conn.start.y, this.appearance.connectionPointSize + 2, 0, 2 * _ma.PI);
+                        this.canvas_context.arc(conn.start.block.x + conn.start.x, conn.start.block.y + conn.start.y, this.appearance.connectionPointSize + 2, 0, 2 * _ma.PI);
                         let startColor = this._getConnectionColor(conn.start.block, conn.start.point);
                         this.canvas_context.strokeStyle = startColor;
                         this.canvas_context.lineWidth = 2;
                         this.canvas_context.stroke();
                         this.canvas_context.beginPath();
-                        this.canvas_context.arc(conn.end.x, conn.end.y, this.appearance.connectionPointSize + 2, 0, 2 * _ma.PI);
+                        this.canvas_context.arc(conn.end.block.x + conn.end.x, conn.end.block.y + conn.end.y, this.appearance.connectionPointSize + 2, 0, 2 * _ma.PI);
                         let endColor = this._getConnectionColor(conn.end.block, conn.end.point);
                         this.canvas_context.strokeStyle = endColor;
                         this.canvas_context.lineWidth = 2;
@@ -3919,7 +3967,11 @@ padding: 0 5px;
             }
             for (let i = 0; i < this.connections.length; i++) {
                 const conn = this.connections[i];
-                if (this._point_line_segment(mouseX, mouseY, conn.start.x, conn.start.y, conn.end.x, conn.end.y)) {
+                if (this._point_line_segment(
+                    mouseX, mouseY,
+                    conn.start.block.x + conn.start.x, conn.start.block.y + conn.start.y,
+                    conn.end.block.x + conn.end.x, conn.end.block.y + conn.end.y
+                )) {
                     const startBlock = this.blocks.find(b => b.id === conn.start.block.id);
                     const endBlock = this.blocks.find(b => b.id === conn.end.block.id);
                     if (startBlock && endBlock) {
@@ -4122,6 +4174,8 @@ padding: 0 5px;
             return block.getAllConnectionCoords().some(coord => _ma.abs(x - coord.x) < radius && _ma.abs(y - coord.y) < radius);
         }
         _point_details(block, x, y) {
+            x -= block.x;
+            y -= block.y;
             const radius = 5;
             let matchedPoint = _n;
             block.leftConnCoords.forEach((coord, index) => {
@@ -4139,9 +4193,10 @@ padding: 0 5px;
             return matchedPoint;
         }
         _point_line_segment(px, py, x1, y1, x2, y2) {
-            const distance = this._point_line_distance(px, py, x1, y1, x2, y2);
-            const buffer = 5;
-            return distance <= buffer;
+            const d1 = _ma.hypot(px - x1, py - y1);
+            const d2 = _ma.hypot(px - x2, py - y2);
+            const lineLen = _ma.hypot(x2 - x1, y2 - y1);
+            return d1 + d2 >= lineLen - 0.1 && d1 + d2 <= lineLen + 0.1;
         }
         _point_line_distance(px, py, x1, y1, x2, y2) {
             const dx = x2 - x1;

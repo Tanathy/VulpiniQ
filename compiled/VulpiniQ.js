@@ -75,8 +75,7 @@ const _ob = Object, _ar = Array, _ma = Math, _ac = AbortController, _as = AbortS
         }
     }
     Q.Ext = (n, o) => (Q.prototype[n] = o, Q);
-    Q.getGLOBAL = function (i)
-    {
+    Q.getGLOBAL = function (i) {
         return GLOBAL[i];
     };
     Q.setGLOBAL = function (h) {
@@ -639,6 +638,52 @@ Q.Resize = (function () {
         a.push(d);
     };
 })();
+Q.AvgColor = function (image, sampleSize, callback) {
+    let img = new Image();
+    img.crossOrigin = 'Anonymous';
+    if (typeof image === 'string') {
+        img.src = image;
+    } else if (image instanceof HTMLCanvasElement) {
+        img.src = image.toDataURL();
+    } else {
+        _c.error("Invalid image source provided.");
+        return;
+    }
+    img.onload = function () {
+        let canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        let ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        let data = ctx.getImageData(0, 0, img.width, img.height).data;
+        let length = data.length / 4;
+        let samplingRate = 1;
+        if (sampleSize === 'auto') {
+            let factor = _ma.ceil(_ma.sqrt(img.width * img.height) / 32);
+            samplingRate = _ma.max(1, factor);
+        } else if (typeof sampleSize === 'number' && sampleSize > 0) {
+            samplingRate = sampleSize;
+        }
+        let color = { r: 0, g: 0, b: 0 };
+        let count = 0;
+        for (let i = 0; i < length; i += samplingRate) {
+            let idx = i * 4; // Convert to RGBA index
+            color.r += data[idx];
+            color.g += data[idx + 1];
+            color.b += data[idx + 2];
+            count++;
+        }
+        color.r = _ma.floor(color.r / count);
+        color.g = _ma.floor(color.g / count);
+        color.b = _ma.floor(color.b / count);
+        if (typeof callback === 'function') {
+            callback(color);
+        }
+    };
+    img.onerror = function () {
+        _c.error("Failed to load image.");
+    };
+};
 Q.ColorBrightness = function (c, percent) {
     let r, g, b, a = 1;
     let hex = false;
