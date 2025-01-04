@@ -26,6 +26,8 @@ Q.Icons = function () {
 	--icon_window-full: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 H 50.860555 84.417403 V 50.860554 84.417401 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z"/></svg>');
 	--icon_window-minimize: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 0.5252846,83.893071 V 79.698469 H 50.860555 101.19582 v 4.194602 4.19461 H 50.860555 0.5252846 Z"/></svg>');
 	--icon_window-windowed: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 h 8.389212 8.389212 V 8.9144961 0.52528408 H 67.638978 101.19582 V 34.082131 67.638977 h -8.389207 -8.38921 v 8.389212 8.389212 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z M 92.806613,34.082131 V 8.9144961 H 67.638978 42.471343 v 4.1946059 4.194606 h 20.973029 20.973031 v 20.973029 20.973029 h 4.1946 4.19461 z"/></svg>');
+	--icon_zoom-in: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0V0z"/></svg>');
+	--icon_zoom-out: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0V0z"/></svg>');
 }
 .svg_icon {-webkit-mask-size: cover;mask-size: cover;-webkit-mask-repeat: no-repeat;mask-repeat: no-repeat;-webkit-mask-position: center;mask-position: center;background-color: currentColor;}
 .svg_iconsize { width:100%;height:100%; }
@@ -40,6 +42,8 @@ Q.Icons = function () {
 .window-full { mask-image: var(--icon_window-full);}
 .window-minimize { mask-image: var(--icon_window-minimize);}
 .window-windowed { mask-image: var(--icon_window-windowed);}
+.zoom-in { mask-image: var(--icon_zoom-in);}
+.zoom-out { mask-image: var(--icon_zoom-out);}
 `
 ,{
   "arrow-down": "arrow-down",
@@ -53,6 +57,8 @@ Q.Icons = function () {
   "window-full": "window-full",
   "window-minimize": "window-minimize",
   "window-windowed": "window-windowed",
+  "zoom-in": "zoom-in",
+  "zoom-out": "zoom-out",
   "svg_icon": "svg_icon",
   "svg_iconsize": "svg_iconsize"
 }, true);

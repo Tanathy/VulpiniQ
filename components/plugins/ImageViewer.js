@@ -137,13 +137,18 @@ width: 50px;
 transform: scale(0.5);
     }
 
-.viewer_close_button {
+.viewer_button_container {
+        z-index: 10000;
+        position: absolute;
+    top: 5px;
+    right: 5px;
+    display: flex;
+    }
+
+
+.viewer_close_button, .viewer_zoom_in_button, .viewer_zoom_out_button {
     width: 30px;
     height: 30px;
-    position: absolute;
-    top: 10px;
-    right: 10px;
-        z-index: 10000;
     cursor: pointer;
     color: white;
     opacity: 0.5;
@@ -175,6 +180,7 @@ transform: scale(0.5);
             this.image_top = Q('<div>', { class: 'image_top' });
             this.image_bottom = Q('<div>', { class: 'image_bottom' });
             this.image_info = Q('<div>', { class: 'image_info' });
+            this.button_container = Q('<div>', { class: 'viewer_button_container' });
 
             this.side_left = Q('<div>', { class: 'side_left' });
             this.side_right = Q('<div>', { class: 'side_right' });
@@ -182,20 +188,25 @@ transform: scale(0.5);
             this.left_button = Q('<div>', { class: 'viewer_left_button' });
             this.right_button = Q('<div>', { class: 'viewer_right_button' });
             this.close_button = Q('<div>', { class: 'viewer_close_button' });
+            this.zoom_in_button = Q('<div>', { class: 'viewer_zoom_in_button' });
+            this.zoom_out_button = Q('<div>', { class: 'viewer_zoom_out_button' });
 
             this.left_button.append(this.icons.get('navigation-left', 'viewer_navicon'));
             this.right_button.append(this.icons.get('navigation-right', 'viewer_navicon'));
             this.close_button.append(this.icons.get('navigation-close'));
+            this.zoom_in_button.append(this.icons.get('zoom-in'));
+            this.zoom_out_button.append(this.icons.get('zoom-out'));
 
             this.side_left.append(this.left_button);
             this.side_right.append(this.right_button);
 
             this.image_top.append(this.image_info);
+            this.button_container.append(this.zoom_in_button, this.zoom_out_button, this.close_button);
 
             this.image_wrapper.append(this.image_top, this.image_bottom);
 
             this.image_panel.append(this.side_left, this.image_wrapper, this.side_right);
-            this.image_viewer.append(this.image_panel, this.close_button);
+            this.image_viewer.append(this.image_panel, this.button_container);
 
 
             this.left_button.on('click', () => this.prev());
