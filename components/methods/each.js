@@ -6,6 +6,7 @@
 // Example: Q(selector).each((index, element) => console.log(index, element)); // Logs the index and element for each node in the selection <br> Q(selector).each((index, element) => element.style.color = 'red'); // Changes the text color to red for each selected element
 // Variables: callback, el, index
 Q.Ext('each', function (callback) {
+    if (!this.nodes) return this;
     this.nodes.forEach((el, index) => callback.call(el, index, el));
     return this;
 });

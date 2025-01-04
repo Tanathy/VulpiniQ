@@ -8,7 +8,14 @@
 Q.Ext('wrap', function (wrapper) {
     return this.each(el => {
         const parent = this.nodes[el].parentNode;
-        const newParent = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;
+        let newParent;
+        if (typeof wrapper === 'string') {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = wrapper.trim();
+            newParent = tempDiv.firstElementChild;
+        } else {
+            newParent = wrapper;
+        }
         parent.insertBefore(newParent, this.nodes[el]);
         newParent.appendChild(this.nodes[el]);
     });

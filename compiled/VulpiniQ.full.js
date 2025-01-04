@@ -191,6 +191,7 @@ Q.Ext('data', function (key, b) {
     return this.each(c => this.nodes[c].dataset[key] = b);
 });
 Q.Ext('each', function (callback) {
+    if (!this.nodes) return this;
     this.nodes.forEach((b, c) => callback.call(b, c, b));
     return this;
 });
@@ -406,7 +407,9 @@ Q.Ext('on', function (a, b, c) {
     };
     c = { ...d, ...c };
     return this.each(e => {
-        a.split(' ').forEach(f => this.nodes[e].addEventListener(f, b, c));
+        a.split(' ').forEach(f => {
+            this.nodes[e].addEventListener(f, b, c);
+        });
     });
 });
 Q.Ext('parent', function () {
@@ -573,7 +576,14 @@ Q.Ext('width', function (value) {
 Q.Ext('wrap', function (c) {
     return this.each(d => {
         const a = this.nodes[d].parentNode;
-        const b = typeof c === 'string' ? document.createElement(c) : c;
+        let b;
+        if (typeof c === 'string') {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = c.trim();
+            b = tempDiv.firstElementChild;
+        } else {
+            b = c;
+        }
         a.insertBefore(b, this.nodes[d]);
         b.appendChild(this.nodes[d]);
     });
@@ -581,7 +591,14 @@ Q.Ext('wrap', function (c) {
 Q.Ext('wrapAll', function (wrapper) {
     return this.each(e => {
         const b = this.nodes[e].parentNode;
-        const c = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;
+        let c;
+        if (typeof wrapper === 'string') {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = wrapper.trim();
+            c = tempDiv.firstElementChild;
+        } else {
+            c = wrapper;
+        }
         b.insertBefore(c, this.nodes[0]);
         this.nodes.forEach(d => c.appendChild(d));
     });
@@ -732,11 +749,11 @@ Q.ColorBrightness = function (c, percent) {
     }
 }
 Q.Debounce = function (id, b, c) {
-    let glob = Q.getGLOBAL('Debounce');
-    if (glob && glob[id]) {
-        _ct(glob[id]);
+    let d = Q.getGLOBAL('Debounce');
+    if (d && d[id]) {
+        _ct(d[id]);
     }
-    Q.setGLOBAL({ Debounce: { ...glob, [id]: _st(c, b) } });
+    Q.setGLOBAL({ Debounce: { ...d, [id]: _st(c, b) } });
 };
 Q.HSL2RGB = function (h, s, l) {
     let r, g, b;
@@ -2846,8 +2863,9 @@ transform: scale(0.5);
         position: absolute;
     top: 5px;
     right: 5px;
+    display: flex;
     }
-.viewer_close_button {
+.viewer_close_button, .viewer_zoom_in_button, .viewer_zoom_out_button {
     width: 30px;
     height: 30px;
     cursor: pointer;
@@ -2884,13 +2902,17 @@ transform: scale(0.5);
             this.left_button = Q('<div>', { class: 'viewer_left_button' });
             this.right_button = Q('<div>', { class: 'viewer_right_button' });
             this.close_button = Q('<div>', { class: 'viewer_close_button' });
+            this.zoom_in_button = Q('<div>', { class: 'viewer_zoom_in_button' });
+            this.zoom_out_button = Q('<div>', { class: 'viewer_zoom_out_button' });
             this.left_button.append(this.icons.get('navigation-left', 'viewer_navicon'));
             this.right_button.append(this.icons.get('navigation-right', 'viewer_navicon'));
             this.close_button.append(this.icons.get('navigation-close'));
+            this.zoom_in_button.append(this.icons.get('zoom-in'));
+            this.zoom_out_button.append(this.icons.get('zoom-out'));
             this.side_left.append(this.left_button);
             this.side_right.append(this.right_button);
             this.image_top.append(this.image_info);
-            this.button_container.append(this.close_button);
+            this.button_container.append(this.zoom_in_button, this.zoom_out_button, this.close_button);
             this.image_wrapper.append(this.image_top, this.image_bottom);
             this.image_panel.append(this.side_left, this.image_wrapper, this.side_right);
             this.image_viewer.append(this.image_panel, this.button_container);

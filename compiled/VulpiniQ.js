@@ -191,6 +191,7 @@ Q.Ext('data', function (key, b) {
     return this.each(c => this.nodes[c].dataset[key] = b);
 });
 Q.Ext('each', function (callback) {
+    if (!this.nodes) return this;
     this.nodes.forEach((b, c) => callback.call(b, c, b));
     return this;
 });
@@ -406,7 +407,9 @@ Q.Ext('on', function (a, b, c) {
     };
     c = { ...d, ...c };
     return this.each(e => {
-        a.split(' ').forEach(f => this.nodes[e].addEventListener(f, b, c));
+        a.split(' ').forEach(f => {
+            this.nodes[e].addEventListener(f, b, c);
+        });
     });
 });
 Q.Ext('parent', function () {
@@ -573,7 +576,14 @@ Q.Ext('width', function (value) {
 Q.Ext('wrap', function (c) {
     return this.each(d => {
         const a = this.nodes[d].parentNode;
-        const b = typeof c === 'string' ? document.createElement(c) : c;
+        let b;
+        if (typeof c === 'string') {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = c.trim();
+            b = tempDiv.firstElementChild;
+        } else {
+            b = c;
+        }
         a.insertBefore(b, this.nodes[d]);
         b.appendChild(this.nodes[d]);
     });
@@ -581,7 +591,14 @@ Q.Ext('wrap', function (c) {
 Q.Ext('wrapAll', function (wrapper) {
     return this.each(e => {
         const b = this.nodes[e].parentNode;
-        const c = typeof wrapper === 'string' ? document.createElement(wrapper) : wrapper;
+        let c;
+        if (typeof wrapper === 'string') {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = wrapper.trim();
+            c = tempDiv.firstElementChild;
+        } else {
+            c = wrapper;
+        }
         b.insertBefore(c, this.nodes[0]);
         this.nodes.forEach(d => c.appendChild(d));
     });
@@ -732,11 +749,11 @@ Q.ColorBrightness = function (c, percent) {
     }
 }
 Q.Debounce = function (id, b, c) {
-    let glob = Q.getGLOBAL('Debounce');
-    if (glob && glob[id]) {
-        _ct(glob[id]);
+    let d = Q.getGLOBAL('Debounce');
+    if (d && d[id]) {
+        _ct(d[id]);
     }
-    Q.setGLOBAL({ Debounce: { ...glob, [id]: _st(c, b) } });
+    Q.setGLOBAL({ Debounce: { ...d, [id]: _st(c, b) } });
 };
 Q.HSL2RGB = function (h, s, l) {
     let r, g, b;

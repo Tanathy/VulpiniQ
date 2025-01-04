@@ -14,6 +14,8 @@ Q.Ext('on', function (events, handler, options) {
     options = { ...defaultOptions, ...options };
 
     return this.each(el => {
-        events.split(' ').forEach(event => this.nodes[el].addEventListener(event, handler, options));
+        events.split(' ').forEach(event => {
+            this.nodes[el].addEventListener(event, handler, options);
+        });
     });
 });
