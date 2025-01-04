@@ -10,3 +10,4 @@ Q.Ext('val', function (input) {
     }
     return this.each(el => this.nodes[el].value = input);
 });
+ 
