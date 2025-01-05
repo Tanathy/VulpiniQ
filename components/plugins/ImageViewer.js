@@ -31,17 +31,24 @@ Q.ImageViewer = function () {
 .image_wrapper {
     width: 100%;
     height: 100%;
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
     opacity: 0;
     transition: all 0.15s;
-    animation: fadeInScale 0.3s forwards;
     margin: 0 1px;
     display: flex;
         flex-direction: column;
+        animation: fadeInScale 0.3s forwards;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.image_canvas {
+position: absolute;
+max-width: 100%;
+max-height: 100%;
+margin: auto;
+transition: width 0.3s, height 0.3s;
 }
 
 @keyframes fadeInScale {
@@ -59,11 +66,18 @@ image_viewer_wrapper .image_panel {
 
 .image_top, .image_bottom {
 width: 100%;
+z-index: 1;
+position: absolute;
     }
 
 .image_top {
+top: 0;
 text-align: left;
 background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
+    }
+
+    .image_bottom {
+bottom: 0;
     }
 
 .side_left, .side_right {
@@ -156,7 +170,7 @@ transform: scale(0.5);
     `, {
         'image_viewer_wrapper': 'image_viewer_wrapper',
         'image_viewer_pseudo': 'image_viewer_pseudo',
-    });
+    },false);
 
     class Viewer {
         constructor() {
@@ -177,6 +191,7 @@ transform: scale(0.5);
             this.image_viewer = Q('<div>', { class: classes.image_viewer_wrapper });
             this.image_panel = Q('<div>', { class: 'image_panel' });
             this.image_wrapper = Q('<div>', { class: 'image_wrapper' });
+            this.image_canvas = Q('<canvas>', { class: 'image_canvas' });
             this.image_top = Q('<div>', { class: 'image_top' });
             this.image_bottom = Q('<div>', { class: 'image_bottom' });
             this.image_info = Q('<div>', { class: 'image_info' });
@@ -203,7 +218,7 @@ transform: scale(0.5);
             this.image_top.append(this.image_info);
             this.button_container.append(this.zoom_in_button, this.zoom_out_button, this.close_button);
 
-            this.image_wrapper.append(this.image_top, this.image_bottom);
+            this.image_wrapper.append(this.image_canvas, this.image_top, this.image_bottom);
 
             this.image_panel.append(this.side_left, this.image_wrapper, this.side_right);
             this.image_viewer.append(this.image_panel, this.button_container);
@@ -262,14 +277,14 @@ transform: scale(0.5);
             if (!this.resizing) {
                 //add blur to image
                 this.resizing = true;
-                this.image_wrapper.css({ filter: 'blur(10px)', transition: 'all 0.1s ease-in-out' });
+                this.image_canvas.css({ filter: 'blur(10px)', transition: 'all 0.1s ease-in-out' });
             }
 
             Q.Debounce('img_viewer', 500, () => {
                 this.updateImage();
                 this.resizing = false;
                 //remove blur from image
-                this.image_wrapper.css({ filter: 'none', transition: '' });
+                this.image_canvas.css({ filter: 'none', transition: '' });
             });
 
         }
@@ -351,9 +366,13 @@ transform: scale(0.5);
             const isAnimated = /\.(webm|apng|gif)$/i.test(src.src);
 
             img.onload = () => {
+                const canvas = this.image_canvas.nodes[0];
+                const ctx = canvas.getContext('2d');
+
                 if (isAnimated) {
-                    // If the image is animated, set it directly without resizing
-                    this.image_wrapper.css({ 'background-image': `url(${src.src})` });
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
                     return;
                 }
 
@@ -369,22 +388,22 @@ transform: scale(0.5);
 
                 //if upscale happens, rather apply the original as background
                 if (width > img.width && height > img.height) {
-                    this.image_wrapper.css({ 'background-image': `url(${src.src})` });
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
                     return;
                 }
 
-                const canvas = document.createElement('canvas');
                 canvas.width = width;
                 canvas.height = height;
-                const ctx = canvas.getContext('2d');
 
                 try {
                     ctx.drawImage(img, 0, 0, width, height);
-                    const dataURL = canvas.toDataURL();
-                    this.image_wrapper.css({ 'background-image': `url(${dataURL})` });
                 } catch (error) {
                     // console.error('Canvas operation failed:', error);
-                    this.image_wrapper.css({ 'background-image': `url(${src.src})` });
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
                 }
             };
             img.src = src.src;

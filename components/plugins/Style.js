@@ -45,7 +45,7 @@ Q.style = (function () {
 
     }, { once: true });
 
-    return function (styles, mapping = null, obfuscate = false) {
+    return function (styles, mapping = null) {
         if (typeof styles === 'string') {
             const rootContentMatch = styles.match(/:root\s*{([^}]*)}/);
             if (rootContentMatch) {
@@ -54,24 +54,8 @@ Q.style = (function () {
                 styleData.root += rootContent.join(';') + ';';
             }
 
-            // if (!disableObfuscation && Object.keys(mapping).length === 0) {
-            //     const generatedKeys = new Set();
-            //     mapping = Object.keys(mapping).reduce((acc, key) => {
-            //         let newKey;
-            //         do {
-            //             newKey = ID(5,'_');
-            //         } while (generatedKeys.has(newKey));
-
-            //         generatedKeys.add(newKey);
-            //         acc[key] = newKey;
-            //         styles = styles.replace(new RegExp(`\\b${key}\\b`, 'gm'), acc[key]);
-            //         return acc;
-            //     }, {});
-            // }
-
-
             //obfuscate the class and id names using the mapping object. mapping object may contain . and #.
-            if (obfuscate && mapping) {
+            if (mapping) {
                 const keys = Object.keys(mapping);
                 keys.forEach((key) => {
                     let newKey = Q.ID(5, '_');
@@ -80,18 +64,14 @@ Q.style = (function () {
                     styles = styles.replace(new RegExp(`\\b${key}\\b`, 'gm'), newKey);
                     //replace the value of the key in the mapping object as well.
                     mapping[key] = mapping[key].replace(key, newKey);
-
-
                 });
                 console.log(mapping);
             }
 
-
-
             styleData.gen += styles;
 
             applyStyles();
-                return mapping;
+            return mapping;
         } else {
             console.error('Invalid styles parameter. Expected a string.');
         }
