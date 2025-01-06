@@ -2793,9 +2793,8 @@ Q.ImageViewer = function () {
     width: 100%;
     height: 100%;
     margin: auto;
-    filter: blur(50px);
-    mix-blend-mode: hard-light;
-    opacity: 0.3;
+    filter: blur(25px);
+    opacity: 0.75;
     z-index: 0;
 }
 @keyframes fadeInScale {
@@ -2917,6 +2916,7 @@ Q.ImageViewer = function () {
             this.config = {
                 panAndZoom: true,
                 ambient: true,
+                ambientSize: 1.2,
                 dynamicBackground: true
             };
         }
@@ -3157,12 +3157,12 @@ Q.ImageViewer = function () {
                 const ambientCtx = ambientCanvas.getContext('2d');
                 canvas.width = this.image_wrapper.nodes[0].clientWidth;
                 canvas.height = this.image_wrapper.nodes[0].clientHeight;
-                ambientCanvas.width = canvas.width;
-                ambientCanvas.height = canvas.height;
+                ambientCanvas.width = canvas.width * 1.2;
+                ambientCanvas.height = canvas.height * 1.2;
                 if (isAnimated) {
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     if (this.config.ambient) {
-                        ambientCtx.drawImage(img, 0, 0, ambientCanvas.width, ambientCanvas.height);
+                        ambientCtx.drawImage(img, (ambientCanvas.width - canvas.width) / 2, (ambientCanvas.height - canvas.height) / 2, canvas.width, canvas.height);
                     }
                     return;
                 }
@@ -3180,7 +3180,9 @@ Q.ImageViewer = function () {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(img, 0, 0, width, height);
                 if (this.config.ambient) {
-                    ambientCtx.setTransform(this.scale, 0, 0, this.scale, this.panX + offsetX, this.panY + offsetY);
+                    const ambientOffsetX = (ambientCanvas.width - width * this.config.ambientSize) / 2;
+                    const ambientOffsetY = (ambientCanvas.height - height * this.config.ambientSize) / 2;
+                    ambientCtx.setTransform(this.scale * this.config.ambientSize, 0, 0, this.scale * this.config.ambientSize, this.panX * this.config.ambientSize + ambientOffsetX, this.panY * this.config.ambientSize + ambientOffsetY);
                     ambientCtx.clearRect(0, 0, ambientCanvas.width, ambientCanvas.height);
                     ambientCtx.drawImage(img, 0, 0, width, height);
                 }
