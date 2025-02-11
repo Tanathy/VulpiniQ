@@ -3,52 +3,66 @@
 // Desc: Provides a timer implementation with automatic stop and interrupt. Useful for running tasks at intervals or for a specific duration.
 // Type: Plugin
 // Example: Q.Timer(() => console.log('Tick'), 'timer1', { tick: 5, delay: 1000, interrupt: true });
-Q.Timer = function (callback, id, options = {}) {
-    const defaultOptions = {
-        tick: 1,
-        delay: 1000,
-        interrupt: false
+Q.Timer = (callback, identifier, options = {}) => {
+    const defaults = { tick: 1, delay: 1000, interrupt: false, autoStart: true, done: null };
+    const config = { ...defaults, ...options };
+    if (!Q.Timer.activeTimers) Q.Timer.activeTimers = new Map();
+    if (config.interrupt && Q.Timer.activeTimers.has(identifier)) Q.Timer.stop(identifier);
+    const timerControl = {
+      id: identifier,
+      tickCount: 0,
+      isPaused: false,
+      remainingDelay: config.delay,
+      startTime: 0,
+      timerHandle: null,
+      pause() {
+        if (!this.isPaused) {
+          this.isPaused = true;
+          clearTimeout(this.timerHandle);
+          const elapsed = Date.now() - this.startTime;
+          this.remainingDelay = config.delay - elapsed;
+        }
+        return this;
+      },
+      resume() {
+        if (this.isPaused) {
+          this.isPaused = false;
+          startTick(this.remainingDelay);
+        }
+        return this;
+      },
+      stop() { Q.Timer.stop(this.id); }
     };
-
-    options = { ...defaultOptions, ...options };
-    let tickCount = 0;
-    let intervalId = null;
-
-    if (!Q.Timer.activeTimers) {
-        Q.Timer.activeTimers = new Map();
-    }
-
-    if (options.interrupt && Q.Timer.activeTimers.has(id)) {
-        clearInterval(Q.Timer.activeTimers.get(id));
-    }
-
-    intervalId = setInterval(() => {
+    const startTick = (delayTime) => {
+      timerControl.startTime = Date.now();
+      timerControl.timerHandle = setTimeout(function tickHandler() {
         callback();
-
-        tickCount++;
-        if (options.tick > 0 && tickCount >= options.tick) {
-            clearInterval(intervalId);
-            Q.Timer.activeTimers.delete(id);
+        timerControl.tickCount++;
+        if (config.tick > 0 && timerControl.tickCount >= config.tick) {
+          Q.Timer.stop(identifier);
+          if (typeof config.done === 'function') config.done();
+        } else {
+          timerControl.startTime = Date.now();
+          timerControl.timerHandle = setTimeout(tickHandler, config.delay);
         }
-    }, options.delay);
-
-    Q.Timer.activeTimers.set(id, intervalId);
-
-    return intervalId;
-};
-
-Q.Timer.stop = function (id) {
-    if (Q.Timer.activeTimers && Q.Timer.activeTimers.has(id)) {
-        clearInterval(Q.Timer.activeTimers.get(id));
-        Q.Timer.activeTimers.delete(id);
+      }, delayTime);
+    };
+    if (config.autoStart) startTick(config.delay);
+    Q.Timer.activeTimers.set(identifier, timerControl);
+    return timerControl;
+  };
+  
+  Q.Timer.stop = (identifier) => {
+    if (Q.Timer.activeTimers?.has(identifier)) {
+      const timerControl = Q.Timer.activeTimers.get(identifier);
+      clearTimeout(timerControl.timerHandle);
+      Q.Timer.activeTimers.delete(identifier);
     }
-};
-
-Q.Timer.stopAll = function () {
+  };
+  
+  Q.Timer.stopAll = () => {
     if (Q.Timer.activeTimers) {
-        for (let intervalId of Q.Timer.activeTimers.values()) {
-            clearInterval(intervalId);
-        }
-        Q.Timer.activeTimers.clear();
+      Q.Timer.activeTimers.forEach(timerControl => clearTimeout(timerControl.timerHandle));
+      Q.Timer.activeTimers.clear();
     }
-};
+  };

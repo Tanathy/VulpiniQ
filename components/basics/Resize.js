@@ -4,14 +4,9 @@
 // Type: Event Handling
 // Example: Q.Resize((width, height) => { console.log(`Width: ${width}, Height: ${height}`); }); // Logs the new dimensions every time the window is resized <br> Q.Resize((width, height) => { document.body.style.fontSize = `${width / 100}px`; }); // Adjusts font size based on the window's width
 // Variables: callbacks, width, height, callback
-Q.Resize = (function () {
-    const callbacks = [];
-    window.addEventListener('resize', () => {
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-        callbacks.forEach(callback => callback(width, height));
+Q.Resize=((c)=>{
+    addEventListener("resize",()=>{
+      for(let i=0,l=c.length;i<l;) c[i++](innerWidth,innerHeight)
     });
-    return function (callback) {
-        callbacks.push(callback);
-    };
-})();
+    return f=>c.push(f)
+  })([])

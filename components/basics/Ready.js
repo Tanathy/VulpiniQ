@@ -4,17 +4,7 @@
 // Type: Event Handling
 // Example: Q.Ready(() => { console.log('DOM is ready'); }); // Executes a callback when the DOM is fully loaded <br> Q.Ready(() => { document.body.style.backgroundColor = 'lightblue'; }); // Changes the background color once the DOM is ready
 // Variables: callbacks, callback
-Q.Ready = (function () {
-    const callbacks = [];
-    document.addEventListener('DOMContentLoaded', () => {
-        callbacks.forEach(callback => callback());
-    }, { once: true });
-
-    return function (callback) {
-        if (document.readyState === 'loading') {
-            callbacks.push(callback);
-        } else {
-            callback();
-        }
-    };
-})();
+Q.Ready=((c)=>{
+    document.readyState==='loading'?document.addEventListener("DOMContentLoaded",()=>{while(c.length)c.shift()();c=0},{once:1}):c=0;
+    return f=>c?c.push(f):f();
+  })([])

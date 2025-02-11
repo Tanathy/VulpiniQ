@@ -4,8 +4,5 @@
 // Type: Utility
 // Example: Q.ID(8, 'user-'); // user-1a2b3c4d <br> Q.ID(); // 1a2b3c4d <br> Q.ID(12, 'session-'); // session-1a2b3c4d5e6f
 // Variables: length, prefix
-Q.ID = function (length = 8, prefix = '') {
-    return prefix + [...Array(length)]
-        .map(() => Math.floor(Math.random() * 16).toString(16))
-        .join('');
-};
+Q.ID = (length = 8, prefix = '') =>
+    prefix + Array.from({ length }, () => (Math.random() * 16 | 0).toString(16)).join('');

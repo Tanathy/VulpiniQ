@@ -5,5 +5,7 @@
 // Example: Q(selector).empty();
 // Variables: el
 Q.Ext('empty', function () {
-    return this.each(el => this.nodes[el].innerHTML = '');
-});
+    for (const node of this.nodes) node.innerHTML = '';
+    return this;
+  });
+  

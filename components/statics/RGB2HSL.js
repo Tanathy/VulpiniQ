@@ -4,23 +4,17 @@
 // Type: Color
 // Example: Q.RGB2HSL(255, 255, 255); // [0, 0, 1] <br> Q.RGB2HSL(0, 0, 0); // [0, 0, 0] <br> Q.RGB2HSL(255, 0, 0); // [0, 1, 0.5]
 // Variables: min, maximum
-Q.RGB2HSL = function (r, g, b) {
+Q.RGB2HSL = (r, g, b) => {
     r /= 255, g /= 255, b /= 255;
-    let maximum = Math.max(r, g, b), minimum = Math.min(r, g, b);
-    let h, s, l = (maximum + minimum) / 2;
-
-    if (maximum === minimum) {
-        h = s = 0;
-    } else {
-        let d = maximum - minimum;
-        s = l > 0.5 ? d / (2 - maximum - minimum) : d / (maximum + minimum);
-        switch (maximum) {
-            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-            case g: h = (b - r) / d + 2; break;
-            case b: h = (r - g) / d + 4; break;
-        }
-        h /= 6;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2, d = max - min;
+    if (!d) h = s = 0;
+    else {
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      h = max === r ? (g - b) / d + (g < b ? 6 : 0)
+        : max === g ? (b - r) / d + 2
+        : (r - g) / d + 4;
+      h /= 6;
     }
-
     return [h, s, l];
-};
+  };

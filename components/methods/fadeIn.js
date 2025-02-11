@@ -3,16 +3,22 @@
 // Desc: Fades in each node.
 // Type: Display
 // Example: Q(selector).fadeIn(duration, callback);
-// Variables: duration, callback, el
-Q.Ext('fadeIn', function (duration = 400, callback) {
-    return this.each(el => {
-        this.nodes[el].style.display = '';
-        this.nodes[el].style.transition = `opacity ${duration}ms`;
-        this.nodes[el].offsetHeight;
-        this.nodes[el].style.opacity = 1;
-        setTimeout(() => {
-            this.nodes[el].style.transition = '';
-            if (callback) callback();
-        }, duration);
+// Variables: duration, callback, elementStyle, nodeElements, elementIndex
+Q.Ext('fadeIn', function(duration = 400, callback) {
+    const nodeElements = this.nodes;
+    this.each(function(elementIndex) {
+      const element = nodeElements[elementIndex];
+      const elementStyle = element.style;
+      elementStyle.display = '';
+      elementStyle.transition = `opacity ${duration}ms`;
+      void element.offsetHeight;
+      elementStyle.opacity = 1;
+      setTimeout(function() {
+        elementStyle.transition = '';
+        if (callback) {
+          callback();
+        }
+      }, duration);
     });
-});
+  });
+  

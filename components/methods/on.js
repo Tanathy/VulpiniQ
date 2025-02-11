@@ -3,19 +3,13 @@
 // Desc: Adds an event listener to each node.
 // Type: Event Handling
 // Example: Q(selector).on("click", () => console.log("Clicked"));
-// Variables: events, handler, options, defaultOptions, el, event
+// Variables: events, handler, options, defaultOptions, eventName, node
 Q.Ext('on', function (events, handler, options) {
-    const defaultOptions = {
-        capture: false,
-        once: false,
-        passive: false
-    };
-
+    const defaultOptions = { capture: false, once: false, passive: false };
     options = { ...defaultOptions, ...options };
-
-    return this.each(el => {
-        events.split(' ').forEach(event => {
-            this.nodes[el].addEventListener(event, handler, options);
-        });
+    return this.each(node => {
+      events.split(' ').forEach(eventName => {
+        node.addEventListener(eventName, handler, options);
+      });
     });
-});
+  });

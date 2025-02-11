@@ -7,17 +7,11 @@
 // Variables: property, value, key, el
 Q.Ext('css', function(property, value) {
     if (typeof property === 'object') {
-        return this.each(el => {
-            for (let key in property) {
-                if (property.hasOwnProperty(key)) {
-                    this.nodes[el].style[key] = property[key];
-                }
-            }
-        });
-    } else {
-        if (value === undefined) {
-            return getComputedStyle(this.nodes[0])[property];
-        }
-        return this.each(el => this.nodes[el].style[property] = value);
+      for (const node of this.nodes)
+        for (const key in property) node.style[key] = property[key];
+      return this;
     }
-});
+    if (value === undefined) return getComputedStyle(this.nodes[0])[property];
+    for (const node of this.nodes) node.style[property] = value;
+    return this;
+  });

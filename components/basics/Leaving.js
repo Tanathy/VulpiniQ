@@ -4,12 +4,10 @@
 // Type: Event Handling
 // Example: Q.Leaving((event) => { console.log('Window is about to be unloaded'); }); // Logs a message when the window is about to unload <br> Q.Leaving((event) => { event.returnValue = 'Are you sure you want to leave?'; }); // Prompts the user with a confirmation message before leaving
 // Variables: callbacks, event, callback
-Q.Leaving = (function () {
-    const callbacks = [];
-    window.addEventListener('beforeunload', (event) => {
-        callbacks.forEach(callback => callback(event));
+Q.Leaving=((c)=>{
+    let ev;
+    window.addEventListener("beforeunload",e=>{
+      ev=e;while(c.length)c.shift()(e);c=0
     });
-    return function (callback) {
-        callbacks.push(callback);
-    };
-})();
+    return f=>c?c.push(f):f(ev)
+  })([])

@@ -4,60 +4,35 @@
 // Type: Color
 // Example: Q.ColorBrightness('#000000', 50); // #7f7f7f (black +50%) <br> Q.ColorBrightness('rgb(255, 0, 0)', -30); // rgb(178, 0, 0) (red -30%) <br> Q.ColorBrightness('rgba(0, 0, 255, 0.5)', 20); // rgba(51, 51, 255, 0.5) (blue +20%)
 // Variables: hex, alphaColor, color, percent
-Q.ColorBrightness = function (color, percent) {
-    let r, g, b, a = 1;
-    let hex = false;
-
-    // Early return for unsupported color formats
-    if (!color.startsWith('#') && !color.startsWith('rgb')) {
-        throw new Error('Unsupported color format');
+Q.ColorBrightness = (inputColor, percent) => {
+    if (!/^#|^rgb/.test(inputColor)) throw new Error('Unsupported color format');
+    let red, green, blue, alpha = 1, isHex = false, factor = 1 + percent / 100;
+    if (inputColor[0] === '#') {
+      isHex = true;
+      const hexString = inputColor.slice(1);
+      if (hexString.length === 3) {
+        red = parseInt(hexString[0] + hexString[0], 16);
+        green = parseInt(hexString[1] + hexString[1], 16);
+        blue = parseInt(hexString[2] + hexString[2], 16);
+      } else if (hexString.length === 6) {
+        red = parseInt(hexString.slice(0, 2), 16);
+        green = parseInt(hexString.slice(2, 4), 16);
+        blue = parseInt(hexString.slice(4, 6), 16);
+      }
+    } else {
+      const match = inputColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+      if (match) {
+        red = +match[1];
+        green = +match[2];
+        blue = +match[3];
+        if (match[4] != null) alpha = parseFloat(match[4]);
+      }
     }
-
-    // Parse hex color
-    if (color.startsWith('#')) {
-        color = color.replace(/^#/, '');
-        if (color.length === 3) {
-            r = parseInt(color[0] + color[0], 16);
-            g = parseInt(color[1] + color[1], 16);
-            b = parseInt(color[2] + color[2], 16);
-        }
-        if (color.length === 6) {
-            r = parseInt(color.substring(0, 2), 16);
-            g = parseInt(color.substring(2, 4), 16);
-            b = parseInt(color.substring(4, 6), 16);
-        }
-        hex = true;
-    }
-
-    // Parse rgb/rgba color
-    if (color.startsWith('rgb')) {
-        const alphaColor = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(\.\d+)?))?\)/);
-        if (alphaColor) {
-            r = parseInt(alphaColor[1]);
-            g = parseInt(alphaColor[2]);
-            b = parseInt(alphaColor[3]);
-            if (alphaColor[4]) {
-                a = parseFloat(alphaColor[4]);
-            }
-        }
-    }
-
-    // Adjust each color component
-    r = Math.min(255, Math.max(0, r + (r * percent / 100)));
-    g = Math.min(255, Math.max(0, g + (g * percent / 100)));
-    b = Math.min(255, Math.max(0, b + (b * percent / 100)));
-
-    // Convert back to the appropriate format and return
-    if (hex) {
-        return '#' +
-            ('0' + Math.round(r).toString(16)).slice(-2) +
-            ('0' + Math.round(g).toString(16)).slice(-2) +
-            ('0' + Math.round(b).toString(16)).slice(-2);
-    } else if (color.startsWith('rgb')) {
-        if (a === 1) {
-            return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
-        } else {
-            return `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${a})`;
-        }
-    }
-}
+    const clamp = value => Math.min(255, Math.max(0, Math.round(value * factor)));
+    red = clamp(red);
+    green = clamp(green);
+    blue = clamp(blue);
+    return isHex
+      ? '#' + [red, green, blue].map(component => (`0${component.toString(16)}`).slice(-2)).join('')
+      : (alpha === 1 ? `rgb(${red}, ${green}, ${blue})` : `rgba(${red}, ${green}, ${blue}, ${alpha})`);
+  };

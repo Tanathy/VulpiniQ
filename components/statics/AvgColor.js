@@ -4,62 +4,31 @@
 // Type: Image Processing
 // Example: Q.AvgColor('image.jpg or canvas', sampleSize, callback); // Returns the average color of the image or canvas
 
-Q.AvgColor = function (image, sampleSize, callback) {
-    let img = new Image();
-    img.crossOrigin = 'Anonymous';
-
-    // Detect image type (URL, Base64, or Canvas)
-    if (typeof image === 'string') {
-        img.src = image;
-    } else if (image instanceof HTMLCanvasElement) {
-        img.src = image.toDataURL();
-    } else {
-        console.error("Invalid image source provided.");
-        return;
-    }
-
-    img.onload = function () {
-        let canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        let ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-
-        let data = ctx.getImageData(0, 0, img.width, img.height).data;
-        let length = data.length / 4;
-
-        // Determine sampling rate
-        let samplingRate = 1;
-        if (sampleSize === 'auto') {
-            let factor = Math.ceil(Math.sqrt(img.width * img.height) / 32);
-            samplingRate = Math.max(1, factor);
-        } else if (typeof sampleSize === 'number' && sampleSize > 0) {
-            samplingRate = sampleSize;
-        }
-
-        let color = { r: 0, g: 0, b: 0 };
-        let count = 0;
-
-        for (let i = 0; i < length; i += samplingRate) {
-            let idx = i * 4; // Convert to RGBA index
-            color.r += data[idx];
-            color.g += data[idx + 1];
-            color.b += data[idx + 2];
-            count++;
-        }
-
-        // Calculate average
-        color.r = Math.floor(color.r / count);
-        color.g = Math.floor(color.g / count);
-        color.b = Math.floor(color.b / count);
-
-        // Call callback if defined
-        if (typeof callback === 'function') {
-            callback(color);
-        }
+Q.AvgColor = (source, sampleSize, callback) => {
+    const image = new Image();
+    image.crossOrigin = 'Anonymous';
+    if (typeof source === 'string') image.src = source;
+    else if (source instanceof HTMLCanvasElement) image.src = source.toDataURL();
+    else return console.error("Invalid image source provided.");
+  
+    image.onload = () => {
+      const canvas = Object.assign(document.createElement('canvas'), { width: image.width, height: image.height });
+      const context = canvas.getContext('2d');
+      context.drawImage(image, 0, 0);
+      const data = context.getImageData(0, 0, image.width, image.height).data;
+      const samplingRate = sampleSize === 'auto'
+        ? Math.max(1, Math.ceil(Math.sqrt(image.width * image.height) / 32))
+        : (typeof sampleSize === 'number' && sampleSize > 0 ? sampleSize : 1);
+      let totalRed = 0, totalGreen = 0, totalBlue = 0, count = 0;
+      for (let index = 0, len = data.length; index < len; index += samplingRate * 4) {
+        totalRed   += data[index];
+        totalGreen += data[index + 1];
+        totalBlue  += data[index + 2];
+        count++;
+      }
+      const avgColor = { r: (totalRed / count) | 0, g: (totalGreen / count) | 0, b: (totalBlue / count) | 0 };
+      typeof callback === 'function' && callback(avgColor);
     };
-
-    img.onerror = function () {
-        console.error("Failed to load image.");
-    };
-};
+  
+    image.onerror = () => console.error("Failed to load image.");
+  };
