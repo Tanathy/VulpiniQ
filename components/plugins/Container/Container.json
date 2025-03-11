@@ -1,0 +1,8 @@
+{
+  "Name": "Container",
+  "Method": "Plugin",
+  "Desc": "Useful to create containers for your elements, like tabs, accordions, etc.",
+  "Type": "Plugin",
+  "Example": "var containers = Q.Container();",
+  "Dependencies": ["Style", "addClass", "removeClass", "on", "append", "each", "find", "scrollTop", "scrollLeft", "Icons"]
+}
