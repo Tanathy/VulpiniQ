@@ -7,17 +7,19 @@
 // Variables: duration, properties, transitionProperties, prop, callback, element, el
 // Dependencies: each
 Q.Ext('animate', function (duration, properties, callback) {
-    return this.each(el => {
-        const element = this.nodes[el];
-        const transitionProperties = Object.keys(properties).map(prop => `${prop} ${duration}ms`).join(', ');
-        element.style.transition = transitionProperties;
-        for (const prop in properties) {
-            element.style[prop] = properties[prop];
-        }
-        if (typeof callback === 'function') {
-            setTimeout(() => {
-                if (callback) callback.call(element);
-            }, duration);
-        }
-    }), this;
+  const nodes = this.nodes;
+  for (let i = 0, len = nodes.length; i < len; i++) {
+    const element = nodes[i],
+          transitionProperties = Object.keys(properties)
+            .map(prop => `${prop} ${duration}ms`)
+            .join(', ');
+    element.style.transition = transitionProperties;
+    for (const prop in properties) {
+      element.style[prop] = properties[prop];
+    }
+    if (typeof callback === 'function') {
+      setTimeout(() => callback.call(element), duration);
+    }
+  }
+  return this;
 });

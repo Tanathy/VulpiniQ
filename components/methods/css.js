@@ -6,12 +6,19 @@
 // Example: Q(selector).css('color', 'red'); // Sets the text color of the first selected element to red <br> const backgroundColor = Q(selector).css('background-color'); // Gets the background color of the first selected element <br> Q(selector).css({ margin: '10px', padding: '5px' }); // Sets multiple styles on each selected element
 // Variables: property, value, key, el
 Q.Ext('css', function(property, value) {
-    if (typeof property === 'object') {
-      for (const node of this.nodes)
-        for (const key in property) node.style[key] = property[key];
+  const nodes = this.nodes;
+  if (typeof property === 'object') {
+      for (let i = 0, len = nodes.length; i < len; i++) {
+          const style = nodes[i].style;
+          for (const key in property) {
+              style[key] = property[key];
+          }
+      }
       return this;
-    }
-    if (value === undefined) return getComputedStyle(this.nodes[0])[property];
-    for (const node of this.nodes) node.style[property] = value;
-    return this;
-  });
+  }
+  if (value === undefined) return getComputedStyle(nodes[0])[property];
+  for (let i = 0, len = nodes.length; i < len; i++) {
+      nodes[i].style[property] = value;
+  }
+  return this;
+});

@@ -5,12 +5,12 @@
 // Type: Traversal
 // Example: Q(selector).closest(".parent"); // Returns the closest parent with class 'parent' <br> const closestSection = Q(".child").closest("section"); // Finds the closest section ancestor of the first element with the class 'child' <br> const closestForm = Q("#inputField").closest("form"); // Gets the nearest form ancestor of the element with ID 'inputField'
 Q.Ext('closest', function (selector) {
-    let el = this.nodes[0];
-    while (el) {
-        if (el.matches && el.matches(selector)) {
-            return new Q(el);
+    let node = this.nodes[0]; // ...existing code...
+    while (node) {
+        if (node.matches && node.matches(selector)) {
+            return new Q(node);
         }
-        el = el.parentElement;
+        node = node.parentElement;
     }
     return null;
 });

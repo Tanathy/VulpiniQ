@@ -5,7 +5,8 @@
 // Example: Q(selector).isExists(); or Q.isExists('.ok')
 // Variables: selector
 Q.Ext('isExists', function () {
-    return document.body.contains(this.nodes[0]);
+    const node = this.nodes[0];
+    return node ? document.body.contains(node) : false;
 });
 
 Q.isExists = function (selector) {

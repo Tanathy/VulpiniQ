@@ -1,0 +1,8 @@
+{
+  "Name": "Form.TextArea",
+  "Method": "Component",
+  "Desc": "TextArea component for Form plugin",
+  "Type": "Component",
+  "Example": "var textarea = Q.Form.TextArea('Initial content', 'Enter text...'); textarea.change(function(value) { console.log(value); });",
+  "Dependencies": ["Form", "style", "addClass", "removeClass", "on", "attr", "val", "prop"]
+}

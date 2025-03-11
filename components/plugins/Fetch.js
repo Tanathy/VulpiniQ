@@ -5,7 +5,7 @@
 // Example: Q.fetch('https://api.example.com/data', (error, data) => console.log(error, data));
 // Variables: url, callback, options, controller, signal, attempt, fetchWithRetry, timeoutId, response, data, error
 Q.Fetch = function (url, callback, options = {}) {
-    const { 
+    const {
         method = 'GET',
         headers = {},
         body,
@@ -13,26 +13,40 @@ Q.Fetch = function (url, callback, options = {}) {
         responseType = 'json',
         credentials = 'same-origin',
         retries = 3,
-        retryDelay = 1000, 
-        timeout = 0, 
-        validateResponse = (data) => data
+        retryDelay = 1000,
+        exponentialBackoff = false,
+        timeout = 0,
+        validateResponse = (data) => data,
+        query = null,
+        signal: externalSignal = null
     } = options;
 
+    // Append query parameters if provided.
+    if (query && typeof query === 'object') {
+        const urlObject = new URL(url, location.origin);
+        Object.entries(query).forEach(([key, value]) => urlObject.searchParams.append(key, value));
+        url = urlObject.toString();
+    }
+
+    // Auto serialize body if needed.
+    let requestBody = body;
+    if (body && typeof body === 'object' && contentType === 'application/json' && !(body instanceof FormData)) {
+        try { requestBody = JSON.stringify(body); } catch (error) { callback(new Error('Failed to serialize request body'), null); return; }
+    }
     headers['Content-Type'] = headers['Content-Type'] || contentType;
-    
+
     const controller = new AbortController();
     const { signal } = controller;
+    if (externalSignal) {
+        externalSignal.addEventListener('abort', () => controller.abort(), { once: true });
+    }
 
-    
-    const fetchWithRetry = (attempt) => {
-        
-        const timeoutId = timeout ? setTimeout(() => controller.abort(), timeout) : null;
-
-        fetch(url, { method, headers, body, credentials, signal })
+    const doFetch = (attempt) => {
+        let timeoutId = null;
+        if (timeout) { timeoutId = setTimeout(() => controller.abort(), timeout); }
+        fetch(url, { method, headers, body: requestBody, credentials, signal })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Network response was not ok: ${response.statusText}`);
-                }
+                if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
                 switch (responseType) {
                     case 'json': return response.json();
                     case 'text': return response.text();
@@ -41,29 +55,24 @@ Q.Fetch = function (url, callback, options = {}) {
                     default: throw new Error('Unsupported response type');
                 }
             })
-            .then(data => {
+            .then(result => {
                 if (timeoutId) clearTimeout(timeoutId);
-                return validateResponse(data);
+                return validateResponse(result);
             })
-            .then(data => callback(null, data))
+            .then(validatedData => callback(null, validatedData))
             .catch(error => {
                 if (timeoutId) clearTimeout(timeoutId);
-
                 if (error.name === 'AbortError') {
                     callback(new Error('Fetch request was aborted'), null);
                 } else if (attempt < retries) {
-                    console.warn(`Retrying fetch (${attempt + 1}/${retries}):`, error);
-                    setTimeout(() => fetchWithRetry(attempt + 1), retryDelay);
+                    const delay = exponentialBackoff ? retryDelay * (2 ** attempt) : retryDelay;
+                    setTimeout(() => doFetch(attempt + 1), delay);
                 } else {
                     callback(error, null);
                 }
             });
     };
 
-    fetchWithRetry(0);
-
-    
-    return {
-        abort: () => controller.abort()
-    };
+    doFetch(0);
+    return { abort: () => controller.abort() };
 };

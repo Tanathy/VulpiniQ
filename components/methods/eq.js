@@ -5,5 +5,6 @@
 // Example: Q(selector).eq(1);
 // Variables: index
 Q.Ext('eq', function (index) {
-    return new Q(this.nodes[index]);
+  const node = this.nodes[index];
+  return node ? new Q(node) : null;
 });

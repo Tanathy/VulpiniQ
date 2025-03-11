@@ -5,5 +5,9 @@
 // Type: Event Handling
 // Example: Q(selector).click(); // Triggers a click event on all matched elements <br> Q(".button").click(); // Simulates clicks on all elements with the class 'button' <br> Q("a").click(); // Automatically clicks the first anchor element in the selection
 Q.Ext('click', function () {
-    return this.each(el => this.nodes[el].click());
+    const nodes = this.nodes; // ...existing code...
+    for (const node of nodes) {
+        node.click();
+    }
+    return this;
 });

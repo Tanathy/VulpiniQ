@@ -5,9 +5,8 @@
 // Example: Q(selector).walk((node) => console.log(node), true); // Passes Q object
 // Variables: callback, useQObject, node, index
 Q.Ext('walk', function (callback, useQObject = false) {
-    this.nodes.forEach((element, index) => {
-        const node = useQObject ? Q(element) : element;
-        callback.call(element, node, index);
-    });
-    return this;
+	return this.each(function(index, el) {
+		const node = useQObject ? Q(el) : el;
+		callback.call(el, node, index);
+	});
 });

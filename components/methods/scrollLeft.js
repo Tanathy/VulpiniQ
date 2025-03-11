@@ -8,12 +8,13 @@ Q.Ext('scrollLeft', function (value, increment) {
     if (value === undefined) {
         return this.nodes[0].scrollLeft;
     }
-    return this.each(el => {
-        const maxScrollLeft = this.nodes[el].scrollWidth - this.nodes[el].clientWidth;
+    return this.each(index => {
+        const node = this.nodes[index];
+        const maxScrollLeft = node.scrollWidth - node.clientWidth;
         if (increment) {
-            this.nodes[el].scrollLeft = Math.min(this.nodes[el].scrollLeft + value, maxScrollLeft);
+            node.scrollLeft = Math.min(node.scrollLeft + value, maxScrollLeft);
         } else {
-            this.nodes[el].scrollLeft = Math.min(value, maxScrollLeft);
+            node.scrollLeft = Math.min(value, maxScrollLeft);
         }
     });
 });

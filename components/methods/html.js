@@ -7,21 +7,32 @@
 // Variables: content, child, el, node, subchild
 Q.Ext('html', function (content) {
     if (content === undefined) {
-        return this.nodes[0]?.innerHTML || null;
+        return this.nodes[0] ? this.nodes[0].innerHTML : null;
     }
-    return this.each(el => {
-        el = this.nodes[el];
-        el.innerHTML = '';
-        content.forEach(child => {
+    for (const node of this.nodes) {
+        node.innerHTML = '';
+        const appendContent = (child) => {
             if (typeof child === 'string') {
-                el.insertAdjacentHTML('beforeend', child);
+                node.insertAdjacentHTML('beforeend', child);
             } else if (child instanceof Q) {
-                child.nodes.forEach(node => el.appendChild(node));
-            } else if (child instanceof HTMLElement) {
-                el.appendChild(child);
+                for (const subnode of child.nodes) {
+                    node.appendChild(subnode);
+                }
+            } else if (child instanceof HTMLElement || child instanceof Node) {
+                node.appendChild(child);
             } else if (Array.isArray(child) || child instanceof NodeList) {
-                Array.from(child).forEach(subchild => el.appendChild(subchild));
+                for (const subchild of Array.from(child)) {
+                    node.appendChild(subchild);
+                }
             }
-        });
-    });
+        };
+        if (Array.isArray(content) || content instanceof NodeList) {
+            for (const child of Array.from(content)) {
+                appendContent(child);
+            }
+        } else {
+            appendContent(content);
+        }
+    }
+    return this;
 });

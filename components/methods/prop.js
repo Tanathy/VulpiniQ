@@ -6,9 +6,10 @@
 // Variables: property, value, el, index
 Q.Ext('prop', function (property, value) {
     if (value === undefined) {
-        return this.nodes[0]?.[property] || null;
+        return this.nodes[0] ? this.nodes[0][property] : null;
     }
-    return this.each(function (index, el) {
-        el[property] = value;
-    });
+    for (const node of this.nodes) {
+        node[property] = value;
+    }
+    return this;
 });

@@ -5,5 +5,6 @@
 // Type: DOM Manipulation
 // Example: Q(selector).clone(); // Clones the first matched element <br> const newElement = Q(".item").clone(); // Clones the first element with the class 'item' and stores it in newElement <br> const clonedDiv = Q("#myDiv").clone(); // Clones the element with the ID 'myDiv' 
 Q.Ext('clone', function () {
-    return new Q(this.nodes[0].cloneNode(true));
+    const node = this.nodes[0]; // ...existing code...
+    return new Q(node.cloneNode(true));
 });

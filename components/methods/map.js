@@ -5,7 +5,9 @@
 // Example: Q(selector).map(el => el.innerHTML);
 // Variables: callback, result, el
 Q.Ext('map', function (callback) {
-    let result = [];
-    this.each(el => result.push(callback(Q(el))));
+    const result = [];
+    for (const node of this.nodes) {
+        result.push(callback(new Q(node)));
+    }
     return result;
 });

@@ -2,132 +2,170 @@ const Q = (() => {
     'use strict';
 const _ob = Object, _ar = Array, _ma = Math, _ac = AbortController, _as = AbortSignal, _bo = Boolean, _da = Date, _er = Error, _ev = Event, _pr = Promise, _nu = Number, _re = RegExp, _st = setTimeout, _un = undefined, _n = null, _nl = NodeList, _el = Element, _si = setInterval, _c = console, _f = fetch, _ct = clearTimeout;
     let GLOBAL = {};
-    function Q(a, b, c) {
-        if (!(this instanceof Q)) {
-            return new Q(a, b, c);
+    let styleData = {
+        gen: "",
+        root: '',
+        element: _n,
+        init: false
+    };
+    function applyStyles() {
+        if (!styleData.init) {
+            styleData.element = document.getElementById('qlib-root-styles') || createStyleElement();
+            styleData.init = true;
         }
-        else if (a?.nodeType === 1 || a?.nodeType != _n) {
+        let finalStyles = '';
+        if (styleData.root) {
+            finalStyles = `:root {${styleData.root}}\n`;
+        }
+        finalStyles += styleData.gen;
+        styleData.element.textContent = finalStyles;
+    }
+    function createStyleElement() {
+        const styleElement = document.createElement('style');
+        styleElement.id = 'qlib-root-styles';
+        document.head.insertBefore(styleElement, document.head.firstChild);
+        return styleElement;
+    }
+    window.addEventListener('load', () => {
+        applyStyles();
+    }, { once: true });
+    function Q(a, attributes, c) {
+        if (!(this instanceof Q)) return new Q(a, attributes, c);
+        if (a?.nodeType === 1 || a?.nodeType != _n) {
             this.nodes = [a];
             return;
         }
-        else if (a instanceof Q) {
+        if (a instanceof Q) {
             this.nodes = a.nodes;
             return;
         }
-        else if (a?.constructor === _nl) {
+        if (a?.constructor === _nl) {
             this.nodes = _ar.from(a);
             return;
         }
-        else if (typeof a === 'string') {
-            let l = !!b || a.includes('<');
+        if (typeof a === 'string') { 
+            const l = attributes || a.indexOf('<') > -1;
             if (l) {
-                const e = document.createDocumentFragment();
-                const f = document.createElement('div');
-                f.innerHTML = a;
-                while (f.firstChild) {
-                    e.appendChild(f.firstChild);
-                }
-                this.nodes = _ar.from(e.childNodes);
-                if (b) {
-                    this.nodes.forEach(m => {
-                        for (const [g, h] of _ob.entries(b)) {
+                const template = document.createElement('template');
+                template.innerHTML = a.trim();
+                this.nodes = _ar.from(template.content.childNodes);
+                if (attributes) {
+                    for (const element of this.nodes) {
+                        _ob.entries(attributes).forEach(([g, j]) => {
                             if (g === 'class') {
-                                if (_ar.isArray(h)) {
-                                    m.classList.add(...h);
+                                element.classList.add(...(_ar.isArray(j) ? j : j.split(/\s+/)));
+                            } else if (g === 'style') {
+                                if (typeof j === 'object') {
+                                    _ob.entries(j).forEach(([property, propertyValue]) => {
+                                        element.style[property] = propertyValue;
+                                    });
+                                } else {
+                                    element.style.cssText = j;
                                 }
-                                else {
-                                    m.classList.add(...h.split(/\s+/));
-                                }
+                            } else if (g === 'text') {
+                                element.textContent = j;
+                            } else if (g === 'html') {
+                                element.innerHTML = j;
+                            } else {
+                                element.setAttribute(g, j);
                             }
-                            else if (g === 'style') {
-                                if (typeof h === 'object') {
-                                    for (const [i, j] of _ob.entries(h)) {
-                                        m.style[i] = j;
-                                    }
-                                }
-                                else {
-                                    m.style.cssText = h;
-                                }
-                            }
-                            else if (g === 'text') {
-                                m.textContent = h;
-                            }
-                            else if (g === 'html') {
-                                m.innerHTML = h;
-                            }
-                            else {
-                                m.setAttribute(g, h);
-                            }
-                        }
-                    });
+                        });
+                    }
                 }
                 if (c) {
-                    this.nodes.forEach(m => {
-                        for (const d of c) {
-                            m[d] = true;
-                        }
+                    this.nodes.forEach(element => {
+                        c.forEach(d => element[d] = true);
                     });
                 }
             } else {
-                let k = document.querySelectorAll(a);
-                this.nodes = _ar.from(k);
+                this.nodes = _ar.from(document.querySelectorAll(a));
             }
         }
     }
-    Q.Ext = (n, o) => (Q.prototype[n] = o, Q);
-    Q.getGLOBAL = function (i) {
-        return GLOBAL[i];
-    };
-    Q.setGLOBAL = function (h) {
-        GLOBAL = { ...GLOBAL, ...h };
+    Q.Ext = (methodName, functionImplementation) =>
+        (Q.prototype[methodName] = functionImplementation, Q);
+    Q.getGLOBAL = i => GLOBAL[i];
+    Q.setGLOBAL = h => (GLOBAL = { ...GLOBAL, ...h });
+    Q.style = (root = '', style = '', mapping = _n) => {
+        if (root && typeof root === 'string') {
+            styleData.root += root.trim() + ';';
+        }
+        if (style && typeof style === 'string') {
+            if (mapping) {
+                const keys = _ob.keys(mapping);
+                keys.forEach((i) => {
+                    let newKey = Q.ID ? Q.ID(5, '_') : `_${_ma.random().toString(36).substring(2, 7)}`;
+                    style = style.replace(new _re(`\\b${i}\\b`, 'gm'), newKey);
+                    mapping[i] = mapping[i].replace(i, newKey);
+                });
+            }
+            styleData.gen += style;
+        }
+        applyStyles();
+        return mapping;
     };
     Q.Ext('addClass', function (classes) {
-    const b = classes.split(' ');
-    return this.each(c => this.nodes[c].classList.add(...b));
+    const b = classes.split(' '),
+          nodes = this.nodes;
+    for (let i = 0, len = nodes.length; i < len; i++) {
+        nodes[i].classList.add(...b);
+    }
+    return this;
 });
 Q.Ext('animate', function (duration, b, e) {
-    return this.each(g => {
-        const f = this.nodes[g];
-        const c = _ob.keys(b).map(d => `${d} ${duration}ms`).join(', ');
-        f.style.transition = c;
-        for (const d in b) {
-            f.style[d] = b[d];
-        }
-        if (typeof e === 'function') {
-            _st(() => {
-                if (e) e.call(f);
-            }, duration);
-        }
-    }), this;
+  const nodes = this.nodes;
+  for (let i = 0, len = nodes.length; i < len; i++) {
+    const f = nodes[i],
+          c = _ob.keys(b)
+            .map(d => `${d} ${duration}ms`)
+            .join(', ');
+    f.style.transition = c;
+    for (const d in b) {
+      f.style[d] = b[d];
+    }
+    if (typeof e === 'function') {
+      _st(() => e.call(f), duration);
+    }
+  }
+  return this;
 });
-Q.Ext('append', function (...allNodes) {
-    return this.each(el => {
-        const b = this.nodes[el];
-        allNodes.forEach(c => {
-            if (typeof c === 'string') {
-                b.insertAdjacentHTML('beforeend', c);
-            } else if (c?.nodeType === 1 || c instanceof Q) {
-                b.appendChild(c.nodes[0]);
-            } else if (_ar.isArray(c) || c?.constructor === _nl) {
-                _ar.from(c).forEach(d => b.appendChild(d));
-            }
-        });
-    });
+Q.Ext('append', function (...contents) {
+  const nodes = this.nodes;
+  for (let i = 0, len = nodes.length; i < len; i++) {
+    const b = nodes[i];
+    for (let j = 0, clen = contents.length; j < clen; j++) {
+      const c = contents[j];
+      if (typeof c === "string") {
+        b.insertAdjacentHTML('beforeend', c);
+      } else if (c?.nodeType === 1 || c instanceof Q) {
+        b.appendChild(c.nodes ? c.nodes[0] : c);
+      } else if (_ar.isArray(c) || c?.constructor === _nl) {
+        const subNodes = _ar.from(c);
+        for (let k = 0, slen = subNodes.length; k < slen; k++) {
+          b.appendChild(subNodes[k]);
+        }
+      }
+    }
+  }
+  return this;
 });
 Q.Ext('attr', function (attribute, b) {
+    const nodes = this.nodes;
     if (typeof attribute === 'object') {
-        return this.each(d => {
-            for (let c in attribute) {
-                if (attribute.hasOwnProperty(c)) {
-                    this.nodes[d].setAttribute(c, attribute[c]);
-                }
+        for (const node of nodes) {
+            for (const [c, val] of _ob.entries(attribute)) {
+                node.setAttribute(c, val);
             }
-        });
+        }
+        return this;
     } else {
         if (b === _un) {
-            return this.nodes[0]?.getAttribute(attribute) || _n;
+            return nodes[0] && nodes[0].getAttribute(attribute) || _n;
         }
-        return this.each(d => this.nodes[d].setAttribute(attribute, b));
+        for (const node of nodes) {
+            node.setAttribute(attribute, b);
+        }
+        return this;
     }
 });
 Q.Ext('bind', function (a, b) {
@@ -136,59 +174,74 @@ Q.Ext('bind', function (a, b) {
     }
     if (!this.d[a]) {
         document.addEventListener(a, (e) => {
-            this.each(c => {
-                if (this.nodes[c].contains(e.target)) {
+            const nodes = this.nodes;
+            for (const node of nodes) {
+                if (node.contains(e.target)) {
                     b.call(e.target, e);
                 }
-            });
+            }
         });
         this.d[a] = true;
     }
     return this;
 });
 Q.Ext('blur', function () {
-    return this.each(a => this.nodes[a].blur());
+    const nodes = this.nodes; // ...existing code...
+    for (const node of nodes) {
+        node.blur();
+    }
+    return this;
 });
 Q.Ext('children', function () {
     return new Q(this.nodes[0].children);
 });
 Q.Ext('click', function () {
-    return this.each(el => this.nodes[el].click());
+    const nodes = this.nodes; // ...existing code...
+    for (const node of nodes) {
+        node.click();
+    }
+    return this;
 });
 Q.Ext('clone', function () {
-    return new Q(this.nodes[0].cloneNode(true));
+    const node = this.nodes[0]; // ...existing code...
+    return new Q(node.cloneNode(true));
 });
 Q.Ext('closest', function (selector) {
-    let el = this.nodes[0];
-    while (el) {
-        if (el.matches && el.matches(selector)) {
-            return new Q(el);
+    let node = this.nodes[0]; // ...existing code...
+    while (node) {
+        if (node.matches && node.matches(selector)) {
+            return new Q(node);
         }
-        el = el.parentElement;
+        node = node.parentElement;
     }
     return _n;
 });
 Q.Ext('css', function(property, b) {
-    if (typeof property === 'object') {
-        return this.each(d => {
-            for (let c in property) {
-                if (property.hasOwnProperty(c)) {
-                    this.nodes[d].style[c] = property[c];
-                }
-            }
-        });
-    } else {
-        if (b === _un) {
-            return getComputedStyle(this.nodes[0])[property];
-        }
-        return this.each(d => this.nodes[d].style[property] = b);
-    }
+  const nodes = this.nodes;
+  if (typeof property === 'object') {
+      for (let i = 0, len = nodes.length; i < len; i++) {
+          const style = nodes[i].style;
+          for (const c in property) {
+              style[c] = property[c];
+          }
+      }
+      return this;
+  }
+  if (b === _un) return getComputedStyle(nodes[0])[property];
+  for (let i = 0, len = nodes.length; i < len; i++) {
+      nodes[i].style[property] = b;
+  }
+  return this;
 });
 Q.Ext('data', function (key, b) {
+    const nodes = this.nodes;
     if (b === _un) {
-        return this.nodes[0]?.dataset[key] || _n;
+        return nodes[0] && nodes[0].dataset[key] || _n;
     }
-    return this.each(c => this.nodes[c].dataset[key] = b);
+    for (const node of nodes) {
+        node.dataset[key] = b;
+    }
+    return this;
 });
 Q.Ext('each', function (callback) {
     if (!this.nodes) return this;
@@ -196,138 +249,179 @@ Q.Ext('each', function (callback) {
     return this;
 });
 Q.Ext('empty', function () {
-    return this.each(a => this.nodes[a].innerHTML = '');
+  const nodes = this.nodes;
+  for (let i = 0, len = nodes.length; i < len; i++) {
+    nodes[i].innerHTML = '';
+  }
+  return this;
 });
 Q.Ext('eq', function (index) {
-    return new Q(this.nodes[index]);
+  const node = this.nodes[index];
+  return node ? new Q(node) : _n;
 });
-Q.Ext('fadeIn', function (a = 400, b) {
-    return this.each(c => {
-        this.nodes[c].style.display = '';
-        this.nodes[c].style.transition = `opacity ${a}ms`;
-        this.nodes[c].offsetHeight;
-        this.nodes[c].style.opacity = 1;
-        _st(() => {
-            this.nodes[c].style.transition = '';
-            if (b) b();
-        }, a);
-    });
-});
-Q.Ext('fadeOut', function (a, b) {
-    return this.each(c => {
-        this.nodes[c].style.transition = `opacity ${a}ms`;
-        this.nodes[c].style.opacity = 0;
-        _st(() => {
-            this.nodes[c].style.transition = '';
-            this.nodes[c].style.display = 'none';
-            if (b) b();
-        }, a);
-    });
-});
-Q.Ext('fadeTo', function (opacity, b, c) {
-    return this.each(d => {
-        this.nodes[d].style.transition = `opacity ${b}ms`;
-        this.nodes[d].offsetHeight;
-        this.nodes[d].style.opacity = opacity;
-        _st(() => {
-            this.nodes[d].style.transition = '';
-            if (c) c();
-        }, b);
-    });
-});
-Q.Ext('fadeToggle', function (a, b) {
-    return this.each(c => {
-        if (window.getComputedStyle(this.nodes[c]).opacity === '0') {
-            this.fadeIn(a, b);
-        } else {
-            this.fadeOut(a, b);
+Q.Ext('fadeIn', function(a = 400, b) {
+    const d = this.nodes;
+    this.each(index => {
+      const element = d[index];
+      const c = element.style;
+      c.display = '';
+      c.transition = `opacity ${a}ms`;
+      void element.offsetHeight;
+      c.opacity = 1;
+      _st(() => {
+        c.transition = '';
+        if (b) {
+          b();
         }
+      }, a);
     });
 });
-Q.Ext('find', function (selector) {
-    const b = this.nodes[0].querySelectorAll(selector);
-    return b.length ? Q(b) : _n;
+Q.Ext('fadeOut', function(a, b) {
+    const d = this.nodes;
+    this.each(index => {
+      const c = d[index].style;
+      c.transition = `opacity ${a}ms`;
+      c.opacity = 0;
+      _st(() => {
+        c.transition = '';
+        c.display = 'none';
+        if (b) b();
+      }, a);
+    });
 });
+Q.Ext('fadeTo', function(opacity, b, c) {
+    const e = this.nodes;
+    this.each(function(f) {
+      const element = e[f];
+      const d = element.style;
+      d.transition = `opacity ${b}ms`;
+      void element.offsetHeight;
+      d.opacity = opacity;
+      _st(function() {
+        d.transition = '';
+        if (c) {
+          c();
+        }
+      }, b);
+    });
+  });
+Q.Ext('fadeToggle', function(a, b) {
+    const c = this.nodes;
+    this.each(function(e) {
+      const d = window.getComputedStyle(c[e]);
+      if (d.opacity === '0') {
+        this.fadeIn(a, b);
+      } else {
+        this.fadeOut(a, b);
+      }
+    });
+  });
+Q.Ext('find', function(selector) {
+    const b = this.nodes[0];
+    if (!b) {
+      return _n;
+    }
+    const c = b.querySelectorAll(selector);
+    return c.length ? Q(c) : _n;
+  });
 Q.Ext('first', function () {
     return new Q(this.nodes[0]);
 });
 Q.Ext('focus', function () {
     return this.each(a => this.nodes[a].focus());
 });
-Q.Ext('hasClass', function (className) {
+Q.Ext('hasClass', function(className) {
     return this.nodes[0]?.classList.contains(className) || false;
-});
+  });
 Q.Ext('height', function (a) {
+    const nodes = this.nodes; // ...existing code...
     if (a === _un) {
-        return this.nodes[0].offsetHeight;
+        return nodes[0].offsetHeight;
     }
-    return this.each(b => this.nodes[b].style.height = a);
+    for (const node of nodes) {
+        node.style.height = a;
+    }
+    return this;
 });
 Q.Ext('hide', function (duration = 0, b) {
-    return this.each(e => {
-        const c = this.nodes[e];
+    for (const node of this.nodes) {
         if (duration === 0) {
-            c.style.display = 'none';
+            node.style.display = 'none';
             if (b) b();
         } else {
-            c.style.transition = `opacity ${duration}ms`;
-            c.style.opacity = 1;
+            node.style.transition = `opacity ${duration}ms`;
+            node.style.opacity = 1;
             _st(() => {
-                c.style.opacity = 0;
-                c.addEventListener('transitionend', function d() {
-                    c.style.display = 'none';
-                    c.style.transition = '';
-                    c.removeEventListener('transitionend', d);
+                node.style.opacity = 0;
+                node.addEventListener('transitionend', function d() {
+                    node.style.display = 'none';
+                    node.style.transition = '';
+                    node.removeEventListener('transitionend', d);
                     if (b) b();
                 });
             }, 0);
         }
-    });
+    }
+    return this;
 });
 Q.Ext('html', function (content) {
     if (content === _un) {
-        return this.nodes[0]?.innerHTML || _n;
+        return this.nodes[0] ? this.nodes[0].innerHTML : _n;
     }
-    return this.each(c => {
-        c = this.nodes[c];
-        c.innerHTML = '';
-        content.forEach(b => {
+    for (const d of this.nodes) {
+        d.innerHTML = '';
+        const appendContent = (b) => {
             if (typeof b === 'string') {
-                c.insertAdjacentHTML('beforeend', b);
+                d.insertAdjacentHTML('beforeend', b);
             } else if (b instanceof Q) {
-                b.nodes.forEach(d => c.appendChild(d));
-            } else if (b?.nodeType === 1) {
-                c.appendChild(b);
+                for (const subnode of b.nodes) {
+                    d.appendChild(subnode);
+                }
+            } else if (b?.nodeType === 1 || b?.nodeType != _n) {
+                d.appendChild(b);
             } else if (_ar.isArray(b) || b?.constructor === _nl) {
-                _ar.from(b).forEach(e => c.appendChild(e));
+                for (const e of _ar.from(b)) {
+                    d.appendChild(e);
+                }
             }
-        });
-    });
+        };
+        if (_ar.isArray(content) || content?.constructor === _nl) {
+            for (const b of _ar.from(content)) {
+                appendContent(b);
+            }
+        } else {
+            appendContent(content);
+        }
+    }
+    return this;
 });
 Q.Ext('id', function (ident) {
-    if (ident === _un) {
-        return this.nodes[0].id;
-    }
-    return this.nodes[0].id = ident;
+    const node = this.nodes[0];
+    if (ident === _un) return node.id;
+    node.id = ident;
+    return this;
 });
 Q.Ext('index', function (index) {
+    const first = this.nodes[0];
     if (index === _un) {
-        return _ar.from(this.nodes[0].parentNode.children).indexOf(this.nodes[0]);
+        return _ar.from(first.parentNode.children).indexOf(first);
     }
-    return this.each(f => {
-        const b = this.nodes[f].parentNode;
-        const c = _ar.from(b.children);
-        const d = c.indexOf(f);
-        const e = c.splice(index, 1)[0];
-        if (d < index) {
-            b.insertBefore(e, f);
+    for (const node of this.nodes) {
+        const b = node.parentNode;
+        if (!b) continue;
+        const children = _ar.from(b.children);
+        b.removeChild(node);
+        if (index >= children.length) {
+            b.appendChild(node);
         } else {
-            b.insertBefore(e, this.nodes[f].nextSibling);
+            b.insertBefore(node, children[index]);
         }
-    });
+    }
+    return this;
 });
 Q.Ext('inside', function (selector) {
-    return this.nodes[0]?.closest(selector) !== _n;
+    const node = this.nodes[0];
+    return node ? node.closest(selector) !== _n : false;
 });
 Q.Ext('is', function (selector) {
     const b = this.nodes[0];
@@ -368,17 +462,21 @@ Q.Ext('is', function (selector) {
     return false;
 });
 Q.Ext('isExists', function () {
-    return document.body.contains(this.nodes[0]);
+    const node = this.nodes[0];
+    return node ? document.body.contains(node) : false;
 });
 Q.isExists = function (a) {
     return document.querySelector(a) !== _n;
 };
 Q.Ext('last', function () {
-    return new Q(this.nodes[this.nodes.length - 1]);
+    const nodes = this.nodes;
+    return new Q(nodes[nodes.length - 1]);
 });
 Q.Ext('map', function (callback) {
-    let b = [];
-    this.each(c => b.push(callback(Q(c))));
+    const b = [];
+    for (const node of this.nodes) {
+        b.push(callback(new Q(node)));
+    }
     return b;
 });
 Q.Ext('off', function (a, b, c) {
@@ -388,79 +486,111 @@ Q.Ext('off', function (a, b, c) {
         passive: false
     };
     c = { ...d, ...c };
-    return this.each(f => {
-        a.split(' ').forEach(e => this.nodes[f].removeEventListener(e, b, c));
-    });
+    const eventList = a.split(' ');
+    for (const node of this.nodes) {
+        for (const e of eventList) {
+            node.removeEventListener(e, b, c);
+        }
+    }
+    return this;
 });
 Q.Ext('offset', function () {
-    const a = this.nodes[0].getBoundingClientRect();
+    const node = this.nodes[0];
+    const a = node.getBoundingClientRect();
     return {
         top: a.top + window.scrollY,
         left: a.left + window.scrollX
     };
 });
 Q.Ext('on', function (a, b, c) {
-    const d = {
-        capture: false,
-        once: false,
-        passive: false
-    };
-    c = { ...d, ...c };
-    return this.each(e => {
-        a.split(' ').forEach(f => {
-            this.nodes[e].addEventListener(f, b, c);
-        });
-    });
+  const d = {
+      capture: false,
+      once: false,
+      passive: false
+  };
+  c = { ...d, ...c };
+  const eventList = a.split(' ');
+  return this.each(index => {
+      const node = this.nodes[index];
+      eventList.forEach(f => {
+          node.addEventListener(f, b, c);
+      });
+  });
 });
 Q.Ext('parent', function () {
-    return new Q(this.nodes[0].parentNode);
+    const node = this.nodes[0];
+    return new Q(node ? node.parentNode : _n);
 });
 Q.Ext('position', function () {
+    const node = this.nodes[0];
     return {
-        top: this.nodes[0].offsetTop,
-        left: this.nodes[0].offsetLeft
+        top: node.offsetTop,
+        left: node.offsetLeft
     };
 });
 Q.Ext('prepend', function (...a) {
-    return this.each(e => {
-        const b = this.a[e];
-        a.forEach(c => {
+    for (const b of this.a) {
+        for (const c of a) {
             if (typeof c === 'string') {
                 b.insertAdjacentHTML('afterbegin', c);
-            } else if (c?.nodeType === 1 || c instanceof Q) {
+            } else if (c instanceof Q) {
                 b.insertBefore(c.a[0], b.firstChild);
+            } else if (c?.nodeType === 1 || c?.nodeType != _n) {
+                b.insertBefore(c, b.firstChild);
             } else if (_ar.isArray(c) || c?.constructor === _nl) {
-                _ar.from(c).forEach(d => b.insertBefore(d, b.firstChild));
+                for (const d of _ar.from(c)) {
+                    b.insertBefore(d, b.firstChild);
+                }
             }
-        });
-    });
+        }
+    }
+    return this;
 });
 Q.Ext('prop', function (property, b) {
     if (b === _un) {
-        return this.nodes[0]?.[property] || _n;
+        return this.nodes[0] ? this.nodes[0][property] : _n;
     }
-    return this.each(function (d, c) {
-        c[property] = b;
-    });
+    for (const node of this.nodes) {
+        node[property] = b;
+    }
+    return this;
 });
 Q.Ext('remove', function() {
-    return this.each(a => this.nodes[a].remove());
+    for (const node of this.nodes) {
+        node.remove();
+    }
+    return this;
 });
 Q.Ext('removeAttr', function (a) {
-    return this.each(b => this.nodes[b].removeAttribute(a));
+    for (const node of this.nodes) {
+        node.removeAttribute(a);
+    }
+    return this;
 });
 Q.Ext('removeClass', function (a) {
     const b = a.split(' ');
-    return this.each(c => this.nodes[c].classList.remove(...b));
+    for (const node of this.nodes) {
+        node.classList.remove(...b);
+    }
+    return this;
 });
 Q.Ext('removeData', function (key) {
-    return this.each(b => delete this.nodes[b].dataset[key]);
+    return this.each(index => {
+        const node = this.nodes[index];
+        delete node.dataset[key];
+    });
 });
 Q.Ext('removeProp', function (property) {
-    return this.each(b => delete this.nodes[b][property]);
+    return this.each(index => {
+        const node = this.nodes[index];
+        delete node[property];
+    });
 });
 Q.Ext('removeTransition', function () {
-    return this.each(a => this.nodes[a].style.transition = '');
+    return this.each(index => {
+        const node = this.nodes[index];
+        node.style.transition = '';
+    });
 });
 Q.Ext('scrollHeight', function () {
     return this.nodes[0].scrollHeight;
@@ -469,12 +599,13 @@ Q.Ext('scrollLeft', function (a, b) {
     if (a === _un) {
         return this.nodes[0].scrollLeft;
     }
-    return this.each(d => {
-        const c = this.nodes[d].scrollWidth - this.nodes[d].clientWidth;
+    return this.each(index => {
+        const node = this.nodes[index];
+        const c = node.scrollWidth - node.clientWidth;
         if (b) {
-            this.nodes[d].scrollLeft = _ma.min(this.nodes[d].scrollLeft + a, c);
+            node.scrollLeft = _ma.min(node.scrollLeft + a, c);
         } else {
-            this.nodes[d].scrollLeft = _ma.min(a, c);
+            node.scrollLeft = _ma.min(a, c);
         }
     });
 });
@@ -482,12 +613,13 @@ Q.Ext('scrollTop', function (a, b) {
     if (a === _un) {
         return this.nodes[0].scrollTop;
     }
-    return this.each(d => {
-        const c = this.nodes[d].scrollHeight - this.nodes[d].clientHeight;
+    return this.each(index => {
+        const node = this.nodes[index];
+        const c = node.scrollHeight - node.clientHeight;
         if (b) {
-            this.nodes[d].scrollTop = _ma.min(this.nodes[d].scrollTop + a, c);
+            node.scrollTop = _ma.min(node.scrollTop + a, c);
         } else {
-            this.nodes[d].scrollTop = _ma.min(a, c);
+            node.scrollTop = _ma.min(a, c);
         }
     });
 });
@@ -495,8 +627,8 @@ Q.Ext('scrollWidth', function () {
     return this.nodes[0].scrollWidth;
 });
 Q.Ext('show', function (duration = 0, b) {
-    return this.each(e => {
-        const c = this.nodes[e];
+    return this.each(index => {
+        const c = this.nodes[index];
         if (duration === 0) {
             c.style.display = '';
             if (b) b();
@@ -506,336 +638,225 @@ Q.Ext('show', function (duration = 0, b) {
             c.style.display = '';
             _st(() => {
                 c.style.opacity = 1;
-                c.addEventListener('transitionend', function d() {
+                c.addEventListener('transitionend', () => {
                     c.style.transition = '';
-                    c.removeEventListener('transitionend', d);
                     if (b) b();
-                });
+                }, { once: true });
             }, 0);
         }
     });
 });
 Q.Ext('size', function () {
-    return {
-        width: this.nodes[0].offsetWidth,
-        height: this.nodes[0].offsetHeight
-    };
+	return {
+		width: this.nodes[0].offsetWidth,
+		height: this.nodes[0].offsetHeight
+	};
 });
 Q.Ext('text', function (a) {
     if (a === _un) {
         return this.nodes[0]?.textContent || _n;
     }
-    return this.each(b => this.nodes[b].textContent = a);
-});
-Q.Ext('toggle', function () {
-    return this.each(a => this.nodes[a].style.display = this.nodes[a].style.display === 'none' ? '' : 'none');
-});
-Q.Ext('toggleClass', function (className) {
-    return this.each(b => this.nodes[b].classList.toggle(className));
-});
-Q.Ext('trigger', function (event) {
-    return this.each(function (c, b) {
-        b.dispatchEvent(new _ev(event));
+    return this.each(function(index, b) {
+        b.textContent = a;
     });
 });
+Q.Ext('toggle', function () {
+    return this.each(function(index, a) {
+        a.style.display = (a.style.display === 'none' ? '' : 'none');
+    });
+});
+Q.Ext('toggleClass', function (className) {
+    return this.each(function(index, b) {
+        b.classList.toggle(className);
+    });
+});
+Q.Ext('trigger', function (event) {
+	return this.each(function(c, b) {
+		b.dispatchEvent(new _ev(event));
+	});
+});
 Q.Ext('unwrap', function () {
-    return this.each(b => {
-        const a = this.nodes[b].parentNode;
-        if (a !== document.body) {
-            a.replaceWith(...this.nodes);
+    return this.each(function(index, b) {
+        const a = b.parentNode;
+        if (a && a !== document.body) {
+            a.replaceWith(...a.childNodes);
         }
     });
 });
-Q.Ext('val', function (a) {
-    if (a === _un) {
-        return this.nodes[0]?.value || _n;
+Q.Ext('val', function(a) {
+    if (a === _un) return this.nodes[0]?.value || _n;
+    for (const node of this.nodes) {
+        node.value = a;
     }
-    return this.each(b => this.nodes[b].value = a);
-});
-Q.Ext('wait', function (ms) {
-    const b = this;
-    return new _pr((resolve) => {
-        _st(() => {
-            resolve(b);
-        }, ms);
-    });
+    return this;
+  });
+Q.Ext('wait', function(ms) {
+	return new _pr(resolve => _st(() => resolve(this), ms));
 });
 Q.Ext('walk', function (callback, b = false) {
-    this.nodes.forEach((e, d) => {
-        const c = b ? Q(e) : e;
-        callback.call(e, c, d);
+	return this.each(function(d, el) {
+		const c = b ? Q(el) : el;
+		callback.call(el, c, d);
+	});
+});
+Q.Ext('width', function (value) {
+    if (typeof value === '_un') {
+        return this.nodes[0] ? this.nodes[0].offsetWidth : _un;
+    }
+    this.nodes.forEach(node => {
+        node.style.width = value;
     });
     return this;
 });
-Q.Ext('width', function (value) {
-    if (value === _un) {
-        return this.nodes[0].offsetWidth;
-    }
-    return this.each(b => this.nodes[b].style.width = value);
-});
-Q.Ext('wrap', function (c) {
-    return this.each(d => {
-        const a = this.nodes[d].parentNode;
-        let b;
-        if (typeof c === 'string') {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = c.trim();
-            b = tempDiv.firstElementChild;
-        } else {
-            b = c;
-        }
-        a.insertBefore(b, this.nodes[d]);
-        b.appendChild(this.nodes[d]);
+Q.Ext('wrap', function (a) {
+    return this.each(f => {
+        const b = f.b;
+        let c = typeof a === 'string'
+            ? // Create and clone the a so each f gets its own instance.
+              ((d => (d.innerHTML = a.trim(), d.firstElementChild.cloneNode(true)))
+              (document.createElement('e')))
+            : a;
+        b.insertBefore(c, f);
+        c.appendChild(f);
     });
 });
 Q.Ext('wrapAll', function (wrapper) {
-    return this.each(e => {
-        const b = this.nodes[e].parentNode;
-        let c;
-        if (typeof wrapper === 'string') {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = wrapper.trim();
-            c = tempDiv.firstElementChild;
-        } else {
-            c = wrapper;
-        }
-        b.insertBefore(c, this.nodes[0]);
-        this.nodes.forEach(d => c.appendChild(d));
-    });
+    if (!this.nodes.length) return this;
+    const b = this.nodes[0].parentNode;
+    let c = typeof wrapper === 'string'
+        ? ((tempDiv => (tempDiv.innerHTML = wrapper.trim(), tempDiv.firstElementChild))
+           (document.createElement('div')))
+        : wrapper;
+    b.insertBefore(c, this.nodes[0]);
+    this.nodes.forEach(d => c.appendChild(d));
+    return this;
 });
 Q.Ext('zIndex', function (value) {
+    const node = this.nodes[0];
+    if (!node) return;
     if (value === _un) {
-        let b = this.nodes[0].style.zIndex;
-        if (!b) {
-            b = window.getComputedStyle(this.nodes[0]).zIndex;
-        }
+        let b = node.style.zIndex || window.getComputedStyle(node).zIndex;
         return b;
     }
-    return this.each(c => this.nodes[c].style.zIndex = value);
+    this.nodes.forEach(node => node.style.zIndex = value);
+    return this;
 });
-Q.Done = (function () {
-    const callbacks = [];
-    window.addEventListener('load', () => {
-        callbacks.forEach(b => b());
-    });
-    return function (b) {
-        callbacks.push(b);
+
+Q.AvgColor = (source, sampleSize, callback) => {
+    const image = new Image();
+    image.crossOrigin = 'Anonymous';
+    if (typeof source === 'string') image.src = source;
+    else if (source instanceof HTMLCanvasElement) image.src = source.toDataURL();
+    else return _c.error("Invalid image source provided.");
+    image.onload = () => {
+      const canvas = _ob.assign(document.createElement('canvas'), { width: image.width, height: image.height });
+      const context = canvas.getContext('2d');
+      context.drawImage(image, 0, 0);
+      const data = context.getImageData(0, 0, image.width, image.height).data;
+      const samplingRate = sampleSize === 'auto'
+        ? _ma.max(1, _ma.ceil(_ma.sqrt(image.width * image.height) / 32))
+        : (typeof sampleSize === 'number' && sampleSize > 0 ? sampleSize : 1);
+      let totalRed = 0, totalGreen = 0, totalBlue = 0, count = 0;
+      for (let index = 0, len = data.length; index < len; index += samplingRate * 4) {
+        totalRed   += data[index];
+        totalGreen += data[index + 1];
+        totalBlue  += data[index + 2];
+        count++;
+      }
+      const avgColor = { r: (totalRed / count) | 0, g: (totalGreen / count) | 0, b: (totalBlue / count) | 0 };
+      typeof callback === 'function' && callback(avgColor);
     };
-})();
-Q.Leaving = (function () {
-    const callbacks = [];
-    window.addEventListener('beforeunload', (b) => {
-        callbacks.forEach(c => c(b));
-    });
-    return function (c) {
-        callbacks.push(c);
-    };
-})();
-Q.Ready = (function () {
-    const callbacks = [];
-    document.addEventListener('DOMContentLoaded', () => {
-        callbacks.forEach(b => b());
-    }, { once: true });
-    return function (b) {
-        if (document.readyState === 'loading') {
-            callbacks.push(b);
-        } else {
-            b();
-        }
-    };
-})();
-Q.Resize = (function () {
-    const a = [];
-    window.addEventListener('resize', () => {
-        const b = window.innerWidth;
-        const c = window.innerHeight;
-        a.forEach(d => d(b, c));
-    });
-    return function (d) {
-        a.push(d);
-    };
-})();
-Q.AvgColor = function (image, sampleSize, callback) {
-    let img = new Image();
-    img.crossOrigin = 'Anonymous';
-    if (typeof image === 'string') {
-        img.src = image;
-    } else if (image instanceof HTMLCanvasElement) {
-        img.src = image.toDataURL();
+    image.onerror = () => _c.error("Failed to load image.");
+  };
+Q.ColorBrightness = (inputColor, percent) => {
+    if (!/^#|^rgb/.test(inputColor)) throw new _er('Unsupported c format');
+    let red, green, blue, alpha = 1, isHex = false, factor = 1 + percent / 100;
+    if (inputColor[0] === '#') {
+      isHex = true;
+      const hexString = inputColor.slice(1);
+      if (hexString.length === 3) {
+        red = parseInt(hexString[0] + hexString[0], 16);
+        green = parseInt(hexString[1] + hexString[1], 16);
+        blue = parseInt(hexString[2] + hexString[2], 16);
+      } else if (hexString.length === 6) {
+        red = parseInt(hexString.slice(0, 2), 16);
+        green = parseInt(hexString.slice(2, 4), 16);
+        blue = parseInt(hexString.slice(4, 6), 16);
+      }
     } else {
-        _c.error("Invalid image source provided.");
-        return;
+      const match = inputColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+      if (match) {
+        red = +match[1];
+        green = +match[2];
+        blue = +match[3];
+        if (match[4] != _n) alpha = parseFloat(match[4]);
+      }
     }
-    img.onload = function () {
-        let canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        let ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        let data = ctx.getImageData(0, 0, img.width, img.height).data;
-        let length = data.length / 4;
-        let samplingRate = 1;
-        if (sampleSize === 'auto') {
-            let factor = _ma.ceil(_ma.sqrt(img.width * img.height) / 32);
-            samplingRate = _ma.max(1, factor);
-        } else if (typeof sampleSize === 'number' && sampleSize > 0) {
-            samplingRate = sampleSize;
-        }
-        let color = { r: 0, g: 0, b: 0 };
-        let count = 0;
-        for (let i = 0; i < length; i += samplingRate) {
-            let idx = i * 4; // Convert to RGBA index
-            color.r += data[idx];
-            color.g += data[idx + 1];
-            color.b += data[idx + 2];
-            count++;
-        }
-        color.r = _ma.floor(color.r / count);
-        color.g = _ma.floor(color.g / count);
-        color.b = _ma.floor(color.b / count);
-        if (typeof callback === 'function') {
-            callback(color);
-        }
-    };
-    img.onerror = function () {
-        _c.error("Failed to load image.");
-    };
-};
-Q.ColorBrightness = function (c, percent) {
-    let r, g, b, a = 1;
-    let hex = false;
-    if (!c.startsWith('#') && !c.startsWith('rgb')) {
-        throw new _er('Unsupported c format');
-    }
-    if (c.startsWith('#')) {
-        c = c.replace(/^#/, '');
-        if (c.length === 3) {
-            r = parseInt(c[0] + c[0], 16);
-            g = parseInt(c[1] + c[1], 16);
-            b = parseInt(c[2] + c[2], 16);
-        }
-        if (c.length === 6) {
-            r = parseInt(c.substring(0, 2), 16);
-            g = parseInt(c.substring(2, 4), 16);
-            b = parseInt(c.substring(4, 6), 16);
-        }
-        hex = true;
-    }
-    if (c.startsWith('rgb')) {
-        const alphaColor = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(\.\d+)?))?\)/);
-        if (alphaColor) {
-            r = parseInt(alphaColor[1]);
-            g = parseInt(alphaColor[2]);
-            b = parseInt(alphaColor[3]);
-            if (alphaColor[4]) {
-                a = parseFloat(alphaColor[4]);
-            }
-        }
-    }
-    r = _ma.min(255, _ma.max(0, r + (r * percent / 100)));
-    g = _ma.min(255, _ma.max(0, g + (g * percent / 100)));
-    b = _ma.min(255, _ma.max(0, b + (b * percent / 100)));
-    if (hex) {
-        return '#' +
-            ('0' + _ma.round(r).toString(16)).slice(-2) +
-            ('0' + _ma.round(g).toString(16)).slice(-2) +
-            ('0' + _ma.round(b).toString(16)).slice(-2);
-    } else if (c.startsWith('rgb')) {
-        if (a === 1) {
-            return `rgb(${_ma.round(r)}, ${_ma.round(g)}, ${_ma.round(b)})`;
-        } else {
-            return `rgba(${_ma.round(r)}, ${_ma.round(g)}, ${_ma.round(b)}, ${a})`;
-        }
-    }
-}
-Q.Debounce = function (id, b, c) {
-    let d = Q.getGLOBAL('Debounce');
-    if (d && d[id]) {
-        _ct(d[id]);
-    }
-    Q.setGLOBAL({ Debounce: { ...d, [id]: _st(c, b) } });
-};
-Q.HSL2RGB = function (h, s, l) {
-    let r, g, b;
+    const clamp = value => _ma.min(255, _ma.max(0, _ma.round(value * factor)));
+    red = clamp(red);
+    green = clamp(green);
+    blue = clamp(blue);
+    return isHex
+      ? '#' + [red, green, blue].map(component => (`0${component.toString(16)}`).slice(-2)).join('')
+      : (alpha === 1 ? `rgb(${red}, ${green}, ${blue})` : `rgba(${red}, ${green}, ${blue}, ${alpha})`);
+  };
+Q.Debounce = (id, b, c) => {
+    const debounceStorage = Q.getGLOBAL('Debounce') || {};
+    debounceStorage[id] && _ct(debounceStorage[id]);
+    debounceStorage[id] = _st(c, b);
+    Q.setGLOBAL({ Debounce: debounceStorage });
+  };
+Q.HSL2RGB = (h, s, l) => {
     if (s === 0) {
-        r = g = b = l;
-    } else {
-        let a = function (p, q, t) {
-            if (t < 0) t += 1;
-            if (t > 1) t -= 1;
-            if (t < 1 / 6) return p + (q - p) * 6 * t;
-            if (t < 1 / 2) return q;
-            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-            return p;
-        };
-        let q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-        let p = 2 * l - q;
-        r = a(p, q, h + 1 / 3);
-        g = a(p, q, h);
-        b = a(p, q, h - 1 / 3);
+      const gray = l * 255;
+      return [gray, gray, gray];
     }
-    return [r * 255, g * 255, b * 255];
-};
-Q.ID = function (length = 8, b = '') {
-    return b + [..._ar(length)]
-        .map(() => _ma.floor(_ma.random() * 16).toString(16))
-        .join('');
-};
-Q.RGB2HSL = function (r, g, b) {
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s,
+          p = 2 * l - q,
+          hueToRgb = (t) => {
+            t < 0 && (t += 1);
+            t > 1 && (t -= 1);
+            return t < 1 / 6 ? p + (q - p) * 6 * t
+                 : t < 1 / 2 ? q
+                 : t < 2 / 3 ? p + (q - p) * 6 * (2 / 3 - t)
+                 : p;
+          };
+    return [hueToRgb(h + 1 / 3) * 255, hueToRgb(h) * 255, hueToRgb(h - 1 / 3) * 255];
+  };
+Q.ID = (length = 8, b = '') =>
+    b + _ar.from({ length }, () => (_ma.random() * 16 | 0).toString(16)).join('');
+Q.RGB2HSL = (r, g, b) => {
     r /= 255, g /= 255, b /= 255;
-    let maximum = _ma.max(r, g, b), minimum = _ma.min(r, g, b);
-    let h, s, l = (maximum + minimum) / 2;
-    if (maximum === minimum) {
-        h = s = 0;
-    } else {
-        let d = maximum - minimum;
-        s = l > 0.5 ? d / (2 - maximum - minimum) : d / (maximum + minimum);
-        switch (maximum) {
-            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-            case g: h = (b - r) / d + 2; break;
-            case b: h = (r - g) / d + 4; break;
-        }
-        h /= 6;
+    const max = _ma.max(r, g, b), min = _ma.min(r, g, b);
+    let h, s, l = (max + min) / 2, d = max - min;
+    if (!d) h = s = 0;
+    else {
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      h = max === r ? (g - b) / d + (g < b ? 6 : 0)
+        : max === g ? (b - r) / d + 2
+        : (r - g) / d + 4;
+      h /= 6;
     }
     return [h, s, l];
-};
-Q.isDarkColor = (color, margin = 20, c = 100) => {
-    let r, g, b;
-    const parseHex = (f) => {
-        if (f.length === 3) {
-            return [
-                parseInt(f[0] + f[0], 16),
-                parseInt(f[1] + f[1], 16),
-                parseInt(f[2] + f[2], 16),
-            ];
-        } else if (f.length === 6) {
-            return [
-                parseInt(f.slice(0, 2), 16),
-                parseInt(f.slice(2, 4), 16),
-                parseInt(f.slice(4, 6), 16),
-            ];
-        }
-        throw new _er('Invalid f color format');
-    };
+  };
+Q.isDarkColor = (color, b = 20, c = 100) => {
+    let red, green, blue;
     if (color[0] === '#') {
-        [r, g, b] = parseHex(color.slice(1));
+      const f = color.slice(1);
+      const parts = f.length === 3
+        ? [f[0] + f[0], f[1] + f[1], f[2] + f[2]]
+        : f.length === 6
+        ? [f.slice(0, 2), f.slice(2, 4), f.slice(4, 6)]
+        : _n;
+      if (!parts) throw _er('Invalid f color format');
+      [red, green, blue] = parts.map(v => parseInt(v, 16));
     } else if (color.startsWith('rgb')) {
-        const rgba = color.match(/\d+/g);
-        if (rgba && rgba.length >= 3) {
-            [r, g, b] = rgba.map(_nu);
-        } else {
-            throw new _er('Invalid color format');
-        }
-    } else {
-        throw new _er('Unsupported color format');
-    }
-    const e = _ma.sqrt(
-        0.299 * (r ** 2) +
-        0.587 * (g ** 2) +
-        0.114 * (b ** 2)
-    ) + margin;
-    return e < c;
-};
+      const arr = color.match(/\d+/g);
+      if (arr && arr.length >= 3) [red, green, blue] = arr.map(_nu);
+      else throw _er('Invalid color format');
+    } else throw _er('Unsupported color format');
+    return _ma.sqrt(0.299 * red ** 2 + 0.587 * green ** 2 + 0.114 * blue ** 2) + b < c;
+  };
 Q.Container = function (options = {}) {
     let Icon = function (icon) {
         let iconElement = Q('<div>');
@@ -999,45 +1020,34 @@ Q.Container = function (options = {}) {
         }
     };
 };
-Q.Cookie = function (a, b, options = {}) { 
-    function h(options) {
-        const { d, e, f, g } = options;
-        let j = '';
-        if (d) {
-            const k = new _da();
-            k.setTime(k.getTime() + (d * 24 * 60 * 60 * 1000));
-            j += `expires=${k.toUTCString()}; `;
-        }
-        if (e) {
-            j += `e=${e}; `;
-        }
-        if (f) {
-            j += `f=${f}; `;
-        }
-        if (g) {
-            j += 'g; ';
-        }
-        return j;
+Q.Cookie = function (a, b, c = {}) {
+    const buildOptions = (options) => {
+      let optionsStr = '';
+      if (options.days) optionsStr += `expires=${new _da(_da.now() + options.days * 86400000).toUTCString()}; `;
+      if (options.path) optionsStr += `path=${options.path}; `;
+      if (options.domain) optionsStr += `domain=${options.domain}; `;
+      if (options.secure) optionsStr += 'secure; ';
+      return optionsStr;
+    };
+    if (arguments.length > 1) {
+      if (b === _n || b === '') {
+        b = '';
+        c = { ...c, days: -1 };
+      }
+      return document.cookie = `${a}=${b}; ${buildOptions(c)}`;
     }
-    function i(j) {
-        return j.split(';').reduce((o, n) => {
-            const [l, b] = n.split('=').map(c => c.trim());
-            o[l] = b;
-            return o;
-        }, {});
+    const allCookies = document.cookie.split('; ');
+    for (let i = 0, len = allCookies.length; i < len; i++) {
+      const currentCookie = allCookies[i];
+      const indexEqual = currentCookie.indexOf('=');
+      if (indexEqual > -1 && currentCookie.slice(0, indexEqual).trim() === a) {
+        return currentCookie.slice(indexEqual + 1);
+      }
     }
-    if (arguments.length === 2) { 
-        if (b === _n || b === '') { 
-            b = ''; 
-            options = { ...options, d: -1 }; 
-        }
-        return document.cookie = `${a}=${b}; ${h(options)}`; 
-    } else if (arguments.length === 1) { 
-        return i(document.cookie)[a]; 
-    }
-};
+    return _un;
+  };
 Q.Fetch = function (url, b, c = {}) {
-    const { 
+    const {
         method = 'GET',
         headers = {},
         body,
@@ -1045,20 +1055,34 @@ Q.Fetch = function (url, b, c = {}) {
         responseType = 'json',
         credentials = 'same-origin',
         retries = 3,
-        retryDelay = 1000, 
-        timeout = 0, 
-        validateResponse = (j) => j
+        retryDelay = 1000,
+        exponentialBackoff = false,
+        timeout = 0,
+        validateResponse = (j) => j,
+        query = _n,
+        e: externalSignal = _n
     } = c;
+    if (query && typeof query === 'object') {
+        const urlObject = new URL(url, location.origin);
+        _ob.entries(query).forEach(([key, value]) => urlObject.searchParams.append(key, value));
+        url = urlObject.toString();
+    }
+    let requestBody = body;
+    if (body && typeof body === 'object' && contentType === 'application/json' && !(body instanceof FormData)) {
+        try { requestBody = JSON.stringify(body); } catch (k) { b(new _er('Failed to serialize request body'), _n); return; }
+    }
     headers['Content-Type'] = headers['Content-Type'] || contentType;
     const d = new _ac();
     const { e } = d;
-    const g = (f) => {
-        const h = timeout ? _st(() => d.abort(), timeout) : _n;
-        _f(url, { method, headers, body, credentials, e })
+    if (externalSignal) {
+        externalSignal.addEventListener('abort', () => d.abort(), { once: true });
+    }
+    const doFetch = (f) => {
+        let h = _n;
+        if (timeout) { h = _st(() => d.abort(), timeout); }
+        _f(url, { method, headers, body: requestBody, credentials, e })
             .then(i => {
-                if (!i.ok) {
-                    throw new _er(`Network i was not ok: ${i.statusText}`);
-                }
+                if (!i.ok) throw new _er(`Network i was not ok: ${i.statusText}`);
                 switch (responseType) {
                     case 'json': return i.json();
                     case 'text': return i.text();
@@ -1067,40 +1091,38 @@ Q.Fetch = function (url, b, c = {}) {
                     default: throw new _er('Unsupported i type');
                 }
             })
-            .then(j => {
+            .then(result => {
                 if (h) _ct(h);
-                return validateResponse(j);
+                return validateResponse(result);
             })
-            .then(j => b(_n, j))
+            .then(validatedData => b(_n, validatedData))
             .catch(k => {
                 if (h) _ct(h);
                 if (k.name === 'AbortError') {
                     b(new _er('Fetch request was aborted'), _n);
                 } else if (f < retries) {
-                    _c.warn(`Retrying _f (${f + 1}/${retries}):`, k);
-                    _st(() => g(f + 1), retryDelay);
+                    const delay = exponentialBackoff ? retryDelay * (2 ** f) : retryDelay;
+                    _st(() => doFetch(f + 1), delay);
                 } else {
                     b(k, _n);
                 }
             });
     };
-    g(0);
-    return {
-        abort: () => d.abort()
-    };
+    doFetch(0);
+    return { abort: () => d.abort() };
 };
 Q.Form = function (options = {}) {
-    let Icon = function (icon) {
+    const Form = {};
+    Form.Icon = function (icon) {
         let iconElement = Q('<div>');
         iconElement.addClass('svg_' + icon + ' form_icon');
         return iconElement;
     };
-    let classes = Q.style(`
+    Form.classes = Q.style(`
            .form_icon {
                width: 100%;
                height: 100%;
                color: #fff;
-               /* Default color */
                pointer-events: none;
            }
            .q_form {
@@ -1113,1203 +1135,359 @@ Q.Form = function (options = {}) {
            .q_form_disabled {
                opacity: 0.5;
            }
-           .q_form_checkbox,
-           .q_form_radio {
-               display: flex;
-               width: fit-content;
-               align-items: center;
-           }
-           .q_form_checkbox .label:empty,
-           .q_form_radio .label:empty {
-               display: none;
-           }
-           .q_form_checkbox .label,
-           .q_form_radio .label {
-               padding-left: 5px;
-               user-select: none;
-           }
-           .q_form_cb {
-               position: relative;
-               width: 20px;
-               height: 20px;
-               background-color: #555555;
-           }
-           .q_form_cb input[type="checkbox"] {
-               opacity: 0;
-               top: 0;
-               left: 0;
-               padding: 0;
-               margin: 0;
-               width: 100%;
-               height: 100%;
-               position: absolute;
-           }
-           .q_form_cb input[type="checkbox"]:checked+label:before {
-               content: "";
-               position: absolute;
-               display: block;
-               top: 0;
-               left: 0;
-               width: 100%;
-               height: 100%;
-               background-color: #1DA1F2;
-           }
-           .q_form_r {
-               position: relative;
-               width: 20px;
-               height: 20px;
-               background-color: #555555;
-               border-radius: 50%;
-               overflow: hidden;
-           }
-           .q_form_r input[type="radio"] {
-               opacity: 0;
-               top: 0;
-               left: 0;
-               padding: 0;
-               margin: 0;
-               width: 100%;
-               height: 100%;
-               position: absolute;
-               border-radius: 50%;
-           }
-           .q_form_r input[type="radio"]:checked+label:before {
-               content: "";
-               position: absolute;
-               display: block;
-               top: 0;
-               left: 0;
-               width: 100%;
-               height: 100%;
-               background-color: #1DA1F2;
-               border-radius: 50%;
-           }
-           .q_form_input {
-               width: calc(100% - 2px);
-               padding: 5px;
-               outline: none;
-               border: 0;
-           }
-           .q_form_input:focus,
-           .q_form_textarea:focus {
-               outline: 1px solid #1DA1F2;
-           }
-           .q_form_textarea {
-               width: calc(100% - 2px);
-               padding: 5px;
-               outline: none;
-               border: 0;
-           }
-           .q_window {
-               position: fixed;
-               background-color: #333;
-               z-index: 1000;
-               box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
-               border: 1px solid rgba(255, 255, 255, 0.01);
-               border-radius: 5px;
-               overflow: hidden;
-               display: flex;
-               flex-direction: column;
-           }
-           .q_window_titlebar {
-               user-select: none;
-               display: flex;
-               background-color: #222;
-               width: 100%;
-               flex-shrink: 0;
-           }
-           .q_window_buttons {
-               display: flex;
-           }
-           .q_window_button {
-               box-sizing: border-box;
-               display: flex;
-               justify-content: center;
-               align-items: center;
-               cursor: pointer;
-               width: 30px;
-               height: 30px;
-               padding: 10px;
-               background-color: rgba(255, 255, 255, 0.01);
-               margin-left: 1px;
-           }
-           .q_window_button:hover {
-               background-color: #424242;
-           }
-           .q_window_close:hover {
-               background-color: #e81123;
-           }
-           .q_window_titletext {
-               flex-grow: 1;
-               color: #fff;
-               align-content: center;
-               white-space: nowrap;
-               overflow: hidden;
-               text-overflow: ellipsis;
-               padding: 0 5px
-           }
-           .q_window_content {
-               width: 100%;
-               overflow-y: auto;
-               flex: 1;
-           }
-           .q_slider_wrapper {
-               position: relative;
-               height: 20px;
-               overflow: hidden;
-               background-color: #333;
-           }
-           .q_slider_pos {
-               position: absolute;
-               top: 0;
-               left: 0;
-               width: 0;
-               height: 100%;
-               background-color: #1473e6;
-           }
-           .q_form_slider {
-               width: 100%;
-               opacity: 0;
-               height: 100%;
-               position: absolute;
-           }
-           .q_form_dropdown {
-               user-select: none;
-               position: relative;
-               background-color: #333;
-           }
-           .q_form_dropdown_options {
-               position: absolute;
-               width: 100%;
-               background-color: #333;
-               z-index: 1;
-           }
-           .q_form_dropdown_option,
-           .q_form_dropdown_selected {
-               padding: 5px 0px;
-           }
-           .q_form_button {
-               user-select: none;
-               padding: 5px 10px;
-               cursor: pointer;
-           }
-           .q_form_button:hover {
-               background-color: #555;
-           }
-           .q_form_button:active {
-               background-color: #777;
-           }
-           .q_form_file {
-               user-select: none;
-               position: relative;
-               overflow: hidden;
-           }
-           .q_form_file input[type="file"] {
-               position: absolute;
-               width: 100%;
-               height: 100%;
-               opacity: 0;
-           }
-           .datepicker_wrapper {
-               user-select: none;
-               width: 100%;
-               height: 100%;
-               display: flex;
-               flex-direction: column;
-           }
-           .datepicker_header {
-               display: flex;
-               align-items: center;
-               color: #fff;
-               justify-content: center;
-           }
-           .datepicker_header div {
-               padding: 15px 5px;
-           }
-           .datepicker_weekdays {
-               display: grid;
-               grid-template-columns: repeat(7, 1fr);
-           }
-           .datepicker_weekdays div {
-               display: flex;
-               align-items: center;
-               justify-content: center;
-           }
-           .datepicker_days {
-               display: grid;
-               grid-template-columns: repeat(7, 1fr);
-               flex: 1;
-           }
-           .prev_month,
-           .next_month {
-               opacity: 0.5;
-           }
-           .datepicker_body {
-               display: flex;
-               flex-direction: column;
-               flex: 1;
-           }
-           .days {
-               cursor: default;
-               display: flex;
-               align-items: center;
-               justify-content: center;
-           }
-           .day_selected {
-               background-color: #1473e6;
-               color: #fff;
-           }
-           .datepicker_footer {
-               display: flex;
-               justify-content: flex-end;
-           }
-           .tag_container {
-                display: flex;
-                flex-wrap: wrap;
-}
-.tag_tag {
-    display: flex;
-    align-items: center;
-    border: 1px solid #333;
-    color: #fff;
-overflow: hidden;
-    margin: 2px;
-    border-radius: 5px;
-}
-        .tag_rating {
-    display: flex;
-    background-color: #333;
-    padding: 2px 5px;
-    align-items: center;
-            }
-            .tag_icon {
-                width: 10px;
-                height: 10px;
-}
-.tag_icon_small {
-    width: 5px;
-    height: 5px;
-}
-.tag_name {
-    padding: 2px 8px;
-}
-.tag_value {
-    padding: 0 5px;
-    user-select: none;   
-}
-.tag_close {
-    cursor: pointer;
-    background-color: #333;
-    height: auto;
-    width: 20px;
-}
-.tag_input {
-width: content;
-    border: 0;
-    margin:0;
-    background-color: transparent;
-    color: #fff;
-}
-.tag_name[contenteditable="true"] {
-    cursor: text;
-}
-.tag_name[contenteditable="true"]:focus {
-    outline: 0;
-}
     `, {
+        'form_icon': 'form_icon',
         'q_form': 'q_form',
-        'q_form_disabled': 'q_form_disabled',
-        'q_form_checkbox': 'q_form_checkbox',
-        'q_form_radio': 'q_form_radio',
-        'q_form_cb': 'q_form_cb',
-        'q_form_r': 'q_form_r',
-        'q_form_input': 'q_form_input',
-        'q_form_textarea': 'q_form_textarea',
-        'q_window': 'q_window',
-        'q_window_titlebar': 'q_window_titlebar',
-        'q_window_buttons': 'q_window_buttons',
-        'q_window_button': 'q_window_button',
-        'q_window_titletext': 'q_window_titletext',
-        'q_window_content': 'q_window_content',
-        'q_slider_wrapper': 'q_slider_wrapper',
-        'q_slider_pos': 'q_slider_pos',
-        'q_form_slider': 'q_form_slider',
-        'q_form_dropdown': 'q_form_dropdown',
-        'q_form_dropdown_options': 'q_form_dropdown_options',
-        'q_form_dropdown_option': 'q_form_dropdown_option',
-        'q_form_dropdown_selected': 'q_form_dropdown_selected',
-        'q_form_button': 'q_form_button',
-        'q_form_progress_bar': 'q_form_progress_bar',
-        'q_form_file': 'q_form_file',
-        'q_form_progress': 'q_form_progress',
-        'q_form_dropdown_active': 'q_form_dropdown_active',
-        'q_window_close': 'q_window_close',
-        'q_window_minimize': 'q_window_minimize',
-        'q_window_maximize': 'q_window_maximize',
-        'tag_name': 'tag_name',
-        'tag_input': 'tag_input',
-        'tag_close': 'tag_close',
-        'tag_value': 'tag_value',
-        'tag_icon_small': 'tag_icon_small',
-        'tag_rating': 'tag_rating',
-        'tag_container': 'tag_container',
-        'tag_tag': 'tag_tag',
-        'tag_icon': 'tag_icon',
-        'tag_up': 'tag_up',
-        'tag_down': 'tag_down',
+        'q_form_disabled': 'q_form_disabled'
     });
-    return {
-        Tag: function (options = {}) {
-            const defaultOptions = {
-                min: 0,
-                max: 10,
-                step: 1,
-                value: 0,
-                digit: 3,
-                flood: 500,
-                disabled: false,
-                removable: true,
-                votes: true,
-                readonly: false,
-                placeholder: ''
-            };
-            let { min, max, step, digit, votes, removable, flood } = { ...defaultOptions, ...options };
-            if (step.toString().includes('.')) {
-                digit = step.toString().split('.')[1].length;
-            }
-            let data = [];
-            let changeCallback = _n;
-            const tagContainer = Q('<div>', { class: classes.tag_container });
-            const input = Q('<input>', { class: classes.tag_input });
-            const malformFix = Q('<input>', { class: classes.tag_input });
-            let ID = Q.ID(5, '_');
-            const changeTagValue = (tag, delta, currentValue) => {
-                let newValue = tag.value + delta;
-                newValue = _ma.min(_ma.max(newValue, min), max);
-                tag.value = parseFloat(newValue.toFixed(digit));
-                currentValue.text(tag.value);
-                data = data.map(t => (t.tag === tag.tag ? { ...t, value: tag.value } : t));
-                if (changeCallback) Q.Debounce(ID, flood, changeCallback);
-            };
-            const appendTags = tags => {
-                tags.forEach(tag => {
-                    const tagElement = Q('<div>', { class: classes.tag_tag });
-                    let tagValue = Q('<div>', { class: classes.tag_name }).text(tag.tag);
-                    if (votes) {
-                        const tagRate = Q('<div>', { class: classes.tag_rating });
-                        const upvote = Q('<div>', { class: [classes.tag_icon, classes.tag_up] }).html(Icon('arrow-up'));
-                        const currentValue = Q('<div>', { class: classes.tag_value }).text(tag.value);
-                        const downvote = Q('<div>', { class: [classes.tag_icon, classes.tag_down] }).html(Icon('arrow-down'));
-                        tagRate.append(downvote, currentValue, upvote);
-                        tagElement.append(tagRate);
-                        upvote.on('click', () => changeTagValue(tag, step, currentValue));
-                        downvote.on('click', () => changeTagValue(tag, -step, currentValue));
-                    }
-                    if (!defaultOptions.readonly) {
-                        tagValue.attr('contenteditable', true);
-                        tagValue.on('input', function () {
-                            malformFix.val(tagValue.text());
-                            tagValue.text(malformFix.val());
-                            tag.tag = malformFix.val();
-                            if (changeCallback) Q.Debounce(ID, flood, changeCallback);
-                        });
-                    }
-                    tagElement.append(tagValue);
-                    if (removable) {
-                        const close = Q('<div>', { class: [classes.tag_icon_small, classes.tag_close] }).html(Icon('window-close'));
-                        close.on('click', () => {
-                            data = data.filter(t => t.tag !== tag.tag);
-                            tagElement.remove();
-                            if (changeCallback) Q.Debounce(ID, flood, changeCallback);
-                        });
-                        tagElement.append(close);
-                    }
-                    tagContainer.append(tagElement);
-                });
-            };
-            tagContainer.add = function (taglist) {
-                tagContainer.empty();
-                if (!_ar.isArray(taglist)) {
-                    taglist = [taglist];
-                }
-                taglist = taglist.map(tag => (typeof tag === 'string' ? { tag, value: 0 } : tag));
-                data = [...data, ...taglist];
-                appendTags(data);
-            };
-            tagContainer.get = function () {
-                return data;
-            };
-            tagContainer.change = function (callback) {
-                changeCallback = callback;
-            };
-            return tagContainer;
-        },
-        DatePicker: function (value = '', locale = window.navigator.language, range = false) {
-            let getFirstDayOfWeek = () => {
-                let startDate = new _da();
-                let dayOfWeek = startDate.getDay();
-                startDate.setDate(startDate.getDate() - dayOfWeek);
-                return startDate.toLocaleDateString(locale, { weekday: 'short' });
-            };
-            let daysLocale = (short = true) => {
-                let days = [];
-                let baseDate = new _da(2021, 0, 4);
-                const options = { weekday: short ? 'short' : 'long' };
-                let firstDayOfWeek = getFirstDayOfWeek();
-                while (baseDate.toLocaleDateString(locale, options) !== firstDayOfWeek) {
-                    baseDate.setDate(baseDate.getDate() - 1);
-                }
-                for (let i = 0; i < 7; i++) {
-                    let date = new _da(baseDate);
-                    date.setDate(date.getDate() + i);
-                    days.push(date.toLocaleDateString(locale, options));
-                }
-                return days;
-            };
-            let monthsLocale = (short = true) => {
-                let months = [];
-                for (let i = 0; i < 12; i++) {
-                    let date = new _da(2021, i, 1);
-                    months.push(date.toLocaleDateString(locale, { month: short ? 'short' : 'long' }));
-                }
-                return months;
-            };
-            let date = value ? new _da(value) : new _da();
-            let day = date.getDate();
-            let month = date.getMonth() + 1;
-            let year = date.getFullYear();
-            let daysInMonth = new _da(year, month, 0).getDate();
-            let firstDay = new _da(year, month - 1, 1).getDay();
-            let lastDay = new _da(year, month - 1, daysInMonth).getDay();
-            let days = daysLocale(true);
-            let dayNames = days.map((dayName, i) => {
-                let dayElement = Q('<div>');
-                dayElement.text(dayName);
-                return dayElement;
-            });
-            let wrapper = Q('<div class="datepicker_wrapper">');
-            let header = Q('<div class="datepicker_header">');
-            let body = Q('<div class="datepicker_body">');
-            let footer = Q('<div class="datepicker_footer">');
-            let weekdays = Q('<div class="datepicker_weekdays">');
-            let days_wrapper = Q('<div class="datepicker_days">');
-            let dateInput = Q('<input type="date">');
-            let button_ok = this.Button('OK');
-            let button_today = this.Button('Today');
-            footer.append(button_today, button_ok);
-            body.append(weekdays, days_wrapper);
-            wrapper.append(header, body, footer);
-            let container_months = Q('<div>');
-            let container_years = Q('<div>');
-            header.append(container_months, container_years);
-            if (wrapper.inside(classes.q_window)) {
-                let button_cancel = this.Button('Cancel');
-                footer.append(button_cancel);
-                button_cancel.click(function () {
-                    wrapper.closest('.' + classes.q_window).hide(200);
-                });
-            }
-            container_months.on('click', function () {
-            });
-            button_today.click(function () {
-                date = new _da();
-                day = date.getDate();
-                month = date.getMonth() + 1;
-                year = date.getFullYear();
-                daysInMonth = new _da(year, month, 0).getDate();
-                firstDay = new _da(year, month - 1, 1).getDay();
-                lastDay = new _da(year, month - 1, daysInMonth).getDay();
-                populateDays(month, year, day);
-                populateHeader(month, year, day);
-            });
-            const populateHeader = function (month, year, day) {
-                let months = monthsLocale(false);
-                container_months.text(months[month - 1]);
-                container_years.text(year);
-            }
-            let populateDays = function (month, year, day) {
-                days_wrapper.empty();
-                let daysInPrevMonth = new _da(year, month - 1, 0).getDate();
-                let prevMonthDays = [];
-                for (let i = daysInPrevMonth - firstDay + 1; i <= daysInPrevMonth; i++) {
-                    let dayElement = Q('<div>');
-                    dayElement.text(i);
-                    dayElement.addClass('days prev_month');
-                    prevMonthDays.push(dayElement);
-                }
-                let currentMonthDays = [];
-                for (let i = 1; i <= daysInMonth; i++) {
-                    let dayElement = Q('<div>');
-                    dayElement.text(i);
-                    dayElement.addClass('days current_month');
-                    if (i === day) {
-                        dayElement.addClass('day_selected');
-                    }
-                    currentMonthDays.push(dayElement);
-                }
-                let nextMonthDays = [];
-                for (let i = 1; i <= 7 - lastDay; i++) {
-                    let dayElement = Q('<div>');
-                    dayElement.text(i);
-                    dayElement.addClass('days next_month');
-                    nextMonthDays.push(dayElement);
-                }
-                days_wrapper.append(...prevMonthDays, ...currentMonthDays, ...nextMonthDays);
-            };
-            weekdays.append(...dayNames);
-            populateDays(month, year, day);
-            populateHeader(month, year, day);
-            days_wrapper.on('click', function (e) {
-                let target = Q(e.target);
-                if (target.hasClass('days')) {
-                    let day = parseInt(target.text());
-                    if (target.hasClass('prev_month')) {
-                        if (month === 1) {
-                            month = 12;
-                            year--;
-                        } else {
-                            month--;
-                        }
-                    } else if (target.hasClass('next_month')) {
-                        if (month === 12) {
-                            month = 1;
-                            year++;
-                        } else {
-                            month++;
-                        }
-                    }
-                    date = new _da(year, month - 1, day);
-                    populateDays(month, year, day);
-                    populateHeader(month, year, day);
-                }
-            });
-            return wrapper;
-        },
-        ProgressBar: function (value = 0, min = 0, max = 100, autoKill = 0) {
-            let timer = _n;
-            const progress = Q('<div class="' + classes.q_form + ' ' + classes.q_form_progress + '">');
-            const bar = Q('<div class="' + classes.q_form_progress_bar + '">');
-            progress.append(bar);
-            function clearAutoKillTimer() {
-                if (timer) {
-                    _ct(timer);
-                    timer = _n;
-                }
-            }
-            function setAutoKillTimer() {
-                if (autoKill > 0) {
-                    clearAutoKillTimer();
-                    timer = _st(() => {
-                        progress.hide();
-                    }, autoKill);
-                }
-            }
-            progress.value = function (value) {
-                const range = max - min;
-                const newWidth = ((value - min) / range) * 100 + '%';
-                if (bar.css('width') !== newWidth) {
-                    bar.css({ width: newWidth });
-                }
-                progress.show();
-                clearAutoKillTimer();
-                setAutoKillTimer();
-            };
-            progress.min = function (value) {
-                min = value;
-                progress.value(value);
-            };
-            progress.max = function (value) {
-                max = value;
-                progress.value(value);
-            };
-            progress.autoKill = function (delay) {
-                autoKill = delay;
-                setAutoKillTimer();
-            };
-            progress.value(value);
-            return progress;
-        },
-        Button: function (text = '') {
-            const button = Q(`<div class="${classes.q_form} ${classes.q_form_button}">${text}</div>`);
-            button.click = function (callback) {
-                button.on('click', callback);
-            };
-            button.disabled = function (state) {
-                if (state) {
-                    button.addClass(classes.q_form_disabled);
-                }
-                else {
-                    button.removeClass(classes.q_form_disabled);
-                }
-            };
-            button.text = function (text) {
-                button.text(text);
-            };
-            button.remove = function () {
-                button.remove();
-            };
-            return button;
-        },
-        File: function (text = '', accept = '*', multiple = false) {
-            const container = Q('<div class="' + classes.q_form + ' ' + classes.q_form_file + ' ' + classes.q_form_button + '">');
-            const input = Q(`<input type="file" accept="${accept}" ${multiple ? 'multiple' : ''}>`);
-            const label = Q(`<div>${text}</div>`);
-            container.append(input, label);
-            input.disabled = function (state) {
-                input.prop('disabled', state);
-                if (state) {
-                    container.addClass(classes.q_form_disabled);
-                } else {
-                    container.removeClass(classes.q_form_disabled);
-                }
-            };
-            container.change = function (callback) {
-                input.on('change', function () {
-                    callback(this.files);
-                });
-            };
-            container.image = function (processText = '', size, callback) {
-                input.on('change', function () {
-                    label.text(processText);
-                    let files = this.files;
-                    let fileReaders = [];
-                    let images = [];
-                    for (let i = 0; i < files.length; i++) {
-                        if (!files[i].type.startsWith('image/')) {
-                            continue;
-                        }
-                        fileReaders[i] = new FileReader();
-                        fileReaders[i].onload = function (e) {
-                            let img = new Image();
-                            img.onload = function () {
-                                if (size !== 'original') {
-                                    let canvas = document.createElement('canvas');
-                                    let ctx = canvas.getContext('2d');
-                                    let width = size;
-                                    let height = (img.height / img.width) * width;
-                                    canvas.width = width;
-                                    canvas.height = height;
-                                    ctx.drawImage(img, 0, 0, width, height);
-                                    images.push(canvas.toDataURL('image/png'));
-                                } else {
-                                    images.push(e.target.result);
-                                }
-                                if (images.length === files.length) {
-                                    label.text(text);
-                                    callback(images);
-                                }
-                            };
-                            img.src = e.target.result;
-                        };
-                        fileReaders[i].readAsDataURL(files[i]);
-                    }
-                });
-            };
-            return container;
-        },
-        DropDown: function (data) {
-            let wrapper = Q('<div class="' + classes.q_form + ' ' + classes.q_form_dropdown + '">');
-            let selected = Q('<div class="' + classes.q_form_dropdown_selected + '">');
-            let options = Q('<div class="' + classes.q_form_dropdown_options + '">');
-            options.hide();
-            wrapper.append(selected, options);
-            let valueMap = new Map();
-            data.forEach((item, index) => {
-                let option = Q('<div class="' + classes.q_form_dropdown_option + '">');
-                option.html(item.content);
-                if (item.disabled) {
-                    option.addClass(classes.q_form_disabled);
-                }
-                options.append(option);
-                valueMap.set(option, item.value);
-            });
-            selected.html(data[0].content);
-            let selectedValue = data[0].value;
-            function deselect() {
-                options.hide();
-                document.removeEventListener('click', deselect);
-            }
-            options.find('.' + classes.q_form_dropdown_option).first().addClass(classes.q_form_dropdown_active);
-            options.on('click', function (e) {
-                let target = Q(e.target);
-                if (target.hasClass(classes.q_form_dropdown_option) && !target.hasClass(classes.q_form_disabled)) {
-                    selected.html(target.html());
-                    selectedValue = valueMap.get(target);
-                    deselect();
-                    options.find('.' + classes.q_form_dropdown_option).removeClass(classes.q_form_dropdown_active);
-                    target.addClass(classes.q_form_dropdown_active);
-                }
-            });
-            selected.on('click', function (e) {
-                e.stopPropagation();
-                options.toggle();
-                if (options.is(':visible')) {
-                    document.addEventListener('click', deselect);
-                } else {
-                    document.removeEventListener('click', deselect);
-                }
-            });
-            wrapper.change = function (callback) {
-                options.on('click', function (e) {
-                    let target = Q(e.target);
-                    if (target.hasClass(classes.q_form_dropdown_option) && !target.hasClass(classes.q_form_disabled)) {
-                        callback(valueMap.get(target));
-                    }
-                });
-            };
-            wrapper.select = function (value) {
-                options.find('.' + classes.q_form_dropdown_option).each(function () {
-                    let option = Q(this);
-                    if (valueMap.get(option) === value) {
-                        selected.html(option.html());
-                        selectedValue = value;
-                        deselect();
-                        options.find('.' + classes.q_form_dropdown_option).removeClass(classes.q_form_dropdown_active);
-                        option.addClass(classes.q_form_dropdown_active);
-                    }
-                });
-            };
-            wrapper.disabled = function (value, state) {
-                options.find('.' + classes.q_form_dropdown_option).each(function () {
-                    let option = Q(this);
-                    if (valueMap.get(option) === value) {
-                        option.prop('disabled', state);
-                        if (state) {
-                            option.addClass(classes.q_form_disabled);
-                        } else {
-                            option.removeClass(classes.q_form_disabled);
-                        }
-                    }
-                });
-            };
-            wrapper.remove = function (value) {
-                options.find('.' + classes.q_form_dropdown_option).each(function () {
-                    let option = Q(this);
-                    if (valueMap.get(option) === value) {
-                        option.remove();
-                        valueMap.delete(option);
-                    }
-                });
-            };
-            wrapper.value = function () {
-                return selectedValue;
-            };
-            return wrapper;
-        },
-        Slider: function (min = 0, max = 100, value = 50) {
-            const slider = Q('<input type="range" class="' + classes.q_form_slider + '">');
-            slider.attr('min', min);
-            slider.attr('max', max);
-            slider.attr('value', value);
-            let slider_wrapper = Q('<div class="' + classes.q_form + ' ' + classes.q_slider_wrapper + '">');
-            let slider_value = Q('<div class="' + classes.q_slider_pos + '">');
-            slider_wrapper.append(slider_value, slider);
-            const slider_width = () => {
-                let percent = (slider.val() - slider.attr('min')) / (slider.attr('max') - slider.attr('min')) * 100;
-                slider_value.css({
-                    width: percent + '%'
-                });
-            };
-            slider.on('input', function () {
-                slider_width();
-            });
-            slider_width();
-            slider_wrapper.change = function (callback) {
-                slider.on('input', function () {
-                    callback(this.value);
-                });
-            };
-            slider_wrapper.value = function (value) {
-                if (value !== _un) {
-                    slider.val(value);
-                    slider.trigger('input');
-                }
-                return slider.val();
-            };
-            slider_wrapper.disabled = function (state) {
-                slider.prop('disabled', state);
-                if (state) {
-                    slider_wrapper.addClass(classes.q_form_disabled);
-                } else {
-                    slider_wrapper.removeClass(classes.q_form_disabled);
-                }
-            };
-            slider_wrapper.min = function (value) {
-                if (value !== _un) {
-                    slider.attr('min', value);
-                    slider.trigger('input');
-                }
-                return slider.attr('min');
-            };
-            slider_wrapper.max = function (value) {
-                if (value !== _un) {
-                    slider.attr('max', value);
-                    slider.trigger('input');
-                }
-                return slider.attr('max');
-            };
-            slider_wrapper.remove = function () {
-                slider_wrapper.remove();
-            };
-            return slider_wrapper;
-        },
-        Window: function (title = '', data, width = 300, height = 300, x = 100, y = 10) {
-            let dimensions = { width, height, x, y };
-            let minimized = false;
-            let maximized = false;
-            let animation_speed = 200;
-            let window_wrapper = Q('<div class="' + classes.q_window + '">');
-            let titlebar = Q('<div class="' + classes.q_window_titlebar + '">');
-            let titletext = Q('<div class="' + classes.q_window_titletext + '">');
-            let uniqueButtons = Q('<div class="' + classes.q_window_unique_buttons + '">');
-            let default_buttons = Q('<div class="' + classes.q_window_buttons + '">');
-            let content = Q('<div class="' + classes.q_window_content + '">');
-            let close = Q('<div class="' + classes.q_window_button + ' ' + classes.q_window_close + '">');
-            let minimize = Q('<div class="' + classes.q_window_button + ' ' + classes.q_window_minimize + '">');
-            let maximize = Q('<div class="' + classes.q_window_button + ' ' + classes.q_window_maximize + '">');
-            close.append(Icon('window-close'));
-            minimize.html(Icon('window-minimize'));
-            maximize.html(Icon('window-full'));
-            content.append(data);
-            titletext.text(title);
-            titletext.attr('title', title);
-            titlebar.append(titletext, uniqueButtons, default_buttons);
-            default_buttons.append(minimize, maximize, close);
-            window_wrapper.append(titlebar, content);
-            dimensions.width = dimensions.width > window_wrapper.parent().width() ? window_wrapper.parent().width() : dimensions.width;
-            dimensions.height = dimensions.height > window_wrapper.parent().height() ? window_wrapper.parent().height() : dimensions.height;
-            dimensions.x = dimensions.x + dimensions.width > window_wrapper.parent().width() ? window_wrapper.parent().width() - dimensions.width : dimensions.x;
-            dimensions.y = dimensions.y + dimensions.height > window_wrapper.parent().height() ? window_wrapper.parent().height() - dimensions.height : dimensions.y;
-            window_wrapper.css({
-                width: dimensions.width + 'px',
-                height: dimensions.height + 'px',
-                left: dimensions.x + 'px',
-                top: dimensions.y + 'px'
-            });
-            function debounce(func, wait) {
-                let timeout;
-                return function (...args) {
-                    _ct(timeout);
-                    timeout = _st(() => func.apply(this, args), wait);
-                };
-            }
-            function handleResize() {
-                const browserWidth = window.innerWidth;
-                const browserHeight = window.innerHeight;
-                const { left: currentX, top: currentY } = window_wrapper.position();
-                let { width: currentWidth, height: currentHeight } = window_wrapper.size();
-                currentWidth = _ma.min(currentWidth, browserWidth);
-                currentHeight = _ma.min(currentHeight, browserHeight);
-                const newX = _ma.min(currentX, browserWidth - currentWidth);
-                const newY = _ma.min(currentY, browserHeight - currentHeight);
-                window_wrapper.css({
-                    width: `${currentWidth}px`,
-                    height: `${currentHeight}px`,
-                    left: `${newX}px`,
-                    top: `${newY}px`
-                });
-            }
-            window.addEventListener('resize', debounce(handleResize, 300));
-            close.on('click', function () {
-                window_wrapper.animate(200, {
-                    opacity: 0,
-                    transform: 'scale(0.8)'
-                }, function () {
-                    window_wrapper.hide();
-                });
-            });
-            minimize.on('click', function () {
-                content.toggle();
-                if (maximized) {
-                    maximized = false;
-                    maximize.html(Icon('window-full'));
-                    window_wrapper.animate(animation_speed, {
-                        width: dimensions.width + 'px',
-                        height: dimensions.height + 'px',
-                        left: dimensions.x + 'px',
-                        top: dimensions.y + 'px'
-                    }, function () {
-                        window_wrapper.removeTransition();
-                    });
-                }
-                if (minimized) {
-                    minimize.html(Icon('window-minimize'));
-                    window_wrapper.css({
-                        height: dimensions.height + 'px'
-                    });
-                    minimized = false;
-                    handleResize();
-                } else {
-                    minimize.html(Icon('window-windowed'));
-                    window_wrapper.css({
-                        height: titlebar.height() + 'px'
-                    });
-                    minimized = true;
-                }
-            });
-            maximize.on('click', function () {
-                if (minimized) {
-                    minimize.html(Icon('window-minimize'));
-                    minimized = false;
-                    if (!content.is(':visible')) {
-                        content.toggle();
-                    }
-                }
-                if (maximized) {
-                    maximized = false;
-                    maximize.html(Icon('window-full'));
-                    window_wrapper.animate(animation_speed, {
-                        width: dimensions.width + 'px',
-                        height: dimensions.height + 'px',
-                        left: dimensions.x + 'px',
-                        top: dimensions.y + 'px'
-                    }, function () {
-                        window_wrapper.removeTransition();
-                        handleResize();
-                    });
-                } else {
-                    maximized = true;
-                    maximize.html(Icon('window-windowed'));
-                    window_wrapper.animate(animation_speed, {
-                        width: '100%',
-                        height: '100%',
-                        left: 0,
-                        top: 0,
-                        borderRadius: 0
-                    }, function () {
-                        window_wrapper.removeTransition();
-                    });
-                }
-            });
-            const zindex = () => {
-                let highestZIndex = 0;
-                Q('.q_window').each(function () {
-                    let zIndex = parseInt(Q(this).css('z-index'));
-                    if (zIndex > highestZIndex) {
-                        highestZIndex = zIndex;
-                    }
-                });
-                return highestZIndex + 1;
-            };
-            titlebar.on('pointerdown', function (e) {
-                let offset = window_wrapper.position();
-                let x = e.clientX - offset.left;
-                let y = e.clientY - offset.top;
-                window_wrapper.css({
-                    'z-index': zindex()
-                });
-                const pointerMoveHandler = function (e) {
-                    let left = e.clientX - x;
-                    let top = e.clientY - y;
-                    left = _ma.max(0, left);
-                    top = _ma.max(0, top);
-                    let currentWidth = window_wrapper.width();
-                    let currentHeight = window_wrapper.height();
-                    left = _ma.min(window.innerWidth - currentWidth, left);
-                    top = _ma.min(window.innerHeight - currentHeight, top);
-                    dimensions.x = left;
-                    dimensions.y = top;
-                    window_wrapper.css({
-                        left: dimensions.x + 'px',
-                        top: dimensions.y + 'px'
-                    });
-                };
-                const pointerUpHandler = function () {
-                    Q(document).off('pointermove', pointerMoveHandler);
-                    Q(document).off('pointerup', pointerUpHandler);
-                };
-                Q(document).on('pointermove', pointerMoveHandler);
-                Q(document).on('pointerup', pointerUpHandler);
-            });
-            window_wrapper.show = function () {
-                if (window_wrapper.isExists()) {
-                    window_wrapper.fadeIn(200);
-                }
-                else {
-                    Q('body').append(window_wrapper);
-                }
-            };
-            window_wrapper.hide = function () {
-                window_wrapper.fadeOut(200);
-            };
-            window_wrapper.title = function (newTitle) {
-                if (newTitle !== _un) {
-                    titletext.text(newTitle);
-                }
-                return titletext.text();
-            };
-            window_wrapper.content = function (newContent) {
-                if (newContent !== _un) {
-                    content.html(newContent);
-                }
-            };
-            window_wrapper.close = function () {
-                close.click();
-            };
-            window_wrapper.minimize = function () {
-                minimize.click();
-            };
-            window_wrapper.maximize = function () {
-                maximize.click();
-            };
-            window_wrapper.remove = function () {
-                window_wrapper.remove();
-            };
-            return window_wrapper;
-        },
-        CheckBox: function (checked = false, text = '') {
-            let ID = '_' + Q.ID();
-            const container = Q('<div class="' + classes.q_form + ' ' + classes.q_form_checkbox + '">');
-            const checkbox_container = Q('<div class="' + classes.q_form_cb + '">');
-            const input = Q(`<input type="checkbox" id="${ID}">`);
-            const label = Q(`<label for="${ID}">${text}</label>`);
-            const labeltext = Q(`<div class="label">${text}</div>`);
-            checkbox_container.append(input, label);
-            container.append(checkbox_container, labeltext);
-            container.checked = function (state) {
-                input.prop('checked', state);
-                if (state) {
-                    input.trigger('change');
-                }
-            };
-            container.change = function (callback) {
-                input.on('change', function () {
-                    callback(this.checked);
-                });
-            };
-            container.disabled = function (state) {
-                input.prop('disabled', state);
-                if (state) {
-                    container.addClass(classes.q_form_disabled);
-                } else {
-                    container.removeClass(classes.q_form_disabled);
-                }
-            };
-            container.text = function (text) {
-                labeltext.text(text);
-            };
-            return container;
-        },
-        TextBox: function (type = 'text', value = '', placeholder = '') {
-            const input = Q(`<input class="${classes.q_form} ${classes.q_form_input}" type="${type}" placeholder="${placeholder}" value="${value}">`);
-            input.placeholder = function (text) {
-                input.attr('placeholder', text);
-            };
-            input.disabled = function (state) {
-                input.prop('disabled', state);
-                if (state) {
-                    input.addClass(classes.q_form_disabled);
-                } else {
-                    input.removeClass(classes.q_form_disabled);
-                }
-            };
-            input.reset = function () {
-                input.val('');
-            };
-            input.change = function (callback) {
-                input.on('change', function () {
-                    callback(this.value);
-                });
-            };
-            return input;
-        },
-        TextArea: function (value = '', placeholder = '') {
-            const textarea = Q(`<textarea class="${classes.q_form} ${classes.q_form_textarea}" placeholder="${placeholder}">${value}</textarea>`);
-            textarea.placeholder = function (text) {
-                textarea.attr('placeholder', text);
-            };
-            textarea.disabled = function (state) {
-                textarea.prop('disabled', state);
-                if (state) {
-                    textarea.addClass(classes.q_form_disabled);
-                } else {
-                    textarea.removeClass(classes.q_form_disabled);
-                }
-            };
-            textarea.reset = function () {
-                textarea.val('');
-            };
-            textarea.change = function (callback) {
-                textarea.on('change', function () {
-                    callback(this.value);
-                });
-            };
-            return textarea;
-        },
-        Radio: function (data) {
-            let wrapper = Q('<div class="q_form q_form_radio_wrapper">');
-            let radios = [];
-            data.forEach((item, index) => {
-                let ID = '_' + Q.ID();
-                const container = Q('<div class="' + classes.q_form + ' ' + classes.q_form_radio + '">');
-                const radio_container = Q('<div class="' + classes.q_form_r + '">');
-                const input = Q(`<input type="radio" id="${ID}" name="${item.name}" value="${item.value}">`);
-                const label = Q(`<label for="${ID}"></label>`);
-                const labeltext = Q(`<div class="label">${item.text}</div>`);
-                if (item.disabled) {
-                    input.prop('disabled', true);
-                    container.addClass(classes.q_form_disabled);
-                }
-                radios.push({ container, input, labeltext });
-                radio_container.append(input, label);
-                container.append(radio_container, labeltext);
-                wrapper.append(container);
-            });
-            wrapper.change = function (callback) {
-                radios.forEach(radio => {
-                    radio.input.on('change', function () {
-                        if (this.checked) {
-                            callback(this.value);
-                        }
-                    });
-                });
-            };
-            wrapper.select = function (value) {
-                radios.forEach(radio => {
-                    if (radio.input.val() === value) {
-                        radio.input.prop('checked', true).trigger('click');
-                    }
-                });
-            };
-            wrapper.disabled = function (value, state) {
-                radios.forEach(radio => {
-                    if (radio.input.val() === value) {
-                        radio.input.prop('disabled', state);
-                        if (state) {
-                            radio.container.addClass(classes.q_form_disabled);
-                        } else {
-                            radio.container.removeClass(classes.q_form_disabled);
-                        }
-                    }
-                });
-            };
-            wrapper.text = function (value, text) {
-                radios.forEach(radio => {
-                    if (radio.input.val() === value) {
-                        radio.labeltext.text(text);
-                    }
-                });
-            };
-            wrapper.remove = function (value) {
-                radios.forEach(radio => {
-                    if (radio.input.val() === value) {
-                        radio.container.remove();
-                    }
-                });
-            };
-            wrapper.reset = function () {
-                radios.forEach(radio => radio.input.prop('checked', false));
-            };
-            wrapper.checked = function (value, state) {
-                radios.forEach(radio => {
-                    if (radio.input.val() === value) {
-                        radio.input.prop('checked', state);
-                    }
-                });
-            };
-            return wrapper;
+    return Form;
+};
+Q.Form.Button = function (text = '') {
+    const Form = Q.Form();
+    const sharedClasses = Form.classes;
+    const classes = _ob.assign({}, sharedClasses, Q.style(`
+        .q_form_button {
+            user-select: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .q_form_button:hover {
+            background-color: #555;
+        }
+        .q_form_button:active {
+            background-color: #777;
+        }
+    `, {
+        'q_form_button': 'q_form_button'
+    }));
+    const button = Q(`<div class="${classes.q_form} ${classes.q_form_button}">${text}</div>`);
+    button.click = function (callback) {
+        button.on('click', callback);
+    };
+    button.disabled = function (state) {
+        if (state) {
+            button.addClass(classes.q_form_disabled);
+        }
+        else {
+            button.removeClass(classes.q_form_disabled);
         }
     };
+    button.text = function (text) {
+        button.text(text);
+    };
+    button.remove = function () {
+        button.remove();
+    };
+    return button;
+};
+Q.Form.CheckBox = function (checked = false, text = '') {
+    const Form = Q.Form();
+    const sharedClasses = Form.classes;
+    const classes = _ob.assign({}, sharedClasses, Q.style(`
+        .q_form_checkbox {
+            display: flex;
+            width: fit-content;
+            align-items: center;
+        }
+        .q_form_checkbox .label:empty {
+            display: none;
+        }
+        .q_form_checkbox .label {
+            padding-left: 5px;
+            user-select: none;
+        }
+        .q_form_cb {
+            position: relative;
+            width: 20px;
+            height: 20px;
+            background-color: #555555;
+        }
+        .q_form_cb input[type="checkbox"] {
+            opacity: 0;
+            top: 0;
+            left: 0;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+        }
+        .q_form_cb input[type="checkbox"]:checked+label:before {
+            content: "";
+            position: absolute;
+            display: block;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1DA1F2;
+        }
+    `, {
+        'q_form_checkbox': 'q_form_checkbox',
+        'q_form_cb': 'q_form_cb'
+    }));
+    let ID = '_' + Q.ID();
+    const container = Q('<div class="' + classes.q_form + ' ' + classes.q_form_checkbox + '">');
+    const checkbox_container = Q('<div class="' + classes.q_form_cb + '">');
+    const input = Q(`<input type="checkbox" id="${ID}">`);
+    const label = Q(`<label for="${ID}">${text}</label>`);
+    const labeltext = Q(`<div class="label">${text}</div>`);
+    checkbox_container.append(input, label);
+    container.append(checkbox_container, labeltext);
+    container.checked = function (state) {
+        input.prop('checked', state);
+        if (state) {
+            input.trigger('change');
+        }
+    };
+    container.change = function (callback) {
+        input.on('change', function () {
+            callback(this.checked);
+        });
+    };
+    container.disabled = function (state) {
+        input.prop('disabled', state);
+        if (state) {
+            container.addClass(classes.q_form_disabled);
+        } else {
+            container.removeClass(classes.q_form_disabled);
+        }
+    };
+    container.text = function (text) {
+        labeltext.text(text);
+    };
+    return container;
+};
+Q.Form.Tag = function (options = {}) {
+    const Form = Q.Form();
+    const sharedClasses = Form.classes;
+    const Icon = Form.Icon;
+    const classes = _ob.assign({}, sharedClasses, Q.style(`
+        .tag_container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .tag_tag {
+            display: flex;
+            align-items: center;
+            border: 1px solid #333;
+            color: #fff;
+            overflow: hidden;
+            margin: 2px;
+            border-radius: 5px;
+        }
+        .tag_rating {
+            display: flex;
+            background-color: #333;
+            padding: 2px 5px;
+            align-items: center;
+        }
+        .tag_icon {
+            width: 10px;
+            height: 10px;
+        }
+        .tag_icon_small {
+            width: 5px;
+            height: 5px;
+        }
+        .tag_name {
+            padding: 2px 8px;
+        }
+        .tag_value {
+            padding: 0 5px;
+            user-select: none;   
+        }
+        .tag_close {
+            cursor: pointer;
+            background-color: #333;
+            height: auto;
+            width: 20px;
+        }
+        .tag_input {
+            width: content;
+            border: 0;
+            margin: 0;
+            background-color: transparent;
+            color: #fff;
+        }
+        .tag_name[contenteditable="true"] {
+            cursor: text;
+        }
+        .tag_name[contenteditable="true"]:focus {
+            outline: 0;
+        }
+    `, {
+        'tag_container': 'tag_container',
+        'tag_tag': 'tag_tag',
+        'tag_rating': 'tag_rating',
+        'tag_icon': 'tag_icon',
+        'tag_icon_small': 'tag_icon_small',
+        'tag_name': 'tag_name',
+        'tag_value': 'tag_value',
+        'tag_close': 'tag_close',
+        'tag_input': 'tag_input',
+        'tag_up': 'tag_up',
+        'tag_down': 'tag_down'
+    }));
+    const defaultOptions = {
+        min: 0,
+        max: 10,
+        step: 1,
+        value: 0,
+        digit: 3,
+        flood: 500,
+        disabled: false,
+        removable: true,
+        votes: true,
+        readonly: false,
+        placeholder: ''
+    };
+    let { min, max, step, digit, votes, removable, flood } = { ...defaultOptions, ...options };
+    if (step.toString().includes('.')) {
+        digit = step.toString().split('.')[1].length;
+    }
+    let data = [];
+    let changeCallback = _n;
+    const tagContainer = Q('<div>', { class: classes.tag_container });
+    const input = Q('<input>', { class: classes.tag_input });
+    const malformFix = Q('<input>', { class: classes.tag_input });
+    let ID = Q.ID(5, '_');
+    const changeTagValue = (tag, delta, currentValue) => {
+        let newValue = tag.value + delta;
+        newValue = _ma.min(_ma.max(newValue, min), max);
+        tag.value = parseFloat(newValue.toFixed(digit));
+        currentValue.text(tag.value);
+        data = data.map(t => (t.tag === tag.tag ? { ...t, value: tag.value } : t));
+        if (changeCallback) Q.Debounce(ID, flood, changeCallback);
+    };
+    const appendTags = tags => {
+        tags.forEach(tag => {
+            const tagElement = Q('<div>', { class: classes.tag_tag });
+            let tagValue = Q('<div>', { class: classes.tag_name }).text(tag.tag);
+            if (votes) {
+                const tagRate = Q('<div>', { class: classes.tag_rating });
+                const upvote = Q('<div>', { class: [classes.tag_icon, classes.tag_up] }).html(Icon('arrow-up'));
+                const currentValue = Q('<div>', { class: classes.tag_value }).text(tag.value);
+                const downvote = Q('<div>', { class: [classes.tag_icon, classes.tag_down] }).html(Icon('arrow-down'));
+                tagRate.append(downvote, currentValue, upvote);
+                tagElement.append(tagRate);
+                upvote.on('click', () => changeTagValue(tag, step, currentValue));
+                downvote.on('click', () => changeTagValue(tag, -step, currentValue));
+            }
+            if (!defaultOptions.readonly) {
+                tagValue.attr('contenteditable', true);
+                tagValue.on('input', function () {
+                    malformFix.val(tagValue.text());
+                    tagValue.text(malformFix.val());
+                    tag.tag = malformFix.val();
+                    if (changeCallback) Q.Debounce(ID, flood, changeCallback);
+                });
+            }
+            tagElement.append(tagValue);
+            if (removable) {
+                const close = Q('<div>', { class: [classes.tag_icon_small, classes.tag_close] }).html(Icon('window-close'));
+                close.on('click', () => {
+                    data = data.filter(t => t.tag !== tag.tag);
+                    tagElement.remove();
+                    if (changeCallback) Q.Debounce(ID, flood, changeCallback);
+                });
+                tagElement.append(close);
+            }
+            tagContainer.append(tagElement);
+        });
+    };
+    tagContainer.add = function (taglist) {
+        tagContainer.empty();
+        if (!_ar.isArray(taglist)) {
+            taglist = [taglist];
+        }
+        taglist = taglist.map(tag => (typeof tag === 'string' ? { tag, value: 0 } : tag));
+        data = [...data, ...taglist];
+        appendTags(data);
+    };
+    tagContainer.get = function () {
+        return data;
+    };
+    tagContainer.change = function (callback) {
+        changeCallback = callback;
+    };
+    return tagContainer;
+};
+Q.Form.TextArea = function (value = '', placeholder = '') {
+    const Form = Q.Form();
+    const sharedClasses = Form.classes;
+    const classes = _ob.assign({}, sharedClasses, Q.style(`
+        .q_form_textarea {
+            width: calc(100% - 2px);
+            padding: 5px;
+            outline: none;
+            border: 0;
+        }
+        .q_form_textarea:focus {
+            outline: 1px solid #1DA1F2;
+        }
+    `, {
+        'q_form_textarea': 'q_form_textarea'
+    }));
+    const textarea = Q(`<textarea class="${classes.q_form} ${classes.q_form_textarea}" placeholder="${placeholder}">${value}</textarea>`);
+    textarea.placeholder = function (text) {
+        textarea.attr('placeholder', text);
+    };
+    textarea.disabled = function (state) {
+        textarea.prop('disabled', state);
+        if (state) {
+            textarea.addClass(classes.q_form_disabled);
+        } else {
+            textarea.removeClass(classes.q_form_disabled);
+        }
+    };
+    textarea.reset = function () {
+        textarea.val('');
+    };
+    textarea.change = function (callback) {
+        textarea.on('change', function () {
+            callback(this.value);
+        });
+    };
+    return textarea;
+};
+Q.Form.TextBox = function (type = 'text', value = '', placeholder = '') {
+    const Form = Q.Form();
+    const sharedClasses = Form.classes;
+    const classes = _ob.assign({}, sharedClasses, Q.style(`
+        .q_form_input { 
+            width: calc(100% - 2px);
+            padding: 5px;
+            outline: none;
+            border: 0;
+        }
+        .q_form_input:focus {
+            outline: 1px solid #1DA1F2;
+        }
+    `, {
+        'q_form_input': 'q_form_input'
+    }));
+    const input = Q(`<input class="${classes.q_form} ${classes.q_form_input}" type="${type}" placeholder="${placeholder}" value="${value}">`);
+    input.placeholder = function (text) {
+        input.attr('placeholder', text);
+    };
+    input.disabled = function (state) {
+        input.prop('disabled', state);
+        if (state) {
+            input.addClass(classes.q_form_disabled);
+        } else {
+            input.removeClass(classes.q_form_disabled);
+        }
+    };
+    input.reset = function () {
+        input.val('');
+    };
+    input.change = function (callback) {
+        input.on('change', function () {
+            callback(this.value);
+        });
+    };
+    return input;
 };
 Q.Icons = function () {
   let glob = Q.getGLOBAL('icons');
@@ -3260,24 +2438,19 @@ Q.ImageViewer = function () {
         }
     };
 }
-Q.JSON = function (a) {
-    if (!(this instanceof Q.JSON)) {
-        return new Q.JSON(a);
-    }
-    this.json = a;
+Q.JSON = function (jsonData) {
+    if (!(this instanceof Q.JSON)) return new Q.JSON(jsonData);
+    this.json = jsonData;
 };
-Q.JSON.prototype.Parse = function (options = { modify: false, recursive: false }, e) {
-    const process = (b) => {
-        if (typeof b === 'object' && b !== _n && !_ar.isArray(b)) {
-            for (const c in b) {
-                if (b.hasOwnProperty(c)) {
-                    const d = e(c, b[c]);
-                    if (modify) {
-                        b[c] = d;
-                    }
-                    if (recursive && typeof b[c] === 'object' && b[c] !== _n) {
-                        process(b[c]);
-                    }
+Q.JSON.prototype.Parse = function (options = { modify: false, recursive: false }, callback) {
+    const { modify, recursive } = options;
+    const process = (data) => {
+        if (typeof data === 'object' && data && !_ar.isArray(data)) {
+            for (const key in data) {
+                if (_ob.prototype.hasOwnProperty.call(data, key)) {
+                    const newValue = callback(key, data[key]);
+                    if (modify) data[key] = newValue;
+                    if (recursive && typeof data[key] === 'object' && data[key]) process(data[key]);
                 }
             }
         }
@@ -3286,58 +2459,131 @@ Q.JSON.prototype.Parse = function (options = { modify: false, recursive: false }
     return this.json;
 };
 Q.JSON.prototype.deflate = function (level) {
-    const f = {};
-    let g = 1;
-    function j(h) {
-        if (typeof h === 'object' && h !== _n) {
-            for (let c in h) {
-                if (typeof h[c] === 'object') {
-                    j(h[c]);
+    const map = {}, deflateCounter = { count: 1 };
+    const replaceRecursive = (obj) => {
+        if (typeof obj === 'object' && obj) {
+            for (let key in obj) {
+                if (typeof obj[key] === 'object' && obj[key]) replaceRecursive(obj[key]);
+                if (key.length >= level) {
+                    if (!map[key]) { map[key] = `[${deflateCounter.count++}]`; }
+                    const newKey = map[key];
+                    obj[newKey] = obj[key]; delete obj[key];
                 }
-                if (c.length >= level) {
-                    if (!f[c]) {
-                        f[c] = `[${g}]`;
-                        g++;
-                    }
-                    const newKey = f[c];
-                    h[newKey] = h[c];
-                    delete h[c];
-                }
-                if (typeof h[c] === 'string' && h[c].length >= level) {
-                    if (!f[h[c]]) {
-                        f[h[c]] = `[${g}]`;
-                        g++;
-                    }
-                    h[c] = f[h[c]];
+                if (typeof obj[key] === 'string' && obj[key].length >= level) {
+                    if (!map[obj[key]]) { map[obj[key]] = `[${deflateCounter.count++}]`; }
+                    obj[key] = map[obj[key]];
                 }
             }
         }
-    }
-    const i = JSON.parse(JSON.stringify(this.json));
-    j(i);
-    return { b: i, f: f };
+    };
+    const deflatedData = JSON.parse(JSON.stringify(this.json));
+    replaceRecursive(deflatedData);
+    return { data: deflatedData, map: map };
 };
-Q.JSON.prototype.inflate = function (l) {
-    const { b, f } = l;
-    const m = _ob.fromEntries(_ob.entries(f).f(([k, v]) => [v, k]));
-    function p(h) {
-        if (typeof h === 'object' && h !== _n) {
-            for (let c in h) {
-                const n = m[c] || c;
-                const o = h[c];
-                delete h[c];
-                h[n] = o;
-                if (typeof h[n] === 'object') {
-                    p(h[n]);
-                } else if (m[h[n]]) {
-                    h[n] = m[h[n]];
+Q.JSON.prototype.inflate = function (deflatedJson) {
+    const { data, map } = deflatedJson;
+    const reverseMap = _ob.fromEntries(_ob.entries(map).map(([k, v]) => [v, k]));
+    const restoreRecursive = (obj) => {
+        if (typeof obj === 'object' && obj) {
+            for (let key in obj) {
+                const originalKey = reverseMap[key] || key;
+                const value = obj[key]; delete obj[key];
+                obj[originalKey] = value;
+                if (typeof obj[originalKey] === 'object' && obj[originalKey]) {
+                    restoreRecursive(obj[originalKey]);
+                } else if (reverseMap[obj[originalKey]]) {
+                    obj[originalKey] = reverseMap[obj[originalKey]];
                 }
             }
         }
-    }
-    const q = JSON.parse(JSON.stringify(b));
-    p(q);
-    return q;
+    };
+    const inflatedData = JSON.parse(JSON.stringify(data));
+    restoreRecursive(inflatedData);
+    return inflatedData;
+};
+Q.JSON.prototype.merge = function (otherJson) {
+    const deepMerge = (target, source) => {
+        for (const key in source) {
+            if (_ob.prototype.hasOwnProperty.call(source, key)) {
+                if (typeof source[key] === 'object' && source[key] && !_ar.isArray(source[key])) {
+                    target[key] = deepMerge(target[key] && typeof target[key] === 'object' ? target[key] : {}, source[key]);
+                } else {
+                    target[key] = source[key];
+                }
+            }
+        }
+        return target;
+    };
+    return deepMerge(this.json, otherJson);
+};
+Q.JSON.prototype.sortKeys = function (recursive = false, reverse = false) {
+    const sortObject = (obj) => {
+        const keys = _ob.keys(obj).sort();
+        if (reverse) keys.reverse();
+        const sorted = {};
+        keys.forEach(key => {
+            sorted[key] = (recursive && typeof obj[key] === 'object' && obj[key] && !_ar.isArray(obj[key])) ? sortObject(obj[key]) : obj[key];
+        });
+        return sorted;
+    };
+    this.json = sortObject(this.json);
+    return this.json;
+};
+Q.JSON.prototype.sortValues = function (reverse = false) {
+    if (typeof this.json !== 'object' || !this.json) return this.json;
+    const entries = _ob.entries(this.json).sort((a, b) => {
+        const aValue = String(a[1]), bValue = String(b[1]);
+        return aValue.localeCompare(bValue);
+    });
+    if (reverse) entries.reverse();
+    const sorted = {};
+    for (const [key, value] of entries) sorted[key] = value;
+    this.json = sorted;
+    return this.json;
+};
+Q.JSON.prototype.sortByValues = function (keyProp, valueProp, reverse = false) {
+    if (!_ar.isArray(this.json)) return this.json;
+    this.json.sort((a, b) => {
+        const cmpKey = String(a[keyProp]).localeCompare(String(b[keyProp]));
+        const cmpValue = String(a[valueProp]).localeCompare(String(b[valueProp]));
+        const cmp = cmpKey || cmpValue;
+        return reverse ? -cmp : cmp;
+    });
+    return this.json;
+};
+Q.JSON.prototype.flatten = function (prefix = '') {
+    const result = {};
+    const flattenRec = (obj, path) => {
+        for (const key in obj) {
+            if (_ob.prototype.hasOwnProperty.call(obj, key)) {
+                const newKey = path ? `${path}.${key}` : key;
+                if (typeof obj[key] === 'object' && obj[key] && !_ar.isArray(obj[key])) {
+                    flattenRec(obj[key], newKey);
+                } else {
+                    result[newKey] = obj[key];
+                }
+            }
+        }
+    };
+    flattenRec(this.json, prefix);
+    return result;
+};
+Q.JSON.prototype.unflatten = function (flatObject) {
+    const result = {};
+    _ob.keys(flatObject).forEach(compoundKey => {
+        compoundKey.split('.').reduce((accumulator, currentKey, index, keysArray) => {
+            if (index === keysArray.length - 1) {
+                accumulator[currentKey] = flatObject[compoundKey];
+            } else {
+                if (!accumulator[currentKey] || typeof accumulator[currentKey] !== 'object') {
+                    accumulator[currentKey] = {};
+                }
+            }
+            return accumulator[currentKey];
+        }, result);
+    });
+    this.json = result;
+    return result;
 };
 Q.NodeBlock = function (selector, width, height, options) {
     let classes = Q.style(`
@@ -4455,17 +3701,59 @@ padding: 0 5px;
     };
 }
 Q.Socket = function (url, onMessage, onStatus, options = {}) {
-    const { retries = 5, delay = 1000, protocols = [] } = options;
-    let socket, attempts = 0;
+    const {
+        retries = 5,                   // _nu of reconnection attempts (0 means unlimited)
+        delay = 1000,                  // Initial delay between reconnections in ms
+        protocols = [],                // WebSocket sub-protocols
+        backoff = false,               // Exponential backoff toggle
+        pingInterval = 0,              // Interval for heartbeat pings (ms); 0 disables
+        pingMessage = 'ping',          // Message to send for heartbeat
+        queueMessages = false,         // Queue messages if socket is not open yet
+        autoReconnect = true,          // Automatically reconnect on close
+        onOpen = _n,                 // Additional callback on open
+        onClose = _n,                // Additional callback on close
+        onError = _n                 // Additional callback on error
+    } = options;
+    let socket, attempts = 0, currentDelay = delay, pingId = _n;
+    const messageQueue = [];
     const connect = () => {
         socket = new WebSocket(url, protocols);
-        socket.onopen = () => { onStatus?.('connected'); attempts = 0; };
+        socket.onopen = () => {
+            attempts = 0;
+            currentDelay = delay;
+            onStatus?.('connected');
+            onOpen?.();
+            if (queueMessages && messageQueue.length) {
+                while (messageQueue.length) {
+                    socket.send(messageQueue.shift());
+                }
+            }
+            if (pingInterval) {
+                pingId && clearInterval(pingId);
+                pingId = _si(() => {
+                    if (socket.readyState === WebSocket.OPEN) {
+                        socket.send(pingMessage);
+                    }
+                }, pingInterval);
+            }
+        };
         socket.onmessage = event => onMessage?.(event.data);
-        socket.onerror = error => onStatus?.('error', error);
-        socket.onclose = () => {
-            if (++attempts <= retries) {
+        socket.onerror = error => {
+            onStatus?.('error', error);
+            onError?.(error);
+        };
+        socket.onclose = event => {
+            onClose?.(event);
+            pingId && clearInterval(pingId);
+            if (autoReconnect && (retries === 0 || attempts < retries)) {
                 onStatus?.('closed');
-                _st(connect, delay);
+                attempts++;
+                _st(() => {
+                    connect();
+                    if (backoff) {
+                        currentDelay *= 2;
+                    }
+                }, currentDelay);
             } else {
                 onStatus?.('Max retries exceeded');
             }
@@ -4473,26 +3761,21 @@ Q.Socket = function (url, onMessage, onStatus, options = {}) {
     };
     connect();
     return {
-        send: msg => socket.readyState === WebSocket.OPEN && socket.send(msg),
+        send: message => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(message);
+            } else if (queueMessages) {
+                messageQueue.push(message);
+            }
+        },
         reconnect: () => connect(),
-        close: () => socket.close()
+        close: () => {
+            autoReconnect = false;
+            pingId && clearInterval(pingId);
+            socket.close();
+        },
+        getState: () => socket?.readyState
     };
-};
-Q.Storage = function (key, value) {
-    if (arguments.length === 2) { 
-        if (value === _n || value === '') { 
-            localStorage.removeItem(key); 
-        } else {
-            localStorage.setItem(key, JSON.stringify(value)); 
-        }
-    } else if (arguments.length === 1) { 
-        let storedValue = localStorage.getItem(key); 
-        try {
-            return JSON.parse(storedValue); 
-        } catch (e) {
-            return storedValue; 
-        }
-    }
 };
 Q.String = function (string) {
     if (!(this instanceof Q.String)) {
@@ -4577,153 +3860,187 @@ Q.style = (function () {
         }
     };
 })();
-Q.Task = (function () {
-    const tasks = {};
-    const runningTasks = {};
-    function createTask(id) {
-        if (!tasks[id]) {
-            tasks[id] = [];
+(() => {
+    class ThreadPool {
+      constructor(maxWorkers = 1) {
+        this.maxWorkers = maxWorkers;
+        this.workers = [];
+        this.taskQueue = [];
+        this.activeTasks = new Map();
+        this.taskIdCounter = 0;
+        this.resultCallbacks = [];
+        this.doneCallbacks = [];
+        this.aborted = false;
+        this.blobURL = ThreadPool._createWorkerBlob();
+        for (let index = 0; index < maxWorkers; index++) {
+          this._addWorker();
         }
-    }
-    function addTask(id, ...functions) {
-        if (!tasks[id]) {
-            createTask(id);
-        }
-        tasks[id].push(...functions);
-    }
-    async function runTask(id) {
-        if (!tasks[id] || tasks[id].length === 0) {
-            _c.error(`No tasks found with ID: ${id}`);
-            return;
-        }
-        runningTasks[id] = {
-            doneCallback: _n,
-            failCallback: _n,
-            timeout: 20000, 
-            timeoutCallback: _n,
+      }
+      static _createWorkerBlob() {
+        const code = `
+          self.onmessage = event => {
+            const { taskId, functionCode, parameters } = event.data;
+            let executionFunction;
+            try {
+              executionFunction = eval('(' + functionCode + ')');
+            } catch (error) {
+              self.postMessage({ taskId, error: error.toString() });
+              return;
+            }
+            _pr.resolve().then(() => executionFunction(...parameters)).then(
+              result => self.postMessage({ taskId, result }),
+              error => self.postMessage({ taskId, error: error.toString() })
+            );
+          };
+        `;
+        return URL.createObjectURL(new Blob([code], { type: 'application/javascript' }));
+      }
+      _addWorker() {
+        const workerInstance = new Worker(this.blobURL);
+        workerInstance.busy = false;
+        workerInstance.onmessage = event => {
+          const { taskId, result, error } = event.data;
+          workerInstance.busy = false;
+          const task = this.activeTasks.get(taskId);
+          if (task) {
+            error !== _un ? task.reject(new _er(error)) : task.resolve(result);
+            this.resultCallbacks.forEach(callbackFunction => callbackFunction({ id: taskId, result, error }));
+            this.activeTasks.delete(taskId);
+          }
+          this._processQueue();
         };
-        const { timeout, timeoutCallback } = runningTasks[id];
-        const timeoutPromise = new _pr((_, reject) => {
-            const timer = _st(() => {
-                abortTask(id);
-                reject(new _er(`Task with ID: ${id} timed out after ${timeout / 1000} seconds`));
-            }, timeout);
-            runningTasks[id].timeoutClear = () => _ct(timer);
-        });
-        try {
-            await _pr.race([
-                (async () => {
-                    for (const task of tasks[id]) {
-                        await new _pr((resolve, reject) => {
-                            try {
-                                const result = task();
-                                if (result instanceof _pr) {
-                                    result.then(resolve).catch(reject);
-                                } else {
-                                    resolve();
-                                }
-                            } catch (error) {
-                                reject(error);
-                            }
-                        });
-                    }
-                })(),
-                timeoutPromise
-            ]);
-            if (runningTasks[id]?.doneCallback) {
-                runningTasks[id].doneCallback();
-            }
-        } catch (error) {
-            _c.error(`Task with ID: ${id} failed with error:`, error);
-            if (runningTasks[id]?.failCallback) {
-                runningTasks[id].failCallback(error);
-            }
-        } finally {
-            if (runningTasks[id]?.timeoutClear) {
-                runningTasks[id].timeoutClear();
-            }
-            delete runningTasks[id];
+        workerInstance.onerror = () => { workerInstance.busy = false; };
+        this.workers.push(workerInstance);
+      }
+      _processQueue() {
+        if (this.aborted) return;
+        while (true) {
+          const idleIndex = this.workers.findIndex(workerInstance => !workerInstance.busy);
+          if (idleIndex === -1 || this.workers.length <= this.maxWorkers) break;
+          this.workers[idleIndex].terminate();
+          this.workers.splice(idleIndex, 1);
         }
+        for (const workerInstance of this.workers) {
+          if (!workerInstance.busy && this.taskQueue.length) {
+            const task = this.taskQueue.shift();
+            workerInstance.busy = true;
+            this.activeTasks.set(task.id, task);
+            workerInstance.postMessage({ taskId: task.id, functionCode: task.functionCode, parameters: task.parameters });
+          }
+        }
+        if (!this.taskQueue.length && !this.activeTasks.size) {
+          const callbacks = this.doneCallbacks.slice();
+          this.doneCallbacks.length = 0;
+          callbacks.forEach(callbackFunction => callbackFunction());
+        }
+      }
+      Workers(newWorkerCount) {
+        if (this.aborted) return this;
+        this.maxWorkers = newWorkerCount;
+        if (newWorkerCount > this.workers.length) {
+          for (let index = 0, difference = newWorkerCount - this.workers.length; index < difference; index++) {
+            this._addWorker();
+          }
+        } else {
+          this._processQueue();
+        }
+        return this;
+      }
+      Push(taskInput, ...parameters) {
+        if (this.aborted) return _pr.reject(new _er('Thread aborted'));
+        const taskFunction = typeof taskInput === 'function' ? taskInput : (() => taskInput);
+        const taskId = ++this.taskIdCounter;
+        const task = { id: taskId, functionCode: taskFunction.toString(), parameters, resolve: _n, reject: _n };
+        const promiseResult = new _pr((resolve, reject) => { task.resolve = resolve; task.reject = reject; });
+        this.taskQueue.push(task);
+        this._processQueue();
+        return promiseResult;
+      }
+      Result(callbackFunction) {
+        if (typeof callbackFunction === 'function') this.resultCallbacks.push(callbackFunction);
+        return this;
+      }
+      Done(callbackFunction) {
+        if (typeof callbackFunction !== 'function') return this;
+        if (!this.taskQueue.length && !this.activeTasks.size) callbackFunction();
+        else this.doneCallbacks.push(callbackFunction);
+        return this;
+      }
+      Abort() {
+        this.aborted = true;
+        while (this.taskQueue.length) this.taskQueue.shift().reject(new _er('Task aborted'));
+        this.activeTasks.forEach(task => task.reject(new _er('Task aborted')));
+        this.activeTasks.clear();
+        this.workers.forEach(workerInstance => workerInstance.terminate());
+        this.workers = [];
+        this.doneCallbacks.length = 0;
+        this.resultCallbacks.length = 0;
+        URL.revokeObjectURL(this.blobURL);
+        return this;
+      }
     }
-    function abortTask(id) {
-        if (runningTasks[id]) {
-            delete runningTasks[id];
-            _c.log(`Task with ID: ${id} has been aborted.`);
+    Q.Thread = (maxWorkers = 1) => new ThreadPool(maxWorkers);
+  })();
+Q.Timer = (callback, identifier, options = {}) => {
+    const defaults = { tick: 1, delay: 1000, interrupt: false, autoStart: true, done: _n };
+    const config = { ...defaults, ...options };
+    if (!Q.Timer.activeTimers) Q.Timer.activeTimers = new Map();
+    if (config.interrupt && Q.Timer.activeTimers.has(identifier)) Q.Timer.stop(identifier);
+    const timerControl = {
+      id: identifier,
+      tickCount: 0,
+      isPaused: false,
+      remainingDelay: config.delay,
+      startTime: 0,
+      timerHandle: _n,
+      pause() {
+        if (!this.isPaused) {
+          this.isPaused = true;
+          _ct(this.timerHandle);
+          const elapsed = _da.now() - this.startTime;
+          this.remainingDelay = config.delay - elapsed;
         }
-    }
-    function taskDone(id, callback) {
-        if (runningTasks[id]) {
-            runningTasks[id].doneCallback = callback;
+        return this;
+      },
+      resume() {
+        if (this.isPaused) {
+          this.isPaused = false;
+          startTick(this.remainingDelay);
         }
-    }
-    function taskFail(id, callback) {
-        if (runningTasks[id]) {
-            runningTasks[id].failCallback = callback;
-        }
-    }
-    function setTimeoutForTask(id, seconds) {
-        if (runningTasks[id]) {
-            runningTasks[id].timeout = seconds * 1000;
-        }
-    }
-    function setTimeoutCallback(id, callback) {
-        if (runningTasks[id]) {
-            runningTasks[id].timeoutCallback = callback;
-        }
-    }
-    return function (id, ...functions) {
-        if (functions.length > 0) {
-            addTask(id, ...functions);
-        }
-        return {
-            Run: () => runTask(id),
-            Abort: () => abortTask(id),
-            Done: callback => taskDone(id, callback),
-            Fail: callback => taskFail(id, callback),
-            Timeout: (seconds) => setTimeoutForTask(id, seconds),
-            TimeoutCallback: (callback) => setTimeoutCallback(id, callback),
-        };
+        return this;
+      },
+      stop() { Q.Timer.stop(this.id); }
     };
-})();
-Q.Timer = function (callback, id, options = {}) {
-    const defaultOptions = {
-        tick: 1,
-        delay: 1000,
-        interrupt: false
-    };
-    options = { ...defaultOptions, ...options };
-    let tickCount = 0;
-    let intervalId = _n;
-    if (!Q.Timer.activeTimers) {
-        Q.Timer.activeTimers = new Map();
-    }
-    if (options.interrupt && Q.Timer.activeTimers.has(id)) {
-        clearInterval(Q.Timer.activeTimers.get(id));
-    }
-    intervalId = _si(() => {
+    const startTick = (delayTime) => {
+      timerControl.startTime = _da.now();
+      timerControl.timerHandle = _st(function tickHandler() {
         callback();
-        tickCount++;
-        if (options.tick > 0 && tickCount >= options.tick) {
-            clearInterval(intervalId);
-            Q.Timer.activeTimers.delete(id);
+        timerControl.tickCount++;
+        if (config.tick > 0 && timerControl.tickCount >= config.tick) {
+          Q.Timer.stop(identifier);
+          if (typeof config.done === 'function') config.done();
+        } else {
+          timerControl.startTime = _da.now();
+          timerControl.timerHandle = _st(tickHandler, config.delay);
         }
-    }, options.delay);
-    Q.Timer.activeTimers.set(id, intervalId);
-    return intervalId;
-};
-Q.Timer.stop = function (id) {
-    if (Q.Timer.activeTimers && Q.Timer.activeTimers.has(id)) {
-        clearInterval(Q.Timer.activeTimers.get(id));
-        Q.Timer.activeTimers.delete(id);
+      }, delayTime);
+    };
+    if (config.autoStart) startTick(config.delay);
+    Q.Timer.activeTimers.set(identifier, timerControl);
+    return timerControl;
+  };
+  Q.Timer.stop = (identifier) => {
+    if (Q.Timer.activeTimers?.has(identifier)) {
+      const timerControl = Q.Timer.activeTimers.get(identifier);
+      _ct(timerControl.timerHandle);
+      Q.Timer.activeTimers.delete(identifier);
     }
-};
-Q.Timer.stopAll = function () {
+  };
+  Q.Timer.stopAll = () => {
     if (Q.Timer.activeTimers) {
-        for (let intervalId of Q.Timer.activeTimers.values()) {
-            clearInterval(intervalId);
-        }
-        Q.Timer.activeTimers.clear();
+      Q.Timer.activeTimers.forEach(timerControl => _ct(timerControl.timerHandle));
+      Q.Timer.activeTimers.clear();
     }
-};
+  };
 return Q;
 })();

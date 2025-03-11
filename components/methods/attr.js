@@ -6,18 +6,21 @@
 // Example: Q(selector).attr("id", "newId"); // Sets the "id" attribute to "newId" <br> Q(selector).attr({ "src": "image.jpg", "alt": "An image" }); // Sets multiple attributes <br> Q(selector).attr("href"); // Gets the "href" attribute value
 // Variables: attribute, value, key, el
 Q.Ext('attr', function (attribute, value) {
+    const nodes = this.nodes;
     if (typeof attribute === 'object') {
-        return this.each(el => {
-            for (let key in attribute) {
-                if (attribute.hasOwnProperty(key)) {
-                    this.nodes[el].setAttribute(key, attribute[key]);
-                }
+        for (const node of nodes) {
+            for (const [key, val] of Object.entries(attribute)) {
+                node.setAttribute(key, val);
             }
-        });
+        }
+        return this;
     } else {
         if (value === undefined) {
-            return this.nodes[0]?.getAttribute(attribute) || null;
+            return nodes[0] && nodes[0].getAttribute(attribute) || null;
         }
-        return this.each(el => this.nodes[el].setAttribute(attribute, value));
+        for (const node of nodes) {
+            node.setAttribute(attribute, value);
+        }
+        return this;
     }
 });

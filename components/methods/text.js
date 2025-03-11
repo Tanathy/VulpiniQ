@@ -8,5 +8,7 @@ Q.Ext('text', function (content) {
     if (content === undefined) {
         return this.nodes[0]?.textContent || null;
     }
-    return this.each(el => this.nodes[el].textContent = content);
+    return this.each(function(index, el) {
+        el.textContent = content;
+    });
 });

@@ -7,13 +7,10 @@
 // Variables: selector, node
 Q.Ext('is', function (selector) {
     const node = this.nodes[0];
-
     if (!node) return false;
-
     if (typeof selector === 'function') {
         return selector.call(node, 0, node);
     }
-
     if (typeof selector === 'string') {
         switch (selector) {
             case ':visible':
@@ -38,14 +35,11 @@ Q.Ext('is', function (selector) {
                 return node.matches(selector);
         }
     }
-
     if (selector instanceof HTMLElement || selector instanceof Node) {
         return node === selector;
     }
-
     if (selector instanceof Q) {
         return node === selector.nodes[0];
     }
-
     return false;
 });

@@ -5,10 +5,10 @@
 // Example: Q(selector).unwrap();
 // Variables: parent, el
 Q.Ext('unwrap', function () {
-    return this.each(el => {
-        const parent = this.nodes[el].parentNode;
-        if (parent !== document.body) {
-            parent.replaceWith(...this.nodes);
+    return this.each(function(index, el) {
+        const parent = el.parentNode;
+        if (parent && parent !== document.body) {
+            parent.replaceWith(...parent.childNodes);
         }
     });
 });

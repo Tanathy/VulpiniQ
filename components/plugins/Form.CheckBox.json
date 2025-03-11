@@ -1,0 +1,8 @@
+{
+  "Name": "Form.CheckBox",
+  "Method": "Component",
+  "Desc": "CheckBox component for Form plugin",
+  "Type": "Component",
+  "Example": "var checkbox = Q.Form.CheckBox(true, 'Check me'); checkbox.change(function(checked) { console.log(checked); });",
+  "Dependencies": ["Form", "style", "addClass", "removeClass", "on", "append", "prop", "trigger", "text"]
+}

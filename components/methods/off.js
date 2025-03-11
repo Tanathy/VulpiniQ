@@ -11,8 +11,11 @@ Q.Ext('off', function (events, handler, options) {
         passive: false
     };
     options = { ...defaultOptions, ...options };
-
-    return this.each(el => {
-        events.split(' ').forEach(event => this.nodes[el].removeEventListener(event, handler, options));
-    });
+    const eventList = events.split(' ');
+    for (const node of this.nodes) {
+        for (const event of eventList) {
+            node.removeEventListener(event, handler, options);
+        }
+    }
+    return this;
 });

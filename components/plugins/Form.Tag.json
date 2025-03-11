@@ -1,0 +1,8 @@
+{
+  "Name": "Form.Tag",
+  "Method": "Component",
+  "Desc": "Tag component for Form plugin",
+  "Type": "Component",
+  "Example": "var tags = Q.Form.Tag(); tags.add(['JavaScript', 'HTML', 'CSS']);",
+  "Dependencies": ["Form", "Icon", "style", "addClass", "removeClass", "on", "append", "each", "text", "html", "val", "click", "closest", "empty", "attr"]
+}

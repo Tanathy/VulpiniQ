@@ -5,5 +5,8 @@
 // Example: Q(selector).remove();
 // Variables: el
 Q.Ext('remove', function() {
-    return this.each(el => this.nodes[el].remove());
+    for (const node of this.nodes) {
+        node.remove();
+    }
+    return this;
 });

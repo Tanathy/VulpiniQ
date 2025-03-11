@@ -5,5 +5,6 @@
 // Example: Q('.text').wait(1000).text('Hello, World!');
 // Variables: ms
 Q.Ext('wait', function(ms) {
-    return new Promise(resolve => setTimeout(() => resolve(this), ms));
-  });
+	// ...existing code...
+	return new Promise(resolve => setTimeout(() => resolve(this), ms));
+});

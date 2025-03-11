@@ -6,9 +6,8 @@
 // Example: const currentId = Q(selector).id(); // Retrieves the current id of the first selected element <br> Q(selector).id('new-id'); // Sets the id of the first selected element to 'new-id'
 // Variables: ident
 Q.Ext('id', function (ident) {
-    if (ident === undefined) {
-        return this.nodes[0].id;
-    }
-
-    return this.nodes[0].id = ident;
+    const node = this.nodes[0];
+    if (ident === undefined) return node.id;
+    node.id = ident;
+    return this;
 });

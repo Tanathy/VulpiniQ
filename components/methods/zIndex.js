@@ -6,12 +6,12 @@
 // Example: Q(selector).zIndex(value);
 // Variables: value, Index, el
 Q.Ext('zIndex', function (value) {
+    const node = this.nodes[0];
+    if (!node) return;
     if (value === undefined) {
-        let Index = this.nodes[0].style.zIndex;
-        if (!Index) {
-            Index = window.getComputedStyle(this.nodes[0]).zIndex;
-        }
+        let Index = node.style.zIndex || window.getComputedStyle(node).zIndex;
         return Index;
     }
-    return this.each(el => this.nodes[el].style.zIndex = value);
+    this.nodes.forEach(node => node.style.zIndex = value);
+    return this;
 });

@@ -4,5 +4,6 @@
 // Type: Traversal
 // Example: Q(selector).parent();
 Q.Ext('parent', function () {
-    return new Q(this.nodes[0].parentNode);
+    const node = this.nodes[0];
+    return new Q(node ? node.parentNode : null);
 });

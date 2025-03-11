@@ -6,6 +6,8 @@
 // Variables: input
 Q.Ext('val', function(input) {
     if (input === undefined) return this.nodes[0]?.value || null;
-    for (const node of this.nodes) node.value = input;
+    for (const node of this.nodes) {
+        node.value = input;
+    }
     return this;
   });

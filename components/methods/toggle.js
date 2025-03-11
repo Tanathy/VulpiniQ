@@ -5,5 +5,7 @@
 // Example: Q(selector).toggle();
 // Variables: el
 Q.Ext('toggle', function () {
-    return this.each(el => this.nodes[el].style.display = this.nodes[el].style.display === 'none' ? '' : 'none');
+    return this.each(function(index, el) {
+        el.style.display = (el.style.display === 'none' ? '' : 'none');
+    });
 });

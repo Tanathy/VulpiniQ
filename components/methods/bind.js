@@ -12,11 +12,12 @@ Q.Ext('bind', function (event, handler) {
 
     if (!this._eventDelegation[event]) {
         document.addEventListener(event, (e) => {
-            this.each(el => {
-                if (this.nodes[el].contains(e.target)) {
+            const nodes = this.nodes;
+            for (const node of nodes) {
+                if (node.contains(e.target)) {
                     handler.call(e.target, e);
                 }
-            });
+            }
         });
         this._eventDelegation[event] = true;
     }

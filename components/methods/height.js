@@ -5,8 +5,12 @@
 // Example: Q(selector).height(value);
 // Variables: value, el
 Q.Ext('height', function (value) {
+    const nodes = this.nodes; // ...existing code...
     if (value === undefined) {
-        return this.nodes[0].offsetHeight;
+        return nodes[0].offsetHeight;
     }
-    return this.each(el => this.nodes[el].style.height = value);
+    for (const node of nodes) {
+        node.style.height = value;
+    }
+    return this;
 });

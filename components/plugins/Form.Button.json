@@ -1,0 +1,8 @@
+{
+  "Name": "Form.Button",
+  "Method": "Component",
+  "Desc": "Button component for Form plugin",
+  "Type": "Component",
+  "Example": "var button = Q.Form.Button('Click me'); button.click(function() { alert('Clicked!'); });",
+  "Dependencies": ["Form", "style", "addClass", "removeClass", "on", "text", "click"]
+}

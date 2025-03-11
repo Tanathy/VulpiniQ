@@ -5,17 +5,24 @@
 // Type: DOM Manipulation
 // Example: Q(selector).append("<p>New paragraph</p>"); // Adds a paragraph as HTML <br> Q(selector).append(document.createElement("div")); // Adds a div element <br> Q(selector).append(Q(otherSelector)); // Appends a Q object <br> Q(selector).append([document.createElement("span"), document.createElement("img")]); // Appends multiple elements <br> Q(selector).append(document.querySelectorAll(".items")); // Appends a NodeList of elements
 // Variables: allNodes, parent, child, subchild
-Q.Ext('append', function (...allNodes) {
-    return this.each(el => {
-        const parent = this.nodes[el];
-        allNodes.forEach(child => {
-            if (typeof child === 'string') {
-                parent.insertAdjacentHTML('beforeend', child);
-            } else if (child instanceof HTMLElement || child instanceof Q) {
-                parent.appendChild(child.nodes[0]);
-            } else if (Array.isArray(child) || child instanceof NodeList) {
-                Array.from(child).forEach(subchild => parent.appendChild(subchild));
-            }
-        });
-    });
+Q.Ext('append', function (...contents) {
+  const nodes = this.nodes;
+  for (let i = 0, len = nodes.length; i < len; i++) {
+    const parent = nodes[i];
+    for (let j = 0, clen = contents.length; j < clen; j++) {
+      const child = contents[j];
+      if (typeof child === "string") {
+        parent.insertAdjacentHTML('beforeend', child);
+      } else if (child instanceof HTMLElement || child instanceof Q) {
+        // If child is Q, its nodes property is used. Otherwise it's an HTMLElement.
+        parent.appendChild(child.nodes ? child.nodes[0] : child);
+      } else if (Array.isArray(child) || child instanceof NodeList) {
+        const subNodes = Array.from(child);
+        for (let k = 0, slen = subNodes.length; k < slen; k++) {
+          parent.appendChild(subNodes[k]);
+        }
+      }
+    }
+  }
+  return this;
 });

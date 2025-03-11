@@ -7,16 +7,13 @@
 // Variables: wrapper, parentNode, newParentElement, tempDiv, div, node
 Q.Ext('wrap', function (wrapper) {
     return this.each(node => {
-      const parentNode = node.parentNode;
-      let newParentElement =
-        typeof wrapper === 'string'
-          ? ((tempDiv => tempDiv.firstElementChild)(((() => {
-              const div = document.createElement('div');
-              div.innerHTML = wrapper.trim();
-              return div;
-            })())))
-          : wrapper;
-      parentNode.insertBefore(newParentElement, node);
-      newParentElement.appendChild(node);
+        const parentNode = node.parentNode;
+        let newParentElement = typeof wrapper === 'string'
+            ? // Create and clone the wrapper so each node gets its own instance.
+              ((tempDiv => (tempDiv.innerHTML = wrapper.trim(), tempDiv.firstElementChild.cloneNode(true)))
+              (document.createElement('div')))
+            : wrapper;
+        parentNode.insertBefore(newParentElement, node);
+        newParentElement.appendChild(node);
     });
-  });
+});

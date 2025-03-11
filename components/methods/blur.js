@@ -6,5 +6,9 @@
 // Example: Q(selector).blur(); // Removes focus from the first matched input field <br> Q(".active").blur(); // Blurs the first active element <br> Q("textarea").blur(); // Blurs the first textarea in the selection
 // Variables: el
 Q.Ext('blur', function () {
-    return this.each(el => this.nodes[el].blur());
+    const nodes = this.nodes; // ...existing code...
+    for (const node of nodes) {
+        node.blur();
+    }
+    return this;
 });

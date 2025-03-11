@@ -6,8 +6,11 @@
 // Example: Q(selector).width(value);
 // Variables: value, el
 Q.Ext('width', function (value) {
-    if (value === undefined) {
-        return this.nodes[0].offsetWidth;
+    if (typeof value === 'undefined') {
+        return this.nodes[0] ? this.nodes[0].offsetWidth : undefined;
     }
-    return this.each(el => this.nodes[el].style.width = value);
+    this.nodes.forEach(node => {
+        node.style.width = value;
+    });
+    return this;
 });

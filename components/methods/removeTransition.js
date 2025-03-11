@@ -5,5 +5,8 @@
 // Example: Q(selector).removeTransition();
 // Variables: el
 Q.Ext('removeTransition', function () {
-    return this.each(el => this.nodes[el].style.transition = '');
+    return this.each(index => {
+        const node = this.nodes[index];
+        node.style.transition = '';
+    });
 });

@@ -6,5 +6,8 @@
 // Variables: classes, list, el
 Q.Ext('removeClass', function (classes) {
     const list = classes.split(' ');
-    return this.each(el => this.nodes[el].classList.remove(...list));
+    for (const node of this.nodes) {
+        node.classList.remove(...list);
+    }
+    return this;
 });

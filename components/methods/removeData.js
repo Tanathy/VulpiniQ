@@ -5,5 +5,8 @@
 // Example: Q(selector).removeData(key);
 // Variables: key, el
 Q.Ext('removeData', function (key) {
-    return this.each(el => delete this.nodes[el].dataset[key]);
+    return this.each(index => {
+        const node = this.nodes[index];
+        delete node.dataset[key];
+    });
 });

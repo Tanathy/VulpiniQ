@@ -6,17 +6,14 @@
 // Variables: duration, callback, elementStyle, nodeElements, elementIndex
 Q.Ext('fadeOut', function(duration, callback) {
     const nodeElements = this.nodes;
-    this.each(function(elementIndex) {
-      const elementStyle = nodeElements[elementIndex].style;
+    this.each(index => {
+      const elementStyle = nodeElements[index].style;
       elementStyle.transition = `opacity ${duration}ms`;
       elementStyle.opacity = 0;
-      setTimeout(function() {
+      setTimeout(() => {
         elementStyle.transition = '';
         elementStyle.display = 'none';
-        if (callback) {
-          callback();
-        }
+        if (callback) callback();
       }, duration);
     });
-  });
-  
+});

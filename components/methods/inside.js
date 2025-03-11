@@ -6,5 +6,6 @@
 // Example: Q(selector).inside(".parent"); // Returns true if the first selected element is within a parent matching the selector <br> const isChild = Q(selector).inside("#container"); // Checks if the first node is inside the element with ID "container"
 // Variables: selector
 Q.Ext('inside', function (selector) {
-    return this.nodes[0]?.closest(selector) !== null;
+    const node = this.nodes[0];
+    return node ? node.closest(selector) !== null : false;
 });

@@ -6,8 +6,12 @@
 // Example: Q(selector).data('userId', 123); // Sets the data-userId attribute to 123 on each selected element <br> const userId = Q(selector).data('userId'); // Retrieves the value of the data-userId attribute from the first selected element <br> const isActive = Q(selector).data('isActive'); // Retrieves the value of the data-isActive attribute, returns null if not set
 // Variables: key, value, el
 Q.Ext('data', function (key, value) {
+    const nodes = this.nodes;
     if (value === undefined) {
-        return this.nodes[0]?.dataset[key] || null;
+        return nodes[0] && nodes[0].dataset[key] || null;
     }
-    return this.each(el => this.nodes[el].dataset[key] = value);
+    for (const node of nodes) {
+        node.dataset[key] = value;
+    }
+    return this;
 });

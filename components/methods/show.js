@@ -5,8 +5,8 @@
 // Example: Q(selector).show(duration, callback);
 // Variables: duration, callback, element, handler, el
 Q.Ext('show', function (duration = 0, callback) {
-    return this.each(el => {
-        const element = this.nodes[el];
+    return this.each(index => {
+        const element = this.nodes[index];
         if (duration === 0) {
             element.style.display = '';
             if (callback) callback();
@@ -16,11 +16,10 @@ Q.Ext('show', function (duration = 0, callback) {
             element.style.display = '';
             setTimeout(() => {
                 element.style.opacity = 1;
-                element.addEventListener('transitionend', function handler() {
+                element.addEventListener('transitionend', () => {
                     element.style.transition = '';
-                    element.removeEventListener('transitionend', handler);
                     if (callback) callback();
-                });
+                }, { once: true });
             }, 0);
         }
     });

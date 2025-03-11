@@ -1,0 +1,8 @@
+{
+  "Name": "Form.TextBox",
+  "Method": "Component",
+  "Desc": "TextBox component for Form plugin",
+  "Type": "Component",
+  "Example": "var textbox = Q.Form.TextBox('text', 'Initial value', 'Enter text...'); textbox.change(function(value) { console.log(value); });",
+  "Dependencies": ["Form", "style", "addClass", "removeClass", "on", "attr", "val", "prop"]
+}

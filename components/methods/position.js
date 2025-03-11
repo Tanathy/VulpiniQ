@@ -4,8 +4,9 @@
 // Type: Dimension/Position
 // Example: Q(selector).position();
 Q.Ext('position', function () {
+    const node = this.nodes[0];
     return {
-        top: this.nodes[0].offsetTop,
-        left: this.nodes[0].offsetLeft
+        top: node.offsetTop,
+        left: node.offsetLeft
     };
 });

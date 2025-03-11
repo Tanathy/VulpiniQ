@@ -4,5 +4,6 @@
 // Type: Traversal
 // Example: Q(selector).last();
 Q.Ext('last', function () {
-    return new Q(this.nodes[this.nodes.length - 1]);
+    const nodes = this.nodes;
+    return new Q(nodes[nodes.length - 1]);
 });
