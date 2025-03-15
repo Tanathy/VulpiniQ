@@ -1,0 +1,9 @@
+{
+    "Name": "closest",
+    "Method": "Prototype",
+    "Desc": "Finds the nearest ancestor node of the first node that matches a given selector.",
+    "Type": "Traversal",
+    "Example": "Q(selector).closest(\".parent\");",
+    "Dependencies": [],
+    "Variables": []
+}

@@ -1,0 +1,9 @@
+{
+  "Name": "prepend",
+  "Method": "Prototype",
+  "Desc": "Prepends child nodes or HTML to each node.",
+  "Type": "DOM Manipulation",
+  "Example": "Q(selector).prepend(\"<div>Prepended</div>\");",
+  "Dependencies": [],
+  "Variables": ["nodes", "parent", "child", "subchild", "el"]
+}

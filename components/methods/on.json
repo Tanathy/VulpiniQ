@@ -1,0 +1,9 @@
+{
+  "Name": "on",
+  "Method": "Prototype",
+  "Desc": "Adds an event listener to each node.",
+  "Type": "Event Handling",
+  "Example": "Q(selector).on(\"click\", () => console.log(\"Clicked\"));",
+  "Dependencies": [],
+  "Variables": ["events", "handler", "options", "defaultOptions", "el", "event"]
+}

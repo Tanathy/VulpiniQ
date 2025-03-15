@@ -1,0 +1,9 @@
+{
+    "Name": "css",
+    "Method": "Prototype",
+    "Desc": "Retrieves or sets CSS styles on the selected nodes. Supports setting multiple styles if provided as an object.",
+    "Type": "Style Manipulation",
+    "Example": "Q(selector).css('color', 'red');",
+    "Dependencies": [],
+    "Variables": ["property", "value", "key", "el"]
+}

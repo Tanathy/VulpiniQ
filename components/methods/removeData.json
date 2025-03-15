@@ -1,0 +1,9 @@
+{
+    "Name": "removeData",
+    "Method": "Prototype",
+    "Desc": "Removes a data-* attribute from each node.",
+    "Type": "Data Manipulation",
+    "Example": "Q(selector).removeData(key);",
+    "Dependencies": "",
+    "Variables": ["key", "el"]
+}

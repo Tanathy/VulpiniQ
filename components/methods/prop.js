@@ -1,15 +1,10 @@
-// Name: prop
-// Method: Prototype
-// Desc: Gets or sets a property on the nodes.
-// Type: Property Manipulation
-// Example: Q(selector).prop(property, value);
-// Variables: property, value, el, index
 Q.Ext('prop', function (property, value) {
+    var nodes = this.nodes;
     if (value === undefined) {
-        return this.nodes[0] ? this.nodes[0][property] : null;
+        return nodes[0] ? nodes[0][property] : null;
     }
-    for (const node of this.nodes) {
-        node[property] = value;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        nodes[i][property] = value;
     }
     return this;
 });

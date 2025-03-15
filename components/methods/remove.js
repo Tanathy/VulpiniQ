@@ -1,12 +1,7 @@
-// Name: remove
-// Method: Prototype
-// Desc: Removes each node from the DOM.
-// Type: DOM Manipulation
-// Example: Q(selector).remove();
-// Variables: el
 Q.Ext('remove', function() {
-    for (const node of this.nodes) {
-        node.remove();
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        nodes[i].remove();
     }
     return this;
 });

@@ -1,0 +1,9 @@
+{
+    "Name": "zIndex",
+    "Method": "Prototype",
+    "Desc": "Gets or sets the z-index of the first node.",
+    "Type": "Display",
+    "Example": "Q(selector).zIndex(value);",
+    "Dependencies": [],
+    "Variables": ["value", "Index", "el"]
+}

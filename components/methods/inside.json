@@ -1,0 +1,9 @@
+{
+  "Name": "inside",
+  "Method": "Prototype",
+  "Desc": "Checks if the first node is inside another node, determined by a specific selector.",
+  "Type": "Traversal",
+  "Example": "Q(selector).inside(\".parent\");",
+  "Dependencies": [],
+  "Variables": ["selector"]
+}

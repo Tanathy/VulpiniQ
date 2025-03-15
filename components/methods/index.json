@@ -1,0 +1,9 @@
+{
+  "Name": "index",
+  "Method": "Prototype",
+  "Desc": "Returns the index of the first node, or moves the node to a specific index within its parent.",
+  "Type": "Traversal",
+  "Example": "Q(selector).index(); // Retrieves the index or Q(selector).index(2);",
+  "Dependencies": [],
+  "Variables": ["index", "parent", "siblings", "position", "target", "el"]
+}

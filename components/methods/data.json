@@ -1,0 +1,9 @@
+{
+    "Name": "data",
+    "Method": "Prototype",
+    "Desc": "Retrieves or sets data-* attributes on the selected nodes. Provides an easy way to store and access custom data associated with the elements.",
+    "Type": "Data Manipulation",
+    "Example": "Q(selector).data('userId', 123);",
+    "Dependencies": [],
+    "Variables": ["key", "value", "el"]
+}

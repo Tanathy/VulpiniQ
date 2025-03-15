@@ -1,13 +1,7 @@
-// Name: removeClass
-// Method: Prototype
-// Desc: Removes one or more classes from each node.
-// Type: Class Manipulation
-// Example: Q(selector).removeClass("class1 class2");
-// Variables: classes, list, el
 Q.Ext('removeClass', function (classes) {
-    const list = classes.split(' ');
-    for (const node of this.nodes) {
-        node.classList.remove(...list);
+    var list = classes.split(' ');
+    for (var i = 0, len = this.nodes.length; i < len; i++) {
+        this.nodes[i].classList.remove.apply(this.nodes[i].classList, list);
     }
     return this;
 });

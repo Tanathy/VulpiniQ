@@ -1,0 +1,9 @@
+{
+    "Name": "scrollHeight",
+    "Method": "Prototype",
+    "Desc": "Returns the scroll height of the first node.",
+    "Type": "Scroll Manipulation",
+    "Example": "Q(selector).scrollHeight();",
+    "Dependencies": "",
+    "Variables": []
+}

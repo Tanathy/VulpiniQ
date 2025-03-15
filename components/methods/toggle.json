@@ -1,0 +1,9 @@
+{
+    "Name": "toggle",
+    "Method": "Prototype",
+    "Desc": "Toggles the display of each node.",
+    "Type": "Utilities",
+    "Example": "Q(selector).toggle();",
+    "Dependencies": "",
+    "Variables": ["el"]
+}

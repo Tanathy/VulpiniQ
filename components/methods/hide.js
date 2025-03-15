@@ -1,26 +1,25 @@
-// Name: hide
-// Method: Prototype
-// Desc: Hides each node, optionally with a fade-out effect over a specified duration.
-// Type: Display
-// Example: Q(selector).hide(duration, callback);
-// Variables: duration, callback, element, handler, el
-Q.Ext('hide', function (duration = 0, callback) {
-    for (const node of this.nodes) {
+Q.Ext('hide', function (duration, callback) {
+    duration = duration || 0;
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        var node = nodes[i];
         if (duration === 0) {
             node.style.display = 'none';
             if (callback) callback();
         } else {
-            node.style.transition = `opacity ${duration}ms`;
+            node.style.transition = 'opacity ' + duration + 'ms';
             node.style.opacity = 1;
-            setTimeout(() => {
-                node.style.opacity = 0;
-                node.addEventListener('transitionend', function handler() {
-                    node.style.display = 'none';
-                    node.style.transition = '';
-                    node.removeEventListener('transitionend', handler);
-                    if (callback) callback();
-                });
-            }, 0);
+            setTimeout((function(n) {
+                return function() {
+                    n.style.opacity = 0;
+                    n.addEventListener('transitionend', function handler() {
+                        n.style.display = 'none';
+                        n.style.transition = '';
+                        n.removeEventListener('transitionend', handler);
+                        if (callback) callback();
+                    });
+                };
+            })(node), 0);
         }
     }
     return this;

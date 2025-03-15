@@ -1,0 +1,9 @@
+{
+    "Name": "hasClass",
+    "Method": "Prototype",
+    "Desc": "Checks if the first node has a specific class.",
+    "Type": "Class Manipulation",
+    "Example": "Q(selector).hasClass(className);",
+    "Dependencies": [],
+    "Variables": ["className"]
+}

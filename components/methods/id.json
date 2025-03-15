@@ -1,0 +1,9 @@
+{
+  "Name": "id",
+  "Method": "Prototype",
+  "Desc": "Gets or sets the id attribute of the first node.",
+  "Type": "Attributes",
+  "Example": "Q(selector).id(); // Retrieves or Q(selector).id('new-id');",
+  "Dependencies": [],
+  "Variables": ["ident"]
+}

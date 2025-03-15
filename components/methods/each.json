@@ -1,0 +1,9 @@
+{
+    "Name": "each",
+    "Method": "Prototype",
+    "Desc": "Iterates over all nodes in the Q object and executes a callback on each node, providing access to the index and element.",
+    "Type": "Iteration",
+    "Example": "Q(selector).each((index, element) => console.log(index, element));",
+    "Dependencies": [],
+    "Variables": ["callback", "el", "index"]
+}

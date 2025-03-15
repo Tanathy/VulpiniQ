@@ -1,0 +1,9 @@
+{
+    "Name": "show",
+    "Method": "Prototype",
+    "Desc": "Shows each node, optionally with a fade-in effect over a specified duration.",
+    "Type": "Display",
+    "Example": "Q(selector).show(duration, callback);",
+    "Dependencies": "",
+    "Variables": ["duration", "callback", "element", "handler", "el"]
+}

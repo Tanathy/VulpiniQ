@@ -1,12 +1,11 @@
-// Name: prepend
-// Method: Prototype
-// Desc: Prepends child nodes or HTML to each node.
-// Type: DOM Manipulation
-// Example: Q(selector).prepend("<div>Prepended</div>");
-// Variables: nodes, parent, child, subchild, el
-Q.Ext('prepend', function (...nodes) {
-    for (const parent of this.nodes) {
-        for (const child of nodes) {
+Q.Ext('prepend', function () {
+    var nodes = this.nodes,
+        contents = Array.prototype.slice.call(arguments),
+        i, j, k, parent, child, subNodes;
+    for (i = 0; i < nodes.length; i++) {
+        parent = nodes[i];
+        for (j = 0; j < contents.length; j++) {
+            child = contents[j];
             if (typeof child === 'string') {
                 parent.insertAdjacentHTML('afterbegin', child);
             } else if (child instanceof Q) {
@@ -14,8 +13,9 @@ Q.Ext('prepend', function (...nodes) {
             } else if (child instanceof HTMLElement || child instanceof Node) {
                 parent.insertBefore(child, parent.firstChild);
             } else if (Array.isArray(child) || child instanceof NodeList) {
-                for (const subchild of Array.from(child)) {
-                    parent.insertBefore(subchild, parent.firstChild);
+                subNodes = Array.from(child);
+                for (k = 0; k < subNodes.length; k++) {
+                    parent.insertBefore(subNodes[k], parent.firstChild);
                 }
             }
         }

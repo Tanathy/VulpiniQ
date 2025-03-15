@@ -5,10 +5,10 @@
 // Example: Q(selector).addClass("class1"); // Adds a single class <br> Q(selector).addClass("class1 class2"); // Adds multiple classes
 // Variables: classes, list, el
 Q.Ext('addClass', function (classes) {
-    const list = classes.split(' '),
-          nodes = this.nodes;
-    for (let i = 0, len = nodes.length; i < len; i++) {
-        nodes[i].classList.add(...list);
+    var list = classes.split(' '),
+        nodes = this.nodes;
+    for (var i = 0, l = nodes.length; i < l; i++) {
+        nodes[i].classList.add.apply(nodes[i].classList, list);
     }
     return this;
 });

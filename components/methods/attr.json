@@ -1,0 +1,9 @@
+{
+    "Name": "attr",
+    "Method": "Prototype",
+    "Desc": "Gets or sets attributes on the nodes, supporting multiple attributes at once.",
+    "Type": "Attribute Manipulation",
+    "Example": "Q(selector).attr(\"id\", \"newId\"); // Sets the \"id\" attribute to \"newId\" <br> Q(selector).attr({ \"src\": \"image.jpg\", \"alt\": \"An image\" }); // Sets multiple attributes <br> Q(selector).attr(\"href\"); // Gets the \"href\" attribute value",
+    "Dependencies": [],
+    "Variables": ["attribute", "value", "key", "el"]
+}

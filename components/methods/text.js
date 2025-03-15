@@ -1,14 +1,9 @@
-// Name: text
-// Method: Prototype
-// Desc: Gets or sets the text content of the nodes.
-// Type: Content Manipulation
-// Example: Q(selector).text(string);
-// Variables: content, el
 Q.Ext('text', function (content) {
     if (content === undefined) {
         return this.nodes[0]?.textContent || null;
     }
-    return this.each(function(index, el) {
-        el.textContent = content;
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        this.nodes[i].textContent = content;
+    }
+    return this;
 });

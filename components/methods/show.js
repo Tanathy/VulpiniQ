@@ -1,12 +1,6 @@
-// Name: show
-// Method: Prototype
-// Desc: Shows each node, optionally with a fade-in effect over a specified duration.
-// Type: Display
-// Example: Q(selector).show(duration, callback);
-// Variables: duration, callback, element, handler, el
 Q.Ext('show', function (duration = 0, callback) {
-    return this.each(index => {
-        const element = this.nodes[index];
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        const element = this.nodes[i];
         if (duration === 0) {
             element.style.display = '';
             if (callback) callback();
@@ -22,5 +16,6 @@ Q.Ext('show', function (duration = 0, callback) {
                 }, { once: true });
             }, 0);
         }
-    });
+    }
+    return this;
 });

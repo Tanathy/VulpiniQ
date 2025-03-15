@@ -1,0 +1,9 @@
+{
+    "Name": "toggleClass",
+    "Method": "Prototype",
+    "Desc": "Toggles a class on each node.",
+    "Type": "Class Manipulation",
+    "Example": "Q(selector).toggleClass(className);",
+    "Dependencies": "",
+    "Variables": ["className", "el"]
+}

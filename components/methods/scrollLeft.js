@@ -1,20 +1,14 @@
-// Name: scrollLeft
-// Method: Prototype
-// Desc: Gets or sets the horizontal scroll position of the first node, with an option to increment.
-// Type: Scroll Manipulation
-// Example: Q(selector).scrollLeft(value, increment);
-// Variables: value, increment, maxScrollLeft, el
 Q.Ext('scrollLeft', function (value, increment) {
+    const node = this.nodes[0];
     if (value === undefined) {
-        return this.nodes[0].scrollLeft;
+        return node.scrollLeft;
     }
-    return this.each(index => {
-        const node = this.nodes[index];
-        const maxScrollLeft = node.scrollWidth - node.clientWidth;
-        if (increment) {
-            node.scrollLeft = Math.min(node.scrollLeft + value, maxScrollLeft);
-        } else {
-            node.scrollLeft = Math.min(value, maxScrollLeft);
-        }
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        const current = this.nodes[i];
+        const maxScrollLeft = current.scrollWidth - current.clientWidth;
+        current.scrollLeft = increment 
+            ? Math.min(current.scrollLeft + value, maxScrollLeft) 
+            : Math.min(value, maxScrollLeft);
+    }
+    return this;
 });

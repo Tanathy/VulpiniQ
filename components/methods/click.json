@@ -1,0 +1,9 @@
+{
+    "Name": "click",
+    "Method": "Prototype",
+    "Desc": "Simulates a click event on each node in the selection.",
+    "Type": "Event Handling",
+    "Example": "Q(selector).click();",
+    "Dependencies": [],
+    "Variables": []
+}

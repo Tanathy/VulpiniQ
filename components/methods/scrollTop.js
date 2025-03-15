@@ -1,20 +1,14 @@
-// Name: scrollTop
-// Method: Prototype
-// Desc: Gets or sets the vertical scroll position of the first node, with an option to increment.
-// Type: Scroll Manipulation
-// Example: Q(selector).scrollTop(value, increment);
-// Variables: value, increment, maxScrollTop, el
 Q.Ext('scrollTop', function (value, increment) {
+    const node = this.nodes[0];
     if (value === undefined) {
-        return this.nodes[0].scrollTop;
+        return node.scrollTop;
     }
-    return this.each(index => {
-        const node = this.nodes[index];
-        const maxScrollTop = node.scrollHeight - node.clientHeight;
-        if (increment) {
-            node.scrollTop = Math.min(node.scrollTop + value, maxScrollTop);
-        } else {
-            node.scrollTop = Math.min(value, maxScrollTop);
-        }
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        const current = this.nodes[i];
+        const maxScrollTop = current.scrollHeight - current.clientHeight;
+        current.scrollTop = increment 
+            ? Math.min(current.scrollTop + value, maxScrollTop) 
+            : Math.min(value, maxScrollTop);
+    }
+    return this;
 });

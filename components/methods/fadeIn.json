@@ -1,0 +1,9 @@
+{
+    "Name": "fadeIn",
+    "Method": "Prototype",
+    "Desc": "Fades in each node.",
+    "Type": "Display",
+    "Example": "Q(selector).fadeIn(duration, callback);",
+    "Dependencies": [],
+    "Variables": ["duration", "callback", "elementStyle", "nodeElements", "elementIndex"]
+}

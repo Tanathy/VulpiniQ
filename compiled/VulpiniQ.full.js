@@ -3814,60 +3814,6 @@ Q.String.prototype.find = function (stringOrRegex) {
 Q.String.prototype.replaceAll = function (stringOrRegex, replacement) {
     return this.string.replace(new _re(stringOrRegex, 'g'), replacement);
 };
-Q.style = (function () {
-    let styleData = {
-        gen: "",
-        root: '',
-        element: _n,
-        checked: false,
-    };
-    function applyStyles() {
-        if (!styleData.init) {
-            styleData.element = document.getElementById('qlib-root-styles') || createStyleElement();
-            styleData.init = true;
-        }
-        let finalStyles = '';
-        if (styleData.root) {
-            finalStyles = `:root {${styleData.root}}\n`;
-        }
-        finalStyles += styleData.gen;
-        styleData.element.textContent = finalStyles;
-    }
-    function createStyleElement() {
-        const styleElement = document.createElement('style');
-        styleElement.id = 'qlib-root-styles';
-        document.head.insertBefore(styleElement, document.head.firstChild);
-        return styleElement;
-    }
-    window.addEventListener('load', () => {
-        _c.log('Styles plugin loaded.');
-        delete Q.style;
-    }, { once: true });
-    return function (styles, mapping = _n) {
-        if (typeof styles === 'string') {
-            const rootContentMatch = styles.match(/:root\s*{([^}]*)}/);
-            if (rootContentMatch) {
-                styles = styles.replace(rootContentMatch[0], '');
-                const rootContent = rootContentMatch[1].split(';').map(item => item.trim()).filter(item => item);
-                styleData.root += rootContent.join(';') + ';';
-            }
-            if (mapping) {
-                const keys = _ob.keys(mapping);
-                keys.forEach((key) => {
-                    let newKey = Q.ID(5, '_');
-                    styles = styles.replace(new _re(`\\b${key}\\b`, 'gm'), newKey);
-                    mapping[key] = mapping[key].replace(key, newKey);
-                });
-                _c.log(mapping);
-            }
-            styleData.gen += styles;
-            applyStyles();
-            return mapping;
-        } else {
-            _c.error('Invalid styles parameter. Expected a string.');
-        }
-    };
-})();
 (() => {
     class ThreadPool {
       constructor(maxWorkers = 1) {

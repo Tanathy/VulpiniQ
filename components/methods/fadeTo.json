@@ -1,0 +1,9 @@
+{
+    "Name": "fadeTo",
+    "Method": "Prototype",
+    "Desc": "Fades each node to a specific opacity.",
+    "Type": "Display",
+    "Example": "Q(selector).fadeTo(opacity, duration, callback);",
+    "Dependencies": [],
+    "Variables": ["opacity", "duration", "callback", "elementStyle", "nodeElements", "elementIndex"]
+}

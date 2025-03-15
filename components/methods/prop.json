@@ -1,0 +1,9 @@
+{
+    "Name": "prop",
+    "Method": "Prototype",
+    "Desc": "Gets or sets a property on the nodes.",
+    "Type": "Property Manipulation",
+    "Example": "Q(selector).prop(property, value);",
+    "Dependencies": "",
+    "Variables": ["property", "value", "el", "index"]
+}

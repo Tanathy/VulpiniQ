@@ -1,0 +1,9 @@
+{
+  "Name": "Resize",
+  "Method": "Static",
+  "Desc": "Registers callbacks to be executed whenever the window is resized, providing the updated width and height.",
+  "Long Desc": "Registers callbacks to be executed whenever the window is resized, providing the updated width and height. This is useful for dynamic layouts, responsive design adjustments, or recalculating dimensions based on the window size. Each registered callback will receive the current window width and height, and multiple callbacks can be added to handle different aspects of resizing.",
+  "Type": "Event Handling",
+  "Example": "Q.Resize((width, height) => {\n    const sidebar = document.querySelector('.sidebar');\n    sidebar.style.display = width < 768 ? 'none' : 'block';\n});\n\nQ.Resize((width, height) => {\n    const baseFontSize = Math.max(14, Math.min(18, width / 100));\n    document.documentElement.style.fontSize = `${baseFontSize}px`;\n});",
+  "Variables": ["callbacks", "width", "height", "callback"]
+}

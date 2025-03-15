@@ -1,0 +1,9 @@
+{
+  "Name": "last",
+  "Method": "Prototype",
+  "Desc": "Returns the last node.",
+  "Type": "Traversal",
+  "Example": "Q(selector).last();",
+  "Dependencies": [],
+  "Variables": []
+}

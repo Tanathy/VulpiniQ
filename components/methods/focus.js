@@ -1,9 +1,7 @@
-// Name: focus
-// Method: Prototype
-// Desc: Focuses on the first node.
-// Type: Form Manipulation
-// Example: Q(selector).focus();
-// Variables: el
 Q.Ext('focus', function () {
-    return this.each(el => this.nodes[el].focus());
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        nodes[i].focus();
+    }
+    return this;
 });

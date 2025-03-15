@@ -1,0 +1,9 @@
+{
+    "Name": "fadeToggle",
+    "Method": "Prototype",
+    "Desc": "Toggles the fade state of each node.",
+    "Type": "Display",
+    "Example": "Q(selector).fadeToggle(duration, callback);",
+    "Dependencies": [],
+    "Variables": ["duration", "callback", "nodeElements", "computedStyle", "elementIndex"]
+}

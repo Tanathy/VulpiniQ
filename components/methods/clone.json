@@ -1,0 +1,9 @@
+{
+    "Name": "clone",
+    "Method": "Prototype",
+    "Desc": "Creates a deep copy of the first node in the selection, including its child nodes.",
+    "Type": "DOM Manipulation",
+    "Example": "Q(selector).clone();",
+    "Dependencies": [],
+    "Variables": []
+}

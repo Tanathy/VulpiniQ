@@ -1,0 +1,9 @@
+{
+  "Name": "isExists",
+  "Method": "Prototype",
+  "Desc": "Checks if the first node exists in the DOM.",
+  "Type": "Utilities",
+  "Example": "Q(selector).isExists(); or Q.isExists('.ok')",
+  "Dependencies": [],
+  "Variables": ["selector"]
+}

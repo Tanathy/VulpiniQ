@@ -1,0 +1,9 @@
+{
+    "Name": "blur",
+    "Method": "Prototype",
+    "Desc": "Removes focus from the first node in the selection, effectively blurring it.",
+    "Type": "Form Manipulation",
+    "Example": "Q(selector).blur(); // Removes focus from the first matched input field <br> Q('.active').blur(); // Blurs the first active element <br> Q('textarea').blur(); // Blurs the first textarea in the selection",
+    "Dependencies": [],
+    "Variables": ["el"]
+}

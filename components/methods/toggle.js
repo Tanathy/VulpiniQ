@@ -1,11 +1,7 @@
-// Name: toggle
-// Method: Prototype
-// Desc: Toggles the display of each node.
-// Type: Utilities
-// Example: Q(selector).toggle();
-// Variables: el
 Q.Ext('toggle', function () {
-    return this.each(function(index, el) {
-        el.style.display = (el.style.display === 'none' ? '' : 'none');
-    });
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        nodes[i].style.display = (nodes[i].style.display === 'none' ? '' : 'none');
+    }
+    return this;
 });

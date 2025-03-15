@@ -1,0 +1,9 @@
+{
+  "Name": "off",
+  "Method": "Prototype",
+  "Desc": "Removes an event listener from each node.",
+  "Type": "Event Handling",
+  "Example": "Q(selector).off(\"click\", handler);",
+  "Dependencies": [],
+  "Variables": ["events", "handler", "options", "defaultOptions", "event", "el"]
+}

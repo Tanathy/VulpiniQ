@@ -1,0 +1,9 @@
+{
+  "Name": "Done",
+  "Method": "Static",
+  "Desc": "Registers one or more callback functions to be executed once the window has completely loaded.",
+  "Long Desc": "Registers one or more callback functions to be executed once the window has completely loaded, ensuring that all resources are available. Useful for executing scripts that depend on the DOM, images, or other resources being fully loaded. This function allows for multiple callbacks to be registered, which will all be executed in the order they were added when the load event occurs.",
+  "Type": "Event Handling",
+  "Example": "// Basic usage - single callback\nQ.Done(() => {\n    console.log('Window has fully loaded');\n    document.body.style.opacity = '1';\n});\n\n// Multiple callbacks - executed in order\nQ.Done(() => {\n    // Initialize main application\n    initApp();\n});\n\nQ.Done(() => {\n    // Show UI elements\n    document.querySelector('#app').style.display = 'block';\n    document.querySelector('#loader').style.display = 'none';\n});",
+  "Variables": ["callbacks", "callback"]
+}

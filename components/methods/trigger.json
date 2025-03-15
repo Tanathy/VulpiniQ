@@ -1,0 +1,9 @@
+{
+    "Name": "trigger",
+    "Method": "Prototype",
+    "Desc": "Triggers a specific event on each node.",
+    "Type": "Event Handling",
+    "Example": "Q(selector).trigger(\"click\");",
+    "Dependencies": [],
+    "Variables": ["event", "el", "index"]
+}

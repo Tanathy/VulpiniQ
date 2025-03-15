@@ -1,0 +1,9 @@
+{
+    "Name": "val",
+    "Method": "Prototype",
+    "Desc": "Gets or sets the value of form elements in the nodes.",
+    "Type": "Form Manipulation",
+    "Example": "Q(selector).val(value);",
+    "Dependencies": [],
+    "Variables": ["input"]
+}

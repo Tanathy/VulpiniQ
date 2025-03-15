@@ -1,0 +1,9 @@
+{
+    "Name": "find",
+    "Method": "Prototype",
+    "Desc": "Finds child nodes of the first node that match a specific selector.",
+    "Type": "Traversal",
+    "Example": "Q(selector).find(\".child\");",
+    "Dependencies": [],
+    "Variables": ["selector", "parentElement", "foundElements"]
+}

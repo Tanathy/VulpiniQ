@@ -1,0 +1,9 @@
+{
+    "Name": "empty",
+    "Method": "Prototype",
+    "Desc": "Empties the innerHTML of each node.",
+    "Type": "Content Manipulation",
+    "Example": "Q(selector).empty();",
+    "Dependencies": [],
+    "Variables": ["el"]
+}

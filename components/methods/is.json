@@ -1,0 +1,9 @@
+{
+  "Name": "is",
+  "Method": "Prototype",
+  "Desc": "Checks if the first node matches a specific selector or condition, allowing for dynamic queries and element comparisons.",
+  "Type": "Utilities",
+  "Example": "Q(selector).is(\":visible\"); // Checks if the element is currently visible",
+  "Dependencies": [],
+  "Variables": ["selector", "node"]
+}

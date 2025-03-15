@@ -1,0 +1,9 @@
+{
+    "Name": "scrollLeft",
+    "Method": "Prototype",
+    "Desc": "Gets or sets the horizontal scroll position of the first node, with an option to increment.",
+    "Type": "Scroll Manipulation",
+    "Example": "Q(selector).scrollLeft(value, increment);",
+    "Dependencies": "",
+    "Variables": ["value", "increment", "maxScrollLeft", "el"]
+}

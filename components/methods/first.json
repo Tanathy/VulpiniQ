@@ -1,0 +1,9 @@
+{
+    "Name": "first",
+    "Method": "Prototype",
+    "Desc": "Returns the first node.",
+    "Type": "Traversal",
+    "Example": "Q(selector).first();",
+    "Dependencies": [],
+    "Variables": []
+}

@@ -1,0 +1,9 @@
+{
+  "Name": "Ready",
+  "Method": "Static",
+  "Desc": "Registers callbacks to be executed once the DOM is fully loaded and parsed.",
+  "Long Desc": "Registers callbacks to be executed once the DOM is fully loaded and parsed, ensuring your scripts can safely interact with the document's structure. Ideal for initializing features, manipulating elements, or setting up event listeners without waiting for the entire page (images, styles) to load. Multiple callbacks can be added, and they will be executed in sequence when the DOMContentLoaded event fires, or immediately if the DOM is already ready.",
+  "Type": "Event Handling",
+  "Example": "// Basic initialization\nQ.Ready(() => {\n    const app = document.querySelector('#app');\n    app.classList.remove('loading');\n});\n\n// Set up event listeners\nQ.Ready(() => {\n    document.querySelectorAll('.nav-link').forEach(link => {\n        link.addEventListener('click', handleNavigation);\n    });\n});",
+  "Variables": ["callbacks", "callback"]
+}

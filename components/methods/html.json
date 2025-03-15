@@ -1,0 +1,9 @@
+{
+    "Name": "html",
+    "Method": "Prototype",
+    "Desc": "Gets or sets the innerHTML of the nodes. This method allows for easy manipulation of the content inside the selected elements.",
+    "Type": "Content Manipulation",
+    "Example": "const currentHtml = Q(selector).html(); // Retrieves the innerHTML of the first selected element <br> Q(selector).html('<div>New Content</div>'); // Sets the innerHTML of each selected element to '<div>New Content</div>' <br> Q(selector).html(['<span>First</span>', '<span>Second</span>']); // Sets the innerHTML with an array of strings <br> const newNode = Q('<p>Paragraph</p>'); Q(selector).html(newNode); // Sets the innerHTML with a Q object containing a new node <br> Q(selector).html(document.createElement('div')); // Sets the innerHTML with a new HTMLElement <br> const nodeList = document.querySelectorAll('.child'); Q(selector).html(nodeList); // Sets the innerHTML with a NodeList of child elements <br> Q(selector).html([]); // Sets the innerHTML to an empty string <br> Q(selector).html(null); // Sets the innerHTML to an empty string",
+    "Dependencies": [],
+    "Variables": ["content", "child", "el", "node", "subchild"]
+}

@@ -1,0 +1,9 @@
+{
+    "Name": "fadeOut",
+    "Method": "Prototype",
+    "Desc": "Fades out each node.",
+    "Type": "Display",
+    "Example": "Q(selector).fadeOut(duration, callback);",
+    "Dependencies": [],
+    "Variables": ["duration", "callback", "elementStyle", "nodeElements", "elementIndex"]
+}

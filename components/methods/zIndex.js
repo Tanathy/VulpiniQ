@@ -1,10 +1,3 @@
-// Name: zIndex
-// Method: Prototype
-// Desc: Gets or sets the z-index of the first node.
-// Long Desc: This is a getter/setter method. If a value is passed, it sets the z-index of the first node to that value. If no value is passed, it returns the z-index of the first node.
-// Type: Display
-// Example: Q(selector).zIndex(value);
-// Variables: value, Index, el
 Q.Ext('zIndex', function (value) {
     const node = this.nodes[0];
     if (!node) return;
@@ -12,6 +5,8 @@ Q.Ext('zIndex', function (value) {
         let Index = node.style.zIndex || window.getComputedStyle(node).zIndex;
         return Index;
     }
-    this.nodes.forEach(node => node.style.zIndex = value);
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        this.nodes[i].style.zIndex = value;
+    }
     return this;
 });
