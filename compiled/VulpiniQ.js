@@ -1,6 +1,13 @@
 const Q = (() => {
     'use strict';
-const _ob = Object, _ar = Array, _ma = Math, _ac = AbortController, _as = AbortSignal, _bo = Boolean, _da = Date, _er = Error, _ev = Event, _pr = Promise, _nu = Number, _re = RegExp, _st = setTimeout, _un = undefined, _n = null, _nl = NodeList, _el = Element, _si = setInterval, _c = console, _f = fetch, _ct = clearTimeout;
+    const _ob = Object, _ar = Array, _ma = Math, _da = Date, _re = RegExp, 
+          _st = setTimeout, _un = undefined, _n = null, _nl = NodeList,
+          _el = Element, _si = setInterval, _c = console, _ct = clearTimeout,
+          _ci = clearInterval, _pr = Promise, _str = String, _nu = Number,
+          _bo = Boolean, _json = JSON, _map = Map, _set = Set, _sym = Symbol,
+          _win = window, _doc = document, _loc = location, _hist = history,
+          _ls = localStorage, _ss = sessionStorage, _f = fetch, _ev = Event,
+          _ac = AbortController, _as = AbortSignal, _err = Error;
     let GLOBAL = {};
     let styleData = {
         gen: "",
@@ -13,10 +20,7 @@ const _ob = Object, _ar = Array, _ma = Math, _ac = AbortController, _as = AbortS
             styleData.element = document.getElementById('qlib-root-styles') || createStyleElement();
             styleData.init = true;
         }
-        let finalStyles = '';
-        if (styleData.root) {
-            finalStyles = `:root {${styleData.root}}\n`;
-        }
+        let finalStyles = styleData.root ? `:root {${styleData.root}}\n` : '';
         finalStyles += styleData.gen;
         styleData.element.textContent = finalStyles;
     }
@@ -26,66 +30,72 @@ const _ob = Object, _ar = Array, _ma = Math, _ac = AbortController, _as = AbortS
         document.head.insertBefore(styleElement, document.head.firstChild);
         return styleElement;
     }
-    window.addEventListener('load', () => {
-        applyStyles();
-    }, { once: true });
-    function Q(a, attributes, c) {
-        if (!(this instanceof Q)) return new Q(a, attributes, c);
-        if (a?.nodeType === 1 || a?.nodeType != _n) {
-            this.nodes = [a];
+    window.addEventListener('load', applyStyles, { once: true });
+    function Q(identifier, attributes, props) {
+        if (!(this instanceof Q)) return new Q(identifier, attributes, props);
+        if (identifier && identifier.nodeType) { 
+            this.nodes = [identifier];
             return;
         }
-        if (a instanceof Q) {
-            this.nodes = a.nodes;
+        if (identifier instanceof Q) {
+            this.nodes = identifier.nodes;
             return;
         }
-        if (a?.constructor === _nl) {
-            this.nodes = _ar.from(a);
+        if (identifier?.constructor === _nl) {
+            this.nodes = _ar.from(identifier);
             return;
         }
-        if (typeof a === 'string') { 
-            const l = attributes || a.indexOf('<') > -1;
-            if (l) {
+        if (typeof identifier === 'string') { 
+            const isCreating = attributes || identifier.indexOf('<') > -1;
+            if (isCreating) {
                 const template = document.createElement('template');
-                template.innerHTML = a.trim();
+                template.innerHTML = identifier.trim();
                 this.nodes = _ar.from(template.content.childNodes);
                 if (attributes) {
-                    for (const element of this.nodes) {
-                        _ob.entries(attributes).forEach(([g, j]) => {
-                            if (g === 'class') {
-                                element.classList.add(...(_ar.isArray(j) ? j : j.split(/\s+/)));
-                            } else if (g === 'style') {
-                                if (typeof j === 'object') {
-                                    _ob.entries(j).forEach(([property, propertyValue]) => {
-                                        element.style[property] = propertyValue;
-                                    });
+                    const attrEntries = _ob.entries(attributes);
+                    for (let i = 0, n = this.nodes.length; i < n; i++) {
+                        const element = this.nodes[i];
+                        for (let j = 0, m = attrEntries.length; j < m; j++) {
+                            const [attr, val] = attrEntries[j];
+                            if (attr === 'class') {
+                                element.classList.add(...(Array.isArray(val) ? val : val.split(/\s+/)));
+                            } else if (attr === 'style') {
+                                if (typeof val === 'object') {
+                                    const styleEntries = _ob.entries(val);
+                                    for (let k = 0, p = styleEntries.length; k < p; k++) {
+                                        const [prop, propVal] = styleEntries[k];
+                                        element.style[prop] = propVal;
+                                    }
                                 } else {
-                                    element.style.cssText = j;
+                                    element.style.cssText = val;
                                 }
-                            } else if (g === 'text') {
-                                element.textContent = j;
-                            } else if (g === 'html') {
-                                element.innerHTML = j;
+                            } else if (attr === 'text') {
+                                element.textContent = val;
+                            } else if (attr === 'html') {
+                                element.innerHTML = val;
                             } else {
-                                element.setAttribute(g, j);
+                                element.setAttribute(attr, val);
                             }
-                        });
+                        }
                     }
                 }
-                if (c) {
-                    this.nodes.forEach(element => {
-                        c.forEach(d => element[d] = true);
-                    });
+                if (props) {
+                    for (let i = 0, n = this.nodes.length; i < n; i++) {
+                        const element = this.nodes[i];
+                        for (let j = 0, m = props.length; j < m; j++) {
+                            element[props[j]] = true;
+                        }
+                    }
                 }
             } else {
-                this.nodes = _ar.from(document.querySelectorAll(a));
+                this.nodes = _ar.from(document.querySelectorAll(identifier));
             }
         }
     }
     Q.Ext = (methodName, functionImplementation) =>
         (Q.prototype[methodName] = functionImplementation, Q);
-    Q.getGLOBAL = i => GLOBAL[i];
-    Q.setGLOBAL = h => (GLOBAL = { ...GLOBAL, ...h });
+    Q.getGLOBAL = key => GLOBAL[key];
+    Q.setGLOBAL = value => (GLOBAL = { ...GLOBAL, ...value });
     Q.style = (root = '', style = '', mapping = _n) => {
         if (root && typeof root === 'string') {
             styleData.root += root.trim() + ';';
@@ -93,38 +103,52 @@ const _ob = Object, _ar = Array, _ma = Math, _ac = AbortController, _as = AbortS
         if (style && typeof style === 'string') {
             if (mapping) {
                 const keys = _ob.keys(mapping);
-                keys.forEach((i) => {
+                keys.forEach((key) => {
                     let newKey = Q.ID ? Q.ID(5, '_') : `_${_ma.random().toString(36).substring(2, 7)}`;
-                    style = style.replace(new _re(`\\b${i}\\b`, 'gm'), newKey);
-                    mapping[i] = mapping[i].replace(i, newKey);
+                    style = style.replace(new _re(`\\b${key}\\b`, 'gm'), newKey);
+                    mapping[key] = mapping[key].replace(key, newKey);
                 });
             }
             styleData.gen += style;
         }
-        applyStyles();
+        if (document.readyState === 'complete') {
+            applyStyles();
+        }
         return mapping;
     };
+    Q._ = {
+        ob: _ob, ar: _ar, ma: _ma, da: _da, re: _re, st: _st, un: _un,
+        n: _n, nl: _nl, el: _el, si: _si, c: _c, ct: _ct, ci: _ci,
+        pr: _pr, str: _str, nu: _nu, bo: _bo, json: _json, map: _map,
+        set: _set, sym: _sym, win: _win, doc: _doc, loc: _loc, hist: _hist,
+        ls: _ls, ss: _ss, f: _f, ev: _ev, ac: _ac, as: _as, err: _err
+    };
     Q.Ext('addClass', function (classes) {
-    const b = classes.split(' '),
-          nodes = this.nodes;
-    for (let i = 0, len = nodes.length; i < len; i++) {
-        nodes[i].classList.add(...b);
+    var b = classes.split(' '),
+        nodes = this.nodes;
+    for (var i = 0, l = nodes.length; i < l; i++) {
+        nodes[i].classList.add.apply(nodes[i].classList, b);
     }
     return this;
 });
 Q.Ext('animate', function (duration, b, e) {
-  const nodes = this.nodes;
-  for (let i = 0, len = nodes.length; i < len; i++) {
-    const f = nodes[i],
-          c = _ob.keys(b)
-            .map(d => `${d} ${duration}ms`)
-            .join(', ');
+  var nodes = this.nodes;
+  for (var i = 0, len = nodes.length; i < len; i++) {
+    var f = nodes[i],
+        keys = Object.keys(b),
+        c = '';
+    for (var j = 0, klen = keys.length; j < klen; j++) {
+      c += keys[j] + ' ' + duration + 'ms' + (j < klen - 1 ? ', ' : '');
+    }
     f.style.transition = c;
-    for (const d in b) {
+    for (var j = 0; j < klen; j++) {
+      var d = keys[j];
       f.style[d] = b[d];
     }
     if (typeof e === 'function') {
-      _st(() => e.call(f), duration);
+      setTimeout((function(g){
+          return function(){ e.call(g); };
+      })(f), duration);
     }
   }
   return this;
@@ -132,262 +156,280 @@ Q.Ext('animate', function (duration, b, e) {
 Q.Ext('append', function (...contents) {
   const nodes = this.nodes;
   for (let i = 0, len = nodes.length; i < len; i++) {
-    const b = nodes[i];
+    const parent = nodes[i];
     for (let j = 0, clen = contents.length; j < clen; j++) {
-      const c = contents[j];
-      if (typeof c === "string") {
-        b.insertAdjacentHTML('beforeend', c);
-      } else if (c?.nodeType === 1 || c instanceof Q) {
-        b.appendChild(c.nodes ? c.nodes[0] : c);
-      } else if (_ar.isArray(c) || c?.constructor === _nl) {
-        const subNodes = _ar.from(c);
+      const child = contents[j];
+      if (typeof child === "string") {
+        parent.insertAdjacentHTML('beforeend', child);
+      } else if (child?.nodeType === 1 || child instanceof Q) {
+        parent.appendChild(child.nodes ? child.nodes[0] : child);
+      } else if (Array.isArray(child) || child?.constructor === NodeList) {
+        const subNodes = Array.from(child);
         for (let k = 0, slen = subNodes.length; k < slen; k++) {
-          b.appendChild(subNodes[k]);
+          parent.appendChild(subNodes[k]);
         }
       }
     }
   }
   return this;
 });
-Q.Ext('attr', function (attribute, b) {
-    const nodes = this.nodes;
+Q.Ext('attr', function (attribute, value) {
+    var nodes = this.nodes;
     if (typeof attribute === 'object') {
-        for (const node of nodes) {
-            for (const [c, val] of _ob.entries(attribute)) {
-                node.setAttribute(c, val);
+        var keys = Object.keys(attribute);
+        for (var i = 0, len = nodes.length; i < len; i++) {
+            var node = nodes[i];
+            for (var j = 0, klen = keys.length; j < klen; j++) {
+                node.setAttribute(keys[j], attribute[keys[j]]);
             }
         }
         return this;
     } else {
-        if (b === _un) {
-            return nodes[0] && nodes[0].getAttribute(attribute) || _n;
+        if (value === undefined) {
+            return nodes[0] && nodes[0].getAttribute(attribute) || null;
         }
-        for (const node of nodes) {
-            node.setAttribute(attribute, b);
+        for (var i = 0, len = nodes.length; i < len; i++) {
+            nodes[i].setAttribute(attribute, value);
         }
         return this;
     }
 });
-Q.Ext('bind', function (a, b) {
-    if (!this.d) {
-        this.d = {};
+Q.Ext('bind', function (event, handler) {
+    if (!this._eventDelegation) {
+        this._eventDelegation = {};
     }
-    if (!this.d[a]) {
-        document.addEventListener(a, (e) => {
-            const nodes = this.nodes;
-            for (const node of nodes) {
-                if (node.contains(e.target)) {
-                    b.call(e.target, e);
+    if (!this._eventDelegation[event]) {
+        document.addEventListener(event, (e) => {
+            var nodes = this.nodes;
+            for (var i = 0, l = nodes.length; i < l; i++) {
+                if (nodes[i].contains(e.target)) {
+                    handler.call(e.target, e);
                 }
             }
         });
-        this.d[a] = true;
+        this._eventDelegation[event] = true;
     }
     return this;
 });
 Q.Ext('blur', function () {
-    const nodes = this.nodes; // ...existing code...
-    for (const node of nodes) {
-        node.blur();
+    var nodes = this.nodes; // ...existing code...
+    for (var i = 0, l = nodes.length; i < l; i++) {
+        nodes[i].blur();
     }
     return this;
 });
-Q.Ext('children', function () {
-    return new Q(this.nodes[0].children);
-});
 Q.Ext('click', function () {
-    const nodes = this.nodes; // ...existing code...
-    for (const node of nodes) {
-        node.click();
+    var nodes = this.nodes;
+    for (var i = 0, l = nodes.length; i < l; i++) {
+        nodes[i].click();
     }
     return this;
 });
 Q.Ext('clone', function () {
-    const node = this.nodes[0]; // ...existing code...
-    return new Q(node.cloneNode(true));
+    return new Q(this.nodes[0].cloneNode(true));
 });
 Q.Ext('closest', function (selector) {
-    let node = this.nodes[0]; // ...existing code...
+    let node = this.nodes[0];
     while (node) {
         if (node.matches && node.matches(selector)) {
             return new Q(node);
         }
         node = node.parentElement;
     }
-    return _n;
+    return null;
 });
-Q.Ext('css', function(property, b) {
+Q.Ext('css', function(property, value) {
   const nodes = this.nodes;
   if (typeof property === 'object') {
       for (let i = 0, len = nodes.length; i < len; i++) {
           const style = nodes[i].style;
-          for (const c in property) {
-              style[c] = property[c];
+          for (const key in property) {
+              style[key] = property[key];
           }
       }
       return this;
   }
-  if (b === _un) return getComputedStyle(nodes[0])[property];
+  if (value === Q._.un) return getComputedStyle(nodes[0])[property];
   for (let i = 0, len = nodes.length; i < len; i++) {
-      nodes[i].style[property] = b;
+      nodes[i].style[property] = value;
   }
   return this;
 });
-Q.Ext('data', function (key, b) {
+Q.Ext('data', function (key, value) {
     const nodes = this.nodes;
-    if (b === _un) {
-        return nodes[0] && nodes[0].dataset[key] || _n;
+    if (value === Q._.un) {
+        return nodes[0] && nodes[0].dataset[key] || Q._.n;
     }
-    for (const node of nodes) {
-        node.dataset[key] = b;
+    for (let i = 0, len = nodes.length; i < len; i++) {
+        nodes[i].dataset[key] = value;
     }
     return this;
 });
 Q.Ext('each', function (callback) {
     if (!this.nodes) return this;
-    this.nodes.forEach((b, c) => callback.call(b, c, b));
+    const nodes = this.nodes;
+    for (let i = 0, len = nodes.length; i < len; i++) {
+        callback.call(nodes[i], i, nodes[i]);
+    }
     return this;
 });
 Q.Ext('empty', function () {
-  const nodes = this.nodes;
-  for (let i = 0, len = nodes.length; i < len; i++) {
+  var nodes = this.nodes;
+  for (var i = 0, len = nodes.length; i < len; i++) {
     nodes[i].innerHTML = '';
   }
   return this;
 });
 Q.Ext('eq', function (index) {
-  const node = this.nodes[index];
-  return node ? new Q(node) : _n;
+  var node = this.nodes[index];
+  return node ? new Q(node) : null;
 });
-Q.Ext('fadeIn', function(a = 400, b) {
-    const d = this.nodes;
-    this.each(index => {
-      const element = d[index];
-      const c = element.style;
-      c.display = '';
-      c.transition = `opacity ${a}ms`;
-      void element.offsetHeight;
-      c.opacity = 1;
-      _st(() => {
-        c.transition = '';
-        if (b) {
-          b();
-        }
-      }, a);
-    });
-});
-Q.Ext('fadeOut', function(a, b) {
-    const d = this.nodes;
-    this.each(index => {
-      const c = d[index].style;
-      c.transition = `opacity ${a}ms`;
-      c.opacity = 0;
-      _st(() => {
-        c.transition = '';
-        c.display = 'none';
-        if (b) b();
-      }, a);
-    });
-});
-Q.Ext('fadeTo', function(opacity, b, c) {
-    const e = this.nodes;
-    this.each(function(f) {
-      const element = e[f];
-      const d = element.style;
-      d.transition = `opacity ${b}ms`;
-      void element.offsetHeight;
-      d.opacity = opacity;
-      _st(function() {
-        d.transition = '';
-        if (c) {
-          c();
-        }
-      }, b);
-    });
-  });
-Q.Ext('fadeToggle', function(a, b) {
-    const c = this.nodes;
-    this.each(function(e) {
-      const d = window.getComputedStyle(c[e]);
-      if (d.opacity === '0') {
-        this.fadeIn(a, b);
-      } else {
-        this.fadeOut(a, b);
-      }
-    });
-  });
-Q.Ext('find', function(selector) {
-    const b = this.nodes[0];
-    if (!b) {
-      return _n;
+Q.Ext('fadeIn', function(duration, callback) {
+    duration = duration || 400;
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        (function(el) {
+            var style = el.style;
+            style.display = '';
+            style.transition = 'opacity ' + duration + 'ms';
+            void el.offsetHeight;
+            style.opacity = 1;
+            setTimeout(function() {
+                style.transition = '';
+                if (callback) callback();
+            }, duration);
+        })(nodes[i]);
     }
-    const c = b.querySelectorAll(selector);
-    return c.length ? Q(c) : _n;
-  });
+    return this;
+});
+Q.Ext('fadeOut', function(duration, callback) {
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        (function(el) {
+            var style = el.style;
+            style.transition = 'opacity ' + duration + 'ms';
+            style.opacity = 0;
+            setTimeout(function() {
+                style.transition = '';
+                style.display = 'none';
+                if (callback) callback();
+            }, duration);
+        })(nodes[i]);
+    }
+    return this;
+});
+Q.Ext('fadeTo', function(opacity, duration, callback) {
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        (function(el) {
+            var style = el.style;
+            style.transition = 'opacity ' + duration + 'ms';
+            void el.offsetHeight;
+            style.opacity = opacity;
+            setTimeout(function() {
+                style.transition = '';
+                if (callback) callback();
+            }, duration);
+        })(nodes[i]);
+    }
+    return this;
+});
+Q.Ext('fadeToggle', function(duration, callback) {
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        var computed = window.getComputedStyle(nodes[i]);
+        if (computed.opacity === '0') {
+            this.fadeIn(duration, callback);
+        } else {
+            this.fadeOut(duration, callback);
+        }
+    }
+    return this;
+});
+Q.Ext('find', function(selector) {
+    var parent = this.nodes[0];
+    if (!parent) return null;
+    var found = parent.querySelectorAll(selector);
+    return found.length ? Q(found) : null;
+});
 Q.Ext('first', function () {
     return new Q(this.nodes[0]);
 });
 Q.Ext('focus', function () {
-    return this.each(a => this.nodes[a].focus());
-});
-Q.Ext('hasClass', function(className) {
-    return this.nodes[0]?.classList.contains(className) || false;
-  });
-Q.Ext('height', function (a) {
-    const nodes = this.nodes; // ...existing code...
-    if (a === _un) {
-        return nodes[0].offsetHeight;
-    }
-    for (const node of nodes) {
-        node.style.height = a;
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        nodes[i].focus();
     }
     return this;
 });
-Q.Ext('hide', function (duration = 0, b) {
-    for (const node of this.nodes) {
+Q.Ext('hasClass', function(className) {
+    var node = this.nodes[0];
+    return (node && node.classList.contains(className)) || false;
+});
+Q.Ext('height', function (value) {
+    var nodes = this.nodes;
+    if (value === undefined) {
+        return nodes[0].offsetHeight;
+    }
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        nodes[i].style.height = value;
+    }
+    return this;
+});
+Q.Ext('hide', function (duration, callback) {
+    duration = duration || 0;
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        var node = nodes[i];
         if (duration === 0) {
             node.style.display = 'none';
-            if (b) b();
+            if (callback) callback();
         } else {
-            node.style.transition = `opacity ${duration}ms`;
+            node.style.transition = 'opacity ' + duration + 'ms';
             node.style.opacity = 1;
-            _st(() => {
-                node.style.opacity = 0;
-                node.addEventListener('transitionend', function d() {
-                    node.style.display = 'none';
-                    node.style.transition = '';
-                    node.removeEventListener('transitionend', d);
-                    if (b) b();
-                });
-            }, 0);
+            setTimeout((function(n) {
+                return function() {
+                    n.style.opacity = 0;
+                    n.addEventListener('transitionend', function handler() {
+                        n.style.display = 'none';
+                        n.style.transition = '';
+                        n.removeEventListener('transitionend', handler);
+                        if (callback) callback();
+                    });
+                };
+            })(node), 0);
         }
     }
     return this;
 });
 Q.Ext('html', function (content) {
-    if (content === _un) {
-        return this.nodes[0] ? this.nodes[0].innerHTML : _n;
+    var nodes = this.nodes;
+    if (content === undefined) {
+        return nodes[0] ? nodes[0].innerHTML : null;
     }
-    for (const d of this.nodes) {
-        d.innerHTML = '';
-        const appendContent = (b) => {
-            if (typeof b === 'string') {
-                d.insertAdjacentHTML('beforeend', b);
-            } else if (b instanceof Q) {
-                for (const subnode of b.nodes) {
-                    d.appendChild(subnode);
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        var node = nodes[i];
+        node.innerHTML = '';
+        var appendContent = function(child) {
+            if (typeof child === 'string') {
+                node.insertAdjacentHTML('beforeend', child);
+            } else if (child instanceof Q) {
+                for (var j = 0, clen = child.nodes.length; j < clen; j++) {
+                    node.appendChild(child.nodes[j]);
                 }
-            } else if (b?.nodeType === 1 || b?.nodeType != _n) {
-                d.appendChild(b);
-            } else if (_ar.isArray(b) || b?.constructor === _nl) {
-                for (const e of _ar.from(b)) {
-                    d.appendChild(e);
+            } else if (child?.nodeType === 1 || child?.nodeType != null) {
+                node.appendChild(child);
+            } else if (Array.isArray(child) || child?.constructor === NodeList) {
+                var subs = Array.from(child);
+                for (var k = 0, slen = subs.length; k < slen; k++) {
+                    node.appendChild(subs[k]);
                 }
             }
         };
-        if (_ar.isArray(content) || content?.constructor === _nl) {
-            for (const b of _ar.from(content)) {
-                appendContent(b);
+        if (Array.isArray(content) || content?.constructor === NodeList) {
+            var contArr = Array.from(content);
+            for (var m = 0, mlen = contArr.length; m < mlen; m++) {
+                appendContent(contArr[m]);
             }
         } else {
             appendContent(content);
@@ -396,365 +438,412 @@ Q.Ext('html', function (content) {
     return this;
 });
 Q.Ext('id', function (ident) {
-    const node = this.nodes[0];
-    if (ident === _un) return node.id;
+    var node = this.nodes[0];
+    if (ident === undefined) return node.id;
     node.id = ident;
     return this;
 });
 Q.Ext('index', function (index) {
-    const first = this.nodes[0];
-    if (index === _un) {
-        return _ar.from(first.parentNode.children).indexOf(first);
+    var first = this.nodes[0];
+    if (index === undefined) {
+        return Array.prototype.indexOf.call(first.parentNode.children, first);
     }
-    for (const node of this.nodes) {
-        const b = node.parentNode;
-        if (!b) continue;
-        const children = _ar.from(b.children);
-        b.removeChild(node);
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        var node = nodes[i],
+            parent = node.parentNode;
+        if (!parent) continue;
+        var children = Array.from(parent.children);
+        parent.removeChild(node);
         if (index >= children.length) {
-            b.appendChild(node);
+            parent.appendChild(node);
         } else {
-            b.insertBefore(node, children[index]);
+            parent.insertBefore(node, children[index]);
         }
     }
     return this;
 });
 Q.Ext('inside', function (selector) {
-    const node = this.nodes[0];
-    return node ? node.closest(selector) !== _n : false;
+    var node = this.nodes[0];
+    return node ? node.closest(selector) !== null : false;
 });
 Q.Ext('is', function (selector) {
-    const b = this.nodes[0];
-    if (!b) return false;
+    var node = this.nodes[0];
+    if (!node) return false;
     if (typeof selector === 'function') {
-        return selector.call(b, 0, b);
+        return selector.call(node, 0, node);
     }
     if (typeof selector === 'string') {
         switch (selector) {
             case ':visible':
-                return b.offsetWidth > 0 && b.offsetHeight > 0;
+                return node.offsetWidth > 0 && node.offsetHeight > 0;
             case ':hidden':
-                return b.offsetWidth === 0 || b.offsetHeight === 0;
+                return node.offsetWidth === 0 || node.offsetHeight === 0;
             case ':hover':
-                return b === document.querySelector(':hover');
+                return node === document.querySelector(':hover');
             case ':focus':
-                return b === document.activeElement;
+                return node === document.activeElement;
             case ':blur':
-                return b !== document.activeElement;
+                return node !== document.activeElement;
             case ':checked':
-                return b.checked;
+                return node.checked;
             case ':selected':
-                return b.selected;
+                return node.selected;
             case ':disabled':
-                return b.disabled;
+                return node.disabled;
             case ':enabled':
-                return !b.disabled;
+                return !node.disabled;
             default:
-                return b.matches(selector);
+                return node.matches(selector);
         }
     }
-    if (selector?.nodeType === 1 || selector?.nodeType != _n) {
-        return b === selector;
+    if (selector?.nodeType === 1 || selector?.nodeType != null) {
+        return node === selector;
     }
     if (selector instanceof Q) {
-        return b === selector.nodes[0];
+        return node === selector.nodes[0];
     }
     return false;
 });
 Q.Ext('isExists', function () {
-    const node = this.nodes[0];
+    var node = this.nodes[0];
     return node ? document.body.contains(node) : false;
 });
-Q.isExists = function (a) {
-    return document.querySelector(a) !== _n;
+Q.isExists = function (selector) {
+    return document.querySelector(selector) !== null;
 };
 Q.Ext('last', function () {
-    const nodes = this.nodes;
+    var nodes = this.nodes;
     return new Q(nodes[nodes.length - 1]);
 });
 Q.Ext('map', function (callback) {
-    const b = [];
-    for (const node of this.nodes) {
-        b.push(callback(new Q(node)));
+    var result = [],
+        nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        result.push(callback(new Q(nodes[i])));
     }
-    return b;
+    return result;
 });
-Q.Ext('off', function (a, b, c) {
-    const d = {
-        capture: false,
-        once: false,
-        passive: false
-    };
-    c = { ...d, ...c };
-    const eventList = a.split(' ');
-    for (const node of this.nodes) {
-        for (const e of eventList) {
-            node.removeEventListener(e, b, c);
+Q.Ext('off', function (events, handler, options) {
+    var defaultOptions = { capture: false, once: false, passive: false },
+        opts = Object.assign({}, defaultOptions, options),
+        eventList = events.split(' '),
+        nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        for (var j = 0, elen = eventList.length; j < elen; j++) {
+            nodes[i].removeEventListener(eventList[j], handler, opts);
         }
     }
     return this;
 });
 Q.Ext('offset', function () {
-    const node = this.nodes[0];
-    const a = node.getBoundingClientRect();
+    var node = this.nodes[0],
+        rect = node.getBoundingClientRect();
     return {
-        top: a.top + window.scrollY,
-        left: a.left + window.scrollX
+        top: rect.top + window.scrollY,
+        left: rect.left + window.scrollX
     };
 });
-Q.Ext('on', function (a, b, c) {
-  const d = {
-      capture: false,
-      once: false,
-      passive: false
-  };
-  c = { ...d, ...c };
-  const eventList = a.split(' ');
-  return this.each(index => {
-      const node = this.nodes[index];
-      eventList.forEach(f => {
-          node.addEventListener(f, b, c);
-      });
-  });
+Q.Ext('on', function (events, handler, options) {
+    var defaultOptions = { capture: false, once: false, passive: false },
+        opts = Object.assign({}, defaultOptions, options),
+        eventList = events.split(' '),
+        nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        for (var j = 0, elen = eventList.length; j < elen; j++) {
+            nodes[i].addEventListener(eventList[j], handler, opts);
+        }
+    }
+    return this;
 });
 Q.Ext('parent', function () {
-    const node = this.nodes[0];
-    return new Q(node ? node.parentNode : _n);
+    var node = this.nodes[0];
+    return new Q(node ? node.parentNode : null);
 });
 Q.Ext('position', function () {
-    const node = this.nodes[0];
+    var node = this.nodes[0];
     return {
         top: node.offsetTop,
         left: node.offsetLeft
     };
 });
-Q.Ext('prepend', function (...a) {
-    for (const b of this.a) {
-        for (const c of a) {
-            if (typeof c === 'string') {
-                b.insertAdjacentHTML('afterbegin', c);
-            } else if (c instanceof Q) {
-                b.insertBefore(c.a[0], b.firstChild);
-            } else if (c?.nodeType === 1 || c?.nodeType != _n) {
-                b.insertBefore(c, b.firstChild);
-            } else if (_ar.isArray(c) || c?.constructor === _nl) {
-                for (const d of _ar.from(c)) {
-                    b.insertBefore(d, b.firstChild);
+Q.Ext('prepend', function () {
+    var nodes = this.nodes,
+        contents = Array.prototype.slice.call(arguments),
+        i, j, k, parent, child, subNodes;
+    for (i = 0; i < nodes.length; i++) {
+        parent = nodes[i];
+        for (j = 0; j < contents.length; j++) {
+            child = contents[j];
+            if (typeof child === 'string') {
+                parent.insertAdjacentHTML('afterbegin', child);
+            } else if (child instanceof Q) {
+                parent.insertBefore(child.nodes[0], parent.firstChild);
+            } else if (child?.nodeType === 1 || child?.nodeType != null) {
+                parent.insertBefore(child, parent.firstChild);
+            } else if (Array.isArray(child) || child?.constructor === NodeList) {
+                subNodes = Array.from(child);
+                for (k = 0; k < subNodes.length; k++) {
+                    parent.insertBefore(subNodes[k], parent.firstChild);
                 }
             }
         }
     }
     return this;
 });
-Q.Ext('prop', function (property, b) {
-    if (b === _un) {
-        return this.nodes[0] ? this.nodes[0][property] : _n;
+Q.Ext('prop', function (property, value) {
+    var nodes = this.nodes;
+    if (value === undefined) {
+        return nodes[0] ? nodes[0][property] : null;
     }
-    for (const node of this.nodes) {
-        node[property] = b;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        nodes[i][property] = value;
     }
     return this;
 });
 Q.Ext('remove', function() {
-    for (const node of this.nodes) {
-        node.remove();
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        nodes[i].remove();
     }
     return this;
 });
-Q.Ext('removeAttr', function (a) {
-    for (const node of this.nodes) {
-        node.removeAttribute(a);
+Q.Ext('removeAttr', function (attribute) {
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        nodes[i].removeAttribute(attribute);
     }
     return this;
 });
-Q.Ext('removeClass', function (a) {
-    const b = a.split(' ');
-    for (const node of this.nodes) {
-        node.classList.remove(...b);
+Q.Ext('removeClass', function (classes) {
+    var list = classes.split(' ');
+    for (var i = 0, len = this.nodes.length; i < len; i++) {
+        this.nodes[i].classList.remove.apply(this.nodes[i].classList, list);
     }
     return this;
 });
 Q.Ext('removeData', function (key) {
-    return this.each(index => {
-        const node = this.nodes[index];
-        delete node.dataset[key];
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        delete this.nodes[i].dataset[key];
+    }
+    return this;
 });
 Q.Ext('removeProp', function (property) {
-    return this.each(index => {
-        const node = this.nodes[index];
-        delete node[property];
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        delete this.nodes[i][property];
+    }
+    return this;
 });
 Q.Ext('removeTransition', function () {
-    return this.each(index => {
-        const node = this.nodes[index];
-        node.style.transition = '';
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        this.nodes[i].style.transition = '';
+    }
+    return this;
 });
 Q.Ext('scrollHeight', function () {
-    return this.nodes[0].scrollHeight;
+    var node = this.nodes[0];
+    return node.scrollHeight;
 });
-Q.Ext('scrollLeft', function (a, b) {
-    if (a === _un) {
-        return this.nodes[0].scrollLeft;
+Q.Ext('scrollLeft', function (value, increment) {
+    const node = this.nodes[0];
+    if (value === undefined) {
+        return node.scrollLeft;
     }
-    return this.each(index => {
-        const node = this.nodes[index];
-        const c = node.scrollWidth - node.clientWidth;
-        if (b) {
-            node.scrollLeft = _ma.min(node.scrollLeft + a, c);
-        } else {
-            node.scrollLeft = _ma.min(a, c);
-        }
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        const current = this.nodes[i];
+        const maxScrollLeft = current.scrollWidth - current.clientWidth;
+        current.scrollLeft = increment 
+            ? Math.min(current.scrollLeft + value, maxScrollLeft) 
+            : Math.min(value, maxScrollLeft);
+    }
+    return this;
 });
-Q.Ext('scrollTop', function (a, b) {
-    if (a === _un) {
-        return this.nodes[0].scrollTop;
+Q.Ext('scrollTop', function (value, increment) {
+    const node = this.nodes[0];
+    if (value === undefined) {
+        return node.scrollTop;
     }
-    return this.each(index => {
-        const node = this.nodes[index];
-        const c = node.scrollHeight - node.clientHeight;
-        if (b) {
-            node.scrollTop = _ma.min(node.scrollTop + a, c);
-        } else {
-            node.scrollTop = _ma.min(a, c);
-        }
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        const current = this.nodes[i];
+        const maxScrollTop = current.scrollHeight - current.clientHeight;
+        current.scrollTop = increment 
+            ? Math.min(current.scrollTop + value, maxScrollTop) 
+            : Math.min(value, maxScrollTop);
+    }
+    return this;
 });
 Q.Ext('scrollWidth', function () {
-    return this.nodes[0].scrollWidth;
+    var node = this.nodes[0];
+    return node.scrollWidth;
 });
-Q.Ext('show', function (duration = 0, b) {
-    return this.each(index => {
-        const c = this.nodes[index];
+Q.Ext('show', function (duration = 0, callback) {
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        const element = this.nodes[i];
         if (duration === 0) {
-            c.style.display = '';
-            if (b) b();
+            element.style.display = '';
+            if (callback) callback();
         } else {
-            c.style.transition = `opacity ${duration}ms`;
-            c.style.opacity = 0;
-            c.style.display = '';
-            _st(() => {
-                c.style.opacity = 1;
-                c.addEventListener('transitionend', () => {
-                    c.style.transition = '';
-                    if (b) b();
+            element.style.transition = `opacity ${duration}ms`;
+            element.style.opacity = 0;
+            element.style.display = '';
+            setTimeout(() => {
+                element.style.opacity = 1;
+                element.addEventListener('transitionend', () => {
+                    element.style.transition = '';
+                    if (callback) callback();
                 }, { once: true });
             }, 0);
         }
-    });
+    }
+    return this;
 });
 Q.Ext('size', function () {
+    const node = this.nodes[0];
 	return {
-		width: this.nodes[0].offsetWidth,
-		height: this.nodes[0].offsetHeight
+		width: node.offsetWidth,
+		height: node.offsetHeight
 	};
 });
-Q.Ext('text', function (a) {
-    if (a === _un) {
-        return this.nodes[0]?.textContent || _n;
+Q.Ext('text', function (content) {
+    if (content === undefined) {
+        return this.nodes[0]?.textContent || null;
     }
-    return this.each(function(index, b) {
-        b.textContent = a;
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        this.nodes[i].textContent = content;
+    }
+    return this;
 });
 Q.Ext('toggle', function () {
-    return this.each(function(index, a) {
-        a.style.display = (a.style.display === 'none' ? '' : 'none');
-    });
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        nodes[i].style.display = (nodes[i].style.display === 'none' ? '' : 'none');
+    }
+    return this;
 });
 Q.Ext('toggleClass', function (className) {
-    return this.each(function(index, b) {
-        b.classList.toggle(className);
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        this.nodes[i].classList.toggle(className);
+    }
+    return this;
 });
 Q.Ext('trigger', function (event) {
-	return this.each(function(c, b) {
-		b.dispatchEvent(new _ev(event));
-	});
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        this.nodes[i].dispatchEvent(new Event(event));
+    }
+    return this;
 });
 Q.Ext('unwrap', function () {
-    return this.each(function(index, b) {
-        const a = b.parentNode;
-        if (a && a !== document.body) {
-            a.replaceWith(...a.childNodes);
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        const el = this.nodes[i];
+        const parent = el.parentNode;
+        if (parent && parent !== document.body) {
+            parent.replaceWith(...parent.childNodes);
         }
-    });
-});
-Q.Ext('val', function(a) {
-    if (a === _un) return this.nodes[0]?.value || _n;
-    for (const node of this.nodes) {
-        node.value = a;
     }
     return this;
-  });
-Q.Ext('wait', function(ms) {
-	return new _pr(resolve => _st(() => resolve(this), ms));
 });
-Q.Ext('walk', function (callback, b = false) {
-	return this.each(function(d, el) {
-		const c = b ? Q(el) : el;
-		callback.call(el, c, d);
-	});
+Q.Ext('val', function(input) {
+    if (input === undefined) return this.nodes[0]?.value || null;
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        this.nodes[i].value = input;
+    }
+    return this;
+});
+Q.Ext('wait', function(ms) {
+	return new Promise(resolve => setTimeout(() => resolve(this), ms));
+});
+Q.Ext('walk', function (callback, useQObject = false) {
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        const node = useQObject ? Q(this.nodes[i]) : this.nodes[i];
+        callback.call(this.nodes[i], node, i);
+    }
+    return this;
 });
 Q.Ext('width', function (value) {
-    if (typeof value === '_un') {
-        return this.nodes[0] ? this.nodes[0].offsetWidth : _un;
+    if (typeof value === 'undefined') {
+        return this.nodes[0] ? this.nodes[0].offsetWidth : undefined;
     }
-    this.nodes.forEach(node => {
-        node.style.width = value;
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        this.nodes[i].style.width = value;
+    }
     return this;
 });
-Q.Ext('wrap', function (a) {
-    return this.each(f => {
-        const b = f.b;
-        let c = typeof a === 'string'
-            ? // Create and clone the a so each f gets its own instance.
-              ((d => (d.innerHTML = a.trim(), d.firstElementChild.cloneNode(true)))
-              (document.createElement('e')))
-            : a;
-        b.insertBefore(c, f);
-        c.appendChild(f);
-    });
+Q.Ext('wrap', function (wrapper) {
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        const node = this.nodes[i];
+        const parentNode = node.parentNode;
+        let newParentElement;
+        if (typeof wrapper === 'string') {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = wrapper.trim();
+            newParentElement = tempDiv.firstElementChild.cloneNode(true);
+        } else {
+            newParentElement = wrapper;
+        }
+        parentNode.insertBefore(newParentElement, node);
+        newParentElement.appendChild(node);
+    }
+    return this;
 });
 Q.Ext('wrapAll', function (wrapper) {
     if (!this.nodes.length) return this;
-    const b = this.nodes[0].parentNode;
-    let c = typeof wrapper === 'string'
+    const parent = this.nodes[0].parentNode;
+    let newParent = typeof wrapper === 'string'
         ? ((tempDiv => (tempDiv.innerHTML = wrapper.trim(), tempDiv.firstElementChild))
            (document.createElement('div')))
         : wrapper;
-    b.insertBefore(c, this.nodes[0]);
-    this.nodes.forEach(d => c.appendChild(d));
+    parent.insertBefore(newParent, this.nodes[0]);
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        newParent.appendChild(this.nodes[i]);
+    }
     return this;
 });
 Q.Ext('zIndex', function (value) {
     const node = this.nodes[0];
     if (!node) return;
-    if (value === _un) {
-        let b = node.style.zIndex || window.getComputedStyle(node).zIndex;
-        return b;
+    if (value === undefined) {
+        let Index = node.style.zIndex || window.getComputedStyle(node).zIndex;
+        return Index;
     }
-    this.nodes.forEach(node => node.style.zIndex = value);
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        this.nodes[i].style.zIndex = value;
+    }
     return this;
 });
-
+Q.Done=((c)=>{
+    window.addEventListener("load",()=>{while(c.length)c.shift()();c=0});
+    return f=>c?c.push(f):f()
+})([])
+Q.Leaving=((c)=>{
+    let ev;
+    window.addEventListener("beforeunload",e=>{
+      ev=e;while(c.length)c.shift()(e);c=0
+    });
+    return f=>c?c.push(f):f(ev)
+  })([])
+Q.Ready=((c)=>{
+    document.readyState==='loading'?document.addEventListener("DOMContentLoaded",()=>{while(c.length)c.shift()();c=0},{once:1}):c=0;
+    return f=>c?c.push(f):f();
+  })([])
+Q.Resize=((c)=>{
+    addEventListener("resize",()=>{
+      for(let i=0,l=c.length;i<l;) c[i++](innerWidth,innerHeight)
+    });
+    return f=>c.push(f)
+  })([])
 Q.AvgColor = (source, sampleSize, callback) => {
     const image = new Image();
     image.crossOrigin = 'Anonymous';
     if (typeof source === 'string') image.src = source;
     else if (source instanceof HTMLCanvasElement) image.src = source.toDataURL();
-    else return _c.error("Invalid image source provided.");
+    else return console.error("Invalid image source provided.");
     image.onload = () => {
-      const canvas = _ob.assign(document.createElement('canvas'), { width: image.width, height: image.height });
+      const canvas = Object.assign(document.createElement('canvas'), { width: image.width, height: image.height });
       const context = canvas.getContext('2d');
       context.drawImage(image, 0, 0);
       const data = context.getImageData(0, 0, image.width, image.height).data;
       const samplingRate = sampleSize === 'auto'
-        ? _ma.max(1, _ma.ceil(_ma.sqrt(image.width * image.height) / 32))
+        ? Math.max(1, Math.ceil(Math.sqrt(image.width * image.height) / 32))
         : (typeof sampleSize === 'number' && sampleSize > 0 ? sampleSize : 1);
       let totalRed = 0, totalGreen = 0, totalBlue = 0, count = 0;
       for (let index = 0, len = data.length; index < len; index += samplingRate * 4) {
@@ -766,10 +855,10 @@ Q.AvgColor = (source, sampleSize, callback) => {
       const avgColor = { r: (totalRed / count) | 0, g: (totalGreen / count) | 0, b: (totalBlue / count) | 0 };
       typeof callback === 'function' && callback(avgColor);
     };
-    image.onerror = () => _c.error("Failed to load image.");
+    image.onerror = () => console.error("Failed to load image.");
   };
 Q.ColorBrightness = (inputColor, percent) => {
-    if (!/^#|^rgb/.test(inputColor)) throw new _er('Unsupported c format');
+    if (!/^#|^rgb/.test(inputColor)) throw new Error('Unsupported c format');
     let red, green, blue, alpha = 1, isHex = false, factor = 1 + percent / 100;
     if (inputColor[0] === '#') {
       isHex = true;
@@ -789,10 +878,10 @@ Q.ColorBrightness = (inputColor, percent) => {
         red = +match[1];
         green = +match[2];
         blue = +match[3];
-        if (match[4] != _n) alpha = parseFloat(match[4]);
+        if (match[4] != null) alpha = parseFloat(match[4]);
       }
     }
-    const clamp = value => _ma.min(255, _ma.max(0, _ma.round(value * factor)));
+    const clamp = value => Math.min(255, Math.max(0, Math.round(value * factor)));
     red = clamp(red);
     green = clamp(green);
     blue = clamp(blue);
@@ -802,8 +891,8 @@ Q.ColorBrightness = (inputColor, percent) => {
   };
 Q.Debounce = (id, b, c) => {
     const debounceStorage = Q.getGLOBAL('Debounce') || {};
-    debounceStorage[id] && _ct(debounceStorage[id]);
-    debounceStorage[id] = _st(c, b);
+    debounceStorage[id] && clearTimeout(debounceStorage[id]);
+    debounceStorage[id] = setTimeout(c, b);
     Q.setGLOBAL({ Debounce: debounceStorage });
   };
 Q.HSL2RGB = (h, s, l) => {
@@ -824,10 +913,10 @@ Q.HSL2RGB = (h, s, l) => {
     return [hueToRgb(h + 1 / 3) * 255, hueToRgb(h) * 255, hueToRgb(h - 1 / 3) * 255];
   };
 Q.ID = (length = 8, b = '') =>
-    b + _ar.from({ length }, () => (_ma.random() * 16 | 0).toString(16)).join('');
+    b + Array.from({ length }, () => (Math.random() * 16 | 0).toString(16)).join('');
 Q.RGB2HSL = (r, g, b) => {
     r /= 255, g /= 255, b /= 255;
-    const max = _ma.max(r, g, b), min = _ma.min(r, g, b);
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
     let h, s, l = (max + min) / 2, d = max - min;
     if (!d) h = s = 0;
     else {
@@ -847,15 +936,15 @@ Q.isDarkColor = (color, b = 20, c = 100) => {
         ? [f[0] + f[0], f[1] + f[1], f[2] + f[2]]
         : f.length === 6
         ? [f.slice(0, 2), f.slice(2, 4), f.slice(4, 6)]
-        : _n;
-      if (!parts) throw _er('Invalid f color format');
+        : null;
+      if (!parts) throw Error('Invalid f color format');
       [red, green, blue] = parts.map(v => parseInt(v, 16));
     } else if (color.startsWith('rgb')) {
       const arr = color.match(/\d+/g);
-      if (arr && arr.length >= 3) [red, green, blue] = arr.map(_nu);
-      else throw _er('Invalid color format');
-    } else throw _er('Unsupported color format');
-    return _ma.sqrt(0.299 * red ** 2 + 0.587 * green ** 2 + 0.114 * blue ** 2) + b < c;
+      if (arr && arr.length >= 3) [red, green, blue] = arr.map(Number);
+      else throw Error('Invalid color format');
+    } else throw Error('Unsupported color format');
+    return Math.sqrt(0.299 * red ** 2 + 0.587 * green ** 2 + 0.114 * blue ** 2) + b < c;
   };
 return Q;
 })();

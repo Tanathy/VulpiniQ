@@ -1,6 +1,13 @@
 const Q = (() => {
     'use strict';
-const _ob = Object, _ar = Array, _ma = Math, _ac = AbortController, _as = AbortSignal, _bo = Boolean, _da = Date, _er = Error, _ev = Event, _pr = Promise, _nu = Number, _re = RegExp, _st = setTimeout, _un = undefined, _n = null, _nl = NodeList, _el = Element, _si = setInterval, _c = console, _f = fetch, _ct = clearTimeout;
+    const _ob = Object, _ar = Array, _ma = Math, _da = Date, _re = RegExp, 
+          _st = setTimeout, _un = undefined, _n = null, _nl = NodeList,
+          _el = Element, _si = setInterval, _c = console, _ct = clearTimeout,
+          _ci = clearInterval, _pr = Promise, _str = String, _nu = Number,
+          _bo = Boolean, _json = JSON, _map = Map, _set = Set, _sym = Symbol,
+          _win = window, _doc = document, _loc = location, _hist = history,
+          _ls = localStorage, _ss = sessionStorage, _f = fetch, _ev = Event,
+          _ac = AbortController, _as = AbortSignal, _err = Error;
     let GLOBAL = {};
     let styleData = {
         gen: "",
@@ -13,10 +20,7 @@ const _ob = Object, _ar = Array, _ma = Math, _ac = AbortController, _as = AbortS
             styleData.element = document.getElementById('qlib-root-styles') || createStyleElement();
             styleData.init = true;
         }
-        let finalStyles = '';
-        if (styleData.root) {
-            finalStyles = `:root {${styleData.root}}\n`;
-        }
+        let finalStyles = styleData.root ? `:root {${styleData.root}}\n` : '';
         finalStyles += styleData.gen;
         styleData.element.textContent = finalStyles;
     }
@@ -26,66 +30,72 @@ const _ob = Object, _ar = Array, _ma = Math, _ac = AbortController, _as = AbortS
         document.head.insertBefore(styleElement, document.head.firstChild);
         return styleElement;
     }
-    window.addEventListener('load', () => {
-        applyStyles();
-    }, { once: true });
-    function Q(a, attributes, c) {
-        if (!(this instanceof Q)) return new Q(a, attributes, c);
-        if (a?.nodeType === 1 || a?.nodeType != _n) {
-            this.nodes = [a];
+    window.addEventListener('load', applyStyles, { once: true });
+    function Q(identifier, attributes, props) {
+        if (!(this instanceof Q)) return new Q(identifier, attributes, props);
+        if (identifier && identifier.nodeType) { 
+            this.nodes = [identifier];
             return;
         }
-        if (a instanceof Q) {
-            this.nodes = a.nodes;
+        if (identifier instanceof Q) {
+            this.nodes = identifier.nodes;
             return;
         }
-        if (a?.constructor === _nl) {
-            this.nodes = _ar.from(a);
+        if (identifier?.constructor === _nl) {
+            this.nodes = _ar.from(identifier);
             return;
         }
-        if (typeof a === 'string') { 
-            const l = attributes || a.indexOf('<') > -1;
-            if (l) {
+        if (typeof identifier === 'string') { 
+            const isCreating = attributes || identifier.indexOf('<') > -1;
+            if (isCreating) {
                 const template = document.createElement('template');
-                template.innerHTML = a.trim();
+                template.innerHTML = identifier.trim();
                 this.nodes = _ar.from(template.content.childNodes);
                 if (attributes) {
-                    for (const element of this.nodes) {
-                        _ob.entries(attributes).forEach(([g, j]) => {
-                            if (g === 'class') {
-                                element.classList.add(...(_ar.isArray(j) ? j : j.split(/\s+/)));
-                            } else if (g === 'style') {
-                                if (typeof j === 'object') {
-                                    _ob.entries(j).forEach(([property, propertyValue]) => {
-                                        element.style[property] = propertyValue;
-                                    });
+                    const attrEntries = _ob.entries(attributes);
+                    for (let i = 0, n = this.nodes.length; i < n; i++) {
+                        const element = this.nodes[i];
+                        for (let j = 0, m = attrEntries.length; j < m; j++) {
+                            const [attr, val] = attrEntries[j];
+                            if (attr === 'class') {
+                                element.classList.add(...(Array.isArray(val) ? val : val.split(/\s+/)));
+                            } else if (attr === 'style') {
+                                if (typeof val === 'object') {
+                                    const styleEntries = _ob.entries(val);
+                                    for (let k = 0, p = styleEntries.length; k < p; k++) {
+                                        const [prop, propVal] = styleEntries[k];
+                                        element.style[prop] = propVal;
+                                    }
                                 } else {
-                                    element.style.cssText = j;
+                                    element.style.cssText = val;
                                 }
-                            } else if (g === 'text') {
-                                element.textContent = j;
-                            } else if (g === 'html') {
-                                element.innerHTML = j;
+                            } else if (attr === 'text') {
+                                element.textContent = val;
+                            } else if (attr === 'html') {
+                                element.innerHTML = val;
                             } else {
-                                element.setAttribute(g, j);
+                                element.setAttribute(attr, val);
                             }
-                        });
+                        }
                     }
                 }
-                if (c) {
-                    this.nodes.forEach(element => {
-                        c.forEach(d => element[d] = true);
-                    });
+                if (props) {
+                    for (let i = 0, n = this.nodes.length; i < n; i++) {
+                        const element = this.nodes[i];
+                        for (let j = 0, m = props.length; j < m; j++) {
+                            element[props[j]] = true;
+                        }
+                    }
                 }
             } else {
-                this.nodes = _ar.from(document.querySelectorAll(a));
+                this.nodes = _ar.from(document.querySelectorAll(identifier));
             }
         }
     }
     Q.Ext = (methodName, functionImplementation) =>
         (Q.prototype[methodName] = functionImplementation, Q);
-    Q.getGLOBAL = i => GLOBAL[i];
-    Q.setGLOBAL = h => (GLOBAL = { ...GLOBAL, ...h });
+    Q.getGLOBAL = key => GLOBAL[key];
+    Q.setGLOBAL = value => (GLOBAL = { ...GLOBAL, ...value });
     Q.style = (root = '', style = '', mapping = _n) => {
         if (root && typeof root === 'string') {
             styleData.root += root.trim() + ';';
@@ -93,38 +103,52 @@ const _ob = Object, _ar = Array, _ma = Math, _ac = AbortController, _as = AbortS
         if (style && typeof style === 'string') {
             if (mapping) {
                 const keys = _ob.keys(mapping);
-                keys.forEach((i) => {
+                keys.forEach((key) => {
                     let newKey = Q.ID ? Q.ID(5, '_') : `_${_ma.random().toString(36).substring(2, 7)}`;
-                    style = style.replace(new _re(`\\b${i}\\b`, 'gm'), newKey);
-                    mapping[i] = mapping[i].replace(i, newKey);
+                    style = style.replace(new _re(`\\b${key}\\b`, 'gm'), newKey);
+                    mapping[key] = mapping[key].replace(key, newKey);
                 });
             }
             styleData.gen += style;
         }
-        applyStyles();
+        if (document.readyState === 'complete') {
+            applyStyles();
+        }
         return mapping;
     };
+    Q._ = {
+        ob: _ob, ar: _ar, ma: _ma, da: _da, re: _re, st: _st, un: _un,
+        n: _n, nl: _nl, el: _el, si: _si, c: _c, ct: _ct, ci: _ci,
+        pr: _pr, str: _str, nu: _nu, bo: _bo, json: _json, map: _map,
+        set: _set, sym: _sym, win: _win, doc: _doc, loc: _loc, hist: _hist,
+        ls: _ls, ss: _ss, f: _f, ev: _ev, ac: _ac, as: _as, err: _err
+    };
     Q.Ext('addClass', function (classes) {
-    const b = classes.split(' '),
-          nodes = this.nodes;
-    for (let i = 0, len = nodes.length; i < len; i++) {
-        nodes[i].classList.add(...b);
+    var b = classes.split(' '),
+        nodes = this.nodes;
+    for (var i = 0, l = nodes.length; i < l; i++) {
+        nodes[i].classList.add.apply(nodes[i].classList, b);
     }
     return this;
 });
 Q.Ext('animate', function (duration, b, e) {
-  const nodes = this.nodes;
-  for (let i = 0, len = nodes.length; i < len; i++) {
-    const f = nodes[i],
-          c = _ob.keys(b)
-            .map(d => `${d} ${duration}ms`)
-            .join(', ');
+  var nodes = this.nodes;
+  for (var i = 0, len = nodes.length; i < len; i++) {
+    var f = nodes[i],
+        keys = Object.keys(b),
+        c = '';
+    for (var j = 0, klen = keys.length; j < klen; j++) {
+      c += keys[j] + ' ' + duration + 'ms' + (j < klen - 1 ? ', ' : '');
+    }
     f.style.transition = c;
-    for (const d in b) {
+    for (var j = 0; j < klen; j++) {
+      var d = keys[j];
       f.style[d] = b[d];
     }
     if (typeof e === 'function') {
-      _st(() => e.call(f), duration);
+      setTimeout((function(g){
+          return function(){ e.call(g); };
+      })(f), duration);
     }
   }
   return this;
@@ -132,262 +156,280 @@ Q.Ext('animate', function (duration, b, e) {
 Q.Ext('append', function (...contents) {
   const nodes = this.nodes;
   for (let i = 0, len = nodes.length; i < len; i++) {
-    const b = nodes[i];
+    const parent = nodes[i];
     for (let j = 0, clen = contents.length; j < clen; j++) {
-      const c = contents[j];
-      if (typeof c === "string") {
-        b.insertAdjacentHTML('beforeend', c);
-      } else if (c?.nodeType === 1 || c instanceof Q) {
-        b.appendChild(c.nodes ? c.nodes[0] : c);
-      } else if (_ar.isArray(c) || c?.constructor === _nl) {
-        const subNodes = _ar.from(c);
+      const child = contents[j];
+      if (typeof child === "string") {
+        parent.insertAdjacentHTML('beforeend', child);
+      } else if (child?.nodeType === 1 || child instanceof Q) {
+        parent.appendChild(child.nodes ? child.nodes[0] : child);
+      } else if (Array.isArray(child) || child?.constructor === NodeList) {
+        const subNodes = Array.from(child);
         for (let k = 0, slen = subNodes.length; k < slen; k++) {
-          b.appendChild(subNodes[k]);
+          parent.appendChild(subNodes[k]);
         }
       }
     }
   }
   return this;
 });
-Q.Ext('attr', function (attribute, b) {
-    const nodes = this.nodes;
+Q.Ext('attr', function (attribute, value) {
+    var nodes = this.nodes;
     if (typeof attribute === 'object') {
-        for (const node of nodes) {
-            for (const [c, val] of _ob.entries(attribute)) {
-                node.setAttribute(c, val);
+        var keys = Object.keys(attribute);
+        for (var i = 0, len = nodes.length; i < len; i++) {
+            var node = nodes[i];
+            for (var j = 0, klen = keys.length; j < klen; j++) {
+                node.setAttribute(keys[j], attribute[keys[j]]);
             }
         }
         return this;
     } else {
-        if (b === _un) {
-            return nodes[0] && nodes[0].getAttribute(attribute) || _n;
+        if (value === undefined) {
+            return nodes[0] && nodes[0].getAttribute(attribute) || null;
         }
-        for (const node of nodes) {
-            node.setAttribute(attribute, b);
+        for (var i = 0, len = nodes.length; i < len; i++) {
+            nodes[i].setAttribute(attribute, value);
         }
         return this;
     }
 });
-Q.Ext('bind', function (a, b) {
-    if (!this.d) {
-        this.d = {};
+Q.Ext('bind', function (event, handler) {
+    if (!this._eventDelegation) {
+        this._eventDelegation = {};
     }
-    if (!this.d[a]) {
-        document.addEventListener(a, (e) => {
-            const nodes = this.nodes;
-            for (const node of nodes) {
-                if (node.contains(e.target)) {
-                    b.call(e.target, e);
+    if (!this._eventDelegation[event]) {
+        document.addEventListener(event, (e) => {
+            var nodes = this.nodes;
+            for (var i = 0, l = nodes.length; i < l; i++) {
+                if (nodes[i].contains(e.target)) {
+                    handler.call(e.target, e);
                 }
             }
         });
-        this.d[a] = true;
+        this._eventDelegation[event] = true;
     }
     return this;
 });
 Q.Ext('blur', function () {
-    const nodes = this.nodes; // ...existing code...
-    for (const node of nodes) {
-        node.blur();
+    var nodes = this.nodes; // ...existing code...
+    for (var i = 0, l = nodes.length; i < l; i++) {
+        nodes[i].blur();
     }
     return this;
 });
-Q.Ext('children', function () {
-    return new Q(this.nodes[0].children);
-});
 Q.Ext('click', function () {
-    const nodes = this.nodes; // ...existing code...
-    for (const node of nodes) {
-        node.click();
+    var nodes = this.nodes;
+    for (var i = 0, l = nodes.length; i < l; i++) {
+        nodes[i].click();
     }
     return this;
 });
 Q.Ext('clone', function () {
-    const node = this.nodes[0]; // ...existing code...
-    return new Q(node.cloneNode(true));
+    return new Q(this.nodes[0].cloneNode(true));
 });
 Q.Ext('closest', function (selector) {
-    let node = this.nodes[0]; // ...existing code...
+    let node = this.nodes[0];
     while (node) {
         if (node.matches && node.matches(selector)) {
             return new Q(node);
         }
         node = node.parentElement;
     }
-    return _n;
+    return null;
 });
-Q.Ext('css', function(property, b) {
+Q.Ext('css', function(property, value) {
   const nodes = this.nodes;
   if (typeof property === 'object') {
       for (let i = 0, len = nodes.length; i < len; i++) {
           const style = nodes[i].style;
-          for (const c in property) {
-              style[c] = property[c];
+          for (const key in property) {
+              style[key] = property[key];
           }
       }
       return this;
   }
-  if (b === _un) return getComputedStyle(nodes[0])[property];
+  if (value === Q._.un) return getComputedStyle(nodes[0])[property];
   for (let i = 0, len = nodes.length; i < len; i++) {
-      nodes[i].style[property] = b;
+      nodes[i].style[property] = value;
   }
   return this;
 });
-Q.Ext('data', function (key, b) {
+Q.Ext('data', function (key, value) {
     const nodes = this.nodes;
-    if (b === _un) {
-        return nodes[0] && nodes[0].dataset[key] || _n;
+    if (value === Q._.un) {
+        return nodes[0] && nodes[0].dataset[key] || Q._.n;
     }
-    for (const node of nodes) {
-        node.dataset[key] = b;
+    for (let i = 0, len = nodes.length; i < len; i++) {
+        nodes[i].dataset[key] = value;
     }
     return this;
 });
 Q.Ext('each', function (callback) {
     if (!this.nodes) return this;
-    this.nodes.forEach((b, c) => callback.call(b, c, b));
+    const nodes = this.nodes;
+    for (let i = 0, len = nodes.length; i < len; i++) {
+        callback.call(nodes[i], i, nodes[i]);
+    }
     return this;
 });
 Q.Ext('empty', function () {
-  const nodes = this.nodes;
-  for (let i = 0, len = nodes.length; i < len; i++) {
+  var nodes = this.nodes;
+  for (var i = 0, len = nodes.length; i < len; i++) {
     nodes[i].innerHTML = '';
   }
   return this;
 });
 Q.Ext('eq', function (index) {
-  const node = this.nodes[index];
-  return node ? new Q(node) : _n;
+  var node = this.nodes[index];
+  return node ? new Q(node) : null;
 });
-Q.Ext('fadeIn', function(a = 400, b) {
-    const d = this.nodes;
-    this.each(index => {
-      const element = d[index];
-      const c = element.style;
-      c.display = '';
-      c.transition = `opacity ${a}ms`;
-      void element.offsetHeight;
-      c.opacity = 1;
-      _st(() => {
-        c.transition = '';
-        if (b) {
-          b();
-        }
-      }, a);
-    });
-});
-Q.Ext('fadeOut', function(a, b) {
-    const d = this.nodes;
-    this.each(index => {
-      const c = d[index].style;
-      c.transition = `opacity ${a}ms`;
-      c.opacity = 0;
-      _st(() => {
-        c.transition = '';
-        c.display = 'none';
-        if (b) b();
-      }, a);
-    });
-});
-Q.Ext('fadeTo', function(opacity, b, c) {
-    const e = this.nodes;
-    this.each(function(f) {
-      const element = e[f];
-      const d = element.style;
-      d.transition = `opacity ${b}ms`;
-      void element.offsetHeight;
-      d.opacity = opacity;
-      _st(function() {
-        d.transition = '';
-        if (c) {
-          c();
-        }
-      }, b);
-    });
-  });
-Q.Ext('fadeToggle', function(a, b) {
-    const c = this.nodes;
-    this.each(function(e) {
-      const d = window.getComputedStyle(c[e]);
-      if (d.opacity === '0') {
-        this.fadeIn(a, b);
-      } else {
-        this.fadeOut(a, b);
-      }
-    });
-  });
-Q.Ext('find', function(selector) {
-    const b = this.nodes[0];
-    if (!b) {
-      return _n;
+Q.Ext('fadeIn', function(duration, callback) {
+    duration = duration || 400;
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        (function(el) {
+            var style = el.style;
+            style.display = '';
+            style.transition = 'opacity ' + duration + 'ms';
+            void el.offsetHeight;
+            style.opacity = 1;
+            setTimeout(function() {
+                style.transition = '';
+                if (callback) callback();
+            }, duration);
+        })(nodes[i]);
     }
-    const c = b.querySelectorAll(selector);
-    return c.length ? Q(c) : _n;
-  });
+    return this;
+});
+Q.Ext('fadeOut', function(duration, callback) {
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        (function(el) {
+            var style = el.style;
+            style.transition = 'opacity ' + duration + 'ms';
+            style.opacity = 0;
+            setTimeout(function() {
+                style.transition = '';
+                style.display = 'none';
+                if (callback) callback();
+            }, duration);
+        })(nodes[i]);
+    }
+    return this;
+});
+Q.Ext('fadeTo', function(opacity, duration, callback) {
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        (function(el) {
+            var style = el.style;
+            style.transition = 'opacity ' + duration + 'ms';
+            void el.offsetHeight;
+            style.opacity = opacity;
+            setTimeout(function() {
+                style.transition = '';
+                if (callback) callback();
+            }, duration);
+        })(nodes[i]);
+    }
+    return this;
+});
+Q.Ext('fadeToggle', function(duration, callback) {
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        var computed = window.getComputedStyle(nodes[i]);
+        if (computed.opacity === '0') {
+            this.fadeIn(duration, callback);
+        } else {
+            this.fadeOut(duration, callback);
+        }
+    }
+    return this;
+});
+Q.Ext('find', function(selector) {
+    var parent = this.nodes[0];
+    if (!parent) return null;
+    var found = parent.querySelectorAll(selector);
+    return found.length ? Q(found) : null;
+});
 Q.Ext('first', function () {
     return new Q(this.nodes[0]);
 });
 Q.Ext('focus', function () {
-    return this.each(a => this.nodes[a].focus());
-});
-Q.Ext('hasClass', function(className) {
-    return this.nodes[0]?.classList.contains(className) || false;
-  });
-Q.Ext('height', function (a) {
-    const nodes = this.nodes; // ...existing code...
-    if (a === _un) {
-        return nodes[0].offsetHeight;
-    }
-    for (const node of nodes) {
-        node.style.height = a;
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        nodes[i].focus();
     }
     return this;
 });
-Q.Ext('hide', function (duration = 0, b) {
-    for (const node of this.nodes) {
+Q.Ext('hasClass', function(className) {
+    var node = this.nodes[0];
+    return (node && node.classList.contains(className)) || false;
+});
+Q.Ext('height', function (value) {
+    var nodes = this.nodes;
+    if (value === undefined) {
+        return nodes[0].offsetHeight;
+    }
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        nodes[i].style.height = value;
+    }
+    return this;
+});
+Q.Ext('hide', function (duration, callback) {
+    duration = duration || 0;
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        var node = nodes[i];
         if (duration === 0) {
             node.style.display = 'none';
-            if (b) b();
+            if (callback) callback();
         } else {
-            node.style.transition = `opacity ${duration}ms`;
+            node.style.transition = 'opacity ' + duration + 'ms';
             node.style.opacity = 1;
-            _st(() => {
-                node.style.opacity = 0;
-                node.addEventListener('transitionend', function d() {
-                    node.style.display = 'none';
-                    node.style.transition = '';
-                    node.removeEventListener('transitionend', d);
-                    if (b) b();
-                });
-            }, 0);
+            setTimeout((function(n) {
+                return function() {
+                    n.style.opacity = 0;
+                    n.addEventListener('transitionend', function handler() {
+                        n.style.display = 'none';
+                        n.style.transition = '';
+                        n.removeEventListener('transitionend', handler);
+                        if (callback) callback();
+                    });
+                };
+            })(node), 0);
         }
     }
     return this;
 });
 Q.Ext('html', function (content) {
-    if (content === _un) {
-        return this.nodes[0] ? this.nodes[0].innerHTML : _n;
+    var nodes = this.nodes;
+    if (content === undefined) {
+        return nodes[0] ? nodes[0].innerHTML : null;
     }
-    for (const d of this.nodes) {
-        d.innerHTML = '';
-        const appendContent = (b) => {
-            if (typeof b === 'string') {
-                d.insertAdjacentHTML('beforeend', b);
-            } else if (b instanceof Q) {
-                for (const subnode of b.nodes) {
-                    d.appendChild(subnode);
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        var node = nodes[i];
+        node.innerHTML = '';
+        var appendContent = function(child) {
+            if (typeof child === 'string') {
+                node.insertAdjacentHTML('beforeend', child);
+            } else if (child instanceof Q) {
+                for (var j = 0, clen = child.nodes.length; j < clen; j++) {
+                    node.appendChild(child.nodes[j]);
                 }
-            } else if (b?.nodeType === 1 || b?.nodeType != _n) {
-                d.appendChild(b);
-            } else if (_ar.isArray(b) || b?.constructor === _nl) {
-                for (const e of _ar.from(b)) {
-                    d.appendChild(e);
+            } else if (child?.nodeType === 1 || child?.nodeType != null) {
+                node.appendChild(child);
+            } else if (Array.isArray(child) || child?.constructor === NodeList) {
+                var subs = Array.from(child);
+                for (var k = 0, slen = subs.length; k < slen; k++) {
+                    node.appendChild(subs[k]);
                 }
             }
         };
-        if (_ar.isArray(content) || content?.constructor === _nl) {
-            for (const b of _ar.from(content)) {
-                appendContent(b);
+        if (Array.isArray(content) || content?.constructor === NodeList) {
+            var contArr = Array.from(content);
+            for (var m = 0, mlen = contArr.length; m < mlen; m++) {
+                appendContent(contArr[m]);
             }
         } else {
             appendContent(content);
@@ -396,365 +438,412 @@ Q.Ext('html', function (content) {
     return this;
 });
 Q.Ext('id', function (ident) {
-    const node = this.nodes[0];
-    if (ident === _un) return node.id;
+    var node = this.nodes[0];
+    if (ident === undefined) return node.id;
     node.id = ident;
     return this;
 });
 Q.Ext('index', function (index) {
-    const first = this.nodes[0];
-    if (index === _un) {
-        return _ar.from(first.parentNode.children).indexOf(first);
+    var first = this.nodes[0];
+    if (index === undefined) {
+        return Array.prototype.indexOf.call(first.parentNode.children, first);
     }
-    for (const node of this.nodes) {
-        const b = node.parentNode;
-        if (!b) continue;
-        const children = _ar.from(b.children);
-        b.removeChild(node);
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        var node = nodes[i],
+            parent = node.parentNode;
+        if (!parent) continue;
+        var children = Array.from(parent.children);
+        parent.removeChild(node);
         if (index >= children.length) {
-            b.appendChild(node);
+            parent.appendChild(node);
         } else {
-            b.insertBefore(node, children[index]);
+            parent.insertBefore(node, children[index]);
         }
     }
     return this;
 });
 Q.Ext('inside', function (selector) {
-    const node = this.nodes[0];
-    return node ? node.closest(selector) !== _n : false;
+    var node = this.nodes[0];
+    return node ? node.closest(selector) !== null : false;
 });
 Q.Ext('is', function (selector) {
-    const b = this.nodes[0];
-    if (!b) return false;
+    var node = this.nodes[0];
+    if (!node) return false;
     if (typeof selector === 'function') {
-        return selector.call(b, 0, b);
+        return selector.call(node, 0, node);
     }
     if (typeof selector === 'string') {
         switch (selector) {
             case ':visible':
-                return b.offsetWidth > 0 && b.offsetHeight > 0;
+                return node.offsetWidth > 0 && node.offsetHeight > 0;
             case ':hidden':
-                return b.offsetWidth === 0 || b.offsetHeight === 0;
+                return node.offsetWidth === 0 || node.offsetHeight === 0;
             case ':hover':
-                return b === document.querySelector(':hover');
+                return node === document.querySelector(':hover');
             case ':focus':
-                return b === document.activeElement;
+                return node === document.activeElement;
             case ':blur':
-                return b !== document.activeElement;
+                return node !== document.activeElement;
             case ':checked':
-                return b.checked;
+                return node.checked;
             case ':selected':
-                return b.selected;
+                return node.selected;
             case ':disabled':
-                return b.disabled;
+                return node.disabled;
             case ':enabled':
-                return !b.disabled;
+                return !node.disabled;
             default:
-                return b.matches(selector);
+                return node.matches(selector);
         }
     }
-    if (selector?.nodeType === 1 || selector?.nodeType != _n) {
-        return b === selector;
+    if (selector?.nodeType === 1 || selector?.nodeType != null) {
+        return node === selector;
     }
     if (selector instanceof Q) {
-        return b === selector.nodes[0];
+        return node === selector.nodes[0];
     }
     return false;
 });
 Q.Ext('isExists', function () {
-    const node = this.nodes[0];
+    var node = this.nodes[0];
     return node ? document.body.contains(node) : false;
 });
-Q.isExists = function (a) {
-    return document.querySelector(a) !== _n;
+Q.isExists = function (selector) {
+    return document.querySelector(selector) !== null;
 };
 Q.Ext('last', function () {
-    const nodes = this.nodes;
+    var nodes = this.nodes;
     return new Q(nodes[nodes.length - 1]);
 });
 Q.Ext('map', function (callback) {
-    const b = [];
-    for (const node of this.nodes) {
-        b.push(callback(new Q(node)));
+    var result = [],
+        nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        result.push(callback(new Q(nodes[i])));
     }
-    return b;
+    return result;
 });
-Q.Ext('off', function (a, b, c) {
-    const d = {
-        capture: false,
-        once: false,
-        passive: false
-    };
-    c = { ...d, ...c };
-    const eventList = a.split(' ');
-    for (const node of this.nodes) {
-        for (const e of eventList) {
-            node.removeEventListener(e, b, c);
+Q.Ext('off', function (events, handler, options) {
+    var defaultOptions = { capture: false, once: false, passive: false },
+        opts = Object.assign({}, defaultOptions, options),
+        eventList = events.split(' '),
+        nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        for (var j = 0, elen = eventList.length; j < elen; j++) {
+            nodes[i].removeEventListener(eventList[j], handler, opts);
         }
     }
     return this;
 });
 Q.Ext('offset', function () {
-    const node = this.nodes[0];
-    const a = node.getBoundingClientRect();
+    var node = this.nodes[0],
+        rect = node.getBoundingClientRect();
     return {
-        top: a.top + window.scrollY,
-        left: a.left + window.scrollX
+        top: rect.top + window.scrollY,
+        left: rect.left + window.scrollX
     };
 });
-Q.Ext('on', function (a, b, c) {
-  const d = {
-      capture: false,
-      once: false,
-      passive: false
-  };
-  c = { ...d, ...c };
-  const eventList = a.split(' ');
-  return this.each(index => {
-      const node = this.nodes[index];
-      eventList.forEach(f => {
-          node.addEventListener(f, b, c);
-      });
-  });
+Q.Ext('on', function (events, handler, options) {
+    var defaultOptions = { capture: false, once: false, passive: false },
+        opts = Object.assign({}, defaultOptions, options),
+        eventList = events.split(' '),
+        nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        for (var j = 0, elen = eventList.length; j < elen; j++) {
+            nodes[i].addEventListener(eventList[j], handler, opts);
+        }
+    }
+    return this;
 });
 Q.Ext('parent', function () {
-    const node = this.nodes[0];
-    return new Q(node ? node.parentNode : _n);
+    var node = this.nodes[0];
+    return new Q(node ? node.parentNode : null);
 });
 Q.Ext('position', function () {
-    const node = this.nodes[0];
+    var node = this.nodes[0];
     return {
         top: node.offsetTop,
         left: node.offsetLeft
     };
 });
-Q.Ext('prepend', function (...a) {
-    for (const b of this.a) {
-        for (const c of a) {
-            if (typeof c === 'string') {
-                b.insertAdjacentHTML('afterbegin', c);
-            } else if (c instanceof Q) {
-                b.insertBefore(c.a[0], b.firstChild);
-            } else if (c?.nodeType === 1 || c?.nodeType != _n) {
-                b.insertBefore(c, b.firstChild);
-            } else if (_ar.isArray(c) || c?.constructor === _nl) {
-                for (const d of _ar.from(c)) {
-                    b.insertBefore(d, b.firstChild);
+Q.Ext('prepend', function () {
+    var nodes = this.nodes,
+        contents = Array.prototype.slice.call(arguments),
+        i, j, k, parent, child, subNodes;
+    for (i = 0; i < nodes.length; i++) {
+        parent = nodes[i];
+        for (j = 0; j < contents.length; j++) {
+            child = contents[j];
+            if (typeof child === 'string') {
+                parent.insertAdjacentHTML('afterbegin', child);
+            } else if (child instanceof Q) {
+                parent.insertBefore(child.nodes[0], parent.firstChild);
+            } else if (child?.nodeType === 1 || child?.nodeType != null) {
+                parent.insertBefore(child, parent.firstChild);
+            } else if (Array.isArray(child) || child?.constructor === NodeList) {
+                subNodes = Array.from(child);
+                for (k = 0; k < subNodes.length; k++) {
+                    parent.insertBefore(subNodes[k], parent.firstChild);
                 }
             }
         }
     }
     return this;
 });
-Q.Ext('prop', function (property, b) {
-    if (b === _un) {
-        return this.nodes[0] ? this.nodes[0][property] : _n;
+Q.Ext('prop', function (property, value) {
+    var nodes = this.nodes;
+    if (value === undefined) {
+        return nodes[0] ? nodes[0][property] : null;
     }
-    for (const node of this.nodes) {
-        node[property] = b;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        nodes[i][property] = value;
     }
     return this;
 });
 Q.Ext('remove', function() {
-    for (const node of this.nodes) {
-        node.remove();
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        nodes[i].remove();
     }
     return this;
 });
-Q.Ext('removeAttr', function (a) {
-    for (const node of this.nodes) {
-        node.removeAttribute(a);
+Q.Ext('removeAttr', function (attribute) {
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        nodes[i].removeAttribute(attribute);
     }
     return this;
 });
-Q.Ext('removeClass', function (a) {
-    const b = a.split(' ');
-    for (const node of this.nodes) {
-        node.classList.remove(...b);
+Q.Ext('removeClass', function (classes) {
+    var list = classes.split(' ');
+    for (var i = 0, len = this.nodes.length; i < len; i++) {
+        this.nodes[i].classList.remove.apply(this.nodes[i].classList, list);
     }
     return this;
 });
 Q.Ext('removeData', function (key) {
-    return this.each(index => {
-        const node = this.nodes[index];
-        delete node.dataset[key];
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        delete this.nodes[i].dataset[key];
+    }
+    return this;
 });
 Q.Ext('removeProp', function (property) {
-    return this.each(index => {
-        const node = this.nodes[index];
-        delete node[property];
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        delete this.nodes[i][property];
+    }
+    return this;
 });
 Q.Ext('removeTransition', function () {
-    return this.each(index => {
-        const node = this.nodes[index];
-        node.style.transition = '';
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        this.nodes[i].style.transition = '';
+    }
+    return this;
 });
 Q.Ext('scrollHeight', function () {
-    return this.nodes[0].scrollHeight;
+    var node = this.nodes[0];
+    return node.scrollHeight;
 });
-Q.Ext('scrollLeft', function (a, b) {
-    if (a === _un) {
-        return this.nodes[0].scrollLeft;
+Q.Ext('scrollLeft', function (value, increment) {
+    const node = this.nodes[0];
+    if (value === undefined) {
+        return node.scrollLeft;
     }
-    return this.each(index => {
-        const node = this.nodes[index];
-        const c = node.scrollWidth - node.clientWidth;
-        if (b) {
-            node.scrollLeft = _ma.min(node.scrollLeft + a, c);
-        } else {
-            node.scrollLeft = _ma.min(a, c);
-        }
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        const current = this.nodes[i];
+        const maxScrollLeft = current.scrollWidth - current.clientWidth;
+        current.scrollLeft = increment 
+            ? Math.min(current.scrollLeft + value, maxScrollLeft) 
+            : Math.min(value, maxScrollLeft);
+    }
+    return this;
 });
-Q.Ext('scrollTop', function (a, b) {
-    if (a === _un) {
-        return this.nodes[0].scrollTop;
+Q.Ext('scrollTop', function (value, increment) {
+    const node = this.nodes[0];
+    if (value === undefined) {
+        return node.scrollTop;
     }
-    return this.each(index => {
-        const node = this.nodes[index];
-        const c = node.scrollHeight - node.clientHeight;
-        if (b) {
-            node.scrollTop = _ma.min(node.scrollTop + a, c);
-        } else {
-            node.scrollTop = _ma.min(a, c);
-        }
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        const current = this.nodes[i];
+        const maxScrollTop = current.scrollHeight - current.clientHeight;
+        current.scrollTop = increment 
+            ? Math.min(current.scrollTop + value, maxScrollTop) 
+            : Math.min(value, maxScrollTop);
+    }
+    return this;
 });
 Q.Ext('scrollWidth', function () {
-    return this.nodes[0].scrollWidth;
+    var node = this.nodes[0];
+    return node.scrollWidth;
 });
-Q.Ext('show', function (duration = 0, b) {
-    return this.each(index => {
-        const c = this.nodes[index];
+Q.Ext('show', function (duration = 0, callback) {
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        const element = this.nodes[i];
         if (duration === 0) {
-            c.style.display = '';
-            if (b) b();
+            element.style.display = '';
+            if (callback) callback();
         } else {
-            c.style.transition = `opacity ${duration}ms`;
-            c.style.opacity = 0;
-            c.style.display = '';
-            _st(() => {
-                c.style.opacity = 1;
-                c.addEventListener('transitionend', () => {
-                    c.style.transition = '';
-                    if (b) b();
+            element.style.transition = `opacity ${duration}ms`;
+            element.style.opacity = 0;
+            element.style.display = '';
+            setTimeout(() => {
+                element.style.opacity = 1;
+                element.addEventListener('transitionend', () => {
+                    element.style.transition = '';
+                    if (callback) callback();
                 }, { once: true });
             }, 0);
         }
-    });
+    }
+    return this;
 });
 Q.Ext('size', function () {
+    const node = this.nodes[0];
 	return {
-		width: this.nodes[0].offsetWidth,
-		height: this.nodes[0].offsetHeight
+		width: node.offsetWidth,
+		height: node.offsetHeight
 	};
 });
-Q.Ext('text', function (a) {
-    if (a === _un) {
-        return this.nodes[0]?.textContent || _n;
+Q.Ext('text', function (content) {
+    if (content === undefined) {
+        return this.nodes[0]?.textContent || null;
     }
-    return this.each(function(index, b) {
-        b.textContent = a;
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        this.nodes[i].textContent = content;
+    }
+    return this;
 });
 Q.Ext('toggle', function () {
-    return this.each(function(index, a) {
-        a.style.display = (a.style.display === 'none' ? '' : 'none');
-    });
+    var nodes = this.nodes;
+    for (var i = 0, len = nodes.length; i < len; i++) {
+        nodes[i].style.display = (nodes[i].style.display === 'none' ? '' : 'none');
+    }
+    return this;
 });
 Q.Ext('toggleClass', function (className) {
-    return this.each(function(index, b) {
-        b.classList.toggle(className);
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        this.nodes[i].classList.toggle(className);
+    }
+    return this;
 });
 Q.Ext('trigger', function (event) {
-	return this.each(function(c, b) {
-		b.dispatchEvent(new _ev(event));
-	});
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        this.nodes[i].dispatchEvent(new Event(event));
+    }
+    return this;
 });
 Q.Ext('unwrap', function () {
-    return this.each(function(index, b) {
-        const a = b.parentNode;
-        if (a && a !== document.body) {
-            a.replaceWith(...a.childNodes);
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        const el = this.nodes[i];
+        const parent = el.parentNode;
+        if (parent && parent !== document.body) {
+            parent.replaceWith(...parent.childNodes);
         }
-    });
-});
-Q.Ext('val', function(a) {
-    if (a === _un) return this.nodes[0]?.value || _n;
-    for (const node of this.nodes) {
-        node.value = a;
     }
     return this;
-  });
-Q.Ext('wait', function(ms) {
-	return new _pr(resolve => _st(() => resolve(this), ms));
 });
-Q.Ext('walk', function (callback, b = false) {
-	return this.each(function(d, el) {
-		const c = b ? Q(el) : el;
-		callback.call(el, c, d);
-	});
+Q.Ext('val', function(input) {
+    if (input === undefined) return this.nodes[0]?.value || null;
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        this.nodes[i].value = input;
+    }
+    return this;
+});
+Q.Ext('wait', function(ms) {
+	return new Promise(resolve => setTimeout(() => resolve(this), ms));
+});
+Q.Ext('walk', function (callback, useQObject = false) {
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        const node = useQObject ? Q(this.nodes[i]) : this.nodes[i];
+        callback.call(this.nodes[i], node, i);
+    }
+    return this;
 });
 Q.Ext('width', function (value) {
-    if (typeof value === '_un') {
-        return this.nodes[0] ? this.nodes[0].offsetWidth : _un;
+    if (typeof value === 'undefined') {
+        return this.nodes[0] ? this.nodes[0].offsetWidth : undefined;
     }
-    this.nodes.forEach(node => {
-        node.style.width = value;
-    });
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        this.nodes[i].style.width = value;
+    }
     return this;
 });
-Q.Ext('wrap', function (a) {
-    return this.each(f => {
-        const b = f.b;
-        let c = typeof a === 'string'
-            ? // Create and clone the a so each f gets its own instance.
-              ((d => (d.innerHTML = a.trim(), d.firstElementChild.cloneNode(true)))
-              (document.createElement('e')))
-            : a;
-        b.insertBefore(c, f);
-        c.appendChild(f);
-    });
+Q.Ext('wrap', function (wrapper) {
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        const node = this.nodes[i];
+        const parentNode = node.parentNode;
+        let newParentElement;
+        if (typeof wrapper === 'string') {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = wrapper.trim();
+            newParentElement = tempDiv.firstElementChild.cloneNode(true);
+        } else {
+            newParentElement = wrapper;
+        }
+        parentNode.insertBefore(newParentElement, node);
+        newParentElement.appendChild(node);
+    }
+    return this;
 });
 Q.Ext('wrapAll', function (wrapper) {
     if (!this.nodes.length) return this;
-    const b = this.nodes[0].parentNode;
-    let c = typeof wrapper === 'string'
+    const parent = this.nodes[0].parentNode;
+    let newParent = typeof wrapper === 'string'
         ? ((tempDiv => (tempDiv.innerHTML = wrapper.trim(), tempDiv.firstElementChild))
            (document.createElement('div')))
         : wrapper;
-    b.insertBefore(c, this.nodes[0]);
-    this.nodes.forEach(d => c.appendChild(d));
+    parent.insertBefore(newParent, this.nodes[0]);
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        newParent.appendChild(this.nodes[i]);
+    }
     return this;
 });
 Q.Ext('zIndex', function (value) {
     const node = this.nodes[0];
     if (!node) return;
-    if (value === _un) {
-        let b = node.style.zIndex || window.getComputedStyle(node).zIndex;
-        return b;
+    if (value === undefined) {
+        let Index = node.style.zIndex || window.getComputedStyle(node).zIndex;
+        return Index;
     }
-    this.nodes.forEach(node => node.style.zIndex = value);
+    for (let i = 0, n = this.nodes.length; i < n; i++) {
+        this.nodes[i].style.zIndex = value;
+    }
     return this;
 });
-
+Q.Done=((c)=>{
+    window.addEventListener("load",()=>{while(c.length)c.shift()();c=0});
+    return f=>c?c.push(f):f()
+})([])
+Q.Leaving=((c)=>{
+    let ev;
+    window.addEventListener("beforeunload",e=>{
+      ev=e;while(c.length)c.shift()(e);c=0
+    });
+    return f=>c?c.push(f):f(ev)
+  })([])
+Q.Ready=((c)=>{
+    document.readyState==='loading'?document.addEventListener("DOMContentLoaded",()=>{while(c.length)c.shift()();c=0},{once:1}):c=0;
+    return f=>c?c.push(f):f();
+  })([])
+Q.Resize=((c)=>{
+    addEventListener("resize",()=>{
+      for(let i=0,l=c.length;i<l;) c[i++](innerWidth,innerHeight)
+    });
+    return f=>c.push(f)
+  })([])
 Q.AvgColor = (source, sampleSize, callback) => {
     const image = new Image();
     image.crossOrigin = 'Anonymous';
     if (typeof source === 'string') image.src = source;
     else if (source instanceof HTMLCanvasElement) image.src = source.toDataURL();
-    else return _c.error("Invalid image source provided.");
+    else return console.error("Invalid image source provided.");
     image.onload = () => {
-      const canvas = _ob.assign(document.createElement('canvas'), { width: image.width, height: image.height });
+      const canvas = Object.assign(document.createElement('canvas'), { width: image.width, height: image.height });
       const context = canvas.getContext('2d');
       context.drawImage(image, 0, 0);
       const data = context.getImageData(0, 0, image.width, image.height).data;
       const samplingRate = sampleSize === 'auto'
-        ? _ma.max(1, _ma.ceil(_ma.sqrt(image.width * image.height) / 32))
+        ? Math.max(1, Math.ceil(Math.sqrt(image.width * image.height) / 32))
         : (typeof sampleSize === 'number' && sampleSize > 0 ? sampleSize : 1);
       let totalRed = 0, totalGreen = 0, totalBlue = 0, count = 0;
       for (let index = 0, len = data.length; index < len; index += samplingRate * 4) {
@@ -766,10 +855,10 @@ Q.AvgColor = (source, sampleSize, callback) => {
       const avgColor = { r: (totalRed / count) | 0, g: (totalGreen / count) | 0, b: (totalBlue / count) | 0 };
       typeof callback === 'function' && callback(avgColor);
     };
-    image.onerror = () => _c.error("Failed to load image.");
+    image.onerror = () => console.error("Failed to load image.");
   };
 Q.ColorBrightness = (inputColor, percent) => {
-    if (!/^#|^rgb/.test(inputColor)) throw new _er('Unsupported c format');
+    if (!/^#|^rgb/.test(inputColor)) throw new Error('Unsupported c format');
     let red, green, blue, alpha = 1, isHex = false, factor = 1 + percent / 100;
     if (inputColor[0] === '#') {
       isHex = true;
@@ -789,10 +878,10 @@ Q.ColorBrightness = (inputColor, percent) => {
         red = +match[1];
         green = +match[2];
         blue = +match[3];
-        if (match[4] != _n) alpha = parseFloat(match[4]);
+        if (match[4] != null) alpha = parseFloat(match[4]);
       }
     }
-    const clamp = value => _ma.min(255, _ma.max(0, _ma.round(value * factor)));
+    const clamp = value => Math.min(255, Math.max(0, Math.round(value * factor)));
     red = clamp(red);
     green = clamp(green);
     blue = clamp(blue);
@@ -802,8 +891,8 @@ Q.ColorBrightness = (inputColor, percent) => {
   };
 Q.Debounce = (id, b, c) => {
     const debounceStorage = Q.getGLOBAL('Debounce') || {};
-    debounceStorage[id] && _ct(debounceStorage[id]);
-    debounceStorage[id] = _st(c, b);
+    debounceStorage[id] && clearTimeout(debounceStorage[id]);
+    debounceStorage[id] = setTimeout(c, b);
     Q.setGLOBAL({ Debounce: debounceStorage });
   };
 Q.HSL2RGB = (h, s, l) => {
@@ -824,10 +913,10 @@ Q.HSL2RGB = (h, s, l) => {
     return [hueToRgb(h + 1 / 3) * 255, hueToRgb(h) * 255, hueToRgb(h - 1 / 3) * 255];
   };
 Q.ID = (length = 8, b = '') =>
-    b + _ar.from({ length }, () => (_ma.random() * 16 | 0).toString(16)).join('');
+    b + Array.from({ length }, () => (Math.random() * 16 | 0).toString(16)).join('');
 Q.RGB2HSL = (r, g, b) => {
     r /= 255, g /= 255, b /= 255;
-    const max = _ma.max(r, g, b), min = _ma.min(r, g, b);
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
     let h, s, l = (max + min) / 2, d = max - min;
     if (!d) h = s = 0;
     else {
@@ -847,15 +936,15 @@ Q.isDarkColor = (color, b = 20, c = 100) => {
         ? [f[0] + f[0], f[1] + f[1], f[2] + f[2]]
         : f.length === 6
         ? [f.slice(0, 2), f.slice(2, 4), f.slice(4, 6)]
-        : _n;
-      if (!parts) throw _er('Invalid f color format');
+        : null;
+      if (!parts) throw Error('Invalid f color format');
       [red, green, blue] = parts.map(v => parseInt(v, 16));
     } else if (color.startsWith('rgb')) {
       const arr = color.match(/\d+/g);
-      if (arr && arr.length >= 3) [red, green, blue] = arr.map(_nu);
-      else throw _er('Invalid color format');
-    } else throw _er('Unsupported color format');
-    return _ma.sqrt(0.299 * red ** 2 + 0.587 * green ** 2 + 0.114 * blue ** 2) + b < c;
+      if (arr && arr.length >= 3) [red, green, blue] = arr.map(Number);
+      else throw Error('Invalid color format');
+    } else throw Error('Unsupported color format');
+    return Math.sqrt(0.299 * red ** 2 + 0.587 * green ** 2 + 0.114 * blue ** 2) + b < c;
   };
 Q.Container = function (options = {}) {
     const Container = {};
@@ -882,7 +971,7 @@ Q.Container.Tab = function (options = {}) {
     const Container = Q.Container();
     const Icon = Container.Icon;
     const sharedClasses = Container.classes;
-    const classes = _ob.assign({}, sharedClasses, Q.style(`
+    const classes = Object.assign({}, sharedClasses, Q.style(`
         .tab_navigation_buttons {
             box-sizing: border-box;
             width: 20px;
@@ -1010,7 +1099,7 @@ Q.Container.Tab = function (options = {}) {
             }
         });
         wrapper.select = function (value) {
-            _ob.keys(data_tabs).forEach(key => {
+            Object.keys(data_tabs).forEach(key => {
                 if (data_tabs[key].data('value') === value) {
                     data_tabs[key].click();
                 }
@@ -1031,14 +1120,14 @@ Q.Container.Tab = function (options = {}) {
 Q.Cookie = function (a, b, c = {}) {
     const buildOptions = (options) => {
       let optionsStr = '';
-      if (options.days) optionsStr += `expires=${new _da(_da.now() + options.days * 86400000).toUTCString()}; `;
+      if (options.days) optionsStr += `expires=${new Date(Date.now() + options.days * 86400000).toUTCString()}; `;
       if (options.path) optionsStr += `path=${options.path}; `;
       if (options.domain) optionsStr += `domain=${options.domain}; `;
       if (options.secure) optionsStr += 'secure; ';
       return optionsStr;
     };
     if (arguments.length > 1) {
-      if (b === _n || b === '') {
+      if (b === null || b === '') {
         b = '';
         c = { ...c, days: -1 };
       }
@@ -1052,7 +1141,7 @@ Q.Cookie = function (a, b, c = {}) {
         return currentCookie.slice(indexEqual + 1);
       }
     }
-    return _un;
+    return undefined;
   };
 Q.Fetch = function (url, b, c = {}) {
     const {
@@ -1067,52 +1156,52 @@ Q.Fetch = function (url, b, c = {}) {
         exponentialBackoff = false,
         timeout = 0,
         validateResponse = (j) => j,
-        query = _n,
-        e: externalSignal = _n
+        query = null,
+        e: externalSignal = null
     } = c;
     if (query && typeof query === 'object') {
         const urlObject = new URL(url, location.origin);
-        _ob.entries(query).forEach(([key, value]) => urlObject.searchParams.append(key, value));
+        Object.entries(query).forEach(([key, value]) => urlObject.searchParams.append(key, value));
         url = urlObject.toString();
     }
     let requestBody = body;
     if (body && typeof body === 'object' && contentType === 'application/json' && !(body instanceof FormData)) {
-        try { requestBody = JSON.stringify(body); } catch (k) { b(new _er('Failed to serialize request body'), _n); return; }
+        try { requestBody = JSON.stringify(body); } catch (k) { b(new Error('Failed to serialize request body'), null); return; }
     }
     headers['Content-Type'] = headers['Content-Type'] || contentType;
-    const d = new _ac();
+    const d = new AbortController();
     const { e } = d;
     if (externalSignal) {
         externalSignal.addEventListener('abort', () => d.abort(), { once: true });
     }
     const doFetch = (f) => {
-        let h = _n;
-        if (timeout) { h = _st(() => d.abort(), timeout); }
-        _f(url, { method, headers, body: requestBody, credentials, e })
+        let h = null;
+        if (timeout) { h = setTimeout(() => d.abort(), timeout); }
+        fetch(url, { method, headers, body: requestBody, credentials, e })
             .then(i => {
-                if (!i.ok) throw new _er(`Network i was not ok: ${i.statusText}`);
+                if (!i.ok) throw new Error(`Network i was not ok: ${i.statusText}`);
                 switch (responseType) {
                     case 'json': return i.json();
                     case 'text': return i.text();
                     case 'blob': return i.blob();
                     case 'arrayBuffer': return i.arrayBuffer();
-                    default: throw new _er('Unsupported i type');
+                    default: throw new Error('Unsupported i type');
                 }
             })
             .then(result => {
-                if (h) _ct(h);
+                if (h) clearTimeout(h);
                 return validateResponse(result);
             })
-            .then(validatedData => b(_n, validatedData))
+            .then(validatedData => b(null, validatedData))
             .catch(k => {
-                if (h) _ct(h);
+                if (h) clearTimeout(h);
                 if (k.name === 'AbortError') {
-                    b(new _er('Fetch request was aborted'), _n);
+                    b(new Error('Fetch request was aborted'), null);
                 } else if (f < retries) {
                     const delay = exponentialBackoff ? retryDelay * (2 ** f) : retryDelay;
-                    _st(() => doFetch(f + 1), delay);
+                    setTimeout(() => doFetch(f + 1), delay);
                 } else {
-                    b(k, _n);
+                    b(k, null);
                 }
             });
     };
@@ -1153,7 +1242,7 @@ Q.Form = function (options = {}) {
 Q.Form.Button = function (text = '') {
     const Form = Q.Form();
     const sharedClasses = Form.classes;
-    const classes = _ob.assign({}, sharedClasses, Q.style(`
+    const classes = Object.assign({}, sharedClasses, Q.style(`
         .q_form_button {
             user-select: none;
             padding: 5px 10px;
@@ -1191,7 +1280,7 @@ Q.Form.Button = function (text = '') {
 Q.Form.CheckBox = function (checked = false, text = '') {
     const Form = Q.Form();
     const sharedClasses = Form.classes;
-    const classes = _ob.assign({}, sharedClasses, Q.style(`
+    const classes = Object.assign({}, sharedClasses, Q.style(`
         .q_form_checkbox {
             display: flex;
             width: fit-content;
@@ -1270,7 +1359,7 @@ Q.Form.Tag = function (options = {}) {
     const Form = Q.Form();
     const sharedClasses = Form.classes;
     const Icon = Form.Icon;
-    const classes = _ob.assign({}, sharedClasses, Q.style(`
+    const classes = Object.assign({}, sharedClasses, Q.style(`
         .tag_container {
             display: flex;
             flex-wrap: wrap;
@@ -1355,14 +1444,14 @@ Q.Form.Tag = function (options = {}) {
         digit = step.toString().split('.')[1].length;
     }
     let data = [];
-    let changeCallback = _n;
+    let changeCallback = null;
     const tagContainer = Q('<div>', { class: classes.tag_container });
     const input = Q('<input>', { class: classes.tag_input });
     const malformFix = Q('<input>', { class: classes.tag_input });
     let ID = Q.ID(5, '_');
     const changeTagValue = (tag, delta, currentValue) => {
         let newValue = tag.value + delta;
-        newValue = _ma.min(_ma.max(newValue, min), max);
+        newValue = Math.min(Math.max(newValue, min), max);
         tag.value = parseFloat(newValue.toFixed(digit));
         currentValue.text(tag.value);
         data = data.map(t => (t.tag === tag.tag ? { ...t, value: tag.value } : t));
@@ -1406,7 +1495,7 @@ Q.Form.Tag = function (options = {}) {
     };
     tagContainer.add = function (taglist) {
         tagContainer.empty();
-        if (!_ar.isArray(taglist)) {
+        if (!Array.isArray(taglist)) {
             taglist = [taglist];
         }
         taglist = taglist.map(tag => (typeof tag === 'string' ? { tag, value: 0 } : tag));
@@ -1424,7 +1513,7 @@ Q.Form.Tag = function (options = {}) {
 Q.Form.TextArea = function (value = '', placeholder = '') {
     const Form = Q.Form();
     const sharedClasses = Form.classes;
-    const classes = _ob.assign({}, sharedClasses, Q.style(`
+    const classes = Object.assign({}, sharedClasses, Q.style(`
         .q_form_textarea {
             width: calc(100% - 2px);
             padding: 5px;
@@ -1462,7 +1551,7 @@ Q.Form.TextArea = function (value = '', placeholder = '') {
 Q.Form.TextBox = function (type = 'text', value = '', placeholder = '') {
     const Form = Q.Form();
     const sharedClasses = Form.classes;
-    const classes = _ob.assign({}, sharedClasses, Q.style(`
+    const classes = Object.assign({}, sharedClasses, Q.style(`
         .q_form_input { 
             width: calc(100% - 2px);
             padding: 5px;
@@ -1563,374 +1652,239 @@ Q.Icons = function () {
   }
 };
 Q.Image = function (options) {
-    let Canvas = Q('<canvas>');
-    let canvas_node = Canvas.nodes[0];
-    let defaultOptions = {
+    const Image = {};
+    const defaultOptions = {
         width: 0,
         height: 0,
         format: 'png',
         fill: 'transparent',
         size: 'auto',
-        quality: 1
-    }
-    options = _ob.assign(defaultOptions, options);
-    Canvas.Load = function (src, callback) {
-        let img = new Image();
-        img.src = src;
-        img.onload = function () {
-            canvas_node.width = img.width;
-            canvas_node.height = img.height;
-            canvas_node.getContext('2d').drawImage(img, 0, 0);
+        quality: 1,
+        historyLimit: 3,         // Maximum number of history states to keep
+        autoSaveHistory: true    // Automatically save history on operations
+    };
+    options = Object.assign({}, defaultOptions, options);
+    const Canvas = Q('<canvas>');
+    const canvas_node = Canvas.nodes[0];
+    const history = {
+        states: [],        // Array of ImageData objects
+        position: -1,      // Current position in history (-1 means no history yet)
+        isUndoRedoing: false // Flag to prevent recording during undo/redo
+    };
+    Image.canvas = Canvas;
+    Image.node = canvas_node;
+    Image.options = options;
+    const saveToHistory = function() {
+        if (history.isUndoRedoing || !options.autoSaveHistory) return;
+        const ctx = canvas_node.getContext('2d', { willReadFrequently: true });
+        const imageData = ctx.getImageData(0, 0, canvas_node.width, canvas_node.height);
+        if (history.position < history.states.length - 1) {
+            history.states = history.states.slice(0, history.position + 1);
+        }
+        history.states.push(imageData);
+        history.position++;
+        if (history.states.length > options.historyLimit) {
+            history.states.shift();
+            history.position--;
+        }
+    };
+    Image.Load = function (src, callback) {
+        if (src instanceof HTMLCanvasElement) {
+            canvas_node.width = src.width;
+            canvas_node.height = src.height;
+            canvas_node.getContext('2d', { willReadFrequently: true })
+                .drawImage(src, 0, 0);
+            saveToHistory();
             if (callback) callback();
-        };
-    }
-    Canvas.Get = function (format = options.format, quality = options.quality) {
+            return Image;
+        } 
+        else if (src instanceof HTMLImageElement) {
+            if (src.complete && src.naturalWidth !== 0) {
+                canvas_node.width = src.naturalWidth;
+                canvas_node.height = src.naturalHeight;
+                canvas_node.getContext('2d', { willReadFrequently: true })
+                    .drawImage(src, 0, 0);
+                saveToHistory();
+                if (callback) callback();
+            } else {
+                src.onload = function() {
+                    canvas_node.width = src.naturalWidth;
+                    canvas_node.height = src.naturalHeight;
+                    canvas_node.getContext('2d', { willReadFrequently: true })
+                        .drawImage(src, 0, 0);
+                    saveToHistory();
+                    if (callback) callback();
+                };
+            }
+            return Image;
+        } 
+        else {
+            let img = new window.Image();
+            img.crossOrigin = 'Anonymous'; // Add this to handle CORS if needed
+            img.src = src;
+            img.onload = function () {
+                canvas_node.width = img.width;
+                canvas_node.height = img.height;
+                canvas_node.getContext('2d', { willReadFrequently: true })
+                    .drawImage(img, 0, 0);
+                saveToHistory();
+                if (callback) callback();
+            };
+            return Image;
+        }
+    };
+    Image.Get = function (format = options.format, quality = options.quality) {
         if (format === 'jpeg' || format === 'webp') {
             return canvas_node.toDataURL('image/' + format, quality);
         } else {
             return canvas_node.toDataURL('image/' + format);
         }
-    }
-    Canvas.Save = function (filename, format = options.format, quality = options.quality) {
-        let href = Canvas.Get(format, quality);
-        let a = Q('<a>', { download: filename, href: href });
-        a.click();
-    }
-    Canvas.Clear = function (fill = options.fill) {
-        let ctx = canvas_node.getContext('2d');
+    };
+    Image.Save = function (filename, saveOptions = {}) {
+        const defaultSaveOptions = {
+            format: options.format,
+            quality: options.quality,
+            backgroundColor: options.fill, // Default background color for alpha handling
+            preserveTransparency: true     // Whether to preserve transparency in non-alpha formats
+        };
+        const finalOptions = Object.assign({}, defaultSaveOptions, saveOptions);
+        let format = finalOptions.format;
+        let quality = finalOptions.quality;
+        let dataUrl;
+        if ((format === 'jpeg' || format === 'jpg') && finalOptions.preserveTransparency) {
+            let tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas_node.width;
+            tempCanvas.height = canvas_node.height;
+            let tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+            tempCtx.fillStyle = finalOptions.backgroundColor;
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            tempCtx.drawImage(canvas_node, 0, 0);
+            dataUrl = tempCanvas.toDataURL('image/' + format, quality);
+        } else {
+            dataUrl = canvas_node.toDataURL('image/' + format, format === 'jpeg' || format === 'webp' ? quality : undefined);
+        }
+        const byteString = atob(dataUrl.split(',')[1]);
+        const mimeType = dataUrl.split(',')[0].split(':')[1].split(';')[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        const blob = new Blob([ab], { type: mimeType });
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+            window.navigator.msSaveOrOpenBlob(blob, filename);
+        } else {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(() => {
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            }, 100);
+        }
+        return Image;
+    };
+    Image.Clear = function (fill = options.fill) {
+        let ctx = canvas_node.getContext('2d', { willReadFrequently: true });
         ctx.fillStyle = fill;
         ctx.fillRect(0, 0, canvas_node.width, canvas_node.height);
-    }
-    Canvas.Resize = function (width, height, size = options.size, keepDimensions = false) {
-        options.width = width;
-        options.height = height;
-        options.size = size;
-        _c.log(keepDimensions);
-        let temp = Q('<canvas>', { width: width, height: height }).nodes[0];
-        let ctx = temp.getContext('2d');
-        let ratio = 1;
-        let canvasWidth = canvas_node.width;
-        let canvasHeight = canvas_node.height;
-        if (size === 'contain') {
-            if (keepDimensions) {
-                let widthRatio = width / canvasWidth;
-                let heightRatio = height / canvasHeight;
-                ratio = _ma.min(widthRatio, heightRatio);
-                let newWidth = canvasWidth * ratio;
-                let newHeight = canvasHeight * ratio;
-                let xOffset = (width - newWidth) / 2;
-                let yOffset = (height - newHeight) / 2;
-                ctx.fillStyle = options.fill;
-                ctx.fillRect(0, 0, width, height);
-                ctx.drawImage(canvas_node, xOffset, yOffset, newWidth, newHeight);
-            } else {
-                let widthRatio = width / canvasWidth;
-                let heightRatio = height / canvasHeight;
-                ratio = _ma.min(widthRatio, heightRatio);
-                let newWidth = canvasWidth * ratio;
-                let newHeight = canvasHeight * ratio;
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-                ctx.drawImage(canvas_node, 0, 0, canvasWidth, canvasHeight, 0, 0, newWidth, newHeight);
-            }
-        } else if (size === 'cover') {
-            let widthRatio = width / canvasWidth;
-            let heightRatio = height / canvasHeight;
-            ratio = _ma.max(widthRatio, heightRatio);
-            let newWidth = canvasWidth * ratio;
-            let newHeight = canvasHeight * ratio;
-            let xOffset = (newWidth - width) / 2;
-            let yOffset = (newHeight - height) / 2;
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(canvas_node, -xOffset, -yOffset, newWidth, newHeight);
-        } else if (size === 'auto') {
-            ratio = _ma.min(width / canvasWidth, height / canvasHeight);
-            let newWidth = canvasWidth * ratio;
-            let newHeight = canvasHeight * ratio;
-            ctx.fillStyle = options.fill;
-            ctx.fillRect(0, 0, width, height);
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(canvas_node, 0, 0, canvasWidth, canvasHeight, 0, 0, newWidth, newHeight);
+        saveToHistory();
+        return Image;
+    };
+    Image.Render = function(target) {
+        if (!target) {
+            console.error('No target provided for rendering');
+            return Image;
         }
-        canvas_node.width = width;
-        canvas_node.height = height;
-        canvas_node.getContext('2d').drawImage(temp, 0, 0);
-    }
-    Canvas.Crop = function (x, y, width, height) {
-        let temp = Q('<canvas>', { width: width, height: height });
-        temp.getContext('2d').drawImage(canvas_node, x, y, width, height, 0, 0, width, height);
-        canvas_node.width = width;
-        canvas_node.height = height;
-        canvas_node.getContext('2d').drawImage(temp, 0, 0);
-    }
-    Canvas.Rotate = function (degrees) {
-        let temp = Q('<canvas>', { width: canvas_node.height, height: canvas_node.width });
-        let ctx = temp.getContext('2d');
-        ctx.translate(canvas_node.height / 2, canvas_node.width / 2);
-        ctx.rotate(degrees * _ma.PI / 180);
-        ctx.drawImage(canvas_node, -canvas_node.width / 2, -canvas_node.height / 2);
-        canvas_node.width = temp.width;
-        canvas_node.height = temp.height;
-        canvas_node.getContext('2d').drawImage(temp, 0, 0);
-    }
-    Canvas.Flip = function (direction = 'horizontal')
-    {
-        let temp = Q('<canvas>', { width: canvas_node.width, height: canvas_node.height });
-        let ctx = temp.getContext('2d');
-        ctx.translate(canvas_node.width, 0);
-        ctx.scale(direction == 'horizontal' ? -1 : 1, direction == 'vertical' ? -1 : 1);
-        ctx.drawImage(canvas_node, 0, 0);
-        canvas_node.getContext('2d').drawImage(temp, 0, 0);
-    }
-    Canvas.Grayscale = function () {
-        let data = canvas_node.getContext('2d').getImageData(0, 0, canvas_node.width, canvas_node.height);
-        let pixels = data.data;
-        for (let i = 0; i < pixels.length; i += 4) {
-            let avg = (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
-            pixels[i] = avg;
-            pixels[i + 1] = avg;
-            pixels[i + 2] = avg;
-        }
-        canvas_node.getContext('2d').putImageData(data, 0, 0);
-    }
-    Canvas.Brightness = function (value) {
-        let data = canvas_node.getContext('2d').getImageData(0, 0, canvas_node.width, canvas_node.height);
-        let pixels = data.data;
-        for (let i = 0; i < pixels.length; i += 4) {
-            pixels[i] += value;
-            pixels[i + 1] += value;
-            pixels[i + 2] += value;
-        }
-        canvas_node.getContext('2d').putImageData(data, 0, 0);
-    }
-    Canvas.Contrast = function (value) {
-        let data = canvas_node.getContext('2d').getImageData(0, 0, canvas_node.width, canvas_node.height);
-        let pixels = data.data;
-        let factor = (259 * (value + 255)) / (255 * (259 - value));
-        for (let i = 0; i < pixels.length; i += 4) {
-            pixels[i] = factor * (pixels[i] - 128) + 128;
-            pixels[i + 1] = factor * (pixels[i + 1] - 128) + 128;
-            pixels[i + 2] = factor * (pixels[i + 2] - 128) + 128;
-        }
-        canvas_node.getContext('2d').putImageData(data, 0, 0);
-    }
-    Canvas.Vivid = function (value) {
-        let data = canvas_node.getContext('2d').getImageData(0, 0, canvas_node.width, canvas_node.height);
-        let pixels = data.data;
-        for (let i = 0; i < pixels.length; i += 4) {
-            pixels[i] = _ma.min(255, pixels[i] * value);
-            pixels[i + 1] = _ma.min(255, pixels[i + 1] * value);
-            pixels[i + 2] = _ma.min(255, pixels[i + 2] * value);
-        }
-        canvas_node.getContext('2d').putImageData(data, 0, 0);
-    }
-    Canvas.Hue = function (value) {
-        let data = canvas_node.getContext('2d').getImageData(0, 0, canvas_node.width, canvas_node.height);
-        let pixels = data.data;
-        for (let i = 0; i < pixels.length; i += 4) {
-            let r = pixels[i];
-            let g = pixels[i + 1];
-            let b = pixels[i + 2];
-            let hsl = Q.RGB2HSL(r, g, b);
-            hsl[0] += value;
-            let rgb = Q.HSL2RGB(hsl[0], hsl[1], hsl[2]);
-            pixels[i] = rgb[0];
-            pixels[i + 1] = rgb[1];
-            pixels[i + 2] = rgb[2];
-        }
-        canvas_node.getContext('2d').putImageData(data, 0, 0);
-    }
-    Canvas.Sharpen = function (options) {
-        let defaults = {
-            amount: 1,
-            threshold: 0,
-            radius: 1,
-            quality: 1
-        };
-        options = _ob.assign(defaults, options);
-        let ctx = canvas_node.getContext('2d');
-        let data = ctx.getImageData(0, 0, canvas_node.width, canvas_node.height);
-        let pixels = data.data;
-        let weights = [-1, -1, -1, -1, 9, -1, -1, -1, -1];
-        let katet = _ma.round(_ma.sqrt(weights.length));
-        let half = _ma.floor(katet / 2);
-        let divisor = weights.reduce((sum, weight) => sum + weight, 0) || 1;
-        let offset = 0;
-        let dataCopy = new Uint8ClampedArray(pixels);
-        let width = canvas_node.width;
-        let height = canvas_node.height;
-        let iterations = _ma.round(options.quality);
-        let iteration = 0;
-        while (iteration < iterations) {
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < width; x++) {
-                    let r = 0, g = 0, b = 0;
-                    let dstOff = (y * width + x) * 4;
-                    for (let cy = 0; cy < katet; cy++) {
-                        for (let cx = 0; cx < katet; cx++) {
-                            let scy = y + cy - half;
-                            let scx = x + cx - half;
-                            if (scy >= 0 && scy < height && scx >= 0 && scx < width) {
-                                let srcOff = (scy * width + scx) * 4;
-                                let wt = weights[cy * katet + cx];
-                                r += dataCopy[srcOff] * wt;
-                                g += dataCopy[srcOff + 1] * wt;
-                                b += dataCopy[srcOff + 2] * wt;
-                            }
-                        }
-                    }
-                    r = _ma.min(_ma.max((r / divisor) + offset, 0), 255);
-                    g = _ma.min(_ma.max((g / divisor) + offset, 0), 255);
-                    b = _ma.min(_ma.max((b / divisor) + offset, 0), 255);
-                    if (_ma.abs(dataCopy[dstOff] - r) > options.threshold) {
-                        pixels[dstOff] = r;
-                        pixels[dstOff + 1] = g;
-                        pixels[dstOff + 2] = b;
-                    }
+        let targetElement;
+        if (typeof target === 'string') {
+            targetElement = document.getElementById(target) || document.querySelector(target);
+            if (!targetElement) {
+                const qElement = Q(target);
+                if (qElement && qElement.nodes && qElement.nodes.length) {
+                    targetElement = qElement.nodes[0];
                 }
             }
-            iteration++;
+        } else if (target.nodes && target.nodes.length) {
+            targetElement = target.nodes[0];
+        } else if (target.appendChild) {
+            targetElement = target;
         }
-        ctx.putImageData(data, 0, 0);
-    }
-    Canvas.Emboss = function (options) {
-        let defaults = {
-            strength: 1,
-            direction: 'top-left',
-            blend: true,    
-            grayscale: true  
-        };
-        options = _ob.assign(defaults, options);
-        let ctx = canvas_node.getContext('2d');
-        let data = ctx.getImageData(0, 0, canvas_node.width, canvas_node.height);
-        let pixels = data.data;
-        let width = canvas_node.width;
-        let height = canvas_node.height;
-        let dataCopy = new Uint8ClampedArray(pixels);
-        let kernels = {
-            'top-left': [-2, -1, 0, -1, 1, 1, 0, 1, 2],
-            'top-right': [0, -1, -2, 1, 1, -1, 2, 1, 0],
-            'bottom-left': [0, 1, 2, -1, 1, 1, -2, -1, 0],
-            'bottom-right': [2, 1, 0, 1, 1, -1, 0, -1, -2]
-        };
-        let kernel = kernels[options.direction] || kernels['top-left'];
-        let katet = _ma.sqrt(kernel.length); 
-        let half = _ma.floor(katet / 2);
-        let strength = options.strength;
-        let divisor = 1; 
-        let offset = 128; 
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                let r = 0, g = 0, b = 0;
-                let dstOff = (y * width + x) * 4;
-                for (let cy = 0; cy < katet; cy++) {
-                    for (let cx = 0; cx < katet; cx++) {
-                        let scy = y + cy - half;
-                        let scx = x + cx - half;
-                        if (scy >= 0 && scy < height && scx >= 0 && scx < width) {
-                            let srcOff = (scy * width + scx) * 4; 
-                            let wt = kernel[cy * katet + cx];
-                            r += dataCopy[srcOff] * wt;
-                            g += dataCopy[srcOff + 1] * wt;
-                            b += dataCopy[srcOff + 2] * wt;
-                        }
-                    }
-                }
-                r = (r / divisor) * strength + offset;
-                g = (g / divisor) * strength + offset;
-                b = (b / divisor) * strength + offset;
-                if (options.grayscale) {
-                    let avg = (r + g + b) / 3;
-                    r = g = b = avg;
-                }
-                r = _ma.min(_ma.max(r, 0), 255);
-                g = _ma.min(_ma.max(g, 0), 255);
-                b = _ma.min(_ma.max(b, 0), 255);
-                if (options.blend) {
-                    pixels[dstOff] = (pixels[dstOff] + r) / 2;
-                    pixels[dstOff + 1] = (pixels[dstOff + 1] + g) / 2;
-                    pixels[dstOff + 2] = (pixels[dstOff + 2] + b) / 2;
-                } else {
-                    pixels[dstOff] = r;
-                    pixels[dstOff + 1] = g;
-                    pixels[dstOff + 2] = b;
-                }
+        if (!targetElement) {
+            console.error('Invalid render target');
+            return Image;
+        }
+        let renderCanvas;
+        const targetTag = targetElement.tagName.toLowerCase();
+        if (targetTag === 'canvas') {
+            renderCanvas = targetElement;
+        } else if (targetTag === 'img') {
+            canvas_node.toBlob(function(blob) {
+                const objectUrl = URL.createObjectURL(blob);
+                targetElement.src = objectUrl;
+                targetElement.onload = function() {
+                    URL.revokeObjectURL(objectUrl);
+                };
+            }, 'image/' + options.format, options.quality);
+            return Image;
+        } else {
+            renderCanvas = targetElement.querySelector('canvas.q-image-render');
+            if (!renderCanvas) {
+                renderCanvas = document.createElement('canvas');
+                renderCanvas.className = 'q-image-render';
+                targetElement.appendChild(renderCanvas);
             }
         }
-        ctx.putImageData(data, 0, 0);
-    }
-    Canvas.Blur = function (options) {
-        let defaults = {
-            radius: 5, 
-            quality: 1 
-        };
-        options = _ob.assign(defaults, options);
-        let ctx = canvas_node.getContext('2d');
-        let data = ctx.getImageData(0, 0, canvas_node.width, canvas_node.height);
-        let pixels = data.data;
-        let width = canvas_node.width;
-        let height = canvas_node.height;
-        function gaussianKernel(radius) {
-            let size = 2 * radius + 1;
-            let kernel = new Float32Array(size * size);
-            let sigma = radius / 3;
-            let sum = 0;
-            let center = radius;
-            for (let y = 0; y < size; y++) {
-                for (let x = 0; x < size; x++) {
-                    let dx = x - center;
-                    let dy = y - center;
-                    let weight = _ma.exp(-(dx * dx + dy * dy) / (2 * sigma * sigma));
-                    kernel[y * size + x] = weight;
-                    sum += weight;
-                }
-            }
-            for (let i = 0; i < kernel.length; i++) {
-                kernel[i] /= sum;
-            }
-            return {
-                kernel: kernel,
-                size: size
-            };
+        renderCanvas.width = canvas_node.width;
+        renderCanvas.height = canvas_node.height;
+        const renderCtx = renderCanvas.getContext('2d', { willReadFrequently: true });
+        renderCtx.clearRect(0, 0, renderCanvas.width, renderCanvas.height);
+        renderCtx.drawImage(canvas_node, 0, 0);
+        return Image;
+    };
+    Image.History = function(offset = -1) {
+        if (history.states.length === 0) return Image;
+        if (offset === 0) return Image;
+        let targetPosition = history.position + offset;
+        if (targetPosition < 0) targetPosition = 0;
+        if (targetPosition >= history.states.length) targetPosition = history.states.length - 1;
+        if (targetPosition === history.position) return Image;
+        history.isUndoRedoing = true;
+        const ctx = canvas_node.getContext('2d', { willReadFrequently: true });
+        const state = history.states[targetPosition];
+        if (canvas_node.width !== state.width || canvas_node.height !== state.height) {
+            canvas_node.width = state.width;
+            canvas_node.height = state.height;
         }
-        let { kernel, size } = gaussianKernel(options.radius);
-        let half = _ma.floor(size / 2);
-        let iterations = _ma.round(options.quality);
-        function applyBlur() {
-            let output = new Uint8ClampedArray(pixels);
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < width; x++) {
-                    let r = 0, g = 0, b = 0;
-                    let dstOff = (y * width + x) * 4;
-                    for (let ky = 0; ky < size; ky++) {
-                        for (let kx = 0; kx < size; kx++) {
-                            let ny = y + ky - half;
-                            let nx = x + kx - half;
-                            if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
-                                let srcOff = (ny * width + nx) * 4;
-                                let weight = kernel[ky * size + kx];
-                                r += pixels[srcOff] * weight;
-                                g += pixels[srcOff + 1] * weight;
-                                b += pixels[srcOff + 2] * weight;
-                            }
-                        }
-                    }
-                    output[dstOff] = r;
-                    output[dstOff + 1] = g;
-                    output[dstOff + 2] = b;
-                }
-            }
-            return output;
-        }
-        for (let i = 0; i < iterations; i++) {
-            pixels = applyBlur();
-        }
-        ctx.putImageData(new ImageData(pixels, width, height), 0, 0);
-    }
-    return Canvas;
-}
+        ctx.putImageData(state, 0, 0);
+        history.position = targetPosition;
+        history.isUndoRedoing = false;
+        return Image;
+    };
+    Image.Undo = function() {
+        return Image.History(-1);
+    };
+    Image.Redo = function() {
+        return Image.History(1);
+    };
+    Image.AutoHistory = function(enable = true) {
+        options.autoSaveHistory = enable;
+        return Image;
+    };
+    Image.SaveHistory = function() {
+        saveToHistory();
+        return Image;
+    };
+    Image.ClearHistory = function() {
+        history.states = [];
+        history.position = -1;
+        return Image;
+    };
+    return Image;
+};
 Q.ImageViewer = function () {
     let classes = Q.style(`
 .image_viewer_wrapper {
@@ -2082,7 +2036,7 @@ Q.ImageViewer = function () {
     }, false);
     class Viewer {
         constructor() {
-            this.selector = _n;
+            this.selector = null;
             this.images = [];
             this.currentIndex = 0;
             this.eventHandler = this.handleClick.bind(this);
@@ -2205,7 +2159,7 @@ Q.ImageViewer = function () {
             const offsetX = (e.clientX - rect.left - this.panX) / this.scale;
             const offsetY = (e.clientY - rect.top - this.panY) / this.scale;
             const scaleAmount = e.deltaY > 0 ? 0.9 : 1.1;
-            const newScale = _ma.min(_ma.max(this.scale * scaleAmount, 0.5), 2.5);
+            const newScale = Math.min(Math.max(this.scale * scaleAmount, 0.5), 2.5);
             const deltaScale = newScale - this.scale;
             this.panX -= offsetX * deltaScale;
             this.panY -= offsetY * deltaScale;
@@ -2236,7 +2190,7 @@ Q.ImageViewer = function () {
                 this.startY = e.touches[0].clientY - this.panY;
             } else if (e.touches.length === 2) {
                 this.isPanning = false;
-                this.initialDistance = _ma.hypot(
+                this.initialDistance = Math.hypot(
                     e.touches[0].clientX - e.touches[1].clientX,
                     e.touches[0].clientY - e.touches[1].clientY
                 );
@@ -2251,12 +2205,12 @@ Q.ImageViewer = function () {
                 this.panY = e.touches[0].clientY - this.startY;
                 this.updateImage();
             } else if (e.touches.length === 2) {
-                const currentDistance = _ma.hypot(
+                const currentDistance = Math.hypot(
                     e.touches[0].clientX - e.touches[1].clientX,
                     e.touches[0].clientY - e.touches[1].clientY
                 );
                 const scaleAmount = currentDistance / this.initialDistance;
-                this.scale = _ma.min(_ma.max(this.initialScale * scaleAmount, 0.5), 2.5);
+                this.scale = Math.min(Math.max(this.initialScale * scaleAmount, 0.5), 2.5);
                 this.updateImage();
             }
         }
@@ -2437,7 +2391,7 @@ Q.ImageViewer = function () {
             return this;
         },
         config: function (options) {
-            _ob.assign(viewer.config, options);
+            Object.assign(viewer.config, options);
             return this;
         },
         source: function (images) {
@@ -2453,9 +2407,9 @@ Q.JSON = function (jsonData) {
 Q.JSON.prototype.Parse = function (options = { modify: false, recursive: false }, callback) {
     const { modify, recursive } = options;
     const process = (data) => {
-        if (typeof data === 'object' && data && !_ar.isArray(data)) {
+        if (typeof data === 'object' && data && !Array.isArray(data)) {
             for (const key in data) {
-                if (_ob.prototype.hasOwnProperty.call(data, key)) {
+                if (Object.prototype.hasOwnProperty.call(data, key)) {
                     const newValue = callback(key, data[key]);
                     if (modify) data[key] = newValue;
                     if (recursive && typeof data[key] === 'object' && data[key]) process(data[key]);
@@ -2490,7 +2444,7 @@ Q.JSON.prototype.deflate = function (level) {
 };
 Q.JSON.prototype.inflate = function (deflatedJson) {
     const { data, map } = deflatedJson;
-    const reverseMap = _ob.fromEntries(_ob.entries(map).map(([k, v]) => [v, k]));
+    const reverseMap = Object.fromEntries(Object.entries(map).map(([k, v]) => [v, k]));
     const restoreRecursive = (obj) => {
         if (typeof obj === 'object' && obj) {
             for (let key in obj) {
@@ -2512,8 +2466,8 @@ Q.JSON.prototype.inflate = function (deflatedJson) {
 Q.JSON.prototype.merge = function (otherJson) {
     const deepMerge = (target, source) => {
         for (const key in source) {
-            if (_ob.prototype.hasOwnProperty.call(source, key)) {
-                if (typeof source[key] === 'object' && source[key] && !_ar.isArray(source[key])) {
+            if (Object.prototype.hasOwnProperty.call(source, key)) {
+                if (typeof source[key] === 'object' && source[key] && !Array.isArray(source[key])) {
                     target[key] = deepMerge(target[key] && typeof target[key] === 'object' ? target[key] : {}, source[key]);
                 } else {
                     target[key] = source[key];
@@ -2526,11 +2480,11 @@ Q.JSON.prototype.merge = function (otherJson) {
 };
 Q.JSON.prototype.sortKeys = function (recursive = false, reverse = false) {
     const sortObject = (obj) => {
-        const keys = _ob.keys(obj).sort();
+        const keys = Object.keys(obj).sort();
         if (reverse) keys.reverse();
         const sorted = {};
         keys.forEach(key => {
-            sorted[key] = (recursive && typeof obj[key] === 'object' && obj[key] && !_ar.isArray(obj[key])) ? sortObject(obj[key]) : obj[key];
+            sorted[key] = (recursive && typeof obj[key] === 'object' && obj[key] && !Array.isArray(obj[key])) ? sortObject(obj[key]) : obj[key];
         });
         return sorted;
     };
@@ -2539,7 +2493,7 @@ Q.JSON.prototype.sortKeys = function (recursive = false, reverse = false) {
 };
 Q.JSON.prototype.sortValues = function (reverse = false) {
     if (typeof this.json !== 'object' || !this.json) return this.json;
-    const entries = _ob.entries(this.json).sort((a, b) => {
+    const entries = Object.entries(this.json).sort((a, b) => {
         const aValue = String(a[1]), bValue = String(b[1]);
         return aValue.localeCompare(bValue);
     });
@@ -2550,7 +2504,7 @@ Q.JSON.prototype.sortValues = function (reverse = false) {
     return this.json;
 };
 Q.JSON.prototype.sortByValues = function (keyProp, valueProp, reverse = false) {
-    if (!_ar.isArray(this.json)) return this.json;
+    if (!Array.isArray(this.json)) return this.json;
     this.json.sort((a, b) => {
         const cmpKey = String(a[keyProp]).localeCompare(String(b[keyProp]));
         const cmpValue = String(a[valueProp]).localeCompare(String(b[valueProp]));
@@ -2563,9 +2517,9 @@ Q.JSON.prototype.flatten = function (prefix = '') {
     const result = {};
     const flattenRec = (obj, path) => {
         for (const key in obj) {
-            if (_ob.prototype.hasOwnProperty.call(obj, key)) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
                 const newKey = path ? `${path}.${key}` : key;
-                if (typeof obj[key] === 'object' && obj[key] && !_ar.isArray(obj[key])) {
+                if (typeof obj[key] === 'object' && obj[key] && !Array.isArray(obj[key])) {
                     flattenRec(obj[key], newKey);
                 } else {
                     result[newKey] = obj[key];
@@ -2578,7 +2532,7 @@ Q.JSON.prototype.flatten = function (prefix = '') {
 };
 Q.JSON.prototype.unflatten = function (flatObject) {
     const result = {};
-    _ob.keys(flatObject).forEach(compoundKey => {
+    Object.keys(flatObject).forEach(compoundKey => {
         compoundKey.split('.').reduce((accumulator, currentKey, index, keysArray) => {
             if (index === keysArray.length - 1) {
                 accumulator[currentKey] = flatObject[compoundKey];
@@ -2764,13 +2718,13 @@ padding: 0 5px;
             this.isDragging = false;
             this.leftConnCoords = [];
             this.rightConnCoords = [];
-            this.img = _n;
-            this.content = _n;
+            this.img = null;
+            this.content = null;
             this.contentHeight = 0;
-            this.unescapedBase64Data = _n;
+            this.unescapedBase64Data = null;
             this.appearance = appearance;
             this.custom_style = custom_style;
-            this.appearance = _ob.assign({}, this.appearance, custom_style);
+            this.appearance = Object.assign({}, this.appearance, custom_style);
             this.darkText = '#ffffff';
             this.lightText = '#000000';
             this.update = true;
@@ -2780,7 +2734,7 @@ padding: 0 5px;
         }
         _restyle(object) {
             this.custom_style = object;
-            this.appearance = _ob.assign({}, this.appearance, object);
+            this.appearance = Object.assign({}, this.appearance, object);
             this._processColors();
             this.t_text = '';
         }
@@ -2799,7 +2753,7 @@ padding: 0 5px;
             const isDark = Q.isDarkColor(background, factorDarkColorMargin, factorDarkColorThreshold);
             const textColor = isDark ? darkTextColor : lightTextColor;
             const borderColor = Q.ColorBrightness(background, isDark ? factorLightColors : factorDarkColors);
-            _ob.assign(this.appearance, {
+            Object.assign(this.appearance, {
                 titleBackground: titleBg,
                 titleColor: textColor,
                 connectionTextColor: textColor,
@@ -2810,7 +2764,7 @@ padding: 0 5px;
         _drawContainer(ctx, x, y, width, height) {
             const { shadowColor, shadowBlur, shadowOffsetX, shadowOffsetY, background, radius, connectionPointSize } = this.appearance;
             ctx.save();
-            _ob.assign(ctx, {
+            Object.assign(ctx, {
                 fillStyle: background,
                 shadowColor,
                 shadowBlur,
@@ -2933,7 +2887,7 @@ padding: 0 5px;
             const TITLE_HEIGHT = this.appearance.fontSizeTitle + (this.appearance.padding * 2);
             const CONNECTION_HEIGHT = this.appearance.padding + TITLE_HEIGHT;
             const CONNECTION_PADDING = (this.appearance.connectionPointSize * 2) + this.appearance.connectionPointPadding;
-            const maxConnectionsHeight = _ma.max(this.connLeft.length, this.connRight.length) * CONNECTION_PADDING;
+            const maxConnectionsHeight = Math.max(this.connLeft.length, this.connRight.length) * CONNECTION_PADDING;
             if (this.update) {
                 const updateContainerHeight = (contentHeight) => {
                     this.height = TITLE_HEIGHT + (this.appearance.padding * 2) + maxConnectionsHeight + contentHeight + this.appearance.padding;
@@ -2971,16 +2925,16 @@ padding: 0 5px;
                     coordsArray.push({ x: baseX, y: connY });
                     ctx.fillStyle = conn.color || this.appearance.connectionColor;
                     ctx.beginPath();
-                    ctx.arc(baseX, connY, pointSize, 0, 2 * _ma.PI);
+                    ctx.arc(baseX, connY, pointSize, 0, 2 * Math.PI);
                     ctx.fill();
                     ctx.fillStyle = this.appearance.connectionTextColor;
                     ctx.fillText(conn.title, getTextX(conn.title, baseX), connY + middleYOffset);
                 });
             };
-            if (_ar.isArray(this.connLeft)) {
+            if (Array.isArray(this.connLeft)) {
                 drawConnectionPoints(this.connLeft, this.leftConnCoords, this.appearance.connectionPointSize, (title, baseX) => baseX + connectionPaddingX * 2);
             }
-            if (_ar.isArray(this.connRight)) {
+            if (Array.isArray(this.connRight)) {
                 drawConnectionPoints(this.connRight, this.rightConnCoords, this.width, (title, baseX) => baseX - ctx.measureText(title).width - connectionPaddingX * 2);
             }
         }
@@ -3013,11 +2967,11 @@ padding: 0 5px;
             this.canvas_context = this.canvas.nodes[0].getContext('2d');
             this.blocks = [];
             this.connections = [];
-            this.draggingBlock = _n;
+            this.draggingBlock = null;
             this.offsetX = 0;
             this.offsetY = 0;
-            this.connection_start = _n;
-            this.connection_end = _n;
+            this.connection_start = null;
+            this.connection_end = null;
             this.mouseX = 0;
             this.mouseY = 0;
             this.isMenuPreferences = false;
@@ -3043,7 +2997,7 @@ padding: 0 5px;
                 );
                 this.addBlock(newBlock);
             });
-            _pr.all(blockCreationPromises).then(() => {
+            Promise.all(blockCreationPromises).then(() => {
                 uml.connections.forEach(conn => {
                     const startBlock = this.blocks.find(b => b.id === conn.id);
                     const endBlock = this.blocks.find(b => b.id === conn.target);
@@ -3055,11 +3009,11 @@ padding: 0 5px;
                             { block: endBlock, point: conn.targetPoint, x: endCoords.x, y: endCoords.y }
                         );
                     } else {
-                        _c.error('Connection failed to initialize:', startBlock, endBlock);
+                        console.error('Connection failed to initialize:', startBlock, endBlock);
                     }
                 });
             }).catch(err => {
-                _c.error('_er during block initialization:', err);
+                console.error('Error during block initialization:', err);
             });
         }
         export() {
@@ -3100,7 +3054,7 @@ padding: 0 5px;
             let block = this.blocks[0];
             let content = block.text;
             let connections = block.connections;
-            let nextBlock = _n;
+            let nextBlock = null;
             while (connections.length > 0) {
                 let conn = connections[0];
                 nextBlock = this.blocks.find(b => b.id === conn.end.block.id);
@@ -3161,7 +3115,7 @@ padding: 0 5px;
                 this.canvas_context.stroke();
                 let dx = (endBlock.x + conn.end.x) - (startBlock.x + conn.start.x);
                 let dy = (endBlock.y + conn.end.y) - (startBlock.y + conn.start.y);
-                let length = _ma.sqrt(dx * dx + dy * dy);
+                let length = Math.sqrt(dx * dx + dy * dy);
                 let unitDx = dx / length;
                 let unitDy = dy / length;
                 let arrowLength = 10;
@@ -3178,7 +3132,7 @@ padding: 0 5px;
                     this.canvas_context.fill();
                 }
             });
-            if (this.connection_start && this.connection_end === _n) {
+            if (this.connection_start && this.connection_end === null) {
                 let startBlock = this.connection_start.block;
                 let startColor = this._getConnectionColor(startBlock, this.connection_start.point);
                 let gradient = this.canvas_context.createLinearGradient(
@@ -3201,7 +3155,7 @@ padding: 0 5px;
         _getConnectionColor(block, pointId) {
             const connection = [...block.connLeft, ...block.connRight]
                 .find(conn => conn.id === pointId);
-            return connection ? connection.color : _n;
+            return connection ? connection.color : null;
         }
         updateConnections(block) {
             const preferences = Q('.' + classes.node_preferences);
@@ -3230,7 +3184,7 @@ padding: 0 5px;
                 }
             });
         }
-        updateBlock(selectedblock = _n, callback) {
+        updateBlock(selectedblock = null, callback) {
             let preferences = Q('.' + classes.node_preferences);
             let block;
             if (selectedblock) {
@@ -3279,9 +3233,9 @@ padding: 0 5px;
             const mouseY = event.offsetY;
             if (this.draggingBlock) {
                 if (this.appearance.snapToGrid) {
-                    this.draggingBlock.x = _ma.round(this.draggingBlock.x / this.appearance.gridSize) * this.appearance.gridSize;
-                    this.draggingBlock.y = _ma.round(this.draggingBlock.y / this.appearance.gridSize) * this.appearance.gridSize;
-                    if (!this.lastMouseX || _ma.abs(mouseX - this.lastMouseX) >= this.appearance.gridSize || _ma.abs(mouseY - this.lastMouseY) >= this.appearance.gridSize) {
+                    this.draggingBlock.x = Math.round(this.draggingBlock.x / this.appearance.gridSize) * this.appearance.gridSize;
+                    this.draggingBlock.y = Math.round(this.draggingBlock.y / this.appearance.gridSize) * this.appearance.gridSize;
+                    if (!this.lastMouseX || Math.abs(mouseX - this.lastMouseX) >= this.appearance.gridSize || Math.abs(mouseY - this.lastMouseY) >= this.appearance.gridSize) {
                         this.draggingBlock.x = mouseX - this.offsetX;
                         this.draggingBlock.y = mouseY - this.offsetY;
                         this.render();
@@ -3289,7 +3243,7 @@ padding: 0 5px;
                         this.lastMouseY = mouseY;
                     }
                 } else {
-                    if (!this.lastMouseX || _ma.abs(mouseX - this.lastMouseX) >= this.appearance.movementResolution || _ma.abs(mouseY - this.lastMouseY) >= this.appearance.movementResolution) {
+                    if (!this.lastMouseX || Math.abs(mouseX - this.lastMouseX) >= this.appearance.movementResolution || Math.abs(mouseY - this.lastMouseY) >= this.appearance.movementResolution) {
                         this.draggingBlock.x = mouseX - this.offsetX;
                         this.draggingBlock.y = mouseY - this.offsetY;
                         this.render();
@@ -3299,7 +3253,7 @@ padding: 0 5px;
                 }
                 return;
             }
-            if (this.connection_start && this.connection_end === _n) {
+            if (this.connection_start && this.connection_end === null) {
                 this.mouseX = mouseX;
                 this.mouseY = mouseY;
                 this.render();
@@ -3317,13 +3271,13 @@ padding: 0 5px;
                 )) {
                     if (!this.isOverConnection) {
                         this.canvas_context.beginPath();
-                        this.canvas_context.arc(conn.start.block.x + conn.start.x, conn.start.block.y + conn.start.y, this.appearance.connectionPointSize + 2, 0, 2 * _ma.PI);
+                        this.canvas_context.arc(conn.start.block.x + conn.start.x, conn.start.block.y + conn.start.y, this.appearance.connectionPointSize + 2, 0, 2 * Math.PI);
                         let startColor = this._getConnectionColor(conn.start.block, conn.start.point);
                         this.canvas_context.strokeStyle = startColor;
                         this.canvas_context.lineWidth = 2;
                         this.canvas_context.stroke();
                         this.canvas_context.beginPath();
-                        this.canvas_context.arc(conn.end.block.x + conn.end.x, conn.end.block.y + conn.end.y, this.appearance.connectionPointSize + 2, 0, 2 * _ma.PI);
+                        this.canvas_context.arc(conn.end.block.x + conn.end.x, conn.end.block.y + conn.end.y, this.appearance.connectionPointSize + 2, 0, 2 * Math.PI);
                         let endColor = this._getConnectionColor(conn.end.block, conn.end.point);
                         this.canvas_context.strokeStyle = endColor;
                         this.canvas_context.lineWidth = 2;
@@ -3337,12 +3291,12 @@ padding: 0 5px;
             if (this.draggingBlock) {
                 this.isDraggingBlock = false;
                 this.draggingBlock.isDragging = false;
-                this.draggingBlock = _n;
+                this.draggingBlock = null;
                 this.render();
             }
-            if (this.connection_start && this.connection_end === _n) {
-                _st(() => {
-                    this.connection_start = _n;
+            if (this.connection_start && this.connection_end === null) {
+                setTimeout(() => {
+                    this.connection_start = null;
                     this.mouseX = 0;
                     this.mouseY = 0;
                     this.render();
@@ -3354,22 +3308,22 @@ padding: 0 5px;
             const mouseY = event.offsetY;
             for (let block of this.blocks) {
                 if (this._connection_over_point(block, mouseX, mouseY)) {
-                    if (this.connection_start === _n) {
+                    if (this.connection_start === null) {
                         this.connection_start = this._point_details(block, mouseX, mouseY);
                     }
-                    else if (this.connection_end === _n) {
+                    else if (this.connection_end === null) {
                         this.connection_end = this._point_details(block, mouseX, mouseY);
                         if (this.connection_start.block !== this.connection_end.block &&
                             !this._connection_exists(this.connection_start, this.connection_end)) {
                             this._connection_create(this.connection_start, this.connection_end);
                             block.addConnection({ id: this.connection_start.block.id, point: this.connection_start.point });
                         } else {
-                            this.connection_start = _n;
-                            this.connection_end = _n;
+                            this.connection_start = null;
+                            this.connection_end = null;
                             this.render();
                         }
-                        this.connection_start = _n;
-                        this.connection_end = _n;
+                        this.connection_start = null;
+                        this.connection_end = null;
                     }
                     return;
                 }
@@ -3434,7 +3388,7 @@ padding: 0 5px;
             this.render();
         }
         _id() {
-            return '_' + _ma.random().toString(36).substr(2, 9);
+            return '_' + Math.random().toString(36).substr(2, 9);
         }
         _menu_remove() {
             Q('.' + classes.node_preferences).remove();
@@ -3466,7 +3420,7 @@ padding: 0 5px;
                 });
                 connection.on('input', () => {
                     let contitle = connection.val();
-                    conn.title = (conn.title && contitle !== _n) ? contitle : '';
+                    conn.title = (conn.title && contitle !== null) ? contitle : '';
                     this.updateConnections(block);
                     this.render();
                 });
@@ -3600,8 +3554,8 @@ padding: 0 5px;
         }
         _connection_update() {
             this.connections.forEach(conn => {
-                _ob.assign(conn.start, this._point_coords(conn.start.block, conn.start.point));
-                _ob.assign(conn.end, this._point_coords(conn.end.block, conn.end.point));
+                Object.assign(conn.start, this._point_coords(conn.start.block, conn.start.point));
+                Object.assign(conn.end, this._point_coords(conn.end.block, conn.end.point));
             });
         }
         _point_coords(block, pointId) {
@@ -3619,21 +3573,21 @@ padding: 0 5px;
         }
         _connection_over_point(block, x, y) {
             const radius = 5;
-            return block.getAllConnectionCoords().some(coord => _ma.abs(x - coord.x) < radius && _ma.abs(y - coord.y) < radius);
+            return block.getAllConnectionCoords().some(coord => Math.abs(x - coord.x) < radius && Math.abs(y - coord.y) < radius);
         }
         _point_details(block, x, y) {
             x -= block.x;
             y -= block.y;
             const radius = 5;
-            let matchedPoint = _n;
+            let matchedPoint = null;
             block.leftConnCoords.forEach((coord, index) => {
-                if (_ma.abs(x - coord.x) < radius && _ma.abs(y - coord.y) < radius) {
+                if (Math.abs(x - coord.x) < radius && Math.abs(y - coord.y) < radius) {
                     matchedPoint = { block: block, point: block.connLeft[index].id, x: coord.x, y: coord.y, index: index };
                 }
             });
             if (!matchedPoint) {
                 block.rightConnCoords.forEach((coord, index) => {
-                    if (_ma.abs(x - coord.x) < radius && _ma.abs(y - coord.y) < radius) {
+                    if (Math.abs(x - coord.x) < radius && Math.abs(y - coord.y) < radius) {
                         matchedPoint = { block: block, point: block.connRight[index].id, x: coord.x, y: coord.y, index: index };
                     }
                 });
@@ -3641,9 +3595,9 @@ padding: 0 5px;
             return matchedPoint;
         }
         _point_line_segment(px, py, x1, y1, x2, y2) {
-            const d1 = _ma.hypot(px - x1, py - y1);
-            const d2 = _ma.hypot(px - x2, py - y2);
-            const lineLen = _ma.hypot(x2 - x1, y2 - y1);
+            const d1 = Math.hypot(px - x1, py - y1);
+            const d2 = Math.hypot(px - x2, py - y2);
+            const lineLen = Math.hypot(x2 - x1, y2 - y1);
             return d1 + d2 >= lineLen - 0.1 && d1 + d2 <= lineLen + 0.1;
         }
         _point_line_distance(px, py, x1, y1, x2, y2) {
@@ -3653,11 +3607,11 @@ padding: 0 5px;
             let t = 0;
             if (lenSq !== 0) {
                 t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
-                t = _ma.max(0, _ma.min(1, t));
+                t = Math.max(0, Math.min(1, t));
             }
             const projX = x1 + t * dx;
             const projY = y1 + t * dy;
-            return _ma.hypot(px - projX, py - projY);
+            return Math.hypot(px - projX, py - projY);
         }
     }
     let appearance = {
@@ -3691,7 +3645,7 @@ padding: 0 5px;
         padding: 5,
         radius: 10
     };
-    appearance = _ob.assign(appearance, options);
+    appearance = Object.assign(appearance, options);
     let uml = new UMLCanvas(selector, width, height, appearance, classes);
     return {
         import: function (data) {
@@ -3710,7 +3664,7 @@ padding: 0 5px;
 }
 Q.Socket = function (url, onMessage, onStatus, options = {}) {
     const {
-        retries = 5,                   // _nu of reconnection attempts (0 means unlimited)
+        retries = 5,                   // Number of reconnection attempts (0 means unlimited)
         delay = 1000,                  // Initial delay between reconnections in ms
         protocols = [],                // WebSocket sub-protocols
         backoff = false,               // Exponential backoff toggle
@@ -3718,11 +3672,11 @@ Q.Socket = function (url, onMessage, onStatus, options = {}) {
         pingMessage = 'ping',          // Message to send for heartbeat
         queueMessages = false,         // Queue messages if socket is not open yet
         autoReconnect = true,          // Automatically reconnect on close
-        onOpen = _n,                 // Additional callback on open
-        onClose = _n,                // Additional callback on close
-        onError = _n                 // Additional callback on error
+        onOpen = null,                 // Additional callback on open
+        onClose = null,                // Additional callback on close
+        onError = null                 // Additional callback on error
     } = options;
-    let socket, attempts = 0, currentDelay = delay, pingId = _n;
+    let socket, attempts = 0, currentDelay = delay, pingId = null;
     const messageQueue = [];
     const connect = () => {
         socket = new WebSocket(url, protocols);
@@ -3738,7 +3692,7 @@ Q.Socket = function (url, onMessage, onStatus, options = {}) {
             }
             if (pingInterval) {
                 pingId && clearInterval(pingId);
-                pingId = _si(() => {
+                pingId = setInterval(() => {
                     if (socket.readyState === WebSocket.OPEN) {
                         socket.send(pingMessage);
                     }
@@ -3756,7 +3710,7 @@ Q.Socket = function (url, onMessage, onStatus, options = {}) {
             if (autoReconnect && (retries === 0 || attempts < retries)) {
                 onStatus?.('closed');
                 attempts++;
-                _st(() => {
+                setTimeout(() => {
                     connect();
                     if (backoff) {
                         currentDelay *= 2;
@@ -3796,10 +3750,10 @@ Q.String.prototype.capitalize = function () {
 };
 Q.String.prototype.levenshtein = function (string) {
     const a = this.string, b = string;
-    const matrix = _ar.from({ length: a.length + 1 }, (_, i) => _ar.from({ length: b.length + 1 }, (_, j) => i || j));
+    const matrix = Array.from({ length: a.length + 1 }, (_, i) => Array.from({ length: b.length + 1 }, (_, j) => i || j));
     for (let i = 1; i <= a.length; i++) {
         for (let j = 1; j <= b.length; j++) {
-            matrix[i][j] = _ma.min(
+            matrix[i][j] = Math.min(
                 matrix[i - 1][j] + 1,
                 matrix[i][j - 1] + 1,
                 matrix[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
@@ -3812,7 +3766,7 @@ Q.String.prototype.find = function (stringOrRegex) {
     return this.string.match(stringOrRegex);
 };
 Q.String.prototype.replaceAll = function (stringOrRegex, replacement) {
-    return this.string.replace(new _re(stringOrRegex, 'g'), replacement);
+    return this.string.replace(new RegExp(stringOrRegex, 'g'), replacement);
 };
 (() => {
     class ThreadPool {
@@ -3841,7 +3795,7 @@ Q.String.prototype.replaceAll = function (stringOrRegex, replacement) {
               self.postMessage({ taskId, error: error.toString() });
               return;
             }
-            _pr.resolve().then(() => executionFunction(...parameters)).then(
+            Promise.resolve().then(() => executionFunction(...parameters)).then(
               result => self.postMessage({ taskId, result }),
               error => self.postMessage({ taskId, error: error.toString() })
             );
@@ -3857,7 +3811,7 @@ Q.String.prototype.replaceAll = function (stringOrRegex, replacement) {
           workerInstance.busy = false;
           const task = this.activeTasks.get(taskId);
           if (task) {
-            error !== _un ? task.reject(new _er(error)) : task.resolve(result);
+            error !== undefined ? task.reject(new Error(error)) : task.resolve(result);
             this.resultCallbacks.forEach(callbackFunction => callbackFunction({ id: taskId, result, error }));
             this.activeTasks.delete(taskId);
           }
@@ -3901,11 +3855,11 @@ Q.String.prototype.replaceAll = function (stringOrRegex, replacement) {
         return this;
       }
       Push(taskInput, ...parameters) {
-        if (this.aborted) return _pr.reject(new _er('Thread aborted'));
+        if (this.aborted) return Promise.reject(new Error('Thread aborted'));
         const taskFunction = typeof taskInput === 'function' ? taskInput : (() => taskInput);
         const taskId = ++this.taskIdCounter;
-        const task = { id: taskId, functionCode: taskFunction.toString(), parameters, resolve: _n, reject: _n };
-        const promiseResult = new _pr((resolve, reject) => { task.resolve = resolve; task.reject = reject; });
+        const task = { id: taskId, functionCode: taskFunction.toString(), parameters, resolve: null, reject: null };
+        const promiseResult = new Promise((resolve, reject) => { task.resolve = resolve; task.reject = reject; });
         this.taskQueue.push(task);
         this._processQueue();
         return promiseResult;
@@ -3922,8 +3876,8 @@ Q.String.prototype.replaceAll = function (stringOrRegex, replacement) {
       }
       Abort() {
         this.aborted = true;
-        while (this.taskQueue.length) this.taskQueue.shift().reject(new _er('Task aborted'));
-        this.activeTasks.forEach(task => task.reject(new _er('Task aborted')));
+        while (this.taskQueue.length) this.taskQueue.shift().reject(new Error('Task aborted'));
+        this.activeTasks.forEach(task => task.reject(new Error('Task aborted')));
         this.activeTasks.clear();
         this.workers.forEach(workerInstance => workerInstance.terminate());
         this.workers = [];
@@ -3936,7 +3890,7 @@ Q.String.prototype.replaceAll = function (stringOrRegex, replacement) {
     Q.Thread = (maxWorkers = 1) => new ThreadPool(maxWorkers);
   })();
 Q.Timer = (callback, identifier, options = {}) => {
-    const defaults = { tick: 1, delay: 1000, interrupt: false, autoStart: true, done: _n };
+    const defaults = { tick: 1, delay: 1000, interrupt: false, autoStart: true, done: null };
     const config = { ...defaults, ...options };
     if (!Q.Timer.activeTimers) Q.Timer.activeTimers = new Map();
     if (config.interrupt && Q.Timer.activeTimers.has(identifier)) Q.Timer.stop(identifier);
@@ -3946,12 +3900,12 @@ Q.Timer = (callback, identifier, options = {}) => {
       isPaused: false,
       remainingDelay: config.delay,
       startTime: 0,
-      timerHandle: _n,
+      timerHandle: null,
       pause() {
         if (!this.isPaused) {
           this.isPaused = true;
-          _ct(this.timerHandle);
-          const elapsed = _da.now() - this.startTime;
+          clearTimeout(this.timerHandle);
+          const elapsed = Date.now() - this.startTime;
           this.remainingDelay = config.delay - elapsed;
         }
         return this;
@@ -3966,16 +3920,16 @@ Q.Timer = (callback, identifier, options = {}) => {
       stop() { Q.Timer.stop(this.id); }
     };
     const startTick = (delayTime) => {
-      timerControl.startTime = _da.now();
-      timerControl.timerHandle = _st(function tickHandler() {
+      timerControl.startTime = Date.now();
+      timerControl.timerHandle = setTimeout(function tickHandler() {
         callback();
         timerControl.tickCount++;
         if (config.tick > 0 && timerControl.tickCount >= config.tick) {
           Q.Timer.stop(identifier);
           if (typeof config.done === 'function') config.done();
         } else {
-          timerControl.startTime = _da.now();
-          timerControl.timerHandle = _st(tickHandler, config.delay);
+          timerControl.startTime = Date.now();
+          timerControl.timerHandle = setTimeout(tickHandler, config.delay);
         }
       }, delayTime);
     };
@@ -3986,13 +3940,13 @@ Q.Timer = (callback, identifier, options = {}) => {
   Q.Timer.stop = (identifier) => {
     if (Q.Timer.activeTimers?.has(identifier)) {
       const timerControl = Q.Timer.activeTimers.get(identifier);
-      _ct(timerControl.timerHandle);
+      clearTimeout(timerControl.timerHandle);
       Q.Timer.activeTimers.delete(identifier);
     }
   };
   Q.Timer.stopAll = () => {
     if (Q.Timer.activeTimers) {
-      Q.Timer.activeTimers.forEach(timerControl => _ct(timerControl.timerHandle));
+      Q.Timer.activeTimers.forEach(timerControl => clearTimeout(timerControl.timerHandle));
       Q.Timer.activeTimers.clear();
     }
   };

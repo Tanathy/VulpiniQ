@@ -51,6 +51,7 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | Container\.Tab | Component | Component | Tab component for Container plugin |
 | Cookie | Plugin | Plugin | Provides methods to store and retrieve data from the browser cookies\. |
 | Debounce | Utility | Event Handling | Debounces a function to ensure it is only called after a specified delay since the last invocation, effectively preventing multiple calls in rapid succession\. <br> This technique is particularly useful in scenarios like resizing windows, scrolling, or typing events, where multiple triggers can lead to performance issues or unintended behavior\. <br> By controlling the rate at which a function can fire, developers can optimize performance and enhance user experience\. |
+| Done | Static | Event Handling | Registers one or more callback functions to be executed once the window has completely loaded\. |
 | Fetch | Plugin | Plugin | Fetches data from a URL and returns it to a callback function\. Supports retries, timeouts, and custom response validation\. |
 | Form | Plugin | Plugin | Form is a simple library for creating forms and windows in the browser\. It provides a set of methods for creating form elements, windows, and other UI components\. |
 | Form\.Button | Component | Component | Button component for Form plugin |
@@ -61,11 +62,14 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | HSL2RGB | Utility | Color | Converts HSL \(Hue, Saturation, Lightness\) color values to RGB \(Red, Green, Blue\) format\. <br> This function is essential for applications that require color transformations, allowing developers to switch between different color representations easily\. <br> Understanding color models is key in design, and this utility helps bridge the gap between HSL, which is often more intuitive for humans, and RGB, which is commonly used in digital displays\. |
 | ID | Utility | Utility | It's useful for creating unique identifiers for users, sessions, or any items requiring distinct identification\. <br> The ID is generated using random hexadecimal digits \(0\-9 and a\-f\) and can be customized with a prefix for better context or categorization\. |
 | Icons | Plugin | Plugin | Additional icons for the VulpiniQ library\. |
-| Image | Plugin | Plugin | Useful to manipulate images\. |
+| Image | Plugin | Component | Useful to manipulate images\. |
 | ImageViewer | Plugin | Plugin | A simple image viewer plugin |
 | JSON | Plugin | Plugin | Provides methods to parse, deflate, inflate, merge, sort, and flatten JSON objects\. |
+| Leaving | Static | Event Handling | Registers callbacks to be executed when the window is about to be unloaded\. |
 | NodeBlock | Plugin | Plugin | A plugin for creating UML blocks and connections\. |
 | RGB2HSL | Utility | Color | Converts RGB color values to HSL format, providing a different way to represent colors that can be more intuitive for artists and designers\. <br> HSL stands for Hue, Saturation, and Lightness, making it easier to manipulate colors based on human perception\. <br> This conversion is essential for applications requiring color manipulation, such as image editing or web design, where understanding color relationships is crucial\. |
+| Ready | Static | Event Handling | Registers callbacks to be executed once the DOM is fully loaded and parsed\. |
+| Resize | Static | Event Handling | Registers callbacks to be executed whenever the window is resized, providing the updated width and height\. |
 | Socket | Plugin | Plugin | Provides a WebSocket implementation with automatic reconnection and status callbacks\. |
 | String | Plugin | Plugin | Provides methods to manipulate strings\. |
 | Thread | Plugin | Plugin | Thread is a utility for managing Web Workers in a thread pool\. It allows developers to execute functions in parallel, offloading heavy tasks to separate threads and improving performance\. <br> Thread provides a simple interface for creating, managing, and controlling worker threads, enabling developers to execute multiple tasks concurrently without blocking the main thread\. <br> By distributing workloads across multiple threads, developers can optimize performance and enhance user experience\. |
@@ -76,7 +80,6 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | attr | Prototype | Attribute Manipulation | Gets or sets attributes on the nodes, supporting multiple attributes at once\. |
 | bind | Prototype | Event Handling | Adds an event listener to each node, allowing for event delegation to improve performance\. |
 | blur | Prototype | Form Manipulation | Removes focus from the first node in the selection, effectively blurring it\. |
-| children | Prototype | Traversal | Retrieves the direct child nodes of the first node in the selection\. |
 | click | Prototype | Event Handling | Simulates a click event on each node in the selection\. |
 | clone | Prototype | DOM Manipulation | Creates a deep copy of the first node in the selection, including its child nodes\. |
 | closest | Prototype | Traversal | Finds the nearest ancestor node of the first node that matches a given selector\. |
@@ -96,7 +99,7 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | height | Prototype | Dimensions | Gets or sets the height of the first node\. |
 | hide | Prototype | Display | Hides each node, optionally with a fade\-out effect over a specified duration\. |
 | html | Prototype | Content Manipulation | Gets or sets the innerHTML of the nodes\. This method allows for easy manipulation of the content inside the selected elements\. |
-| id | Prototype | Attributes | Gets or sets the id attribute of the first node\. This provides a simple way to retrieve or modify the unique identifier of an element\. |
+| id | Prototype | Attributes | Gets or sets the id attribute of the first node\. |
 | index | Prototype | Traversal | Returns the index of the first node, or moves the node to a specific index within its parent\. |
 | inside | Prototype | Traversal | Checks if the first node is inside another node, determined by a specific selector\. |
 | is | Prototype | Utilities | Checks if the first node matches a specific selector or condition, allowing for dynamic queries and element comparisons\. |
