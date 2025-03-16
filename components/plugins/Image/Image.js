@@ -62,6 +62,9 @@ Q.Image = function (options) {
             history.states.shift();
             history.position--;
         }
+        
+        // Debug: console log history state for debugging
+        console.log(`History saved: Position=${history.position}, States=${history.states.length}`);
     };
 
     // Core functionality: Load an image - enhanced to support URLs, Image elements and Canvas elements
@@ -284,7 +287,10 @@ Q.Image = function (options) {
     // History management methods - updated to match requested behavior
     Image.History = function(offset = -1) {
         // Check if we have history
-        if (history.states.length === 0) return Image;
+        if (history.states.length === 0) {
+            console.log("No history available");
+            return Image;
+        }
         
         // If offset is 0, stay at current position
         if (offset === 0) return Image;
@@ -297,7 +303,12 @@ Q.Image = function (options) {
         if (targetPosition >= history.states.length) targetPosition = history.states.length - 1;
         
         // Check if we actually need to change position
-        if (targetPosition === history.position) return Image;
+        if (targetPosition === history.position) {
+            console.log(`Already at position ${targetPosition}`);
+            return Image;
+        }
+        
+        console.log(`History navigation: ${history.position} -> ${targetPosition}`);
         
         // Apply history state
         history.isUndoRedoing = true;
@@ -338,6 +349,36 @@ Q.Image = function (options) {
     Image.SaveHistory = function() {
         saveToHistory();
         return Image;
+    };
+    
+    // History observer - improve to catch drawImage calls as well
+    const originalCtxPutImageData = CanvasRenderingContext2D.prototype.putImageData;
+    const originalCtxDrawImage = CanvasRenderingContext2D.prototype.drawImage;
+    
+    // Override the putImageData method to automatically save history
+    CanvasRenderingContext2D.prototype.putImageData = function() {
+        // Call the original method with all arguments
+        const result = originalCtxPutImageData.apply(this, arguments);
+        
+        // If this is our canvas context, save history after the image was modified
+        if (this.canvas === canvas_node && options.autoSaveHistory && !history.isUndoRedoing) {
+            saveToHistory(); // Directly save without timeout
+        }
+        
+        return result;
+    };
+    
+    // Also hook into drawImage which is used by many plugins
+    CanvasRenderingContext2D.prototype.drawImage = function() {
+        // Call the original method with all arguments
+        const result = originalCtxDrawImage.apply(this, arguments);
+        
+        // If this is our canvas context, save history after the image was modified
+        if (this.canvas === canvas_node && options.autoSaveHistory && !history.isUndoRedoing) {
+            saveToHistory(); // Directly save without timeout
+        }
+        
+        return result;
     };
 
     // Clear history

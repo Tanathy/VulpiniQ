@@ -6,7 +6,7 @@
 
 // Directly extend Q.Image with the Resize method
 (function() {
-    // Store the original Image function - important to use this exact naming
+    // Store the original Image function
     const originalImage = Q.Image;
     
     // Override Q.Image to add our method
@@ -43,15 +43,12 @@
             const canvasWidth = canvas_node.width;
             const canvasHeight = canvas_node.height;
             
-            // Calculate ratio based on the resize mode
-            let ratio = 1;
-            
             if (finalOptions.size === 'contain') {
                 if (finalOptions.keepDimensions) {
                     // Keep the dimensions but scale the image to fit within the specified dimensions
                     const widthRatio = width / canvasWidth;
                     const heightRatio = height / canvasHeight;
-                    ratio = Math.min(widthRatio, heightRatio);
+                    const ratio = Math.min(widthRatio, heightRatio);
                     
                     // Scale the image to fit within the specified dimensions
                     const newWidth = canvasWidth * ratio;
@@ -62,12 +59,12 @@
                     // Draw the image onto the temporary canvas with padding if necessary
                     ctx.fillStyle = finalOptions.fill;
                     ctx.fillRect(0, 0, width, height);
-                    ctx.drawImage(canvas_node, xOffset, yOffset, newWidth, newHeight);
+                    ctx.drawImage(canvas_node, 0, 0, canvasWidth, canvasHeight, xOffset, yOffset, newWidth, newHeight);
                 } else {
                     // Scale the image to fit within the specified dimensions
                     const widthRatio = width / canvasWidth;
                     const heightRatio = height / canvasHeight;
-                    ratio = Math.min(widthRatio, heightRatio);
+                    const ratio = Math.min(widthRatio, heightRatio);
                     const newWidth = canvasWidth * ratio;
                     const newHeight = canvasHeight * ratio;
                     
@@ -77,16 +74,19 @@
                 // Scale the image to cover the specified dimensions
                 const widthRatio = width / canvasWidth;
                 const heightRatio = height / canvasHeight;
-                ratio = Math.max(widthRatio, heightRatio);
+                const ratio = Math.max(widthRatio, heightRatio);
                 
                 const newWidth = canvasWidth * ratio;
                 const newHeight = canvasHeight * ratio;
                 
-                const xOffset = (newWidth - width) / 2;
-                const yOffset = (newHeight - height) / 2;
-                ctx.drawImage(canvas_node, xOffset, yOffset, newWidth, newHeight);
+                // Ez volt a fő hiba - az x és y koordináták nem lehetnek negatívak
+                // A kiindulási koordináták helyes kiszámítása, hogy középre kerüljön a kép
+                const sourceX = (canvasWidth - width / ratio) / 2;
+                const sourceY = (canvasHeight - height / ratio) / 2;
+                
+                ctx.drawImage(canvas_node, sourceX, sourceY, width / ratio, height / ratio, 0, 0, width, height);
             } else if (finalOptions.size === 'auto') {
-                ratio = Math.min(width / canvasWidth, height / canvasHeight);
+                const ratio = Math.min(width / canvasWidth, height / canvasHeight);
                 const newWidth = canvasWidth * ratio;
                 const newHeight = canvasHeight * ratio;
                 
@@ -99,6 +99,9 @@
             canvas_node.width = width;
             canvas_node.height = height;
             canvas_node.getContext('2d').drawImage(temp, 0, 0);
+            
+            // Explicitly save to history after resize
+            Image.SaveHistory();
             
             return Image;
         };
