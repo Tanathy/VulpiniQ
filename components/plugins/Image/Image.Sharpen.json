@@ -1,0 +1,9 @@
+{
+    "Name": "Image.Sharpen",
+    "Method": "Plugin",
+    "Desc": "Apply smart sharpening to images.",
+    "Type": "Component",
+    "Dependencies": "Image",
+    "Example": "const image = Q.Image(); <br> image.Sharpen({ amount: 2.0, radius: 1.0 }); // Sharpens the image with specified parameters <br> image.Sharpen({ amount: 1.5, details: 0.7, threshold: 10 }); // Sharpen with detail preservation",
+    "Status": "Stable"
+}

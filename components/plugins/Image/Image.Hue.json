@@ -1,0 +1,9 @@
+{
+    "Name": "Image.Hue",
+    "Method": "Plugin",
+    "Desc": "Adjust image hue.",
+    "Type": "Component",
+    "Dependencies": "Image, RGB2HSL, HSL2RGB",
+    "Example": "const image = Q.Image(); <br> image.Hue(45); // Adjusts the hue by 45 degrees <br> image.Hue(-60, { preserveSaturation: true }); // Shifts hue while preserving saturation",
+    "Status": "Stable"
+}

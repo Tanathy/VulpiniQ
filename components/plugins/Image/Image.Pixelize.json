@@ -1,0 +1,9 @@
+{
+    "Name": "Image.Pixelize",
+    "Method": "Plugin",
+    "Desc": "Apply a pixelation effect to an image.",
+    "Type": "Component",
+    "Dependencies": "Image",
+    "Example": "const image = Q.Image(); <br> image.Pixelize({ blockSize: 10 }); // Applies a pixelation effect with block size of 10 <br> image.Pixelize({ blockSize: 8, shape: 'dot', roundedCorners: true }); // Creates rounded pixel dots",
+    "Status": "Stable"
+}

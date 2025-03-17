@@ -1,0 +1,9 @@
+{
+    "Name": "Image.HDR",
+    "Method": "Plugin",
+    "Desc": "Apply an HDR-like effect to an image.",
+    "Type": "Component",
+    "Dependencies": "Image",
+    "Example": "const image = Q.Image(); <br> image.HDR({ shadowAdjust: 20 }); // Applies HDR effect with shadow adjustment <br> image.HDR({ vibrance: 0.3, clarity: 15, tonal: true }); // Enhanced HDR with vibrance and clarity",
+    "Status": "Stable"
+}

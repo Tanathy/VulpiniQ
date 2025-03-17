@@ -63,6 +63,30 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | ID | Utility | Utility | It's useful for creating unique identifiers for users, sessions, or any items requiring distinct identification\. <br> The ID is generated using random hexadecimal digits \(0\-9 and a\-f\) and can be customized with a prefix for better context or categorization\. |
 | Icons | Plugin | Plugin | Additional icons for the VulpiniQ library\. |
 | Image | Plugin | Component | Useful to manipulate images\. |
+| Image\.Blur | Plugin | Component | Apply standard blur to images\. |
+| Image\.Brightness | Plugin | Component | Adjust image brightness\. |
+| Image\.CRT | Plugin | Component | Apply CRT \(old TV\) and VHS effects to an image\. |
+| Image\.ComicEffect | Plugin | Component | Apply a comic book style effect to an image\. |
+| Image\.Contrast | Plugin | Component | Adjust image contrast\. |
+| Image\.Crop | Plugin | Component | Crop image to specified dimensions\. |
+| Image\.Emboss | Plugin | Component | Apply embossing effect to images\. |
+| Image\.Flip | Plugin | Component | Flip image horizontally or vertically\. |
+| Image\.GaussianBlur | Plugin | Component | Apply high\-quality Gaussian blur to images\. |
+| Image\.Glow | Plugin | Component | Apply a glow effect to an image\. |
+| Image\.Grayscale | Plugin | Component | Convert image to grayscale\. |
+| Image\.HDR | Plugin | Component | Apply an HDR\-like effect to an image\. |
+| Image\.Halftone | Plugin | Component | Apply a halftone effect to an image\. |
+| Image\.Hue | Plugin | Component | Adjust image hue\. |
+| Image\.LensFlareAnamorphic | Plugin | Component | Apply horizontal anamorphic lens flare effect to bright spots in an image\. |
+| Image\.Noise | Plugin | Component | Apply random noise to an image\. |
+| Image\.NoiseSmooth | Plugin | Component | Apply smoothing effect with noise to an image\. |
+| Image\.Pixelize | Plugin | Component | Apply a pixelation effect to an image\. |
+| Image\.RGBSubpixel | Plugin | Component | Apply RGB subpixel emulation effect to an image\. |
+| Image\.Resize | Plugin | Component | Image resizing operations\. |
+| Image\.Rotate | Plugin | Component | Rotate image by specified degrees\. |
+| Image\.Sharpen | Plugin | Component | Apply smart sharpening to images\. |
+| Image\.Vivid | Plugin | Component | Adjust image vividness/saturation\. |
+| Image\.Zoom | Plugin | Component | Zoom in or out of an image\. |
 | ImageViewer | Plugin | Plugin | A simple image viewer plugin |
 | JSON | Plugin | Plugin | Provides methods to parse, deflate, inflate, merge, sort, and flatten JSON objects\. |
 | Leaving | Static | Event Handling | Registers callbacks to be executed when the window is about to be unloaded\. |

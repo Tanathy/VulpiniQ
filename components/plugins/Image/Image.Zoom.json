@@ -1,0 +1,9 @@
+{
+    "Name": "Image.Zoom",
+    "Method": "Plugin",
+    "Desc": "Zoom in or out of an image.",
+    "Type": "Component",
+    "Dependencies": "Image",
+    "Example": "const image = Q.Image(); <br> image.Zoom(1.5); // Zooms in by a factor of 1.5 <br> image.Zoom(0.5, { centerX: 100, centerY: 100 }); // Zooms out centered at point (100,100)",
+    "Status": "Stable"
+}

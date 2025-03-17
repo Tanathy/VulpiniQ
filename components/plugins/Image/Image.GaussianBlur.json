@@ -1,0 +1,9 @@
+{
+    "Name": "Image.GaussianBlur",
+    "Method": "Plugin", 
+    "Desc": "Apply high-quality Gaussian blur to images.",
+    "Type": "Component",
+    "Dependencies": "Image",
+    "Example": "const image = Q.Image(); <br> image.GaussianBlur(10); // Applies Gaussian blur with a radius of 10 <br> image.GaussianBlur(5, { quality: 2, sigma: 1.5 }); // Higher quality blur with custom sigma",
+    "Status": "Stable"
+}

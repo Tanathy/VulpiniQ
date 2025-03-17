@@ -1,0 +1,9 @@
+{
+    "Name": "Image.Contrast",
+    "Method": "Plugin",
+    "Desc": "Adjust image contrast.",
+    "Type": "Component",
+    "Dependencies": "Image",
+    "Example": "const image = Q.Image(); <br> image.Contrast(50); // Increases contrast by 50 <br> image.Contrast(-20, { preserveHue: true }); // Decreases contrast while preserving hue",
+    "Status": "Stable"
+}

@@ -1,0 +1,9 @@
+{
+    "Name": "Image.LensFlareAnamorphic",
+    "Method": "Plugin",
+    "Desc": "Apply horizontal anamorphic lens flare effect to bright spots in an image.",
+    "Type": "Component",
+    "Dependencies": "Image",
+    "Example": "const image = Q.Image(); <br> image.LensFlareAnamorphic({ brightnessThreshold: 200 }); // Adds anamorphic lens flare <br> image.LensFlareAnamorphic({ widthModifier: 1.5, flareColor: [255, 200, 150] }); // Custom colored flare",
+    "Status": "Experimental"
+}

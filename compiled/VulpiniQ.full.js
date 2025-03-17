@@ -1909,6 +1909,2105 @@ Q.Image = function (options) {
     };
     return Image;
 };
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.Blur = function(blurOptions = {}) {
+            const defaults = {
+                radius: 5,       // Blur radius
+                quality: 1       // Number of iterations for higher quality
+            };
+            const settings = Object.assign({}, defaults, blurOptions);
+            const ctx = canvas_node.getContext('2d');
+            const data = ctx.getImageData(0, 0, canvas_node.width, canvas_node.height);
+            const pixels = data.data;
+            const width = canvas_node.width;
+            const height = canvas_node.height;
+            const { kernel, size } = gaussianKernel(settings.radius);
+            const half = Math.floor(size / 2);
+            const iterations = Math.round(settings.quality);
+            let currentPixels = new Uint8ClampedArray(pixels);
+            for (let i = 0; i < iterations; i++) {
+                currentPixels = applyBlur(currentPixels, width, height, kernel, size, half);
+            }
+            for (let i = 0; i < pixels.length; i++) {
+                pixels[i] = currentPixels[i];
+            }
+            ctx.putImageData(data, 0, 0);
+            Image.SaveHistory();
+            return Image;
+        };
+        function gaussianKernel(radius) {
+            const size = 2 * radius + 1;
+            const kernel = new Float32Array(size * size);
+            const sigma = radius / 3;
+            let sum = 0;
+            const center = radius;
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    const dx = x - center;
+                    const dy = y - center;
+                    const weight = Math.exp(-(dx * dx + dy * dy) / (2 * sigma * sigma));
+                    kernel[y * size + x] = weight;
+                    sum += weight;
+                }
+            }
+            for (let i = 0; i < kernel.length; i++) {
+                kernel[i] /= sum;
+            }
+            return { kernel, size };
+        }
+        function applyBlur(pixels, width, height, kernel, size, half) {
+            const output = new Uint8ClampedArray(pixels.length);
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let r = 0, g = 0, b = 0, a = 0;
+                    const dstOff = (y * width + x) * 4;
+                    let weightSum = 0;
+                    for (let ky = 0; ky < size; ky++) {
+                        for (let kx = 0; kx < size; kx++) {
+                            const ny = y + ky - half;
+                            const nx = x + kx - half;
+                            if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
+                                const srcOff = (ny * width + nx) * 4;
+                                const weight = kernel[ky * size + kx];
+                                r += pixels[srcOff] * weight;
+                                g += pixels[srcOff + 1] * weight;
+                                b += pixels[srcOff + 2] * weight;
+                                a += pixels[srcOff + 3] * weight;
+                                weightSum += weight;
+                            }
+                        }
+                    }
+                    if (weightSum > 0) {
+                        r /= weightSum;
+                        g /= weightSum;
+                        b /= weightSum;
+                        a /= weightSum;
+                    }
+                    output[dstOff] = r;
+                    output[dstOff + 1] = g;
+                    output[dstOff + 2] = b;
+                    output[dstOff + 3] = a;
+                }
+            }
+            return output;
+        }
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.Brightness = function(value, brightOptions = {}) {
+            const defaultOptions = {
+                preserveAlpha: true,
+                clamp: true   // Whether to clamp values to 0-255 range
+            };
+            const finalOptions = Object.assign({}, defaultOptions, brightOptions);
+            let data = canvas_node.getContext('2d').getImageData(0, 0, canvas_node.width, canvas_node.height);
+            let pixels = data.data;
+            for (let i = 0; i < pixels.length; i += 4) {
+                pixels[i] += value;     // Red
+                pixels[i + 1] += value; // Green
+                pixels[i + 2] += value; // Blue
+                if (finalOptions.clamp) {
+                    pixels[i] = Math.min(255, Math.max(0, pixels[i]));
+                    pixels[i + 1] = Math.min(255, Math.max(0, pixels[i + 1]));
+                    pixels[i + 2] = Math.min(255, Math.max(0, pixels[i + 2]));
+                }
+            }
+            canvas_node.getContext('2d').putImageData(data, 0, 0);
+            return Image;
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.CRT = function(crtOptions = {}) {
+            const defaultOptions = {
+                noiseStrength: 10,        // Base noise strength
+                strongNoiseStrength: 100, // Stronger noise patches strength
+                strongNoiseCount: 5,      // Number of stronger noise patches
+                noiseMaxLength: 20000,    // Maximum length of noise patch
+                redShift: 3,              // Red channel shift (for chromatic aberration)
+                blueShift: 3,             // Blue channel shift (for chromatic aberration)
+                scanlineHeight: 1,        // Height of scanlines
+                scanlineMargin: 3,        // Space between scanlines
+                scanlineOpacity: 0.1,     // Opacity of scanlines
+                vignette: false,          // Apply vignette effect
+                vignetteStrength: 0.5,    // Vignette effect strength (0-1),
+                scanlineBrightness: 0.5,  // Brightness between scanlines (0-1)
+                rgbOffset: 0,             // RGB subpixel separation
+                curvature: true,          // Apply CRT screen curvature
+                curvatureAmount: 0.1,     // Amount of screen curvature (0-0.3),
+                verticalWobble: 5,        // Amplitude of vertical wobble
+                horizontalWobble: 2,      // Amplitude of horizontal wobble
+                wobbleSpeed: 10,          // Speed of wobble effect (1-50)
+                colorBleed: 0,            // Amount of color bleeding (0-5)
+                jitterChance: 0,          // Chance of frame jitter (0-100)
+            };
+            const finalOptions = Object.assign({}, defaultOptions, crtOptions);
+            let temp = Q('<canvas>', { 
+                width: canvas_node.width, 
+                height: canvas_node.height 
+            }).nodes[0];
+            let ctx = temp.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(canvas_node, 0, 0);
+            const imageData = ctx.getImageData(0, 0, temp.width, temp.height);
+            const data = imageData.data;
+            function clamp(value, min, max) {
+                return Math.min(Math.max(value, min), max);
+            }
+            function CRTRandomBetween(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+            const noiseStrength = finalOptions.noiseStrength;
+            for (let i = 0; i < data.length; i += 4) {
+                const noise = (Math.random() - 0.5) * noiseStrength;
+                data[i] = clamp(data[i] + noise, 0, 255);        // Red channel
+                data[i + 1] = clamp(data[i + 1] + noise, 0, 255); // Green channel
+                data[i + 2] = clamp(data[i + 2] + noise, 0, 255); // Blue channel
+            }
+            const strongNoiseStrength = finalOptions.strongNoiseStrength;
+            const strongNoiseCount = finalOptions.strongNoiseCount;
+            const noiseMaxLength = finalOptions.noiseMaxLength;
+            for (let i0 = 0; i0 < strongNoiseCount; i0++) {
+                const startPos = CRTRandomBetween(
+                    CRTRandomBetween(0, data.length - noiseMaxLength), 
+                    data.length - noiseMaxLength
+                );
+                const endPos = startPos + CRTRandomBetween(0, noiseMaxLength);
+                for (let i = startPos; i < endPos; i += 4) {
+                    if (i + 2 < data.length) {  // Ensure we're within bounds
+                        const noise = (Math.random() - 0.4) * strongNoiseStrength;
+                        data[i] = clamp(data[i] + noise, 0, 255);        // Red channel
+                        data[i + 1] = clamp(data[i + 1] + noise, 0, 255); // Green channel
+                        data[i + 2] = clamp(data[i + 2] + noise, 0, 255); // Blue channel
+                    }
+                }
+            }
+            let wobbleCanvas = Q('<canvas>', { 
+                width: canvas_node.width, 
+                height: canvas_node.height 
+            }).nodes[0];
+            let wobbleCtx = wobbleCanvas.getContext('2d', { willReadFrequently: true });
+            const tempData = new Uint8ClampedArray(data);
+            const redShift = finalOptions.redShift;
+            const blueShift = finalOptions.blueShift;
+            const rgbOffset = finalOptions.rgbOffset;
+            if (finalOptions.colorBleed > 0) {
+                const bleed = Math.floor(finalOptions.colorBleed);
+                for (let y = 0; y < temp.height; y++) {
+                    for (let x = 0; x < temp.width; x++) {
+                        const currentIndex = (y * temp.width + x) * 4;
+                        if (x + bleed < temp.width) {
+                            const bleedIndex = (y * temp.width + (x + bleed)) * 4;
+                            data[bleedIndex] = Math.max(data[bleedIndex], data[currentIndex] * 0.7); // Red bleeds
+                        }
+                        if (y > bleed) {
+                            const bleedIndex = ((y - bleed) * temp.width + x) * 4 + 2;
+                            data[bleedIndex] = Math.max(data[bleedIndex], data[currentIndex + 2] * 0.7); // Blue bleeds
+                        }
+                    }
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+            wobbleCtx.drawImage(temp, 0, 0);
+            const resultCtx = canvas_node.getContext('2d', { willReadFrequently: true });
+            resultCtx.clearRect(0, 0, canvas_node.width, canvas_node.height);
+            let applyScanlines = !finalOptions.subpixelEmulation || !finalOptions.applyScanlineAfterSubpixel;
+            if (finalOptions.jitterChance > 0 && Math.random() * 100 < finalOptions.jitterChance) {
+                const jumpOffset = CRTRandomBetween(5, 20);
+                resultCtx.drawImage(wobbleCanvas, 0, jumpOffset, canvas_node.width, canvas_node.height - jumpOffset);
+                resultCtx.drawImage(wobbleCanvas, 0, 0, canvas_node.width, jumpOffset, 0, canvas_node.height - jumpOffset, canvas_node.width, jumpOffset);
+            } else {
+                const vWobbleAmp = finalOptions.verticalWobble;
+                const hWobbleAmp = finalOptions.horizontalWobble;
+                const wobbleSpeed = finalOptions.wobbleSpeed / 10;
+                const timePhase = Date.now() / 1000 * wobbleSpeed;
+                if (finalOptions.curvature) {
+                    const curveAmount = finalOptions.curvatureAmount;
+                    for (let y = 0; y < canvas_node.height; y++) {
+                        const ny = y / canvas_node.height * 2 - 1; // -1 to 1
+                        const vWobble = vWobbleAmp * Math.sin(y / 30 + timePhase);
+                        for (let x = 0; x < canvas_node.width; x++) {
+                            const nx = x / canvas_node.width * 2 - 1; // -1 to 1
+                            const hWobble = hWobbleAmp * Math.sin(x / 20 + timePhase * 0.7);
+                            const distSq = nx * nx + ny * ny;
+                            const distortion = 1 + distSq * curveAmount;
+                            const srcX = Math.round((nx / distortion + 1) / 2 * canvas_node.width + hWobble);
+                            const srcY = Math.round((ny / distortion + 1) / 2 * canvas_node.height + vWobble);
+                            if (srcX >= 0 && srcX < canvas_node.width && srcY >= 0 && srcY < canvas_node.height) {
+                                if (rgbOffset > 0) {
+                                    const rOffset = Math.min(canvas_node.width - 1, srcX + Math.floor(rgbOffset));
+                                    const gOffset = srcX;
+                                    const bOffset = Math.max(0, srcX - Math.floor(rgbOffset));
+                                    const rData = wobbleCtx.getImageData(rOffset, srcY, 1, 1).data;
+                                    const gData = wobbleCtx.getImageData(gOffset, srcY, 1, 1).data;
+                                    const bData = wobbleCtx.getImageData(bOffset, srcY, 1, 1).data;
+                                    resultCtx.fillStyle = `rgb(${rData[0]}, ${gData[1]}, ${bData[2]})`;
+                                    resultCtx.fillRect(x, y, 1, 1);
+                                } else {
+                                    const pixelData = wobbleCtx.getImageData(srcX, srcY, 1, 1).data;
+                                    resultCtx.fillStyle = `rgba(${pixelData[0]}, ${pixelData[1]}, ${pixelData[2]}, ${pixelData[3] / 255})`;
+                                    resultCtx.fillRect(x, y, 1, 1);
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    for (let y = 0; y < canvas_node.height; y++) {
+                        const vWobble = vWobbleAmp * Math.sin(y / 30 + timePhase);
+                        for (let x = 0; x < canvas_node.width; x++) {
+                            const hWobble = hWobbleAmp * Math.sin(x / 20 + timePhase * 0.7);
+                            const srcX = Math.round(x + hWobble);
+                            const srcY = Math.round(y + vWobble);
+                            if (srcX >= 0 && srcX < canvas_node.width && srcY >= 0 && srcY < canvas_node.height) {
+                                if (rgbOffset > 0) {
+                                    const rOffset = Math.min(canvas_node.width - 1, srcX + Math.floor(rgbOffset));
+                                    const gOffset = srcX;
+                                    const bOffset = Math.max(0, srcX - Math.floor(rgbOffset));
+                                    const rData = wobbleCtx.getImageData(rOffset, srcY, 1, 1).data;
+                                    const gData = wobbleCtx.getImageData(gOffset, srcY, 1, 1).data;
+                                    const bData = wobbleCtx.getImageData(bOffset, srcY, 1, 1).data;
+                                    resultCtx.fillStyle = `rgb(${rData[0]}, ${gData[1]}, ${bData[2]})`;
+                                    resultCtx.fillRect(x, y, 1, 1);
+                                } else {
+                                    const pixelData = wobbleCtx.getImageData(srcX, srcY, 1, 1).data;
+                                    resultCtx.fillStyle = `rgba(${pixelData[0]}, ${pixelData[1]}, ${pixelData[2]}, ${pixelData[3] / 255})`;
+                                    resultCtx.fillRect(x, y, 1, 1);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            function drawHorizontalLines(ctx, width, height, totalHeight, margin, color, brightnessFactor) {
+                ctx.fillStyle = color;
+                for (let i = 0; i < totalHeight; i += (height + margin)) {
+                    ctx.fillRect(0, i, width, height);
+                    if (brightnessFactor > 0 && i + height < totalHeight) {
+                        const brightColor = `rgba(255, 255, 255, ${brightnessFactor * 0.1})`;
+                        ctx.fillStyle = brightColor;
+                        ctx.fillRect(0, i + height, width, margin);
+                        ctx.fillStyle = color; // Reset to scanline color
+                    }
+                }
+            }
+            if (applyScanlines) {
+                drawHorizontalLines(
+                    resultCtx, 
+                    canvas_node.width, 
+                    finalOptions.scanlineHeight, 
+                    canvas_node.height, 
+                    finalOptions.scanlineMargin, 
+                    `rgba(0, 0, 0, ${finalOptions.scanlineOpacity})`,
+                    finalOptions.scanlineBrightness
+                );
+            }
+            if (finalOptions.subpixelEmulation && finalOptions.applyScanlineAfterSubpixel) {
+                drawHorizontalLines(
+                    resultCtx, 
+                    canvas_node.width, 
+                    finalOptions.scanlineHeight, 
+                    canvas_node.height, 
+                    finalOptions.scanlineMargin, 
+                    `rgba(0, 0, 0, ${finalOptions.scanlineOpacity})`,
+                    finalOptions.scanlineBrightness
+                );
+            }
+            if (finalOptions.vignette) {
+                const centerX = canvas_node.width / 2;
+                const centerY = canvas_node.height / 2;
+                const radius = Math.max(centerX, centerY);
+                const gradient = resultCtx.createRadialGradient(
+                    centerX, centerY, radius * 0.5, 
+                    centerX, centerY, radius * 1.5
+                );
+                gradient.addColorStop(0, 'rgba(0,0,0,0)');
+                gradient.addColorStop(1, `rgba(0,0,0,${finalOptions.vignetteStrength})`);
+                resultCtx.fillStyle = gradient;
+                resultCtx.globalCompositeOperation = 'multiply';
+                resultCtx.fillRect(0, 0, canvas_node.width, canvas_node.height);
+                resultCtx.globalCompositeOperation = 'source-over';
+            }
+            return Image;
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.ComicEffect = function(colorSteps = 4, effectOptions = {}) {
+            const defaultOptions = {
+                redSteps: colorSteps,      // Number of color steps for red channel
+                greenSteps: colorSteps,    // Number of color steps for green channel
+                blueSteps: colorSteps,     // Number of color steps for blue channel
+                edgeDetection: false,      // Whether to add edge detection
+                edgeThickness: 1,          // Edge thickness (when edge detection is enabled)
+                edgeThreshold: 20,         // Edge detection threshold
+                saturation: 1.2            // Saturation enhancement factor (1.0 = no change)
+            };
+            const finalOptions = Object.assign({}, defaultOptions, effectOptions);
+            let temp = Q('<canvas>', { 
+                width: canvas_node.width, 
+                height: canvas_node.height 
+            }).nodes[0];
+            let ctx = temp.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(canvas_node, 0, 0);
+            const imageData = ctx.getImageData(0, 0, temp.width, temp.height);
+            const pixels = imageData.data;
+            const redIntervalSize = 256 / finalOptions.redSteps;
+            const greenIntervalSize = 256 / finalOptions.greenSteps;
+            const blueIntervalSize = 256 / finalOptions.blueSteps;
+            for (let i = 0; i < pixels.length; i += 4) {
+                if (finalOptions.saturation !== 1.0) {
+                    let r = pixels[i] / 255;
+                    let g = pixels[i + 1] / 255;
+                    let b = pixels[i + 2] / 255;
+                    const max = Math.max(r, g, b);
+                    const min = Math.min(r, g, b);
+                    let h, s, l = (max + min) / 2;
+                    if (max === min) {
+                        h = s = 0; // achromatic
+                    } else {
+                        const d = max - min;
+                        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                        switch (max) {
+                            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                            case g: h = (b - r) / d + 2; break;
+                            case b: h = (r - g) / d + 4; break;
+                        }
+                        h /= 6;
+                    }
+                    s = Math.min(1, s * finalOptions.saturation);
+                    if (s === 0) {
+                        r = g = b = l; // achromatic
+                    } else {
+                        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                        const p = 2 * l - q;
+                        r = hue2rgb(p, q, h + 1/3);
+                        g = hue2rgb(p, q, h);
+                        b = hue2rgb(p, q, h - 1/3);
+                    }
+                    pixels[i] = Math.round(r * 255);
+                    pixels[i + 1] = Math.round(g * 255);
+                    pixels[i + 2] = Math.round(b * 255);
+                }
+                const redIndex = Math.floor(pixels[i] / redIntervalSize);
+                const greenIndex = Math.floor(pixels[i + 1] / greenIntervalSize);
+                const blueIndex = Math.floor(pixels[i + 2] / blueIntervalSize);
+                pixels[i] = redIndex * redIntervalSize;         // Red channel
+                pixels[i + 1] = greenIndex * greenIntervalSize; // Green channel
+                pixels[i + 2] = blueIndex * blueIntervalSize;   // Blue channel
+            }
+            if (finalOptions.edgeDetection) {
+                const edgeImageData = new ImageData(
+                    new Uint8ClampedArray(pixels), 
+                    temp.width, 
+                    temp.height
+                );
+                for (let y = finalOptions.edgeThickness; y < temp.height - finalOptions.edgeThickness; y++) {
+                    for (let x = finalOptions.edgeThickness; x < temp.width - finalOptions.edgeThickness; x++) {
+                        const pos = (y * temp.width + x) * 4;
+                        let edgeDetected = false;
+                        const leftPos = (y * temp.width + (x - finalOptions.edgeThickness)) * 4;
+                        const rightPos = (y * temp.width + (x + finalOptions.edgeThickness)) * 4;
+                        const topPos = ((y - finalOptions.edgeThickness) * temp.width + x) * 4;
+                        const bottomPos = ((y + finalOptions.edgeThickness) * temp.width + x) * 4;
+                        const diffH = Math.abs(pixels[leftPos] - pixels[rightPos]) +
+                                     Math.abs(pixels[leftPos + 1] - pixels[rightPos + 1]) +
+                                     Math.abs(pixels[leftPos + 2] - pixels[rightPos + 2]);
+                        const diffV = Math.abs(pixels[topPos] - pixels[bottomPos]) +
+                                     Math.abs(pixels[topPos + 1] - pixels[bottomPos + 1]) +
+                                     Math.abs(pixels[topPos + 2] - pixels[bottomPos + 2]);
+                        if (diffH > finalOptions.edgeThreshold || diffV > finalOptions.edgeThreshold) {
+                            edgeImageData.data[pos] = 0;
+                            edgeImageData.data[pos + 1] = 0;
+                            edgeImageData.data[pos + 2] = 0;
+                        }
+                    }
+                }
+                ctx.putImageData(edgeImageData, 0, 0);
+            } else {
+                ctx.putImageData(imageData, 0, 0);
+            }
+            canvas_node.getContext('2d').clearRect(0, 0, canvas_node.width, canvas_node.height);
+            canvas_node.getContext('2d').drawImage(temp, 0, 0);
+            return Image;
+        };
+        function hue2rgb(p, q, t) {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1/6) return p + (q - p) * 6 * t;
+            if (t < 1/2) return q;
+            if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+            return p;
+        }
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.Contrast = function(value, contrastOptions = {}) {
+            const defaultOptions = {
+                preserveHue: true,  // Whether to preserve the hue while adjusting contrast
+                clamp: true        // Whether to clamp values to 0-255 range
+            };
+            const finalOptions = Object.assign({}, defaultOptions, contrastOptions);
+            let data = canvas_node.getContext('2d').getImageData(0, 0, canvas_node.width, canvas_node.height);
+            let pixels = data.data;
+            let factor = (259 * (value + 255)) / (255 * (259 - value));
+            for (let i = 0; i < pixels.length; i += 4) {
+                pixels[i] = factor * (pixels[i] - 128) + 128;
+                pixels[i + 1] = factor * (pixels[i + 1] - 128) + 128;
+                pixels[i + 2] = factor * (pixels[i + 2] - 128) + 128;
+                if (finalOptions.clamp) {
+                    pixels[i] = Math.min(255, Math.max(0, pixels[i]));
+                    pixels[i + 1] = Math.min(255, Math.max(0, pixels[i + 1]));
+                    pixels[i + 2] = Math.min(255, Math.max(0, pixels[i + 2]));
+                }
+            }
+            canvas_node.getContext('2d').putImageData(data, 0, 0);
+            return Image;
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.Crop = function(x, y, width, height, cropOptions = {}) {
+            const defaultOptions = {
+                preserveContext: true // Whether to preserve the drawing context properties
+            };
+            const finalOptions = Object.assign({}, defaultOptions, cropOptions);
+            let temp = Q('<canvas>', { width: width, height: height }).nodes[0];
+            let tempCtx = temp.getContext('2d');
+            if (finalOptions.preserveContext) {
+                const ctx = canvas_node.getContext('2d');
+                tempCtx.globalAlpha = ctx.globalAlpha;
+                tempCtx.globalCompositeOperation = ctx.globalCompositeOperation;
+            }
+            tempCtx.drawImage(canvas_node, x, y, width, height, 0, 0, width, height);
+            canvas_node.width = width;
+            canvas_node.height = height;
+            canvas_node.getContext('2d').drawImage(temp, 0, 0);
+            return Image;
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.Emboss = function(embossOptions = {}) {
+            const defaults = {
+                strength: 1,              // Effect strength
+                direction: 'top-left',    // Direction of embossing: 'top-left', 'top-right', 'bottom-left', 'bottom-right'
+                blend: true,              // Blend with original image
+                grayscale: true           // Convert to grayscale
+            };
+            const settings = Object.assign({}, defaults, embossOptions);
+            const ctx = canvas_node.getContext('2d');
+            const data = ctx.getImageData(0, 0, canvas_node.width, canvas_node.height);
+            const pixels = data.data;
+            const width = canvas_node.width;
+            const height = canvas_node.height;
+            const dataCopy = new Uint8ClampedArray(pixels);
+            const kernels = {
+                'top-left': [-2, -1, 0, -1, 1, 1, 0, 1, 2],
+                'top-right': [0, -1, -2, 1, 1, -1, 2, 1, 0],
+                'bottom-left': [0, 1, 2, -1, 1, 1, -2, -1, 0],
+                'bottom-right': [2, 1, 0, 1, 1, -1, 0, -1, -2]
+            };
+            const kernel = kernels[settings.direction] || kernels['top-left'];
+            const kernelSize = Math.sqrt(kernel.length);
+            const half = Math.floor(kernelSize / 2);
+            const strength = settings.strength;
+            const divisor = 1;
+            const offset = 128; // Middle gray for emboss effect
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let r = 0, g = 0, b = 0;
+                    const dstOff = (y * width + x) * 4;
+                    for (let cy = 0; cy < kernelSize; cy++) {
+                        for (let cx = 0; cx < kernelSize; cx++) {
+                            const scy = y + cy - half;
+                            const scx = x + cx - half;
+                            if (scy >= 0 && scy < height && scx >= 0 && scx < width) {
+                                const srcOff = (scy * width + scx) * 4;
+                                const wt = kernel[cy * kernelSize + cx];
+                                r += dataCopy[srcOff] * wt;
+                                g += dataCopy[srcOff + 1] * wt;
+                                b += dataCopy[srcOff + 2] * wt;
+                            }
+                        }
+                    }
+                    r = (r / divisor) * strength + offset;
+                    g = (g / divisor) * strength + offset;
+                    b = (b / divisor) * strength + offset;
+                    if (settings.grayscale) {
+                        const avg = (r + g + b) / 3;
+                        r = g = b = avg;
+                    }
+                    r = Math.min(Math.max(r, 0), 255);
+                    g = Math.min(Math.max(g, 0), 255);
+                    b = Math.min(Math.max(b, 0), 255);
+                    if (settings.blend) {
+                        pixels[dstOff] = (pixels[dstOff] + r) / 2;
+                        pixels[dstOff + 1] = (pixels[dstOff + 1] + g) / 2;
+                        pixels[dstOff + 2] = (pixels[dstOff + 2] + b) / 2;
+                    } else {
+                        pixels[dstOff] = r;
+                        pixels[dstOff + 1] = g;
+                        pixels[dstOff + 2] = b;
+                    }
+                }
+            }
+            ctx.putImageData(data, 0, 0);
+            Image.SaveHistory();
+            return Image;
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.Flip = function(direction = 'horizontal', flipOptions = {}) {
+            const defaultOptions = {
+                smoothing: true,    // Whether to use smoothing
+                quality: 'high'     // Smoothing quality: 'low', 'medium', 'high'
+            };
+            const finalOptions = Object.assign({}, defaultOptions, flipOptions);
+            let temp = Q('<canvas>', { 
+                width: canvas_node.width, 
+                height: canvas_node.height 
+            }).nodes[0];
+            let ctx = temp.getContext('2d');
+            ctx.imageSmoothingEnabled = finalOptions.smoothing;
+            ctx.imageSmoothingQuality = finalOptions.quality;
+            if (direction === 'horizontal') {
+                ctx.translate(canvas_node.width, 0);
+                ctx.scale(-1, 1);
+            } else if (direction === 'vertical') {
+                ctx.translate(0, canvas_node.height);
+                ctx.scale(1, -1);
+            } else if (direction === 'both') {
+                ctx.translate(canvas_node.width, canvas_node.height);
+                ctx.scale(-1, -1);
+            }
+            ctx.drawImage(canvas_node, 0, 0);
+            canvas_node.getContext('2d').drawImage(temp, 0, 0);
+            return Image;
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.GaussianBlur = function(radius = 5, blurOptions = {}) {
+            const defaultOptions = {
+                sigma: radius / 2.0,         // Standard deviation of the Gaussian distribution
+                iterations: 1,               // Number of iterations (higher = stronger blur)
+                preserveAlpha: true,         // Whether to preserve alpha channel
+                separableKernel: true        // Use separable kernel for better performance
+            };
+            const finalOptions = Object.assign({}, defaultOptions, blurOptions);
+            const ctx = canvas_node.getContext('2d', { willReadFrequently: true });
+            const imageData = ctx.getImageData(0, 0, canvas_node.width, canvas_node.height);
+            const pixels = imageData.data;
+            const width = canvas_node.width;
+            const height = canvas_node.height;
+            const kernel = createGaussianKernel(radius, finalOptions.sigma);
+            for (let i = 0; i < finalOptions.iterations; i++) {
+                if (finalOptions.separableKernel) {
+                    applySeparableGaussianBlur(pixels, width, height, kernel.kernel1D, kernel.size, finalOptions.preserveAlpha);
+                } else {
+                    apply2DGaussianBlur(pixels, width, height, kernel.kernel2D, kernel.size, finalOptions.preserveAlpha);
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+            return Image;
+        };
+        function createGaussianKernel(radius, sigma) {
+            const size = Math.ceil(radius) * 2 + 1;
+            const center = Math.floor(size / 2);
+            const kernel2D = new Float32Array(size * size);
+            let sum = 0;
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    const distance = Math.sqrt(Math.pow(x - center, 2) + Math.pow(y - center, 2));
+                    const value = Math.exp(-(distance * distance) / (2 * sigma * sigma));
+                    kernel2D[y * size + x] = value;
+                    sum += value;
+                }
+            }
+            for (let i = 0; i < kernel2D.length; i++) {
+                kernel2D[i] /= sum;
+            }
+            const kernel1D = new Float32Array(size);
+            sum = 0;
+            for (let i = 0; i < size; i++) {
+                const distance = Math.abs(i - center);
+                const value = Math.exp(-(distance * distance) / (2 * sigma * sigma));
+                kernel1D[i] = value;
+                sum += value;
+            }
+            for (let i = 0; i < size; i++) {
+                kernel1D[i] /= sum;
+            }
+            return { kernel1D, kernel2D, size };
+        }
+        function apply2DGaussianBlur(pixels, width, height, kernel, kernelSize, preserveAlpha) {
+            const tempPixels = new Uint8ClampedArray(pixels.length);
+            const half = Math.floor(kernelSize / 2);
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let r = 0, g = 0, b = 0, a = 0;
+                    const index = (y * width + x) * 4;
+                    for (let ky = 0; ky < kernelSize; ky++) {
+                        for (let kx = 0; kx < kernelSize; kx++) {
+                            const pixelY = Math.min(height - 1, Math.max(0, y + ky - half));
+                            const pixelX = Math.min(width - 1, Math.max(0, x + kx - half));
+                            const pixelIndex = (pixelY * width + pixelX) * 4;
+                            const kernelValue = kernel[ky * kernelSize + kx];
+                            r += pixels[pixelIndex] * kernelValue;
+                            g += pixels[pixelIndex + 1] * kernelValue;
+                            b += pixels[pixelIndex + 2] * kernelValue;
+                            if (!preserveAlpha) {
+                                a += pixels[pixelIndex + 3] * kernelValue;
+                            }
+                        }
+                    }
+                    tempPixels[index] = r;
+                    tempPixels[index + 1] = g;
+                    tempPixels[index + 2] = b;
+                    tempPixels[index + 3] = preserveAlpha ? pixels[index + 3] : a;
+                }
+            }
+            for (let i = 0; i < pixels.length; i++) {
+                pixels[i] = tempPixels[i];
+            }
+        }
+        function applySeparableGaussianBlur(pixels, width, height, kernel, kernelSize, preserveAlpha) {
+            const tempPixels = new Uint8ClampedArray(pixels.length);
+            const half = Math.floor(kernelSize / 2);
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let r = 0, g = 0, b = 0, a = 0;
+                    const index = (y * width + x) * 4;
+                    for (let k = 0; k < kernelSize; k++) {
+                        const pixelX = Math.min(width - 1, Math.max(0, x + k - half));
+                        const pixelIndex = (y * width + pixelX) * 4;
+                        const kernelValue = kernel[k];
+                        r += pixels[pixelIndex] * kernelValue;
+                        g += pixels[pixelIndex + 1] * kernelValue;
+                        b += pixels[pixelIndex + 2] * kernelValue;
+                        if (!preserveAlpha) {
+                            a += pixels[pixelIndex + 3] * kernelValue;
+                        }
+                    }
+                    tempPixels[index] = r;
+                    tempPixels[index + 1] = g;
+                    tempPixels[index + 2] = b;
+                    tempPixels[index + 3] = preserveAlpha ? pixels[index + 3] : a;
+                }
+            }
+            for (let i = 0; i < pixels.length; i++) {
+                pixels[i] = tempPixels[i];
+            }
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let r = 0, g = 0, b = 0, a = 0;
+                    const index = (y * width + x) * 4;
+                    for (let k = 0; k < kernelSize; k++) {
+                        const pixelY = Math.min(height - 1, Math.max(0, y + k - half));
+                        const pixelIndex = (pixelY * width + x) * 4;
+                        const kernelValue = kernel[k];
+                        r += pixels[pixelIndex] * kernelValue;
+                        g += pixels[pixelIndex + 1] * kernelValue;
+                        b += pixels[pixelIndex + 2] * kernelValue;
+                        if (!preserveAlpha) {
+                            a += pixels[pixelIndex + 3] * kernelValue;
+                        }
+                    }
+                    tempPixels[index] = r;
+                    tempPixels[index + 1] = g;
+                    tempPixels[index + 2] = b;
+                    tempPixels[index + 3] = preserveAlpha ? pixels[index + 3] : a;
+                }
+            }
+            for (let i = 0; i < pixels.length; i++) {
+                pixels[i] = tempPixels[i];
+            }
+        }
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.Glow = function(glowOptions = {}) {
+            const defaultOptions = {
+                illuminanceThreshold: 200,  // Brightness threshold for glow (0-255)
+                blurRadius: 10,             // Radius of the glow blur
+                intensity: 1.0,             // Intensity multiplier for the glow
+                color: null                 // Optional color tint for the glow (null for original colors)
+            };
+            const finalOptions = Object.assign({}, defaultOptions, glowOptions);
+            let sourceCanvas = Q('<canvas>', { 
+                width: canvas_node.width, 
+                height: canvas_node.height 
+            }).nodes[0];
+            let glowCanvas = Q('<canvas>', { 
+                width: canvas_node.width, 
+                height: canvas_node.height 
+            }).nodes[0];
+            sourceCanvas.getContext('2d').drawImage(canvas_node, 0, 0);
+            const glowCtx = glowCanvas.getContext('2d', { willReadFrequently: true });
+            const imageData = sourceCanvas.getContext('2d').getImageData(
+                0, 0, sourceCanvas.width, sourceCanvas.height
+            );
+            const data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                const red = data[i];
+                const green = data[i + 1];
+                const blue = data[i + 2];
+                const alpha = data[i + 3];
+                const brightness = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+                if (brightness > finalOptions.illuminanceThreshold) {
+                    const x = (i / 4) % sourceCanvas.width;
+                    const y = Math.floor((i / 4) / sourceCanvas.width);
+                    if (finalOptions.color) {
+                        let tintColor;
+                        if (typeof finalOptions.color === 'string') {
+                            const tempCanvas = document.createElement('canvas');
+                            tempCanvas.width = 1;
+                            tempCanvas.height = 1;
+                            const tempCtx = tempCanvas.getContext('2d');
+                            tempCtx.fillStyle = finalOptions.color;
+                            tempCtx.fillRect(0, 0, 1, 1);
+                            const tempData = tempCtx.getImageData(0, 0, 1, 1).data;
+                            tintColor = {
+                                r: tempData[0],
+                                g: tempData[1],
+                                b: tempData[2]
+                            };
+                        } else if (typeof finalOptions.color === 'object') {
+                            tintColor = finalOptions.color;
+                        }
+                        if (tintColor) {
+                            glowCtx.fillStyle = `rgba(${tintColor.r}, ${tintColor.g}, ${tintColor.b}, ${(alpha / 255) * finalOptions.intensity})`;
+                        }
+                    } else {
+                        glowCtx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${(alpha / 255) * finalOptions.intensity})`;
+                    }
+                    glowCtx.fillRect(x, y, 1, 1);
+                }
+            }
+            applyBoxBlur(glowCanvas, finalOptions.blurRadius);
+            const ctx = canvas_node.getContext('2d');
+            ctx.drawImage(sourceCanvas, 0, 0);
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.drawImage(glowCanvas, 0, 0);
+            ctx.globalCompositeOperation = 'source-over';
+            return Image;
+            function applyBoxBlur(canvas, radius) {
+                const context = canvas.getContext('2d', { willReadFrequently: true });
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                const pixels = imageData.data;
+                const width = imageData.width;
+                const height = imageData.height;
+                const totalPixels = width * height;
+                const pixelsCopy = new Uint8ClampedArray(pixels);
+                for (let i = 0; i < totalPixels; i++) {
+                    let blurValueR = 0;
+                    let blurValueG = 0;
+                    let blurValueB = 0;
+                    let blurValueA = 0;
+                    let blurCount = 0;
+                    const startY = Math.max(0, Math.floor(i / width) - radius);
+                    const endY = Math.min(height - 1, Math.floor(i / width) + radius);
+                    const startX = Math.max(0, (i % width) - radius);
+                    const endX = Math.min(width - 1, (i % width) + radius);
+                    for (let y = startY; y <= endY; y++) {
+                        for (let x = startX; x <= endX; x++) {
+                            const index = (y * width + x) * 4;
+                            blurValueR += pixelsCopy[index];
+                            blurValueG += pixelsCopy[index + 1];
+                            blurValueB += pixelsCopy[index + 2];
+                            blurValueA += pixelsCopy[index + 3];
+                            blurCount++;
+                        }
+                    }
+                    const currentIndex = i * 4;
+                    pixels[currentIndex] = blurValueR / blurCount;
+                    pixels[currentIndex + 1] = blurValueG / blurCount;
+                    pixels[currentIndex + 2] = blurValueB / blurCount;
+                    pixels[currentIndex + 3] = blurValueA / blurCount;
+                }
+                context.putImageData(imageData, 0, 0);
+            }
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.Grayscale = function(grayOptions = {}) {
+            const defaultGrayOptions = {
+                algorithm: 'average', // 'average', 'luminance', 'lightness'
+                intensity: 1.0       // 0.0 to 1.0 for partial grayscale effect
+            };
+            const finalOptions = Object.assign({}, defaultGrayOptions, grayOptions);
+            let data = canvas_node.getContext('2d').getImageData(0, 0, canvas_node.width, canvas_node.height);
+            let pixels = data.data;
+            for (let i = 0; i < pixels.length; i += 4) {
+                let r = pixels[i];
+                let g = pixels[i + 1];
+                let b = pixels[i + 2];
+                let gray;
+                switch (finalOptions.algorithm) {
+                    case 'luminance':
+                        gray = 0.299 * r + 0.587 * g + 0.114 * b;
+                        break;
+                    case 'lightness':
+                        gray = (Math.max(r, g, b) + Math.min(r, g, b)) / 2;
+                        break;
+                    case 'average':
+                    default:
+                        gray = (r + g + b) / 3;
+                        break;
+                }
+                if (finalOptions.intensity < 1.0) {
+                    pixels[i] = r * (1 - finalOptions.intensity) + gray * finalOptions.intensity;
+                    pixels[i + 1] = g * (1 - finalOptions.intensity) + gray * finalOptions.intensity;
+                    pixels[i + 2] = b * (1 - finalOptions.intensity) + gray * finalOptions.intensity;
+                } else {
+                    pixels[i] = gray;
+                    pixels[i + 1] = gray;
+                    pixels[i + 2] = gray;
+                }
+            }
+            canvas_node.getContext('2d').putImageData(data, 0, 0);
+            return Image;
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.HDR = function(hdrOptions = {}) {
+            const defaultOptions = {
+                shadowAdjust: 15,        // Shadow level adjustment
+                brightnessAdjust: 10,    // Brightness adjustment
+                contrastAdjust: 1.2,     // Contrast adjustment
+                vibrance: 0.2,           // Vibrance adjustment (saturation for less saturated colors)
+                highlights: -10,         // Highlight level adjustment
+                clarity: 10,             // Clarity/local contrast enhancement
+                tonal: true              // Apply tonal balancing
+            };
+            const finalOptions = Object.assign({}, defaultOptions, hdrOptions);
+            let temp = Q('<canvas>', { 
+                width: canvas_node.width, 
+                height: canvas_node.height 
+            }).nodes[0];
+            let ctx = temp.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(canvas_node, 0, 0);
+            const imageData = ctx.getImageData(0, 0, temp.width, temp.height);
+            const data = imageData.data;
+            let minBrightness = 255;
+            let maxBrightness = 0;
+            let avgBrightness = 0;
+            if (finalOptions.tonal) {
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                    minBrightness = Math.min(minBrightness, brightness);
+                    maxBrightness = Math.max(maxBrightness, brightness);
+                    avgBrightness += brightness;
+                }
+                avgBrightness /= (data.length / 4);
+            }
+            for (let i = 0; i < data.length; i += 4) {
+                let r = data[i];
+                let g = data[i + 1];
+                let b = data[i + 2];
+                const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                const shadowFactor = Math.max(0, 1 - brightness / 128);
+                r += finalOptions.shadowAdjust * shadowFactor;
+                g += finalOptions.shadowAdjust * shadowFactor;
+                b += finalOptions.shadowAdjust * shadowFactor;
+                const highlightFactor = Math.max(0, brightness / 128 - 1);
+                r += finalOptions.highlights * highlightFactor;
+                g += finalOptions.highlights * highlightFactor;
+                b += finalOptions.highlights * highlightFactor;
+                r += finalOptions.brightnessAdjust;
+                g += finalOptions.brightnessAdjust;
+                b += finalOptions.brightnessAdjust;
+                r = (r - 128) * finalOptions.contrastAdjust + 128;
+                g = (g - 128) * finalOptions.contrastAdjust + 128;
+                b = (b - 128) * finalOptions.contrastAdjust + 128;
+                if (finalOptions.vibrance !== 0) {
+                    const max = Math.max(r, g, b);
+                    const min = Math.min(r, g, b);
+                    const lightness = (max + min) / 510; // Normalize to 0-1
+                    if (max - min < 100) {  // Lower values = less saturated
+                        const satAdjust = finalOptions.vibrance * (1 - (max - min) / 100);
+                        if (max === r) {
+                            g = g - satAdjust * (g - min);
+                            b = b - satAdjust * (b - min);
+                        } else if (max === g) {
+                            r = r - satAdjust * (r - min);
+                            b = b - satAdjust * (b - min);
+                        } else {
+                            r = r - satAdjust * (r - min);
+                            g = g - satAdjust * (g - min);
+                        }
+                    }
+                }
+                if (finalOptions.tonal && maxBrightness > minBrightness) {
+                    const normalizedBrightness = (brightness - minBrightness) / (maxBrightness - minBrightness);
+                    const tonalFactor = (normalizedBrightness < 0.5) ? 
+                        2 * normalizedBrightness : 2 - 2 * normalizedBrightness;
+                    const tonalAdjust = finalOptions.clarity * tonalFactor;
+                    r += tonalAdjust;
+                    g += tonalAdjust;
+                    b += tonalAdjust;
+                }
+                data[i] = Math.min(255, Math.max(0, r));
+                data[i + 1] = Math.min(255, Math.max(0, g));
+                data[i + 2] = Math.min(255, Math.max(0, b));
+            }
+            ctx.putImageData(imageData, 0, 0);
+            canvas_node.getContext('2d').clearRect(0, 0, canvas_node.width, canvas_node.height);
+            canvas_node.getContext('2d').drawImage(temp, 0, 0);
+            return Image;
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.Halftone = function(halftoneOptions = {}) {
+            const defaultOptions = {
+                dotSize: 8,                  // Size of the halftone dots
+                shape: "dot",                // Shape of the dots: "dot", "rectangle", "hexagon"
+                colored: true,               // Whether to use color or black and white
+                backgroundColor: "black",    // Background color
+                foregroundColor: "white",    // Foreground color (for non-colored mode)
+                spacing: 2                   // Spacing multiplier between dots
+            };
+            const finalOptions = Object.assign({}, defaultOptions, halftoneOptions);
+            let temp = Q('<canvas>', { 
+                width: canvas_node.width, 
+                height: canvas_node.height 
+            }).nodes[0];
+            let tempCtx = temp.getContext('2d', { willReadFrequently: true });
+            tempCtx.drawImage(canvas_node, 0, 0);
+            const ctx = canvas_node.getContext('2d');
+            ctx.fillStyle = finalOptions.backgroundColor;
+            ctx.fillRect(0, 0, canvas_node.width, canvas_node.height);
+            const imageData = tempCtx.getImageData(0, 0, temp.width, temp.height);
+            const pixels = imageData.data;
+            const width = temp.width;
+            const height = temp.height;
+            function drawShape(x, y, size, color, shapeType) {
+                ctx.beginPath();
+                if (shapeType === "dot") {
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                } else if (shapeType === "rectangle") {
+                    ctx.rect(x - size / 2, y - size / 2, size, size);
+                } else if (shapeType === "hexagon") {
+                    const sideLength = size / 2;
+                    const angleStep = (Math.PI * 2) / 6;
+                    ctx.moveTo(x + sideLength * Math.cos(0), y + sideLength * Math.sin(0));
+                    for (let i = 1; i <= 6; i++) {
+                        ctx.lineTo(
+                            x + sideLength * Math.cos(angleStep * i), 
+                            y + sideLength * Math.sin(angleStep * i)
+                        );
+                    }
+                } else {
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                }
+                if (finalOptions.colored) {
+                    ctx.fillStyle = color;
+                } else {
+                    ctx.fillStyle = finalOptions.foregroundColor;
+                }
+                ctx.fill();
+            }
+            const dotSpacing = finalOptions.dotSize * finalOptions.spacing;
+            for (let y = 0; y < height; y += dotSpacing) {
+                for (let x = 0; x < width; x += dotSpacing) {
+                    let r = 0, g = 0, b = 0, count = 0;
+                    const sampleSize = finalOptions.dotSize;
+                    for (let offsetY = 0; offsetY < sampleSize; offsetY++) {
+                        for (let offsetX = 0; offsetX < sampleSize; offsetX++) {
+                            const sampleX = x + offsetX;
+                            const sampleY = y + offsetY;
+                            if (sampleX < width && sampleY < height) {
+                                const index = (sampleY * width + sampleX) * 4;
+                                r += pixels[index];
+                                g += pixels[index + 1];
+                                b += pixels[index + 2];
+                                count++;
+                            }
+                        }
+                    }
+                    const avgR = Math.floor(r / count);
+                    const avgG = Math.floor(g / count);
+                    const avgB = Math.floor(b / count);
+                    const color = finalOptions.colored ? `rgb(${avgR}, ${avgG}, ${avgB})` : "";
+                    const brightness = (avgR + avgG + avgB) / 3;
+                    const dotSizeBasedOnBrightness = finalOptions.dotSize * (1 - brightness / 255);
+                    if (dotSizeBasedOnBrightness > 0) {
+                        if (x >= 0 && x < width && y >= 0 && y < height) {
+                            drawShape(x, y, dotSizeBasedOnBrightness, color, finalOptions.shape);
+                        }
+                    }
+                }
+            }
+            return Image;
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.Hue = function(value, hueOptions = {}) {
+            const defaultOptions = {
+                preserveSaturation: true,  // Whether to preserve saturation during hue shift
+                preserveLightness: true    // Whether to preserve lightness during hue shift
+            };
+            const finalOptions = Object.assign({}, defaultOptions, hueOptions);
+            if (typeof Q.RGB2HSL !== 'function' || typeof Q.HSL2RGB !== 'function') {
+                console.error('Hue adjustment requires RGB2HSL and HSL2RGB utilities');
+                return Image;
+            }
+            let ctx = canvas_node.getContext('2d');
+            let data = ctx.getImageData(0, 0, canvas_node.width, canvas_node.height);
+            let pixels = data.data;
+            for (let i = 0; i < pixels.length; i += 4) {
+                let r = pixels[i];
+                let g = pixels[i + 1];
+                let b = pixels[i + 2];
+                let hsl = Q.RGB2HSL(r, g, b);
+                hsl[0] = (hsl[0] * 360 + value) % 360;
+                if (hsl[0] < 0) hsl[0] += 360; // Handle negative values
+                hsl[0] = hsl[0] / 360; // Convert back to 0-1 range for HSL2RGB
+                let rgb = Q.HSL2RGB(hsl[0], hsl[1], hsl[2]);
+                pixels[i] = rgb[0];
+                pixels[i + 1] = rgb[1];
+                pixels[i + 2] = rgb[2];
+            }
+            ctx.putImageData(data, 0, 0);
+            return Image;
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.LensFlareAnamorphic = function(flareOptions = {}) {
+            const defaultOptions = {
+                brightnessThreshold: 200,  // Minimum brightness to consider as a flare source
+                widthModifier: 1.0,        // Size multiplier for the flare width
+                heightThreshold: 10,       // Height of the flare
+                maxFlares: 20,             // Maximum number of flares to render
+                opacity: 0.2,              // Opacity reduction factor (subtracted from brightness)
+                flareColor: null           // Optional fixed color for flares [r, g, b]
+            };
+            const finalOptions = Object.assign({}, defaultOptions, flareOptions);
+            let temp = Q('<canvas>', { 
+                width: canvas_node.width, 
+                height: canvas_node.height 
+            }).nodes[0];
+            let ctx = temp.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(canvas_node, 0, 0);
+            const sourceData = ctx.getImageData(0, 0, temp.width, temp.height).data;
+            let flareColor = finalOptions.flareColor;
+            if (!flareColor) {
+                const avgColor = { r: 0, g: 0, b: 0, count: 0 };
+                for (let y = 0; y < temp.height; y++) {
+                    for (let x = 0; x < temp.width; x++) {
+                        const index = (y * temp.width + x) * 4;
+                        const brightness = (sourceData[index] + sourceData[index + 1] + sourceData[index + 2]) / 3;
+                        if (brightness >= finalOptions.brightnessThreshold) {
+                            avgColor.r += sourceData[index];
+                            avgColor.g += sourceData[index + 1];
+                            avgColor.b += sourceData[index + 2];
+                            avgColor.count++;
+                        }
+                    }
+                }
+                if (avgColor.count > 0) {
+                    flareColor = [
+                        Math.round(avgColor.r / avgColor.count),
+                        Math.round(avgColor.g / avgColor.count),
+                        Math.round(avgColor.b / avgColor.count)
+                    ];
+                } else {
+                    flareColor = [255, 255, 255]; // Default to white if no bright spots
+                }
+            }
+            const flareColorR = flareColor[0];
+            const flareColorG = flareColor[1];
+            const flareColorB = flareColor[2];
+            const flares = [];
+            for (let y = 0; y < temp.height; y++) {
+                for (let x = 0; x < temp.width; x++) {
+                    const index = (y * temp.width + x) * 4;
+                    const brightness = (sourceData[index] + sourceData[index + 1] + sourceData[index + 2]) / 3;
+                    if (brightness >= finalOptions.brightnessThreshold) {
+                        flares.push({ x, y, brightness });
+                    }
+                }
+            }
+            flares.sort((a, b) => b.brightness - a.brightness);
+            const targetCtx = canvas_node.getContext('2d');
+            for (let i = 0; i < Math.min(finalOptions.maxFlares, flares.length); i++) {
+                const flare = flares[i];
+                const size = flare.brightness / finalOptions.brightnessThreshold * (100 * finalOptions.widthModifier);
+                const height = finalOptions.heightThreshold;
+                const gradient = targetCtx.createLinearGradient(
+                    flare.x - size / 2, flare.y, 
+                    flare.x + size / 2, flare.y
+                );
+                gradient.addColorStop(0, `rgba(${flareColorR}, ${flareColorG}, ${flareColorB}, 0)`);
+                gradient.addColorStop(0.5, `rgba(${flareColorR}, ${flareColorG}, ${flareColorB}, ${(flare.brightness / 255) - finalOptions.opacity})`);
+                gradient.addColorStop(1, `rgba(${flareColorR}, ${flareColorG}, ${flareColorB}, 0)`);
+                targetCtx.globalCompositeOperation = "overlay";
+                targetCtx.beginPath();
+                targetCtx.fillStyle = gradient;
+                targetCtx.fillRect(flare.x - size / 2, flare.y - height / 2, size, height);
+            }
+            targetCtx.globalCompositeOperation = "source-over";
+            return Image;
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.Noise = function(noiseOptions = {}) {
+            const defaultOptions = {
+                threshold: 30,          // Maximum noise intensity
+                isBlackAndWhite: false, // Whether to apply the same noise to all color channels
+                mode: 'add',            // Mode: 'add', 'subtract', or 'mix'
+                intensity: 1.0,         // Overall noise intensity multiplier (0-1)
+                seed: Math.random()     // Random seed for noise generation
+            };
+            const finalOptions = Object.assign({}, defaultOptions, noiseOptions);
+            let temp = Q('<canvas>', { 
+                width: canvas_node.width, 
+                height: canvas_node.height 
+            }).nodes[0];
+            let ctx = temp.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(canvas_node, 0, 0);
+            const imageData = ctx.getImageData(0, 0, temp.width, temp.height);
+            const pixels = imageData.data;
+            function getRandomNoise(threshold) {
+                const adjustedThreshold = threshold * finalOptions.intensity;
+                switch(finalOptions.mode) {
+                    case 'subtract':
+                        return -Math.floor(Math.random() * (adjustedThreshold + 1));
+                    case 'mix':
+                        return Math.floor(Math.random() * (adjustedThreshold * 2 + 1)) - adjustedThreshold;
+                    case 'add':
+                    default:
+                        return Math.floor(Math.random() * (adjustedThreshold + 1));
+                }
+            }
+            for (let i = 0; i < pixels.length; i += 4) {
+                let red = pixels[i];
+                let green = pixels[i + 1];
+                let blue = pixels[i + 2];
+                if (finalOptions.isBlackAndWhite) {
+                    const noise = getRandomNoise(finalOptions.threshold);
+                    red = Math.min(255, Math.max(0, red + noise));
+                    green = Math.min(255, Math.max(0, green + noise));
+                    blue = Math.min(255, Math.max(0, blue + noise));
+                } else {
+                    const noiseRed = getRandomNoise(finalOptions.threshold);
+                    const noiseGreen = getRandomNoise(finalOptions.threshold);
+                    const noiseBlue = getRandomNoise(finalOptions.threshold);
+                    red = Math.min(255, Math.max(0, red + noiseRed));
+                    green = Math.min(255, Math.max(0, green + noiseGreen));
+                    blue = Math.min(255, Math.max(0, blue + noiseBlue));
+                }
+                pixels[i] = red;
+                pixels[i + 1] = green;
+                pixels[i + 2] = blue;
+            }
+            ctx.putImageData(imageData, 0, 0);
+            canvas_node.getContext('2d').clearRect(0, 0, canvas_node.width, canvas_node.height);
+            canvas_node.getContext('2d').drawImage(temp, 0, 0);
+            return Image;
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.NoiseSmooth = function(smoothOptions = {}) {
+            const defaultOptions = {
+                radius: 1,            // Smoothing radius (pixels)
+                strength: 0.5,        // Blend strength between original and smoothed image (0-1)
+                noiseAmount: 0,       // Amount of noise to add after smoothing (0 = no noise)
+                preserveEdges: false, // Whether to preserve edges while smoothing
+                edgeThreshold: 30     // Threshold for edge detection when preserveEdges is true
+            };
+            const finalOptions = Object.assign({}, defaultOptions, smoothOptions);
+            let temp = Q('<canvas>', { 
+                width: canvas_node.width, 
+                height: canvas_node.height 
+            }).nodes[0];
+            let ctx = temp.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(canvas_node, 0, 0);
+            const srcImageData = ctx.getImageData(0, 0, temp.width, temp.height);
+            const resultImageData = new ImageData(temp.width, temp.height);
+            const srcData = srcImageData.data;
+            const tgtData = resultImageData.data;
+            const diameter = finalOptions.radius * 2 + 1;
+            const area = diameter * diameter;
+            const halfRadius = Math.floor(finalOptions.radius);
+            for (let y = 0; y < temp.height; y++) {
+                for (let x = 0; x < temp.width; x++) {
+                    let rSum = 0;
+                    let gSum = 0;
+                    let bSum = 0;
+                    let aSum = 0;
+                    let weightSum = 0;
+                    let isEdge = false;
+                    if (finalOptions.preserveEdges) {
+                        if (x > 0 && y > 0 && x < temp.width - 1 && y < temp.height - 1) {
+                            const centerIdx = (y * temp.width + x) * 4;
+                            const leftIdx = (y * temp.width + (x - 1)) * 4;
+                            const rightIdx = (y * temp.width + (x + 1)) * 4;
+                            const hDiff = Math.abs(srcData[leftIdx] - srcData[rightIdx]) +
+                                          Math.abs(srcData[leftIdx+1] - srcData[rightIdx+1]) +
+                                          Math.abs(srcData[leftIdx+2] - srcData[rightIdx+2]);
+                            const topIdx = ((y - 1) * temp.width + x) * 4;
+                            const bottomIdx = ((y + 1) * temp.width + x) * 4;
+                            const vDiff = Math.abs(srcData[topIdx] - srcData[bottomIdx]) +
+                                          Math.abs(srcData[topIdx+1] - srcData[bottomIdx+1]) +
+                                          Math.abs(srcData[topIdx+2] - srcData[bottomIdx+2]);
+                            if (hDiff > finalOptions.edgeThreshold || 
+                                vDiff > finalOptions.edgeThreshold) {
+                                isEdge = true;
+                            }
+                        }
+                    }
+                    if (isEdge) {
+                        const idx = (y * temp.width + x) * 4;
+                        tgtData[idx] = srcData[idx];
+                        tgtData[idx+1] = srcData[idx+1];
+                        tgtData[idx+2] = srcData[idx+2];
+                        tgtData[idx+3] = srcData[idx+3];
+                        continue;
+                    }
+                    for (let offsetY = -halfRadius; offsetY <= halfRadius; offsetY++) {
+                        for (let offsetX = -halfRadius; offsetX <= halfRadius; offsetX++) {
+                            const nx = x + offsetX;
+                            const ny = y + offsetY;
+                            if (nx >= 0 && ny >= 0 && nx < temp.width && ny < temp.height) {
+                                const srcIndex = (ny * temp.width + nx) * 4;
+                                const weight = 1;
+                                rSum += srcData[srcIndex] * weight;
+                                gSum += srcData[srcIndex + 1] * weight;
+                                bSum += srcData[srcIndex + 2] * weight;
+                                aSum += srcData[srcIndex + 3] * weight;
+                                weightSum += weight;
+                            }
+                        }
+                    }
+                    const tgtIndex = (y * temp.width + x) * 4;
+                    const smoothedR = rSum / weightSum;
+                    const smoothedG = gSum / weightSum;
+                    const smoothedB = bSum / weightSum;
+                    const smoothedA = aSum / weightSum;
+                    const origIdx = (y * temp.width + x) * 4;
+                    tgtData[tgtIndex] = smoothedR * finalOptions.strength + srcData[origIdx] * (1 - finalOptions.strength);
+                    tgtData[tgtIndex + 1] = smoothedG * finalOptions.strength + srcData[origIdx + 1] * (1 - finalOptions.strength);
+                    tgtData[tgtIndex + 2] = smoothedB * finalOptions.strength + srcData[origIdx + 2] * (1 - finalOptions.strength);
+                    tgtData[tgtIndex + 3] = smoothedA * finalOptions.strength + srcData[origIdx + 3] * (1 - finalOptions.strength);
+                    if (finalOptions.noiseAmount > 0) {
+                        const noise = (Math.random() - 0.5) * finalOptions.noiseAmount * 2;
+                        tgtData[tgtIndex] = Math.min(255, Math.max(0, tgtData[tgtIndex] + noise));
+                        tgtData[tgtIndex + 1] = Math.min(255, Math.max(0, tgtData[tgtIndex + 1] + noise));
+                        tgtData[tgtIndex + 2] = Math.min(255, Math.max(0, tgtData[tgtIndex + 2] + noise));
+                    }
+                }
+            }
+            ctx.putImageData(resultImageData, 0, 0);
+            canvas_node.getContext('2d').clearRect(0, 0, canvas_node.width, canvas_node.height);
+            canvas_node.getContext('2d').drawImage(temp, 0, 0);
+            return Image;
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.Pixelize = function(pixelizeOptions = {}) {
+            const defaultOptions = {
+                blockSize: 10,        // Size of each pixel block
+                sampleMode: 'corner',  // How to sample pixel color: 'corner', 'center', 'average'
+                effect: 'normal',      // Effect type: 'normal', 'mosaic', 'ordered'
+                roundedCorners: false, // Whether to round the corners of each pixel block
+                cornerRadius: 2,       // Radius for rounded corners
+                spacing: 0             // Spacing between pixel blocks
+            };
+            const finalOptions = Object.assign({}, defaultOptions, pixelizeOptions);
+            let temp = Q('<canvas>', { 
+                width: canvas_node.width, 
+                height: canvas_node.height 
+            }).nodes[0];
+            let ctx = temp.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(canvas_node, 0, 0);
+            const imageData = ctx.getImageData(0, 0, temp.width, temp.height);
+            const pixels = imageData.data;
+            const resultCtx = canvas_node.getContext('2d');
+            resultCtx.clearRect(0, 0, canvas_node.width, canvas_node.height);
+            const blockSize = Math.max(1, finalOptions.blockSize);
+            const spacing = Math.max(0, finalOptions.spacing);
+            for (let y = 0; y < temp.height; y += blockSize) {
+                for (let x = 0; x < temp.width; x += blockSize) {
+                    let r, g, b, a;
+                    if (finalOptions.sampleMode === 'center') {
+                        const centerX = Math.min(temp.width - 1, x + Math.floor(blockSize / 2));
+                        const centerY = Math.min(temp.height - 1, y + Math.floor(blockSize / 2));
+                        const centerIndex = (centerY * temp.width + centerX) * 4;
+                        r = pixels[centerIndex];
+                        g = pixels[centerIndex + 1];
+                        b = pixels[centerIndex + 2];
+                        a = pixels[centerIndex + 3];
+                    } 
+                    else if (finalOptions.sampleMode === 'average') {
+                        let rSum = 0, gSum = 0, bSum = 0, aSum = 0;
+                        let count = 0;
+                        for (let by = 0; by < blockSize && y + by < temp.height; by++) {
+                            for (let bx = 0; bx < blockSize && x + bx < temp.width; bx++) {
+                                const idx = ((y + by) * temp.width + (x + bx)) * 4;
+                                rSum += pixels[idx];
+                                gSum += pixels[idx + 1];
+                                bSum += pixels[idx + 2];
+                                aSum += pixels[idx + 3];
+                                count++;
+                            }
+                        }
+                        r = Math.round(rSum / count);
+                        g = Math.round(gSum / count);
+                        b = Math.round(bSum / count);
+                        a = Math.round(aSum / count);
+                    } 
+                    else {
+                        const cornerIndex = (y * temp.width + x) * 4;
+                        r = pixels[cornerIndex];
+                        g = pixels[cornerIndex + 1];
+                        b = pixels[cornerIndex + 2];
+                        a = pixels[cornerIndex + 3];
+                    }
+                    resultCtx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a/255})`;
+                    if (finalOptions.effect === 'ordered') {
+                        const actualSize = blockSize - spacing;
+                        if (finalOptions.roundedCorners) {
+                            resultCtx.beginPath();
+                            resultCtx.roundRect(
+                                x, y, actualSize, actualSize, 
+                                finalOptions.cornerRadius
+                            );
+                            resultCtx.fill();
+                        } else {
+                            resultCtx.fillRect(x, y, actualSize, actualSize);
+                        }
+                    } 
+                    else if (finalOptions.effect === 'mosaic') {
+                        const brightness = (r + g + b) / 3;
+                        const sizeVariation = Math.max(1, blockSize * (brightness / 255));
+                        if (finalOptions.roundedCorners) {
+                            resultCtx.beginPath();
+                            resultCtx.roundRect(
+                                x, y, sizeVariation, sizeVariation, 
+                                finalOptions.cornerRadius
+                            );
+                            resultCtx.fill();
+                        } else {
+                            resultCtx.fillRect(x, y, sizeVariation, sizeVariation);
+                        }
+                    } 
+                    else {
+                        const actualWidth = Math.min(blockSize, temp.width - x);
+                        const actualHeight = Math.min(blockSize, temp.height - y);
+                        if (finalOptions.roundedCorners && spacing > 0) {
+                            resultCtx.beginPath();
+                            resultCtx.roundRect(
+                                x, y, 
+                                actualWidth - spacing, actualHeight - spacing, 
+                                finalOptions.cornerRadius
+                            );
+                            resultCtx.fill();
+                        } else {
+                            resultCtx.fillRect(x, y, 
+                                actualWidth - spacing, 
+                                actualHeight - spacing);
+                        }
+                    }
+                }
+            }
+            return Image;
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.RGBSubpixel = function(subpixelOptions = {}) {
+            const defaultOptions = {
+                subpixelLayout: 'rgb',         // Subpixel layout: 'rgb', 'bgr', 'vrgb' (vertical)
+                subpixelScale: 3.0,            // Scale factor for subpixel rendering (3 = each pixel becomes 3 subpixels)
+                phosphorSize: 0.8,             // Size of phosphor dots (0-1, where 1 fills the whole subpixel)
+                phosphorBloom: 0.2,            // Bloom effect around phosphors (0-1)
+                maxResolution: 640,            // Maximum "native resolution" width to simulate
+                resolutionScale: 1.0,          // Scale factor for the final resolution (1 = use maxResolution)
+                brightness: 1.0,               // Brightness adjustment for subpixels (0.5-2.0)
+                applyNoise: false,             // Apply CRT-like noise
+                noiseAmount: 5,                // Amount of noise to apply
+                fastMode: true,                // Use faster rendering algorithm (less authentic but much faster)
+                scanlines: false,              // Whether to apply scanlines
+                scanlineHeight: 1,             // Height of scanlines
+                scanlineMargin: 3,             // Space between scanlines
+                scanlineOpacity: 0.1,          // Opacity of scanlines
+                scanlineBrightness: 0.5        // Brightness between scanlines (0-1)
+            };
+            const finalOptions = Object.assign({}, defaultOptions, subpixelOptions);
+            let temp = Q('<canvas>', { 
+                width: canvas_node.width, 
+                height: canvas_node.height 
+            }).nodes[0];
+            let ctx = temp.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(canvas_node, 0, 0);
+            const resultCanvas = canvas_node;
+            const resultCtx = resultCanvas.getContext('2d', { willReadFrequently: true });
+            if (finalOptions.fastMode) {
+                const patternSize = finalOptions.subpixelLayout === 'vrgb' ? 1 : 3;
+                const patternCanvas = document.createElement('canvas');
+                patternCanvas.width = patternSize;
+                patternCanvas.height = 1;
+                const patternCtx = patternCanvas.getContext('2d');
+                if (finalOptions.subpixelLayout === 'rgb') {
+                    patternCtx.fillStyle = `rgba(255,0,0,${finalOptions.phosphorSize})`;
+                    patternCtx.fillRect(0, 0, 1, 1);
+                    patternCtx.fillStyle = `rgba(0,255,0,${finalOptions.phosphorSize})`;
+                    patternCtx.fillRect(1, 0, 1, 1);
+                    patternCtx.fillStyle = `rgba(0,0,255,${finalOptions.phosphorSize})`;
+                    patternCtx.fillRect(2, 0, 1, 1);
+                } else if (finalOptions.subpixelLayout === 'bgr') {
+                    patternCtx.fillStyle = `rgba(0,0,255,${finalOptions.phosphorSize})`;
+                    patternCtx.fillRect(0, 0, 1, 1);
+                    patternCtx.fillStyle = `rgba(0,255,0,${finalOptions.phosphorSize})`;
+                    patternCtx.fillRect(1, 0, 1, 1);
+                    patternCtx.fillStyle = `rgba(255,0,0,${finalOptions.phosphorSize})`;
+                    patternCtx.fillRect(2, 0, 1, 1);
+                } else if (finalOptions.subpixelLayout === 'vrgb') {
+                    patternCanvas.width = 1;
+                    patternCanvas.height = 3;
+                    patternCtx.fillStyle = `rgba(255,0,0,${finalOptions.phosphorSize})`;
+                    patternCtx.fillRect(0, 0, 1, 1);
+                    patternCtx.fillStyle = `rgba(0,255,0,${finalOptions.phosphorSize})`;
+                    patternCtx.fillRect(0, 1, 1, 1);
+                    patternCtx.fillStyle = `rgba(0,0,255,${finalOptions.phosphorSize})`;
+                    patternCtx.fillRect(0, 2, 1, 1);
+                }
+                const targetWidth = Math.min(temp.width, finalOptions.maxResolution);
+                const targetHeight = Math.round(temp.height * (targetWidth / temp.width));
+                const scaledCanvas = document.createElement('canvas');
+                scaledCanvas.width = targetWidth;
+                scaledCanvas.height = targetHeight;
+                const scaledCtx = scaledCanvas.getContext('2d', { willReadFrequently: true });
+                scaledCtx.drawImage(temp, 0, 0, targetWidth, targetHeight);
+                let rgbCanvas;
+                let rgbCtx;
+                if (finalOptions.subpixelLayout === 'vrgb') {
+                    rgbCanvas = document.createElement('canvas');
+                    rgbCanvas.width = targetWidth;
+                    rgbCanvas.height = targetHeight * 3;
+                    rgbCtx = rgbCanvas.getContext('2d', { willReadFrequently: true });
+                    rgbCtx.drawImage(scaledCanvas, 0, 0);
+                    rgbCtx.fillStyle = 'rgba(0, 255, 255, 1.0)'; // Cyan (removes red)
+                    rgbCtx.globalCompositeOperation = 'multiply';
+                    rgbCtx.fillRect(0, 0, targetWidth, targetHeight);
+                    rgbCtx.globalCompositeOperation = 'source-over';
+                    rgbCtx.drawImage(scaledCanvas, 0, targetHeight);
+                    rgbCtx.fillStyle = 'rgba(255, 0, 255, 1.0)'; // Magenta (removes green)
+                    rgbCtx.globalCompositeOperation = 'multiply';
+                    rgbCtx.fillRect(0, targetHeight, targetWidth, targetHeight);
+                    rgbCtx.globalCompositeOperation = 'source-over';
+                    rgbCtx.drawImage(scaledCanvas, 0, targetHeight * 2);
+                    rgbCtx.fillStyle = 'rgba(255, 255, 0, 1.0)'; // Yellow (removes blue)
+                    rgbCtx.globalCompositeOperation = 'multiply';
+                    rgbCtx.fillRect(0, targetHeight * 2, targetWidth, targetHeight);
+                } else {
+                    rgbCanvas = document.createElement('canvas');
+                    rgbCanvas.width = targetWidth * 3;
+                    rgbCanvas.height = targetHeight;
+                    rgbCtx = rgbCanvas.getContext('2d', { willReadFrequently: true });
+                    rgbCtx.globalCompositeOperation = 'source-over';
+                    rgbCtx.drawImage(scaledCanvas, 0, 0);
+                    rgbCtx.fillStyle = 'rgba(0, 255, 255, 1.0)'; // Cyan (removes red)
+                    rgbCtx.globalCompositeOperation = 'multiply';
+                    rgbCtx.fillRect(0, 0, targetWidth, targetHeight);
+                    rgbCtx.globalCompositeOperation = 'source-over';
+                    rgbCtx.drawImage(scaledCanvas, targetWidth, 0);
+                    rgbCtx.fillStyle = 'rgba(255, 0, 255, 1.0)'; // Magenta (removes green)
+                    rgbCtx.globalCompositeOperation = 'multiply';
+                    rgbCtx.fillRect(targetWidth, 0, targetWidth, targetHeight);
+                    rgbCtx.globalCompositeOperation = 'source-over';
+                    rgbCtx.drawImage(scaledCanvas, targetWidth * 2, 0);
+                    rgbCtx.fillStyle = 'rgba(255, 255, 0, 1.0)'; // Yellow (removes blue)
+                    rgbCtx.globalCompositeOperation = 'multiply';
+                    rgbCtx.fillRect(targetWidth * 2, 0, targetWidth, targetHeight);
+                }
+                rgbCtx.globalCompositeOperation = 'destination-in';
+                const pattern = patternCtx.createPattern(patternCanvas, 'repeat');
+                rgbCtx.fillStyle = pattern;
+                rgbCtx.fillRect(0, 0, rgbCanvas.width, rgbCanvas.height);
+                if (finalOptions.applyNoise) {
+                    const noiseCanvas = document.createElement('canvas');
+                    noiseCanvas.width = rgbCanvas.width;
+                    noiseCanvas.height = rgbCanvas.height;
+                    const noiseCtx = noiseCanvas.getContext('2d', { willReadFrequently: true });
+                    const noiseData = noiseCtx.createImageData(noiseCanvas.width, noiseCanvas.height);
+                    const noisePixels = noiseData.data;
+                    for (let i = 0; i < noisePixels.length; i += 4) {
+                        const noise = (Math.random() - 0.5) * finalOptions.noiseAmount;
+                        noisePixels[i] = noisePixels[i + 1] = noisePixels[i + 2] = 128 + noise;
+                        noisePixels[i + 3] = 30; // Low alpha for subtle noise
+                    }
+                    noiseCtx.putImageData(noiseData, 0, 0);
+                    rgbCtx.globalCompositeOperation = 'overlay';
+                    rgbCtx.drawImage(noiseCanvas, 0, 0);
+                }
+                resultCtx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+                resultCtx.globalAlpha = finalOptions.brightness;
+                resultCtx.drawImage(
+                    rgbCanvas, 0, 0, rgbCanvas.width, rgbCanvas.height,
+                    0, 0, resultCanvas.width, resultCanvas.height
+                );
+                resultCtx.globalAlpha = 1.0;
+            }
+            else {
+                let subpixelCanvas = Q('<canvas>', { 
+                    width: Math.ceil(temp.width * finalOptions.subpixelScale), 
+                    height: Math.ceil(temp.height * finalOptions.subpixelScale) 
+                }).nodes[0];
+                let subpixelCtx = subpixelCanvas.getContext('2d', { willReadFrequently: true });
+                const targetWidth = Math.min(temp.width, finalOptions.maxResolution);
+                const targetHeight = Math.round(temp.height * (targetWidth / temp.width));
+                const resolutionScale = targetWidth / temp.width * finalOptions.resolutionScale;
+                subpixelCtx.drawImage(temp, 0, 0, subpixelCanvas.width, subpixelCanvas.height);
+                const imageData = ctx.getImageData(0, 0, temp.width, temp.height);
+                const subpixelData = subpixelCtx.getImageData(0, 0, subpixelCanvas.width, subpixelCanvas.height);
+                let processedCanvas = document.createElement('canvas');
+                processedCanvas.width = subpixelCanvas.width;
+                processedCanvas.height = subpixelCanvas.height;
+                let processedCtx = processedCanvas.getContext('2d', { willReadFrequently: true });
+                processedCtx.clearRect(0, 0, processedCanvas.width, processedCanvas.height);
+                const subpixelWidth = Math.ceil(finalOptions.subpixelScale / 3);
+                const phosphorWidth = Math.ceil(subpixelWidth * finalOptions.phosphorSize);
+                const phosphorBloom = finalOptions.phosphorBloom * subpixelWidth;
+                const colorRed = `rgba(255,0,0,1)`;
+                const colorGreen = `rgba(0,255,0,1)`;
+                const colorBlue = `rgba(0,0,255,1)`;
+                const colors = [colorRed, colorGreen, colorBlue];
+                const intensityLevels = 10; // Use 10 intensity levels instead of 256
+                const gradients = {
+                    'red': [],
+                    'green': [],
+                    'blue': []
+                };
+                for (let level = 0; level < intensityLevels; level++) {
+                    const intensity = level / (intensityLevels - 1);
+                    ['red', 'green', 'blue'].forEach((color, colorIndex) => {
+                        const gradientSize = phosphorWidth + (phosphorBloom * 2);
+                        const centerX = subpixelWidth / 2;
+                        const centerY = subpixelWidth / 2;
+                        const gradient = processedCtx.createRadialGradient(
+                            centerX, centerY, 0,
+                            centerX, centerY, gradientSize / 2
+                        );
+                        gradient.addColorStop(0, `rgba(${colors[colorIndex].replace(/[^\d,]/g, '')},${intensity})`);
+                        gradient.addColorStop(phosphorWidth / gradientSize, 
+                            `rgba(${colors[colorIndex].replace(/[^\d,]/g, '')},${intensity * 0.7})`);
+                        gradient.addColorStop(1, `rgba(${colors[colorIndex].replace(/[^\d,]/g, '')},0)`);
+                        gradients[color].push(gradient);
+                    });
+                }
+                if (finalOptions.subpixelLayout === 'rgb' || finalOptions.subpixelLayout === 'bgr') {
+                    const isRGB = finalOptions.subpixelLayout === 'rgb';
+                    const colorOrder = isRGB ? [0, 1, 2] : [2, 1, 0]; // RGB or BGR
+                    const batchHeight = 20; // Process 20 rows at a time
+                    for (let y = 0; y < temp.height; y += batchHeight) {
+                        const maxY = Math.min(temp.height, y + batchHeight);
+                        for (let cy = y; cy < maxY; cy++) {
+                            for (let x = 0; x < temp.width; x++) {
+                                const srcIndex = (cy * temp.width + x) * 4;
+                                const r = imageData.data[srcIndex];
+                                const g = imageData.data[srcIndex + 1];
+                                const b = imageData.data[srcIndex + 2];
+                                const baseX = Math.floor(x * finalOptions.subpixelScale);
+                                const baseY = Math.floor(cy * finalOptions.subpixelScale);
+                                const components = [r, g, b];
+                                for (let i = 0; i < 3; i++) {
+                                    const intensity = components[colorOrder[i]] / 255;
+                                    const gradientIndex = Math.floor(intensity * (intensityLevels - 1));
+                                    const colorName = i === 0 ? 'red' : (i === 1 ? 'green' : 'blue');
+                                    const subpixelX = baseX + (i * subpixelWidth);
+                                    processedCtx.fillStyle = gradients[colorName][gradientIndex];
+                                    processedCtx.fillRect(
+                                        subpixelX, baseY, 
+                                        subpixelWidth, finalOptions.subpixelScale
+                                    );
+                                }
+                            }
+                        }
+                    }
+                } 
+                else if (finalOptions.subpixelLayout === 'vrgb') {
+                    for (let y = 0; y < temp.height; y++) {
+                        for (let x = 0; x < temp.width; x++) {
+                            const srcIndex = (y * temp.width + x) * 4;
+                            const r = imageData.data[srcIndex];
+                            const g = imageData.data[srcIndex + 1];
+                            const b = imageData.data[srcIndex + 2];
+                            const baseX = Math.floor(x * finalOptions.subpixelScale);
+                            const baseY = Math.floor(y * finalOptions.subpixelScale);
+                            const components = [r, g, b];
+                            for (let i = 0; i < 3; i++) {
+                                const intensity = components[i] / 255;
+                                const gradientIndex = Math.floor(intensity * (intensityLevels - 1));
+                                const colorName = i === 0 ? 'red' : (i === 1 ? 'green' : 'blue');
+                                const subpixelY = baseY + (i * subpixelWidth);
+                                processedCtx.fillStyle = gradients[colorName][gradientIndex];
+                                processedCtx.fillRect(
+                                    baseX, subpixelY, 
+                                    finalOptions.subpixelScale, subpixelWidth
+                                );
+                            }
+                        }
+                    }
+                }
+                if (finalOptions.applyNoise) {
+                    const noiseData = processedCtx.getImageData(0, 0, processedCanvas.width, processedCanvas.height);
+                    const noisePixels = noiseData.data;
+                    for (let i = 0; i < noisePixels.length; i += 4) {
+                        if (noisePixels[i+3] > 0) { // Only apply to visible pixels
+                            const noise = (Math.random() - 0.5) * finalOptions.noiseAmount;
+                            noisePixels[i] = Math.min(255, Math.max(0, noisePixels[i] + noise));
+                            noisePixels[i+1] = Math.min(255, Math.max(0, noisePixels[i+1] + noise));
+                            noisePixels[i+2] = Math.min(255, Math.max(0, noisePixels[i+2] + noise));
+                        }
+                    }
+                    processedCtx.putImageData(noiseData, 0, 0);
+                }
+                resultCtx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+                resultCtx.globalAlpha = finalOptions.brightness;
+                resultCtx.drawImage(
+                    processedCanvas, 0, 0, 
+                    processedCanvas.width, processedCanvas.height,
+                    0, 0, resultCanvas.width, resultCanvas.height
+                );
+                resultCtx.globalAlpha = 1.0;
+            }
+            if (finalOptions.scanlines) {
+                function drawHorizontalLines(ctx, width, height, totalHeight, margin, color, brightnessFactor) {
+                    ctx.fillStyle = color;
+                    for (let i = 0; i < totalHeight; i += (height + margin)) {
+                        ctx.fillRect(0, i, width, height);
+                        if (brightnessFactor > 0 && i + height < totalHeight) {
+                            const brightColor = `rgba(255, 255, 255, ${brightnessFactor * 0.1})`;
+                            ctx.fillStyle = brightColor;
+                            ctx.fillRect(0, i + height, width, margin);
+                            ctx.fillStyle = color; // Reset to scanline color
+                        }
+                    }
+                }
+                drawHorizontalLines(
+                    resultCtx, 
+                    resultCanvas.width, 
+                    finalOptions.scanlineHeight, 
+                    resultCanvas.height, 
+                    finalOptions.scanlineMargin, 
+                    `rgba(0, 0, 0, ${finalOptions.scanlineOpacity})`,
+                    finalOptions.scanlineBrightness
+                );
+            }
+            return Image;
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.Resize = function(width, height, resizeOptions = {}) {
+            const defaultOptions = {
+                size: 'auto',            // 'auto', 'contain', 'cover'
+                keepDimensions: false,   // Keep original dimensions with padding
+                fill: 'transparent',     // Background fill color
+                smoothing: true,         // Use image smoothing
+                quality: 'high'          // 'low', 'medium', 'high'
+            };
+            const finalOptions = Object.assign({}, defaultOptions, resizeOptions);
+            const temp = document.createElement('canvas');
+            temp.width = width;
+            temp.height = height;
+            const ctx = temp.getContext('2d');
+            ctx.imageSmoothingEnabled = finalOptions.smoothing;
+            ctx.imageSmoothingQuality = finalOptions.quality;
+            const canvasWidth = canvas_node.width;
+            const canvasHeight = canvas_node.height;
+            if (finalOptions.size === 'contain') {
+                if (finalOptions.keepDimensions) {
+                    const widthRatio = width / canvasWidth;
+                    const heightRatio = height / canvasHeight;
+                    const ratio = Math.min(widthRatio, heightRatio);
+                    const newWidth = canvasWidth * ratio;
+                    const newHeight = canvasHeight * ratio;
+                    const xOffset = (width - newWidth) / 2;
+                    const yOffset = (height - newHeight) / 2;
+                    ctx.fillStyle = finalOptions.fill;
+                    ctx.fillRect(0, 0, width, height);
+                    ctx.drawImage(canvas_node, 0, 0, canvasWidth, canvasHeight, xOffset, yOffset, newWidth, newHeight);
+                } else {
+                    const widthRatio = width / canvasWidth;
+                    const heightRatio = height / canvasHeight;
+                    const ratio = Math.min(widthRatio, heightRatio);
+                    const newWidth = canvasWidth * ratio;
+                    const newHeight = canvasHeight * ratio;
+                    ctx.drawImage(canvas_node, 0, 0, canvasWidth, canvasHeight, 0, 0, newWidth, newHeight);
+                }
+            } else if (finalOptions.size === 'cover') {
+                const widthRatio = width / canvasWidth;
+                const heightRatio = height / canvasHeight;
+                const ratio = Math.max(widthRatio, heightRatio);
+                const newWidth = canvasWidth * ratio;
+                const newHeight = canvasHeight * ratio;
+                const sourceX = (canvasWidth - width / ratio) / 2;
+                const sourceY = (canvasHeight - height / ratio) / 2;
+                ctx.drawImage(canvas_node, sourceX, sourceY, width / ratio, height / ratio, 0, 0, width, height);
+            } else if (finalOptions.size === 'auto') {
+                const ratio = Math.min(width / canvasWidth, height / canvasHeight);
+                const newWidth = canvasWidth * ratio;
+                const newHeight = canvasHeight * ratio;
+                ctx.fillStyle = finalOptions.fill;
+                ctx.fillRect(0, 0, width, height);
+                ctx.drawImage(canvas_node, 0, 0, canvasWidth, canvasHeight, 0, 0, newWidth, newHeight);
+            }
+            canvas_node.width = width;
+            canvas_node.height = height;
+            canvas_node.getContext('2d').drawImage(temp, 0, 0);
+            Image.SaveHistory();
+            return Image;
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.Rotate = function(degrees, rotateOptions = {}) {
+            const defaultOptions = {
+                keepSize: false,     // Whether to keep original canvas size
+                smoothing: true,     // Whether to use smoothing
+                quality: 'high',     // Smoothing quality: 'low', 'medium', 'high'
+                centerOrigin: true   // Whether to rotate around the center
+            };
+            const finalOptions = Object.assign({}, defaultOptions, rotateOptions);
+            let width = canvas_node.width;
+            let height = canvas_node.height;
+            if (!finalOptions.keepSize) {
+                const radians = degrees * Math.PI / 180;
+                const newWidth = Math.abs(Math.cos(radians) * width) + Math.abs(Math.sin(radians) * height);
+                const newHeight = Math.abs(Math.sin(radians) * width) + Math.abs(Math.cos(radians) * height);
+                width = newWidth;
+                height = newHeight;
+            }
+            let temp = Q('<canvas>', { width: width, height: height }).nodes[0];
+            let ctx = temp.getContext('2d');
+            ctx.imageSmoothingEnabled = finalOptions.smoothing;
+            ctx.imageSmoothingQuality = finalOptions.quality;
+            ctx.translate(width / 2, height / 2);
+            ctx.rotate(degrees * Math.PI / 180);
+            ctx.drawImage(
+                canvas_node, 
+                -canvas_node.width / 2, 
+                -canvas_node.height / 2
+            );
+            canvas_node.width = width;
+            canvas_node.height = height;
+            canvas_node.getContext('2d').drawImage(temp, 0, 0);
+            return Image;
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.Sharpen = function(sharpenOptions = {}) {
+            const defaults = {
+                amount: 1.0,     // Sharpening amount (0.0 to 4.0)
+                radius: 1.0,     // Sharpening radius
+                threshold: 0,    // Edge threshold
+                details: 0.5     // Detail preservation (0.0 to 1.0)
+            };
+            const settings = Object.assign({}, defaults, sharpenOptions);
+            settings.amount = Math.max(0, Math.min(4, settings.amount));
+            const ctx = canvas_node.getContext('2d');
+            const imgData = ctx.getImageData(0, 0, canvas_node.width, canvas_node.height);
+            const pixels = imgData.data;
+            const width = canvas_node.width;
+            const height = canvas_node.height;
+            const dataCopy = new Uint8ClampedArray(pixels);
+            applyGaussianBlur(dataCopy, width, height, settings.radius);
+            const sharpAmount = settings.amount * 0.75; // Scale for better visual match
+            const detailFactor = settings.details * 2; // Amplify detail preservation
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const i = (y * width + x) * 4;
+                    const diffR = pixels[i] - dataCopy[i];
+                    const diffG = pixels[i + 1] - dataCopy[i + 1];
+                    const diffB = pixels[i + 2] - dataCopy[i + 2];
+                    const edgeIntensity = Math.sqrt(diffR * diffR + diffG * diffG + diffB * diffB);
+                    if (edgeIntensity > settings.threshold) {
+                        const factor = sharpAmount + (detailFactor * edgeIntensity / 255);
+                        pixels[i] = clamp(pixels[i] + diffR * factor);
+                        pixels[i + 1] = clamp(pixels[i + 1] + diffG * factor);
+                        pixels[i + 2] = clamp(pixels[i + 2] + diffB * factor);
+                    }
+                }
+            }
+            ctx.putImageData(imgData, 0, 0);
+            Image.SaveHistory();
+            return Image;
+        };
+        function clamp(value) {
+            return Math.min(255, Math.max(0, value));
+        }
+        function applyGaussianBlur(data, width, height, radius) {
+            const iterations = 3; // Multiple passes for better Gaussian approximation
+            const size = Math.ceil(radius) * 2 + 1;
+            const halfSize = Math.floor(size / 2);
+            const temp = new Uint8ClampedArray(data.length);
+            for (let i = 0; i < iterations; i++) {
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        let r = 0, g = 0, b = 0;
+                        let count = 0;
+                        for (let j = -halfSize; j <= halfSize; j++) {
+                            const cx = Math.min(Math.max(0, x + j), width - 1);
+                            const idx = (y * width + cx) * 4;
+                            r += data[idx];
+                            g += data[idx + 1];
+                            b += data[idx + 2];
+                            count++;
+                        }
+                        const idx = (y * width + x) * 4;
+                        temp[idx] = r / count;
+                        temp[idx + 1] = g / count;
+                        temp[idx + 2] = b / count;
+                        temp[idx + 3] = data[idx + 3];
+                    }
+                }
+                for (let x = 0; x < width; x++) {
+                    for (let y = 0; y < height; y++) {
+                        let r = 0, g = 0, b = 0;
+                        let count = 0;
+                        for (let j = -halfSize; j <= halfSize; j++) {
+                            const cy = Math.min(Math.max(0, y + j), height - 1);
+                            const idx = (cy * width + x) * 4;
+                            r += temp[idx];
+                            g += temp[idx + 1];
+                            b += temp[idx + 2];
+                            count++;
+                        }
+                        const idx = (y * width + x) * 4;
+                        data[idx] = r / count;
+                        data[idx + 1] = g / count;
+                        data[idx + 2] = b / count;
+                    }
+                }
+            }
+        }
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.Vivid = function(value, vividOptions = {}) {
+            const defaultOptions = {
+                method: 'multiply',  // 'multiply', 'hsl'
+                clamp: true          // Whether to clamp values to 0-255 range
+            };
+            const finalOptions = Object.assign({}, defaultOptions, vividOptions);
+            let data = canvas_node.getContext('2d').getImageData(0, 0, canvas_node.width, canvas_node.height);
+            let pixels = data.data;
+            if (finalOptions.method === 'hsl' && typeof Q.RGB2HSL === 'function' && typeof Q.HSL2RGB === 'function') {
+                for (let i = 0; i < pixels.length; i += 4) {
+                    let r = pixels[i];
+                    let g = pixels[i + 1];
+                    let b = pixels[i + 2];
+                    let hsl = Q.RGB2HSL(r, g, b);
+                    hsl[1] *= value; // Adjust saturation
+                    if (finalOptions.clamp) {
+                        hsl[1] = Math.min(1, Math.max(0, hsl[1]));
+                    }
+                    let rgb = Q.HSL2RGB(hsl[0], hsl[1], hsl[2]);
+                    pixels[i] = rgb[0];
+                    pixels[i + 1] = rgb[1];
+                    pixels[i + 2] = rgb[2];
+                }
+            } else {
+                for (let i = 0; i < pixels.length; i += 4) {
+                    let luminance = 0.299 * pixels[i] + 0.587 * pixels[i + 1] + 0.114 * pixels[i + 2];
+                    pixels[i] = luminance + (pixels[i] - luminance) * value;
+                    pixels[i + 1] = luminance + (pixels[i + 1] - luminance) * value;
+                    pixels[i + 2] = luminance + (pixels[i + 2] - luminance) * value;
+                    if (finalOptions.clamp) {
+                        pixels[i] = Math.min(255, Math.max(0, pixels[i]));
+                        pixels[i + 1] = Math.min(255, Math.max(0, pixels[i + 1]));
+                        pixels[i + 2] = Math.min(255, Math.max(0, pixels[i + 2]));
+                    }
+                }
+            }
+            canvas_node.getContext('2d').putImageData(data, 0, 0);
+            return Image;
+        };
+        return Image;
+    };
+})();
+(function() {
+    const originalImage = Q.Image;
+    Q.Image = function(options = {}) {
+        const Image = originalImage(options);
+        const canvas_node = Image.node;
+        Image.Zoom = function(factor = 1.5, zoomOptions = {}) {
+            const defaultOptions = {
+                centerX: canvas_node.width / 2,   // Default center point X
+                centerY: canvas_node.height / 2,  // Default center point Y
+                smoothing: true,                  // Whether to use smoothing
+                quality: 'high',                  // Smoothing quality: 'low', 'medium', 'high'
+                background: 'transparent'         // Background for areas outside the image when zooming out
+            };
+            const finalOptions = Object.assign({}, defaultOptions, zoomOptions);
+            let temp = Q('<canvas>', { 
+                width: canvas_node.width, 
+                height: canvas_node.height 
+            }).nodes[0];
+            let ctx = temp.getContext('2d');
+            ctx.imageSmoothingEnabled = finalOptions.smoothing;
+            ctx.imageSmoothingQuality = finalOptions.quality;
+            ctx.fillStyle = finalOptions.background;
+            ctx.fillRect(0, 0, temp.width, temp.height);
+            if (factor >= 1) {
+                const sWidth = canvas_node.width / factor;
+                const sHeight = canvas_node.height / factor;
+                const sx = finalOptions.centerX - (sWidth / 2);
+                const sy = finalOptions.centerY - (sHeight / 2);
+                const boundedSx = Math.max(0, Math.min(canvas_node.width - sWidth, sx));
+                const boundedSy = Math.max(0, Math.min(canvas_node.height - sHeight, sy));
+                ctx.drawImage(
+                    canvas_node,
+                    boundedSx, boundedSy, sWidth, sHeight,
+                    0, 0, canvas_node.width, canvas_node.height
+                );
+            } else {
+                const scaledWidth = canvas_node.width * factor;
+                const scaledHeight = canvas_node.height * factor;
+                const dx = (canvas_node.width - scaledWidth) / 2;
+                const dy = (canvas_node.height - scaledHeight) / 2;
+                ctx.drawImage(
+                    canvas_node,
+                    0, 0, canvas_node.width, canvas_node.height,
+                    dx, dy, scaledWidth, scaledHeight
+                );
+            }
+            canvas_node.getContext('2d').clearRect(0, 0, canvas_node.width, canvas_node.height);
+            canvas_node.getContext('2d').drawImage(temp, 0, 0);
+            return Image;
+        };
+        return Image;
+    };
+})();
 Q.ImageViewer = function () {
     let classes = Q.style(`
 .image_viewer_wrapper {

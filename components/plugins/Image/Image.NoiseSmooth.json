@@ -1,0 +1,9 @@
+{
+    "Name": "Image.NoiseSmooth",
+    "Method": "Plugin",
+    "Desc": "Apply smoothing effect with noise to an image.",
+    "Type": "Component",
+    "Dependencies": "Image",
+    "Example": "const image = Q.Image(); <br> image.NoiseSmooth({ radius: 2, noiseAmount: 5 }); // Smooths the image with noise <br> image.NoiseSmooth({ radius: 3, strength: 0.7, preserveEdges: true }); // Smooth with edge preservation",
+    "Status": "Stable"
+}

@@ -1,0 +1,9 @@
+{
+    "Name": "Image.Grayscale",
+    "Method": "Plugin",
+    "Desc": "Convert image to grayscale.",
+    "Type": "Component",
+    "Dependencies": "Image",
+    "Example": "const image = Q.Image(); <br> image.Grayscale({ algorithm: 'luminance' }); // Converts the image to grayscale using luminance <br> image.Grayscale({ intensity: 0.7, algorithm: 'lightness' }); // Partial grayscale conversion",
+    "Status": "Stable"
+}

@@ -1,0 +1,9 @@
+{
+    "Name": "Image.Vivid",
+    "Method": "Plugin",
+    "Desc": "Adjust image vividness/saturation.",
+    "Type": "Component",
+    "Dependencies": "Image",
+    "Example": "const image = Q.Image(); <br> image.Vivid(1.5); // Increases saturation by 1.5x <br> image.Vivid(0.5, { method: 'hsl' }); // Decreases saturation using HSL method",
+    "Status": "Stable"
+}

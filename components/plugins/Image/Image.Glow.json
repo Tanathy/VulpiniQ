@@ -1,0 +1,9 @@
+{
+    "Name": "Image.Glow",
+    "Method": "Plugin",
+    "Desc": "Apply a glow effect to an image.",
+    "Type": "Component",
+    "Dependencies": "Image",
+    "Example": "const image = Q.Image(); <br> image.Glow({ blurRadius: 15 }); // Adds a glow effect with a blur radius of 15 <br> image.Glow({ illuminanceThreshold: 180, color: '#3388ff', intensity: 1.5 }); // Blue-tinted glow effect",
+    "Status": "Stable"
+}
