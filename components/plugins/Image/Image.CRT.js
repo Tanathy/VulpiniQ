@@ -32,7 +32,7 @@
                 vignette: false,          // Apply vignette effect
                 vignetteStrength: 0.5,    // Vignette effect strength (0-1),
                 
-                // New options
+                // Additional options
                 scanlineBrightness: 0.5,  // Brightness between scanlines (0-1)
                 rgbOffset: 0,             // RGB subpixel separation
                 curvature: true,          // Apply CRT screen curvature
@@ -43,17 +43,7 @@
                 horizontalWobble: 2,      // Amplitude of horizontal wobble
                 wobbleSpeed: 10,          // Speed of wobble effect (1-50)
                 colorBleed: 0,            // Amount of color bleeding (0-5)
-                jitterChance: 0,          // Chance of frame jitter (0-100),
-                
-                // RGB Subpixel options
-                subpixelEmulation: false,      // Whether to enable RGB subpixel emulation
-                subpixelLayout: 'rgb',         // Subpixel layout: 'rgb', 'bgr', 'vrgb' (vertical)
-                subpixelScale: 3.0,            // Scale factor for subpixel rendering (3 = each pixel becomes 3 subpixels)
-                phosphorSize: 0.8,             // Size of phosphor dots (0-1, where 1 fills the whole subpixel)
-                phosphorBloom: 0.2,            // Bloom effect around phosphors (0-1)
-                crtMaxResolution: 640,         // Maximum "CRT native resolution" width to simulate
-                crtResolutionScale: 1.0,       // Scale factor for the final resolution (1 = use crtMaxResolution)
-                applyScanlineAfterSubpixel: true // Whether to apply scanlines after subpixel rendering
+                jitterChance: 0,          // Chance of frame jitter (0-100)
             };
             
             const finalOptions = Object.assign({}, defaultOptions, crtOptions);
@@ -120,7 +110,7 @@
                 height: canvas_node.height 
             }).nodes[0];
             
-            let wobbleCtx = wobbleCanvas.getContext('2d');
+            let wobbleCtx = wobbleCanvas.getContext('2d', { willReadFrequently: true });
             
             // Apply chromatic aberration with RGB subpixel separation
             const tempData = new Uint8ClampedArray(data);
@@ -154,167 +144,11 @@
             // Apply the modified image data to the wobble canvas first
             ctx.putImageData(imageData, 0, 0);
 
-            // Apply subpixel emulation if enabled
-            if (finalOptions.subpixelEmulation) {
-                // Create a canvas for subpixel rendering
-                let subpixelCanvas = Q('<canvas>', { 
-                    width: Math.ceil(temp.width * finalOptions.subpixelScale), 
-                    height: Math.ceil(temp.height * finalOptions.subpixelScale) 
-                }).nodes[0];
-                
-                let subpixelCtx = subpixelCanvas.getContext('2d');
-                
-                // Determine target CRT resolution
-                const targetWidth = Math.min(temp.width, finalOptions.crtMaxResolution);
-                const targetHeight = Math.round(temp.height * (targetWidth / temp.width));
-                
-                // Scale factor based on target resolution
-                const resolutionScale = targetWidth / temp.width * finalOptions.crtResolutionScale;
-                
-                // Draw the source image (with any previous effects) to the subpixel canvas
-                subpixelCtx.drawImage(temp, 0, 0, subpixelCanvas.width, subpixelCanvas.height);
-                
-                // Get subpixel canvas image data for processing
-                const subpixelData = subpixelCtx.getImageData(0, 0, subpixelCanvas.width, subpixelCanvas.height);
-                const subpixelPixels = subpixelData.data;
-                
-                // Create a new canvas for the processed subpixel image
-                let processedCanvas = Q('<canvas>', { 
-                    width: subpixelCanvas.width, 
-                    height: subpixelCanvas.height 
-                }).nodes[0];
-                
-                let processedCtx = processedCanvas.getContext('2d');
-                processedCtx.clearRect(0, 0, processedCanvas.width, processedCanvas.height);
-                
-                // Calculate phosphor parameters
-                const subpixelWidth = Math.ceil(finalOptions.subpixelScale / 3);
-                const phosphorWidth = Math.ceil(subpixelWidth * finalOptions.phosphorSize);
-                const phosphorGap = subpixelWidth - phosphorWidth;
-                const phosphorBloom = finalOptions.phosphorBloom * subpixelWidth;
-                
-                // Apply the subpixel pattern based on layout
-                if (finalOptions.subpixelLayout === 'rgb' || finalOptions.subpixelLayout === 'bgr') {
-                    // Horizontal RGB/BGR layout
-                    const isRGB = finalOptions.subpixelLayout === 'rgb';
-                    
-                    for (let y = 0; y < temp.height; y++) {
-                        for (let x = 0; x < temp.width; x++) {
-                            const srcIndex = (y * temp.width + x) * 4;
-                            
-                            // Get source pixel color
-                            const r = imageData.data[srcIndex];
-                            const g = imageData.data[srcIndex + 1];
-                            const b = imageData.data[srcIndex + 2];
-                            
-                            // Calculate subpixel positions
-                            const baseX = Math.floor(x * finalOptions.subpixelScale);
-                            const baseY = Math.floor(y * finalOptions.subpixelScale);
-                            
-                            // Draw R, G, B phosphor dots with proper order
-                            const components = isRGB ? [r, g, b] : [b, g, r];
-                            
-                            for (let i = 0; i < 3; i++) {
-                                const intensity = components[i] / 255;
-                                const subpixelX = baseX + (i * subpixelWidth);
-                                
-                                // Draw phosphor dot with bloom
-                                const gradientSize = phosphorWidth + (phosphorBloom * 2);
-                                const gradient = processedCtx.createRadialGradient(
-                                    subpixelX + subpixelWidth/2, baseY + subpixelWidth/2, 0,
-                                    subpixelX + subpixelWidth/2, baseY + subpixelWidth/2, gradientSize/2
-                                );
-                                
-                                // Colors for R, G, B phosphors
-                                const colors = ['rgb(255,0,0)', 'rgb(0,255,0)', 'rgb(0,0,255)'];
-                                const color = colors[i];
-                                
-                                gradient.addColorStop(0, `rgba(${color.replace(/[^\d,]/g, '')},${intensity})`);
-                                gradient.addColorStop(phosphorWidth/gradientSize, `rgba(${color.replace(/[^\d,]/g, '')},${intensity * 0.7})`);
-                                gradient.addColorStop(1, `rgba(${color.replace(/[^\d,]/g, '')},0)`);
-                                
-                                processedCtx.fillStyle = gradient;
-                                processedCtx.fillRect(
-                                    subpixelX, baseY, 
-                                    subpixelWidth, finalOptions.subpixelScale
-                                );
-                            }
-                        }
-                    }
-                } else if (finalOptions.subpixelLayout === 'vrgb') {
-                    // Vertical RGB layout (used in some displays)
-                    for (let y = 0; y < temp.height; y++) {
-                        for (let x = 0; x < temp.width; x++) {
-                            const srcIndex = (y * temp.width + x) * 4;
-                            
-                            // Get source pixel color
-                            const r = imageData.data[srcIndex];
-                            const g = imageData.data[srcIndex + 1];
-                            const b = imageData.data[srcIndex + 2];
-                            
-                            // Calculate subpixel positions
-                            const baseX = Math.floor(x * finalOptions.subpixelScale);
-                            const baseY = Math.floor(y * finalOptions.subpixelScale);
-                            
-                            // Draw vertical R, G, B phosphor lines
-                            const components = [r, g, b];
-                            
-                            for (let i = 0; i < 3; i++) {
-                                const intensity = components[i] / 255;
-                                const subpixelY = baseY + (i * subpixelWidth);
-                                
-                                // Colors for R, G, B phosphors
-                                const colors = ['rgb(255,0,0)', 'rgb(0,255,0)', 'rgb(0,0,255)'];
-                                const color = colors[i];
-                                
-                                processedCtx.fillStyle = `rgba(${color.replace(/[^\d,]/g, '')},${intensity})`;
-                                processedCtx.fillRect(
-                                    baseX, subpixelY, 
-                                    finalOptions.subpixelScale, subpixelWidth
-                                );
-                            }
-                        }
-                    }
-                }
-                
-                // Scale the processed image back to target resolution
-                wobbleCtx.clearRect(0, 0, wobbleCanvas.width, wobbleCanvas.height);
-                wobbleCtx.drawImage(
-                    processedCanvas, 0, 0, 
-                    temp.width * finalOptions.subpixelScale, 
-                    temp.height * finalOptions.subpixelScale,
-                    0, 0, 
-                    temp.width * resolutionScale, 
-                    temp.height * resolutionScale
-                );
-                
-                // Scale the image to match the original canvas dimensions
-                const resultCanvasWidth = canvas_node.width;
-                const resultCanvasHeight = canvas_node.height;
-                
-                temp = Q('<canvas>', { 
-                    width: resultCanvasWidth, 
-                    height: resultCanvasHeight 
-                }).nodes[0];
-                
-                ctx = temp.getContext('2d');
-                ctx.drawImage(
-                    wobbleCanvas, 0, 0,
-                    temp.width * resolutionScale,
-                    temp.height * resolutionScale, 
-                    0, 0, resultCanvasWidth, resultCanvasHeight
-                );
-                
-                // Update wobble canvas with the resized content
-                wobbleCtx.clearRect(0, 0, wobbleCanvas.width, wobbleCanvas.height);
-                wobbleCtx.drawImage(temp, 0, 0);
-            } else {
-                // Standard rendering (no subpixel emulation)
-                wobbleCtx.drawImage(temp, 0, 0);
-            }
-            
+            // Standard rendering (no subpixel emulation)
+            wobbleCtx.drawImage(temp, 0, 0);
+
             // Clear the result canvas
-            const resultCtx = canvas_node.getContext('2d');
+            const resultCtx = canvas_node.getContext('2d', { willReadFrequently: true });
             resultCtx.clearRect(0, 0, canvas_node.width, canvas_node.height);
             
             // Apply scanlines later if using subpixel emulation and flag is set
