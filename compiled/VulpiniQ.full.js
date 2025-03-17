@@ -1687,6 +1687,7 @@ Q.Image = function (options) {
             history.states.shift();
             history.position--;
         }
+        console.log(`History saved: Position=${history.position}, States=${history.states.length}`);
     };
     Image.Load = function (src, callback) {
         if (src instanceof HTMLCanvasElement) {
@@ -1846,12 +1847,19 @@ Q.Image = function (options) {
         return Image;
     };
     Image.History = function(offset = -1) {
-        if (history.states.length === 0) return Image;
+        if (history.states.length === 0) {
+            console.log("No history available");
+            return Image;
+        }
         if (offset === 0) return Image;
         let targetPosition = history.position + offset;
         if (targetPosition < 0) targetPosition = 0;
         if (targetPosition >= history.states.length) targetPosition = history.states.length - 1;
-        if (targetPosition === history.position) return Image;
+        if (targetPosition === history.position) {
+            console.log(`Already at position ${targetPosition}`);
+            return Image;
+        }
+        console.log(`History navigation: ${history.position} -> ${targetPosition}`);
         history.isUndoRedoing = true;
         const ctx = canvas_node.getContext('2d', { willReadFrequently: true });
         const state = history.states[targetPosition];
@@ -1877,6 +1885,22 @@ Q.Image = function (options) {
     Image.SaveHistory = function() {
         saveToHistory();
         return Image;
+    };
+    const originalCtxPutImageData = CanvasRenderingContext2D.prototype.putImageData;
+    const originalCtxDrawImage = CanvasRenderingContext2D.prototype.drawImage;
+    CanvasRenderingContext2D.prototype.putImageData = function() {
+        const result = originalCtxPutImageData.apply(this, arguments);
+        if (this.canvas === canvas_node && options.autoSaveHistory && !history.isUndoRedoing) {
+            saveToHistory(); // Directly save without timeout
+        }
+        return result;
+    };
+    CanvasRenderingContext2D.prototype.drawImage = function() {
+        const result = originalCtxDrawImage.apply(this, arguments);
+        if (this.canvas === canvas_node && options.autoSaveHistory && !history.isUndoRedoing) {
+            saveToHistory(); // Directly save without timeout
+        }
+        return result;
     };
     Image.ClearHistory = function() {
         history.states = [];
