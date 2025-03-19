@@ -1,0 +1,19 @@
+{
+  "Name": "Image",
+  "Method": "Plugin",
+  "Desc": "Useful to manipulate images.",
+  "Type": "Component",
+  "Example": "var image = Q.Image();",
+  "Dependencies": ["RGB2HSL", "HSL2RGB"],
+  "Variables": [
+    "Image",
+    "defaultOptions",
+    "options",
+    "Canvas",
+    "canvas_node",
+    "history",
+    "saveToHistory",
+    "originalCtxPutImageData",
+    "originalCtxDrawImage"
+  ]
+}

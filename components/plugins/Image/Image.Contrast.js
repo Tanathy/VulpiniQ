@@ -1,26 +1,26 @@
-// Name: Image.Contrast
-// Method: Plugin
-// Desc: Adjust image contrast
-// Type: Component
-// Dependencies: Image
 
-// Directly extend Q.Image with the Contrast method
+
+
+
+
+
+
 (function() {
-    // Store the original Image function
+    
     const originalImage = Q.Image;
     
-    // Override Q.Image to add our method
+    
     Q.Image = function(options = {}) {
-        // Get the original Image object
+        
         const Image = originalImage(options);
         const canvas_node = Image.node;
         
-        // Add Contrast method directly to the Image object
+        
         Image.Contrast = function(value, contrastOptions = {}) {
-            // Default options
+            
             const defaultOptions = {
-                preserveHue: true,  // Whether to preserve the hue while adjusting contrast
-                clamp: true        // Whether to clamp values to 0-255 range
+                preserveHue: true,  
+                clamp: true        
             };
             
             const finalOptions = Object.assign({}, defaultOptions, contrastOptions);

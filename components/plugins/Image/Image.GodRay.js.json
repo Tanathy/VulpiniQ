@@ -1,0 +1,33 @@
+{
+  "Name": "Image.GodRay",
+  "Method": "Plugin",
+  "Desc": "Create light rays emanating from bright areas of an image",
+  "Type": "Component",
+  "Dependencies": ["Image"],
+  "Variables": [
+    "originalImage",
+    "Image",
+    "canvas_node",
+    "defaultOptions",
+    "finalOptions",
+    "centerX",
+    "centerY",
+    "threshold",
+    "length",
+    "samples",
+    "strength",
+    "decay",
+    "exposure",
+    "sourceCanvas",
+    "sourceCtx",
+    "brightCanvas",
+    "brightCtx",
+    "rayCanvas",
+    "rayCtx",
+    "finalCanvas",
+    "finalCtx",
+    "imageData",
+    "brightData",
+    "parseColor"
+  ]
+}

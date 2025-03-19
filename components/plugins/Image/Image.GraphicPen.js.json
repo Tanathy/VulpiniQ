@@ -1,0 +1,30 @@
+{
+  "Name": "Image.GraphicPen",
+  "Method": "Plugin",
+  "Desc": "Transform images to realistic pen drawings with various sketching techniques",
+  "Type": "Component",
+  "Dependencies": ["Image"],
+  "Variables": [
+    "originalImage",
+    "Image",
+    "canvas_node",
+    "defaultOptions",
+    "finalOptions",
+    "sourceCanvas",
+    "sourceCtx",
+    "grayCanvas",
+    "grayCtx", 
+    "imageData",
+    "grayData",
+    "destCanvas",
+    "destCtx",
+    "applyCrosshatchStrokes",
+    "applyHatchingStrokes",
+    "applyCircularStrokes",
+    "applyStippleStrokes",
+    "drawHatchingLayer",
+    "drawStroke",
+    "applyPaperTexture",
+    "rotateImageData"
+  ]
+}
