@@ -3,7 +3,7 @@ Q.Form.Button = function (text = '') {
     const sharedClasses = Form.classes;
     
     // Define Button-specific styles
-    const classes = Object.assign({}, sharedClasses, Q.style(`
+    const classes = Object.assign({}, sharedClasses, Q.style('', `
         .q_form_button {
             user-select: none;
             padding: 5px 10px;
@@ -17,7 +17,7 @@ Q.Form.Button = function (text = '') {
         .q_form_button:active {
             background-color: #777;
         }
-    `, {
+    `, null, {
         'q_form_button': 'q_form_button'
     }));
     

@@ -4,7 +4,7 @@ Q.Container.Tab = function (options = {}) {
     const sharedClasses = Container.classes;
     
     // Define Tab-specific styles
-    const classes = Object.assign({}, sharedClasses, Q.style(`
+    const classes = Object.assign({}, sharedClasses, Q.style('', `
         .tab_navigation_buttons {
             box-sizing: border-box;
             width: 20px;
@@ -71,7 +71,7 @@ Q.Container.Tab = function (options = {}) {
             background-color: #333;
             color: #555;
         }
-    `, {
+    `, null, {
         'tab_navigation_buttons': 'tab_navigation_buttons',
         'tab_navigation_buttons_vertical': 'tab_navigation_buttons_vertical',
         'tab_container': 'tab_container',

@@ -12,7 +12,7 @@ Q.Container = function (options = {}) {
     Q.Icons();
 
     // Define only basic shared styles
-    Container.classes = Q.style(`
+    Container.classes = Q.style('', `
         .container_icon {
             width: 100%;
             height: 100%;
@@ -20,10 +20,8 @@ Q.Container = function (options = {}) {
             pointer-events: none;
             z-index: 1;
         }
-    `, {
+    `, null, {
         'container_icon': 'container_icon'
     });
-
-    // Return the Container namespace to be extended by other components
     return Container;
 };

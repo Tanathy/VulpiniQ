@@ -3,7 +3,7 @@ Q.Form.TextArea = function (value = '', placeholder = '') {
     const sharedClasses = Form.classes;
     
     // Define TextArea-specific styles
-    const classes = Object.assign({}, sharedClasses, Q.style(`
+    const classes = Object.assign({}, sharedClasses, Q.style('', `
         .q_form_textarea {
             width: calc(100% - 2px);
             padding: 5px;
@@ -14,7 +14,7 @@ Q.Form.TextArea = function (value = '', placeholder = '') {
         .q_form_textarea:focus {
             outline: 1px solid #1DA1F2;
         }
-    `, {
+    `, null, {
         'q_form_textarea': 'q_form_textarea'
     }));
     

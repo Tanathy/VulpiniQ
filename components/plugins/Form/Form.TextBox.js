@@ -3,7 +3,7 @@ Q.Form.TextBox = function (type = 'text', value = '', placeholder = '') {
     const sharedClasses = Form.classes;
     
     // Define TextBox-specific styles
-    const classes = Object.assign({}, sharedClasses, Q.style(`
+    const classes = Object.assign({}, sharedClasses, Q.style('', `
         .q_form_input { 
             width: calc(100% - 2px);
             padding: 5px;
@@ -14,7 +14,7 @@ Q.Form.TextBox = function (type = 'text', value = '', placeholder = '') {
         .q_form_input:focus {
             outline: 1px solid #1DA1F2;
         }
-    `, {
+    `, null, {
         'q_form_input': 'q_form_input'
     }));
     

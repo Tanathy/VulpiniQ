@@ -4,11 +4,11 @@ Q.Form.Tag = function (options = {}) {
     const Icon = Form.Icon;
     
     // Define Tag-specific styles
-    const classes = Object.assign({}, sharedClasses, Q.style(`
+    const classes = Object.assign({}, sharedClasses, Q.style('', `
         .tag_container {
             display: flex;
             flex-wrap: wrap;
-        }
+        } 
 
         .tag_tag {
             display: flex;
@@ -68,7 +68,7 @@ Q.Form.Tag = function (options = {}) {
         .tag_name[contenteditable="true"]:focus {
             outline: 0;
         }
-    `, {
+    `, null, {
         'tag_container': 'tag_container',
         'tag_tag': 'tag_tag',
         'tag_rating': 'tag_rating',

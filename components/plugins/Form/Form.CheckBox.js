@@ -3,7 +3,7 @@ Q.Form.CheckBox = function (checked = false, text = '') {
     const sharedClasses = Form.classes;
     
     // Define CheckBox-specific styles
-    const classes = Object.assign({}, sharedClasses, Q.style(`
+    const classes = Object.assign({}, sharedClasses, Q.style('', `
         .q_form_checkbox {
             display: flex;
             width: fit-content;
@@ -47,7 +47,7 @@ Q.Form.CheckBox = function (checked = false, text = '') {
             height: 100%;
             background-color: #1DA1F2;
         }
-    `, {
+    `, null, {
         'q_form_checkbox': 'q_form_checkbox',
         'q_form_cb': 'q_form_cb'
     }));

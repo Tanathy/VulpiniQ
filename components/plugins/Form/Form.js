@@ -10,7 +10,7 @@ Q.Form = function (options = {}) {
     };
 
     // Define only basic shared styles
-    Form.classes = Q.style(`
+    Form.classes = Q.style('', `
            .form_icon {
                width: 100%;
                height: 100%;
@@ -29,7 +29,7 @@ Q.Form = function (options = {}) {
            .q_form_disabled {
                opacity: 0.5;
            }
-    `, {
+    `, null, {
         'form_icon': 'form_icon',
         'q_form': 'q_form',
         'q_form_disabled': 'q_form_disabled'
