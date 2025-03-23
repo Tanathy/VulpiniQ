@@ -10,8 +10,9 @@ const Q = (() => {
           _ac = AbortController, _as = AbortSignal, _err = Error;
     let GLOBAL = {};
     let styleData = {
-        gen: "",
         root: '',
+        generic: "",
+        responsive: {},
         element: _n,
         init: false
     };
@@ -21,7 +22,15 @@ const Q = (() => {
             styleData.init = true;
         }
         let finalStyles = styleData.root ? `:root {${styleData.root}}\n` : '';
-        finalStyles += styleData.gen;
+        finalStyles += styleData.generic;
+        const breakpoints = _ob.keys(styleData.responsive);
+        for (let i = 0; i < breakpoints.length; i++) {
+            const size = breakpoints[i];
+            const css = styleData.responsive[size];
+            if (css) {
+                finalStyles += `\n@media (max-width: ${size}) {\n${css}\n}`;
+            }
+        }
         styleData.element.textContent = finalStyles;
     }
     function createStyleElement() {
@@ -96,24 +105,38 @@ const Q = (() => {
         (Q.prototype[methodName] = functionImplementation, Q);
     Q.getGLOBAL = key => GLOBAL[key];
     Q.setGLOBAL = value => (GLOBAL = { ...GLOBAL, ...value });
-    Q.style = (root = '', style = '', mapping = _n) => {
+    Q.style = (root = '', style = '', responsive = _n, mapping = _n) => {
+        if (mapping) {
+            const keys = _ob.keys(mapping);
+            keys.forEach((key) => {
+                let newKey = Q.ID ? Q.ID(5, '_') : `_${_ma.random().toString(36).substring(2, 7)}`;
+                if (style && typeof style === 'string') {
+                    style = style.replace(new _re(`\\b${key}\\b`, 'gm'), newKey);
+                }
+                mapping[key] = mapping[key].replace(key, newKey);
+            });
+        }
         if (root && typeof root === 'string') {
             styleData.root += root.trim() + ';';
         }
         if (style && typeof style === 'string') {
-            if (mapping) {
-                const keys = _ob.keys(mapping);
-                keys.forEach((key) => {
-                    let newKey = Q.ID ? Q.ID(5, '_') : `_${_ma.random().toString(36).substring(2, 7)}`;
-                    style = style.replace(new _re(`\\b${key}\\b`, 'gm'), newKey);
-                    mapping[key] = mapping[key].replace(key, newKey);
-                });
+            styleData.generic += style;
+        }
+        if (responsive && typeof responsive === 'object') {
+            const breakpoints = _ob.entries(responsive);
+            for (let i = 0; i < breakpoints.length; i++) {
+                const [size, css] = breakpoints[i];
+                if (css && typeof css === 'string') {
+                    if (!styleData.responsive[size]) {
+                        styleData.responsive[size] = '';
+                    }           
+                    styleData.responsive[size] += css + '\n';
+                }
             }
-            styleData.gen += style;
         }
         if (document.readyState === 'complete') {
             applyStyles();
-        }
+        }  
         return mapping;
     };
     Q._ = {

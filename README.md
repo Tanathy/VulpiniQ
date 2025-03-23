@@ -56,7 +56,6 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | Form | Plugin | Plugin | Form is a simple library for creating forms and windows in the browser\. It provides a set of methods for creating form elements, windows, and other UI components\. |
 | Form\.Button | Component | Component | Button component for Form plugin |
 | Form\.CheckBox | Component | Component | CheckBox component for Form plugin |
-| Form\.Tag | Component | Component | Tag component for Form plugin |
 | Form\.TextArea | Component | Component | TextArea component for Form plugin |
 | Form\.TextBox | Component | Component | TextBox component for Form plugin |
 | HSL2RGB | Utility | Color | Converts HSL \(Hue, Saturation, Lightness\) color values to RGB \(Red, Green, Blue\) format\. <br> This function is essential for applications that require color transformations, allowing developers to switch between different color representations easily\. <br> Understanding color models is key in design, and this utility helps bridge the gap between HSL, which is often more intuitive for humans, and RGB, which is commonly used in digital displays\. |
