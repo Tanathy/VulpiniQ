@@ -34,6 +34,7 @@
         }
         
         canvas_node.getContext('2d').putImageData(data, 0, 0);
+        this.saveToHistory();
         return this;
     };
 })();

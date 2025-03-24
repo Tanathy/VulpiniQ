@@ -1,5 +1,4 @@
-
-    Q.Image.prototype.Brightness = function(value, brightOptions = {}) {
+Q.Image.prototype.Brightness = function(value, brightOptions = {}) {
         // Default options
         const defaultOptions = {
             preserveAlpha: true,
@@ -25,5 +24,6 @@
         }
         
         canvas_node.getContext('2d').putImageData(data, 0, 0);
+        this.saveToHistory();
         return this;
     };
