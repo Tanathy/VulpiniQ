@@ -5,11 +5,8 @@
 // Example: Q.Icons();
 // Dependencies: style
 Q.Icons = function () {
-
   let glob = Q.getGLOBAL('icons');
-
   let classes = {};
-
   if (glob && glob.icons) {
     classes = glob.icons;
   }
@@ -63,20 +60,12 @@ Q.Icons = function () {
   "svg_iconsize": "svg_iconsize"
 }, true);
   }
-
   return {
     get: function (name, additional = '') {
-
       if (additional === '') {
         additional = classes['svg_iconsize'];
       }
       return Q('<div>', {class: classes['svg_icon'] + ' ' + classes[name] + ' ' + additional});
     }
-
-
-
-
   }
-
-
 };

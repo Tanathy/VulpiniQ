@@ -1,53 +1,48 @@
-// Add TextArea as a method to the Form prototype
+
 Form.prototype.TextArea = function(value = '', placeholder = '') {
-    // Define TextArea-specific styles if not already defined
     if (!Form.textAreaClassesInitialized) {
         Form.textAreaClasses = Q.style('', `
-            .q_form_textarea {
-                width: calc(100% - 2px);
-                padding: 5px;
-                outline: none;
-                border: 0;
+            .form_textarea {
+                width: 100%;
+                padding: var(--form-default-padding);
+                font-family: var(--form-default-font-family);
+                font-size: var(--form-default-font-size);
+                border-radius: var(--form-default-border-radius);
+                background-color: var(--form-default-input-background-color);
+                color: var(--form-default-input-text-color);
+                border: 1px solid var(--form-default-input-border-color);
+                resize: none;
+                min-height: 100px;
             }
-
-            .q_form_textarea:focus {
-                outline: 1px solid #1DA1F2;
+            .form_textarea:focus {
+                border-color: var(--form-default-button-background-color);
+                outline: none;
             }
         `, null, {
-            'q_form_textarea': 'q_form_textarea'
+            'form_textarea': 'form_textarea'
         });
-        
         Form.textAreaClassesInitialized = true;
     }
-    
-    const textarea = Q(`<textarea class="${Form.classes.q_form} ${Form.textAreaClasses.q_form_textarea}" placeholder="${placeholder}">${value}</textarea>`);
-
+    const textarea = Q(`<textarea class="${Form.classes.q_form} ${Form.textAreaClasses.form_textarea}" placeholder="${placeholder}">${value}</textarea>`);
     textarea.placeholder = function(text) {
         textarea.attr('placeholder', text);
     };
-    
     textarea.disabled = function(state) {
         textarea.prop('disabled', state);
-
         if (state) {
             textarea.addClass(Form.classes.q_form_disabled);
         } else {
             textarea.removeClass(Form.classes.q_form_disabled);
         }
     };
-    
     textarea.reset = function() {
         textarea.val('');
     };
-    
     textarea.change = function(callback) {
         textarea.on('change', function() {
             callback(this.value);
         });
     };
-    
-    // Add to form elements
     this.elements.push(textarea);
-
     return textarea;
 };

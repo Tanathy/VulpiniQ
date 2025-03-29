@@ -1,0 +1,9 @@
+{
+  "Name": "after",
+  "Method": "Prototype",
+  "Desc": "Inserts content after each element in the current set of matched elements.",
+  "Long Desc": "Inserts content after each element in the current set of matched elements. Accepts a string for HTML, an HTMLElement, a Q object, an array of elements, or a NodeList. Strings are added as raw HTML, while elements and objects are inserted after the target nodes.",
+  "Type": "DOM Manipulation",
+  "Example": "Q(selector).after(\"<p>New paragraph</p>\"); // Adds a paragraph as HTML\nQ(selector).after(document.createElement(\"div\")); // Adds a div element\nQ(selector).after(Q(otherSelector)); // Inserts a Q object\nQ(selector).after([document.createElement(\"span\"), document.createElement(\"img\")]); // Inserts multiple elements",
+  "Variables": ["nodes", "target", "parent", "content", "subNodes", "nextSibling"]
+}

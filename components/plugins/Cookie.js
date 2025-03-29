@@ -13,7 +13,6 @@ Q.Cookie = function (cookieKey, cookieValue, cookieOptions = {}) {
       if (options.secure) optionsStr += 'secure; ';
       return optionsStr;
     };
-  
     if (arguments.length > 1) {
       if (cookieValue === null || cookieValue === '') {
         cookieValue = '';
@@ -21,7 +20,6 @@ Q.Cookie = function (cookieKey, cookieValue, cookieOptions = {}) {
       }
       return document.cookie = `${cookieKey}=${cookieValue}; ${buildOptions(cookieOptions)}`;
     }
-  
     const allCookies = document.cookie.split('; ');
     for (let i = 0, len = allCookies.length; i < len; i++) {
       const currentCookie = allCookies[i];

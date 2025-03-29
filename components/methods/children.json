@@ -1,0 +1,9 @@
+{
+  "Name": "children",
+  "Method": "Prototype",
+  "Desc": "Gets the children of each element in the set of matched elements.",
+  "Long Desc": "Gets the children of each element in the set of matched elements. Returns all direct child nodes as an array. Optionally accepts a selector to filter the children by a specific criteria.",
+  "Type": "DOM Traversal",
+  "Example": "Q(selector).children(); // Returns all direct children\nQ(selector).children('.specific-class'); // Returns children with the specified class\nQ(selector).children('[data-attribute=\"value\"]'); // Returns children with the specified attribute",
+  "Variables": ["nodes", "allChildren", "children", "selector"]
+}

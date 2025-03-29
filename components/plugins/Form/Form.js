@@ -1,20 +1,32 @@
-// Define the Form constructor
+
 function Form(options = {}) {
     if (!(this instanceof Form)) {
         return new Form(options);
     }
     
-    // Store form elements and data
     this.elements = [];
     this.options = options;
     
-    // Initialize shared styles if not already done
     if (!Form.initialized) {
         Form.classes = Q.style(`
-            --form-default-background-color: #fff;
-            --form-default-text-color: #000;
-            --form-default-border-color: #000;
             --form-default-border-radius: 5px;
+            --form-default-padding: 5px 10px;
+            --form-default-font-size: 12px;
+            --form-default-font-family: Arial, sans-serif;
+            --form-default-input-background-color:rgb(37, 37, 37);
+            --form-default-input-text-color:rgb(153, 153, 153);
+            --form-default-input-border-color:rgba(255, 255, 255, 0.03);
+            --form-default-checkbox-background-color:rgb(68, 68, 68);
+            --form-default-checkbox-active-background-color:rgb(100, 60, 240);
+            --form-default-checkbox-text-color:rgb(153, 153, 153);
+            --form-default-checkbox-radius: 5px;
+            --form-default-button-background-color:rgb(100, 60, 240);
+            --form-default-button-text-color: #fff;
+            --form-default-button-hover-background-color:rgb(129, 100, 231);
+            --form-default-button-hover-text-color: #fff;
+            --form-default-button-active-background-color:rgb(129, 100, 231);
+            --form-default-button-active-text-color: #fff;
+            --form-default-button-border-color:rgba(255, 255, 255, 0.1);
         `, `
             .form_icon {
                 width: 100%;
@@ -22,41 +34,16 @@ function Form(options = {}) {
                 color: #fff;
                 pointer-events: none;
             }
-
-            .q_form {
-                box-sizing: border-box;
-                font-family: inherit;
-                font-size: inherit;
-                color: inherit;
-                margin: 1px;
-            }
-
-            .q_form_disabled {
-                opacity: 0.5;
-            }
-            
-            .form_active {
-                background-color: #1DA1F2;
-                color: #fff;
-            }
-        `, null, {
-            'form_icon': 'form_icon',
-            'q_form': 'q_form',
-            'q_form_disabled': 'q_form_disabled',
-            'form_active': 'form_active'
-        });
-        
+        `, null, {});
         Form.initialized = true;
         console.log('Form core initialized');
     }
 }
 
-// Add utility methods to the Form prototype
-Form.prototype.Icon = function(icon) {
+Form.prototype.Icon = function (icon) {
     let iconElement = Q('<div>');
     iconElement.addClass('svg_' + icon + ' form_icon');
     return iconElement;
 };
 
-// Add the Form constructor to the global Q object
 Q.Form = Form;

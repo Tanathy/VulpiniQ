@@ -20,27 +20,23 @@ Q.Fetch = function (url, callback, options = {}) {
         query = null,
         signal: externalSignal = null
     } = options;
-
     // Append query parameters if provided.
     if (query && typeof query === 'object') {
         const urlObject = new URL(url, location.origin);
         Object.entries(query).forEach(([key, value]) => urlObject.searchParams.append(key, value));
         url = urlObject.toString();
     }
-
     // Auto serialize body if needed.
     let requestBody = body;
     if (body && typeof body === 'object' && contentType === 'application/json' && !(body instanceof FormData)) {
         try { requestBody = JSON.stringify(body); } catch (error) { callback(new Error('Failed to serialize request body'), null); return; }
     }
     headers['Content-Type'] = headers['Content-Type'] || contentType;
-
     const controller = new AbortController();
     const { signal } = controller;
     if (externalSignal) {
         externalSignal.addEventListener('abort', () => controller.abort(), { once: true });
     }
-
     const doFetch = (attempt) => {
         let timeoutId = null;
         if (timeout) { timeoutId = setTimeout(() => controller.abort(), timeout); }
@@ -72,7 +68,6 @@ Q.Fetch = function (url, callback, options = {}) {
                 }
             });
     };
-
     doFetch(0);
     return { abort: () => controller.abort() };
 };

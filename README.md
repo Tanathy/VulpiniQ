@@ -56,6 +56,7 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | Form | Plugin | Plugin | Form is a simple library for creating forms and windows in the browser\. It provides a set of methods for creating form elements, windows, and other UI components\. |
 | Form\.Button | Component | Component | Button component for Form plugin |
 | Form\.CheckBox | Component | Component | CheckBox component for Form plugin |
+| Form\.Tags | Component | Component | Tags component for Form plugin |
 | Form\.TextArea | Component | Component | TextArea component for Form plugin |
 | Form\.TextBox | Component | Component | TextBox component for Form plugin |
 | HSL2RGB | Utility | Color | Converts HSL \(Hue, Saturation, Lightness\) color values to RGB \(Red, Green, Blue\) format\. <br> This function is essential for applications that require color transformations, allowing developers to switch between different color representations easily\. <br> Understanding color models is key in design, and this utility helps bridge the gap between HSL, which is often more intuitive for humans, and RGB, which is commonly used in digital displays\. |
@@ -64,28 +65,7 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | Image | Plugin | Component | Useful to manipulate images\. |
 | Image\.Blur | Plugin | Component | Apply standard blur to images\. |
 | Image\.Brightness | Plugin | Component | Adjust image brightness\. |
-| Image\.CRT | Plugin | Component | Apply CRT \(old TV\) and VHS effects to an image\. |
-| Image\.ComicEffect | Plugin | Component | Apply a comic book style effect to an image\. |
 | Image\.Contrast | Plugin | Component | Adjust image contrast\. |
-| Image\.Crop | Plugin | Component | Crop image to specified dimensions\. |
-| Image\.Emboss | Plugin | Component | Apply embossing effect to images\. |
-| Image\.Flip | Plugin | Component | Flip image horizontally or vertically\. |
-| Image\.GaussianBlur | Plugin | Component | Apply high\-quality Gaussian blur to images\. |
-| Image\.Glow | Plugin | Component | Apply a glow effect to an image\. |
-| Image\.Grayscale | Plugin | Component | Convert image to grayscale\. |
-| Image\.HDR | Plugin | Component | Apply an HDR\-like effect to an image\. |
-| Image\.Halftone | Plugin | Component | Apply a halftone effect to an image\. |
-| Image\.Hue | Plugin | Component | Adjust image hue\. |
-| Image\.LensFlareAnamorphic | Plugin | Component | Apply horizontal anamorphic lens flare effect to bright spots in an image\. |
-| Image\.Noise | Plugin | Component | Apply random noise to an image\. |
-| Image\.NoiseSmooth | Plugin | Component | Apply smoothing effect with noise to an image\. |
-| Image\.Pixelize | Plugin | Component | Apply a pixelation effect to an image\. |
-| Image\.RGBSubpixel | Plugin | Component | Apply RGB subpixel emulation effect to an image\. |
-| Image\.Resize | Plugin | Component | Image resizing operations\. |
-| Image\.Rotate | Plugin | Component | Rotate image by specified degrees\. |
-| Image\.Sharpen | Plugin | Component | Apply smart sharpening to images\. |
-| Image\.Vivid | Plugin | Component | Adjust image vividness/saturation\. |
-| Image\.Zoom | Plugin | Component | Zoom in or out of an image\. |
 | ImageViewer | Plugin | Plugin | A simple image viewer plugin |
 | JSON | Plugin | Plugin | Provides methods to parse, deflate, inflate, merge, sort, and flatten JSON objects\. |
 | Leaving | Static | Event Handling | Registers callbacks to be executed when the window is about to be unloaded\. |
@@ -98,11 +78,14 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | Thread | Plugin | Plugin | Thread is a utility for managing Web Workers in a thread pool\. It allows developers to execute functions in parallel, offloading heavy tasks to separate threads and improving performance\. <br> Thread provides a simple interface for creating, managing, and controlling worker threads, enabling developers to execute multiple tasks concurrently without blocking the main thread\. <br> By distributing workloads across multiple threads, developers can optimize performance and enhance user experience\. |
 | Timer | Plugin | Plugin | Provides a timer implementation with automatic stop and interrupt\. Useful for running tasks at intervals or for a specific duration\. |
 | addClass | Prototype | Class Manipulation | Adds one or more classes to each node, ignoring duplicates\. |
+| after | Prototype | DOM Manipulation | Inserts content after each element in the current set of matched elements\. |
 | animate | Prototype | Animation | Animates each node using specified CSS properties over a given duration, with an optional callback when complete\. |
 | append | Prototype | DOM Manipulation | Appends child nodes, HTML, or multiple elements to each node\. |
 | attr | Prototype | Attribute Manipulation | Gets or sets attributes on the nodes, supporting multiple attributes at once\. |
+| before | Prototype | DOM Manipulation | Inserts content before each element in the current set of matched elements\. |
 | bind | Prototype | Event Handling | Adds an event listener to each node, allowing for event delegation to improve performance\. |
 | blur | Prototype | Form Manipulation | Removes focus from the first node in the selection, effectively blurring it\. |
+| children | Prototype | DOM Traversal | Gets the children of each element in the set of matched elements\. |
 | click | Prototype | Event Handling | Simulates a click event on each node in the selection\. |
 | clone | Prototype | DOM Manipulation | Creates a deep copy of the first node in the selection, including its child nodes\. |
 | closest | Prototype | Traversal | Finds the nearest ancestor node of the first node that matches a given selector\. |

@@ -105,13 +105,16 @@ const Q = (() => {
         (Q.prototype[methodName] = functionImplementation, Q);
     Q.getGLOBAL = key => GLOBAL[key];
     Q.setGLOBAL = value => (GLOBAL = { ...GLOBAL, ...value });
-    Q.style = (root = '', style = '', responsive = _n, mapping = _n) => {
+    Q.style = (root = _n, style = '', responsive = _n, mapping = _n) => {
         if (mapping) {
             const keys = _ob.keys(mapping);
             keys.forEach((key) => {
                 let newKey = Q.ID ? Q.ID(5, '_') : `_${_ma.random().toString(36).substring(2, 7)}`;
                 if (style && typeof style === 'string') {
-                    style = style.replace(new _re(`\\b${key}\\b`, 'gm'), newKey);
+                    style = style.replace(new _re(`\\.${key}\\b`, 'gm'), `.${newKey}`);
+                    style = style.replace(new _re(`^\\s*\\.${key}\\s*{`, 'gm'), `.${newKey} {`);
+                    style = style.replace(new _re(`(,\\s*)\\.${key}\\b`, 'gm'), `$1.${newKey}`);
+                    style = style.replace(new _re(`(\\s+)\\.${key}\\b`, 'gm'), `$1.${newKey}`);
                 }
                 mapping[key] = mapping[key].replace(key, newKey);
             });
@@ -153,6 +156,44 @@ const Q = (() => {
         nodes[i].classList.add.apply(nodes[i].classList, b);
     }
     return this;
+});
+Q.Ext('after', function (...contents) {
+  const nodes = this.nodes;
+  for (let i = 0, len = nodes.length; i < len; i++) {
+    const target = nodes[i];
+    const parent = target.parentNode;
+    if (!parent) continue;
+    for (let j = 0, clen = contents.length; j < clen; j++) {
+      const content = contents[j];
+      if (typeof content === "string") {
+        target.insertAdjacentHTML('afterend', content);
+      } else if (content?.nodeType === 1) {
+        if (target.nextSibling) {
+          parent.insertBefore(content, target.nextSibling);
+        } else {
+          parent.appendChild(content);
+        }
+      } else if (content instanceof Q) {
+        if (target.nextSibling) {
+          parent.insertBefore(content.nodes[0], target.nextSibling);
+        } else {
+          parent.appendChild(content.nodes[0]);
+        }
+      } else if (Array.isArray(content) || content?.constructor === NodeList) {
+        const subNodes = Array.from(content);
+        let nextSibling = target.nextSibling;
+        for (let k = 0, slen = subNodes.length; k < slen; k++) {
+          if (nextSibling) {
+            parent.insertBefore(subNodes[k], nextSibling);
+            nextSibling = subNodes[k].nextSibling;
+          } else {
+            parent.appendChild(subNodes[k]);
+          }
+        }
+      }
+    }
+  }
+  return this;
 });
 Q.Ext('animate', function (duration, b, e) {
   var nodes = this.nodes;
@@ -217,6 +258,30 @@ Q.Ext('attr', function (attribute, value) {
         return this;
     }
 });
+Q.Ext('before', function (...contents) {
+  const nodes = this.nodes;
+  for (let i = 0, len = nodes.length; i < len; i++) {
+    const target = nodes[i];
+    const parent = target.parentNode;
+    if (!parent) continue;
+    for (let j = 0, clen = contents.length; j < clen; j++) {
+      const content = contents[j];
+      if (typeof content === "string") {
+        target.insertAdjacentHTML('beforebegin', content);
+      } else if (content?.nodeType === 1) {
+        parent.insertBefore(content, target);
+      } else if (content instanceof Q) {
+        parent.insertBefore(content.nodes[0], target);
+      } else if (Array.isArray(content) || content?.constructor === NodeList) {
+        const subNodes = Array.from(content);
+        for (let k = 0, slen = subNodes.length; k < slen; k++) {
+          parent.insertBefore(subNodes[k], target);
+        }
+      }
+    }
+  }
+  return this;
+});
 Q.Ext('bind', function (event, handler) {
     if (!this._eventDelegation) {
         this._eventDelegation = {};
@@ -240,6 +305,30 @@ Q.Ext('blur', function () {
         nodes[i].blur();
     }
     return this;
+});
+Q.Ext('children', function (selector) {
+  const result = [];
+  const nodes = this.nodes;
+  for (let i = 0, len = nodes.length; i < len; i++) {
+    const parent = nodes[i];
+    const children = parent.children; // Get HTMLCollection of children
+    if (children) {
+      const childrenArray = Array.from(children);
+      if (selector) {
+        for (let j = 0, clen = childrenArray.length; j < clen; j++) {
+          const child = childrenArray[j];
+          if (child.matches && child.matches(selector)) {
+            result.push(child);
+          }
+        }
+      } else {
+        for (let j = 0, clen = childrenArray.length; j < clen; j++) {
+          result.push(childrenArray[j]);
+        }
+      }
+    }
+  }
+  return new Q(result);
 });
 Q.Ext('click', function () {
     var nodes = this.nodes;
@@ -1239,10 +1328,24 @@ function Form(options = {}) {
     this.options = options;
     if (!Form.initialized) {
         Form.classes = Q.style(`
-            --form-default-background-color: #fff;
-            --form-default-text-color: #000;
-            --form-default-border-color: #000;
             --form-default-border-radius: 5px;
+            --form-default-padding: 5px 10px;
+            --form-default-font-size: 12px;
+            --form-default-font-family: Arial, sans-serif;
+            --form-default-input-background-color:rgb(37, 37, 37);
+            --form-default-input-text-color:rgb(153, 153, 153);
+            --form-default-input-border-color:rgba(255, 255, 255, 0.03);
+            --form-default-checkbox-background-color:rgb(68, 68, 68);
+            --form-default-checkbox-active-background-color:rgb(100, 60, 240);
+            --form-default-checkbox-text-color:rgb(153, 153, 153);
+            --form-default-checkbox-radius: 5px;
+            --form-default-button-background-color:rgb(100, 60, 240);
+            --form-default-button-text-color: #fff;
+            --form-default-button-hover-background-color:rgb(129, 100, 231);
+            --form-default-button-hover-text-color: #fff;
+            --form-default-button-active-background-color:rgb(129, 100, 231);
+            --form-default-button-active-text-color: #fff;
+            --form-default-button-border-color:rgba(255, 255, 255, 0.1);
         `, `
             .form_icon {
                 width: 100%;
@@ -1250,31 +1353,12 @@ function Form(options = {}) {
                 color: #fff;
                 pointer-events: none;
             }
-            .q_form {
-                box-sizing: border-box;
-                font-family: inherit;
-                font-size: inherit;
-                color: inherit;
-                margin: 1px;
-            }
-            .q_form_disabled {
-                opacity: 0.5;
-            }
-            .form_active {
-                background-color: #1DA1F2;
-                color: #fff;
-            }
-        `, null, {
-            'form_icon': 'form_icon',
-            'q_form': 'q_form',
-            'q_form_disabled': 'q_form_disabled',
-            'form_active': 'form_active'
-        });
+        `, null, {});
         Form.initialized = true;
         console.log('Form core initialized');
     }
 }
-Form.prototype.Icon = function(icon) {
+Form.prototype.Icon = function (icon) {
     let iconElement = Q('<div>');
     iconElement.addClass('svg_' + icon + ' form_icon');
     return iconElement;
@@ -1282,33 +1366,48 @@ Form.prototype.Icon = function(icon) {
 Q.Form = Form;
 Form.prototype.Button = function(text = '') {
     if (!Form.buttonClassesInitialized) {
-        Form.buttonClasses = Q.style('', `
-            .q_form_button {
+        Form.buttonClasses = Q.style(null, `
+            .button {
                 user-select: none;
-                padding: 5px 10px;
+                font-family: var(--form-default-font-family);
+                background-color: var(--form-default-button-background-color);
+                color: var(--form-default-button-text-color);
+                box-shadow: inset 0 0 0 1px var(--form-default-button-border-color);
+                border-radius: var(--form-default-border-radius);
+                padding: var(--form-default-padding);
+                font-size: var(--form-default-font-size);
                 cursor: pointer;
             }
-            .q_form_button:hover {
-                background-color: #555;
+            .button:hover {
+                background-color: var(--form-default-button-hover-background-color);
+                color: var(--form-default-button-hover-text-color);
             }
-            .q_form_button:active {
-                background-color: #777;
+            .button:active {
+                background-color: var(--form-default-button-active-background-color);
+                color: var(--form-default-button-active-text-color);
+            }
+            .button_disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
             }
         `, null, {
-            'q_form_button': 'q_form_button'
+            'button_disabled': 'button_disabled',
+            'button': 'button'
         });
         Form.buttonClassesInitialized = true;
     }
-    const button = Q(`<div class="${Form.classes.q_form} ${Form.buttonClasses.q_form_button}">${text}</div>`);
+    const button = Q(`<div class="${Form.buttonClasses.button}">${text}</div>`);
     button.click = function(callback) {
         button.on('click', callback);
+        return button;
     };
     button.disabled = function(state) {
         if (state) {
-            button.addClass(Form.classes.q_form_disabled);
+            button.addClass(Form.buttonClasses.button_disabled);
         } else {
-            button.removeClass(Form.classes.q_form_disabled);
+            button.removeClass(Form.buttonClasses.button_disabled);
         }
+        return button;
     };
     button.setText = function(newText) {
         button.text(newText);
@@ -1340,7 +1439,8 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
                 position: relative;
                 width: 20px;
                 height: 20px;
-                background-color: #555555;
+                background-color: var(--form-default-checkbox-background-color);
+                border-radius: var(--form-default-checkbox-radius);
             }
             .q_form_cb input[type="checkbox"] {
                 opacity: 0;
@@ -1360,11 +1460,19 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background-color: #1DA1F2;
+                background-color: var(--form-default-checkbox-active-background-color);
+                border-radius: var(--form-default-checkbox-radius);
+            }
+                .q_form_label {
+                padding-left: 5px;
+                color: var(--form-default-checkbox-text-color);
+                font-family: var(--form-default-font-family);
+                font-size: var(--form-default-font-size);
             }
         `, null, {
             'q_form_checkbox': 'q_form_checkbox',
-            'q_form_cb': 'q_form_cb'
+            'q_form_cb': 'q_form_cb',
+            'q_form_label': 'q_form_label'
         });
         Form.checkBoxClassesInitialized = true;
     }
@@ -1373,7 +1481,7 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
     const checkbox_container = Q('<div class="' + Form.checkBoxClasses.q_form_cb + '">');
     const input = Q(`<input type="checkbox" id="${ID}">`);
     const label = Q(`<label for="${ID}">${text}</label>`);
-    const labeltext = Q(`<div class="label">${text}</div>`);
+    const labeltext = Q(`<div class="${Form.checkBoxClasses.q_form_label}">${text}</div>`);
     if (checked) {
         input.prop('checked', true);
     }
@@ -1404,24 +1512,338 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
     this.elements.push(container);
     return container;
 };
+Form.prototype.Tags = function(value = '', placeholder = '', options = {}) {
+    const defaultOptions = {
+        separator: ',',
+        maxTags: null,
+        minChars: 1
+    };
+    options = Object.assign({}, defaultOptions, options);
+    if (!Form.tagsClassesInitialized) {
+        Form.tagsClasses = Q.style('', `
+            .form_tags_container {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 5px;
+                width: 100%;
+                min-height: 36px;
+                padding: 3px;
+                border: 1px solid var(--form-default-input-border-color);
+                border-radius: var(--form-default-border-radius);
+                background-color: var(--form-default-input-background-color);
+                cursor: text;
+            }
+            .form_tags_container:focus-within {
+                border-color: var(--form-default-button-background-color);
+                outline: none;
+            }
+            .form_tag {
+                display: inline-flex;
+                align-items: center;
+                padding: 3px 8px;
+                background-color: var(--form-default-button-background-color);
+                color: var(--form-default-button-text-color);
+                border-radius: var(--form-default-border-radius);
+                font-size: var(--form-default-font-size);
+                font-family: var(--form-default-font-family);
+                user-select: none;
+            }
+            .form_tag_editable {
+                background-color: var(--form-default-button-hover-background-color);
+            }
+            .form_tag_remove {
+                margin-left: 5px;
+                cursor: pointer;
+                width: 14px;
+                height: 14px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 10px;
+                border-radius: 50%;
+                background-color: rgba(255, 255, 255, 0.2);
+            }
+            .form_tag_input {
+                flex-grow: 1;
+                min-width: 60px;
+                border: none;
+                outline: none;
+                padding: 5px;
+                font-family: var(--form-default-font-family);
+                font-size: var(--form-default-font-size);
+                background: transparent;
+                color: var(--form-default-input-text-color);
+            }
+            .form_tag.dragging {
+                opacity: 0.5;
+            }
+            .form_tag[draggable=true] {
+                cursor: move;
+            }
+        `, null, {
+            'form_tags_container': 'form_tags_container',
+            'form_tag': 'form_tag',
+            'form_tag_editable': 'form_tag_editable',
+            'form_tag_remove': 'form_tag_remove',
+            'form_tag_input': 'form_tag_input'
+        });
+        Form.tagsClassesInitialized = true;
+    }
+    const container = Q(`<div class="${Form.classes.q_form} ${Form.tagsClasses.form_tags_container}"></div>`);
+    const input = Q(`<input class="${Form.tagsClasses.form_tag_input}" placeholder="${placeholder}" type="text">`);
+    const state = {
+        tags: [],
+        draggedTag: null,
+        currentEditTag: null
+    };
+    if (value) {
+        const initialTags = value.split(options.separator).map(tag => tag.trim()).filter(Boolean);
+        initialTags.forEach(tag => addTag(tag));
+    }
+    container.append(input);
+    function addTag(text) {
+        if (!text || text.length < options.minChars) return;
+        if (options.maxTags !== null && state.tags.length >= options.maxTags) return;
+        if (state.tags.includes(text)) return;
+        const tag = Q(`<div class="${Form.tagsClasses.form_tag}" draggable="true"></div>`);
+        const tagText = Q(`<span>${text}</span>`);
+        const removeBtn = Q(`<span class="${Form.tagsClasses.form_tag_remove}">×</span>`);
+        tag.append(tagText, removeBtn);
+        state.tags.push(text);
+        input.before(tag);
+        setupDragAndDrop(tag);
+        tag.on('click', function(e) {
+            if (e.target.classList.contains(Form.tagsClasses.form_tag_remove.split(' ')[0])) return;
+            tag.html('');
+            tag.addClass(Form.tagsClasses.form_tag_editable);
+            const editInput = Q(`<input type="text" value="${text}" style="border:none; background:transparent; color:inherit; outline:none; width:auto;">`);
+            tag.append(editInput);
+            editInput.focus();
+            state.currentEditTag = { tag, originalText: text };
+            editInput.on('blur', function() {
+                finishEditing(editInput.val());
+            });
+            editInput.on('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    finishEditing(editInput.val());
+                    e.preventDefault();
+                } else if (e.key === 'Escape') {
+                    finishEditing(text); // Restore original text
+                    e.preventDefault();
+                }
+            });
+        });
+        removeBtn.on('click', function() {
+            removeTag(tag, text);
+        });
+        if (typeof container.changeCallback === 'function') {
+            container.changeCallback(state.tags.join(options.separator));
+        }
+    }
+    function finishEditing(newText) {
+        if (!state.currentEditTag) return;
+        const { tag, originalText } = state.currentEditTag;
+        const index = state.tags.indexOf(originalText);
+        if (index !== -1) {
+            state.tags.splice(index, 1);
+        }
+        if (newText && newText.trim() && newText.length >= options.minChars) {
+            tag.removeClass(Form.tagsClasses.form_tag_editable);
+            tag.html(`<span>${newText}</span><span class="${Form.tagsClasses.form_tag_remove}">×</span>`);
+            tag.find(`.${Form.tagsClasses.form_tag_remove.split(' ')[0]}`).on('click', function() {
+                removeTag(tag, newText);
+            });
+            state.tags.push(newText);
+        } else {
+            tag.remove();
+        }
+        state.currentEditTag = null;
+        if (typeof container.changeCallback === 'function') {
+            container.changeCallback(state.tags.join(options.separator));
+        }
+    }
+    function removeTag(tagElement, text) {
+        tagElement.remove();
+        const index = state.tags.indexOf(text);
+        if (index !== -1) {
+            state.tags.splice(index, 1);
+        }
+        if (typeof container.changeCallback === 'function') {
+            container.changeCallback(state.tags.join(options.separator));
+        }
+    }
+    function setupDragAndDrop(tag) {
+        tag.on('dragstart', function(e) {
+            state.draggedTag = tag;
+            tag.addClass('dragging');
+            if (e.dataTransfer) {
+                e.dataTransfer.setData('text/plain', '');
+                e.dataTransfer.effectAllowed = 'move';
+            }
+        });
+        tag.on('dragend', function() {
+            state.draggedTag = null;
+            tag.removeClass('dragging');
+        });
+        tag.on('dragover', function(e) {
+            if (e.preventDefault) {
+                e.preventDefault(); // Allows drop
+            }
+            return false;
+        });
+        tag.on('dragenter', function(e) {
+            e.preventDefault();
+        });
+        tag.on('drop', function(e) {
+            e.stopPropagation();
+            if (!state.draggedTag || state.draggedTag === tag) {
+                return;
+            }
+            const allTags = Array.from(container.children()).filter(
+                el => el.classList.contains(Form.tagsClasses.form_tag.split(' ')[0])
+            );
+            const fromIndex = allTags.indexOf(state.draggedTag);
+            const toIndex = allTags.indexOf(tag);
+            if (fromIndex < toIndex) {
+                tag.after(state.draggedTag);
+            } else {
+                tag.before(state.draggedTag);
+            }
+            const movedTag = state.tags.splice(fromIndex, 1)[0];
+            state.tags.splice(toIndex, 0, movedTag);
+            if (typeof container.changeCallback === 'function') {
+                container.changeCallback(state.tags.join(options.separator));
+            }
+            return false;
+        });
+    }
+    container.on('click', function(e) {
+        if (e.target === container.element) {
+            input.focus();
+        }
+    });
+    input.on('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ',' || e.key === ';' || (options.separator === ' ' && e.key === ' ')) {
+            const value = input.val().trim();
+            if (value) {
+                addTag(value);
+                input.val('');
+                e.preventDefault();
+            }
+        }
+        else if (e.key === 'Backspace' && input.val() === '' && state.tags.length > 0) {
+            const allTags = Array.from(container.children()).filter(
+                el => el.classList.contains(Form.tagsClasses.form_tag.split(' ')[0])
+            );
+            if (allTags.length > 0) {
+                const lastTag = allTags[allTags.length - 1];
+                lastTag.click(); // Trigger click to start editing
+            }
+        }
+    });
+    input.on('paste', function(e) {
+        let pastedText;
+        if (window.clipboardData && window.clipboardData.getData) {
+            pastedText = window.clipboardData.getData('Text');
+        } else if (e.clipboardData && e.clipboardData.getData) {
+            pastedText = e.clipboardData.getData('text/plain');
+        }
+        if (pastedText) {
+            e.preventDefault();
+            const tags = pastedText.split(options.separator).map(tag => tag.trim()).filter(Boolean);
+            tags.forEach(tag => addTag(tag));
+            input.val('');
+        }
+    });
+    input.on('blur', function() {
+        const inputValue = input.val();
+        const value = inputValue ? inputValue.trim() : '';
+        if (value) {
+            addTag(value);
+            input.val('');
+        }
+    });
+    container.val = function(value) {
+        if (value === undefined) {
+            return state.tags.join(options.separator);
+        }
+        if (value === '') {
+            const tagElements = container.element.querySelectorAll(`.${Form.tagsClasses.form_tag.split(' ')[0]}`);
+            for (let i = 0; i < tagElements.length; i++) {
+                if (tagElements[i].parentNode) {
+                    tagElements[i].parentNode.removeChild(tagElements[i]);
+                }
+            }
+            state.tags = [];
+        } else {
+            const tagElements = container.element.querySelectorAll(`.${Form.tagsClasses.form_tag.split(' ')[0]}`);
+            for (let i = 0; i < tagElements.length; i++) {
+                if (tagElements[i].parentNode) {
+                    tagElements[i].parentNode.removeChild(tagElements[i]);
+                }
+            }
+            state.tags = [];
+            const newTags = value.split(options.separator).map(tag => tag.trim()).filter(Boolean);
+            newTags.forEach(tag => addTag(tag));
+        }
+        if (typeof container.changeCallback === 'function') {
+            container.changeCallback(state.tags.join(options.separator));
+        }
+        return container;
+    };
+    container.placeholder = function(text) {
+        input.attr('placeholder', text);
+        return container;
+    };
+    container.disabled = function(state) {
+        input.prop('disabled', state);
+        container.css('pointer-events', state ? 'none' : 'auto');
+        if (state) {
+            container.addClass(Form.classes.q_form_disabled);
+        } else {
+            container.removeClass(Form.classes.q_form_disabled);
+        }
+        return container;
+    };
+    container.setSeparator = function(separator) {
+        options.separator = separator;
+        return container;
+    };
+    container.reset = function() {
+        return container.val('');
+    };
+    container.change = function(callback) {
+        container.changeCallback = callback;
+        return container;
+    };
+    this.elements.push(container);
+    return container;
+};
 Form.prototype.TextArea = function(value = '', placeholder = '') {
     if (!Form.textAreaClassesInitialized) {
         Form.textAreaClasses = Q.style('', `
-            .q_form_textarea {
-                width: calc(100% - 2px);
-                padding: 5px;
-                outline: none;
-                border: 0;
+            .form_textarea {
+                width: 100%;
+                padding: var(--form-default-padding);
+                font-family: var(--form-default-font-family);
+                font-size: var(--form-default-font-size);
+                border-radius: var(--form-default-border-radius);
+                background-color: var(--form-default-input-background-color);
+                color: var(--form-default-input-text-color);
+                border: 1px solid var(--form-default-input-border-color);
+                resize: none;
+                min-height: 100px;
             }
-            .q_form_textarea:focus {
-                outline: 1px solid #1DA1F2;
+            .form_textarea:focus {
+                border-color: var(--form-default-button-background-color);
+                outline: none;
             }
         `, null, {
-            'q_form_textarea': 'q_form_textarea'
+            'form_textarea': 'form_textarea'
         });
         Form.textAreaClassesInitialized = true;
     }
-    const textarea = Q(`<textarea class="${Form.classes.q_form} ${Form.textAreaClasses.q_form_textarea}" placeholder="${placeholder}">${value}</textarea>`);
+    const textarea = Q(`<textarea class="${Form.classes.q_form} ${Form.textAreaClasses.form_textarea}" placeholder="${placeholder}">${value}</textarea>`);
     textarea.placeholder = function(text) {
         textarea.attr('placeholder', text);
     };
@@ -1447,14 +1869,20 @@ Form.prototype.TextArea = function(value = '', placeholder = '') {
 Form.prototype.TextBox = function(type = 'text', value = '', placeholder = '') {
     if (!Form.textBoxClassesInitialized) {
         Form.textBoxClasses = Q.style('', `
-            .q_form_input { 
-                width: calc(100% - 2px);
-                padding: 5px;
-                outline: none;
-                border: 0;
+            .q_form_input {
+                width: 100%;
+                font-family: var(--form-default-font-family);
+                padding: var(--form-default-padding);
+                font-size: var(--form-default-font-size);
+                border-radius: var(--form-default-border-radius);
+                background-color: var(--form-default-input-background-color);
+                color: var(--form-default-input-text-color);
+                border: 1px solid var(--form-default-input-border-color);
+                resize: none;
             }
             .q_form_input:focus {
-                outline: 1px solid #1DA1F2;
+                border-color: var(--form-default-button-background-color);
+                outline: none;
             }
         `, null, {
             'q_form_input': 'q_form_input'
@@ -1550,279 +1978,188 @@ Q.Icons = function () {
   }
 };
 Q.Image = function (options) {
-    const Image = {};
     const defaultOptions = {
         width: 0,
         height: 0,
         format: 'png',
         fill: 'transparent',
-        size: 'auto',
         quality: 1,
-        historyLimit: 3,         
+        historyLimit: 10,
         autoSaveHistory: true    
     };
-    options = Object.assign({}, defaultOptions, options);
-    const Canvas = Q('<canvas>');
-    const canvas_node = Canvas.nodes[0];
-    const history = {
+    this.options = Object.assign({}, defaultOptions, options);
+    this.canvas = Q('<canvas>');
+    this.node = this.canvas.nodes[0];
+    if (this.options.width && this.options.height) {
+        this.node.width = this.options.width;
+        this.node.height = this.options.height;
+    }
+    this.history = {
         states: [],        
         position: -1,      
         isUndoRedoing: false 
     };
-    Image.canvas = Canvas;
-    Image.node = canvas_node;
-    Image.options = options;
-    const saveToHistory = function() {
-        if (history.isUndoRedoing || !options.autoSaveHistory) return;
-        const ctx = canvas_node.getContext('2d', { willReadFrequently: true });
-        const imageData = ctx.getImageData(0, 0, canvas_node.width, canvas_node.height);
-        if (history.position < history.states.length - 1) {
-            history.states = history.states.slice(0, history.position + 1);
+};
+Q.Image.prototype.Load = function(src, callback) {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+        if (this.node.width === 0 || this.node.height === 0 || 
+            this.options.width === 0 || this.options.height === 0) {
+            this.node.width = img.width;
+            this.node.height = img.height;
         }
-        history.states.push(imageData);
-        history.position++;
-        if (history.states.length > options.historyLimit) {
-            history.states.shift();
-            history.position--;
-        }
-        console.log(`History saved: Position=${history.position}, States=${history.states.length}`);
+        const ctx = this.node.getContext('2d');
+        ctx.clearRect(0, 0, this.node.width, this.node.height);
+        ctx.drawImage(img, 0, 0, img.width, img.height, 
+                      0, 0, this.node.width, this.node.height);
+        this.history.states = [];
+        this.history.position = -1;
+        this.saveToHistory();
+        if (callback) callback.call(this, null);
     };
-    Q.Image.prototype = {
-        saveToHistory: saveToHistory,
-        Load: function (src, callback) {
-            if (src instanceof HTMLCanvasElement) {
-                this.node.width = src.width;
-                this.node.height = src.height;
-                this.node.getContext('2d', { willReadFrequently: true })
-                    .drawImage(src, 0, 0);
-                this.saveToHistory();
-                if (callback) callback();
-                return this;
-            } 
-            else if (src instanceof HTMLImageElement) {
-                if (src.complete && src.naturalWidth !== 0) {
-                    this.node.width = src.naturalWidth;
-                    this.node.height = src.naturalHeight;
-                    this.node.getContext('2d', { willReadFrequently: true })
-                        .drawImage(src, 0, 0);
-                    this.saveToHistory();
-                    if (callback) callback();
-                } else {
-                    src.onload = () => {
-                        this.node.width = src.naturalWidth;
-                        this.node.height = src.naturalHeight;
-                        this.node.getContext('2d', { willReadFrequently: true })
-                            .drawImage(src, 0, 0);
-                        this.saveToHistory();
-                        if (callback) callback();
-                    };
-                }
-                return this;
-            } 
-            else {
-                let img = new window.Image();
-                img.crossOrigin = 'Anonymous';
-                img.src = src;
-                img.onload = () => {
-                    this.node.width = img.width;
-                    this.node.height = img.height;
-                    this.node.getContext('2d', { willReadFrequently: true })
-                        .drawImage(img, 0, 0);
-                    this.saveToHistory();
-                    if (callback) callback();
-                };
-                return this;
-            }
-        },
-        Get: function (format = this.options.format, quality = this.options.quality) {
-            if (format === 'jpeg' || format === 'webp') {
-                return this.node.toDataURL('image/' + format, quality);
-            } else {
-                return this.node.toDataURL('image/' + format);
-            }
-        },
-        Save: function (filename, saveOptions = {}) {
-            const defaultSaveOptions = {
-                format: this.options.format,
-                quality: this.options.quality,
-                backgroundColor: this.options.fill,
-                preserveTransparency: true    
-            };
-            const finalOptions = Object.assign({}, defaultSaveOptions, saveOptions);
-            let format = finalOptions.format;
-            let quality = finalOptions.quality;
-            let dataUrl;
-            if ((format === 'jpeg' || format === 'jpg') && finalOptions.preserveTransparency) {
-                let tempCanvas = document.createElement('canvas');
-                tempCanvas.width = this.node.width;
-                tempCanvas.height = this.node.height;
-                let tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
-                tempCtx.fillStyle = finalOptions.backgroundColor;
-                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-                tempCtx.drawImage(this.node, 0, 0);
-                dataUrl = tempCanvas.toDataURL('image/' + format, quality);
-            } else {
-                dataUrl = this.node.toDataURL('image/' + format, format === 'jpeg' || format === 'webp' ? quality : undefined);
-            }
-            const byteString = atob(dataUrl.split(',')[1]);
-            const mimeType = dataUrl.split(',')[0].split(':')[1].split(';')[0];
-            const ab = new ArrayBuffer(byteString.length);
-            const ia = new Uint8Array(ab);
-            for (let i = 0; i < byteString.length; i++) {
-                ia[i] = byteString.charCodeAt(i);
-            }
-            const blob = new Blob([ab], { type: mimeType });
-            if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-                window.navigator.msSaveOrOpenBlob(blob, filename);
-            } else {
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = filename;
-                link.style.display = 'none';
-                document.body.appendChild(link);
-                link.click();
-                setTimeout(() => {
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(link.href);
-                }, 100);
-            }
-            return this;
-        },
-        Clear: function (fill = this.options.fill) {
-            let ctx = this.node.getContext('2d', { willReadFrequently: true });
-            ctx.fillStyle = fill;
-            ctx.fillRect(0, 0, this.node.width, this.node.height);
-            this.saveToHistory();
-            return this;
-        },
-        Render: function(target) {
-            if (!target) {
-                console.error('No target provided for rendering');
-                return this;
-            }
-            let targetElement;
-            if (typeof target === 'string') {
-                targetElement = document.getElementById(target) || document.querySelector(target);
-                if (!targetElement) {
-                    const qElement = Q(target);
-                    if (qElement && qElement.nodes && qElement.nodes.length) {
-                        targetElement = qElement.nodes[0];
-                    }
-                }
-            } else if (target.nodes && target.nodes.length) {
-                targetElement = target.nodes[0];
-            } else if (target.appendChild) {
-                targetElement = target;
-            }
-            if (!targetElement) {
-                console.error('Invalid render target');
-                return this;
-            }
-            let renderCanvas;
-            const targetTag = targetElement.tagName.toLowerCase();
-            if (targetTag === 'canvas') {
-                renderCanvas = targetElement;
-            } else if (targetTag === 'img') {
-                this.node.toBlob((blob) => {
-                    const objectUrl = URL.createObjectURL(blob);
-                    targetElement.src = objectUrl;
-                    targetElement.onload = function() {
-                        URL.revokeObjectURL(objectUrl);
-                    };
-                }, 'image/' + this.options.format, this.options.quality);
-                return this;
-            } else {
-                renderCanvas = targetElement.querySelector('canvas.q-image-render');
-                if (!renderCanvas) {
-                    renderCanvas = document.createElement('canvas');
-                    renderCanvas.className = 'q-image-render';
-                    targetElement.appendChild(renderCanvas);
-                }
-            }
-            renderCanvas.width = this.node.width;
-            renderCanvas.height = this.node.height;
-            const renderCtx = renderCanvas.getContext('2d', { willReadFrequently: true });
-            renderCtx.clearRect(0, 0, renderCanvas.width, renderCanvas.height);
-            renderCtx.drawImage(this.node, 0, 0);
-            return this;
-        },
-        History: function(offset = -1) {
-            if (history.states.length === 0) {
-                console.log("No history available");
-                return this;
-            }
-            if (offset === 0) return this;
-            let targetPosition = history.position + offset;
-            if (targetPosition < 0) targetPosition = 0;
-            if (targetPosition >= history.states.length) targetPosition = history.states.length - 1;
-            if (targetPosition === history.position) {
-                console.log(`Already at position ${targetPosition}`);
-                return this;
-            }
-            console.log(`History navigation: ${history.position} -> ${targetPosition}`);
-            history.isUndoRedoing = true;
-            const ctx = this.node.getContext('2d', { willReadFrequently: true });
-            const state = history.states[targetPosition];
-            if (this.node.width !== state.width || this.node.height !== state.height) {
-                this.node.width = state.width;
-                this.node.height = state.height;
-            }
-            ctx.putImageData(state, 0, 0);
-            history.position = targetPosition;
-            history.isUndoRedoing = false;
-            return this;
-        },
-        Undo: function() {
-            return this.History(-1);
-        },
-        Redo: function() {
-            return this.History(1);
-        },
-        AutoHistory: function(enable = true) {
-            this.options.autoSaveHistory = enable;
-            return this;
-        },
-        SaveHistory: function() {
-            this.saveToHistory();
-            return this;
-        },
-        ClearHistory: function() {
-            history.states = [];
-            history.position = -1;
-            return this;
-        }
+    img.onerror = (err) => {
+        console.error('Hiba a kép betöltésekor:', src, err);
+        if (callback) callback.call(this, new Error('Error loading image'));
     };
-    Object.setPrototypeOf(Image, Q.Image.prototype);
-    const originalCtxPutImageData = CanvasRenderingContext2D.prototype.putImageData;
-    const originalCtxDrawImage = CanvasRenderingContext2D.prototype.drawImage;
-    CanvasRenderingContext2D.prototype.putImageData = function() {
-        const result = originalCtxPutImageData.apply(this, arguments);
-        if (this.canvas === canvas_node && options.autoSaveHistory && !history.isUndoRedoing) {
-            saveToHistory();
+    img.src = typeof src === 'string' ? src : src.src;
+    return this; // Láncolhatóság!
+};
+Q.Image.prototype.Clear = function(fill = this.options.fill) {
+    let ctx = this.node.getContext('2d');
+    ctx.fillStyle = fill;
+    ctx.fillRect(0, 0, this.node.width, this.node.height);
+    this.saveToHistory();
+    return this; 
+};
+Q.Image.prototype.Render = function(target) {
+    const targetNode = (typeof target === 'string')
+        ? document.querySelector(target)
+        : (target?.nodeType === 1)
+            ? target
+            : (target.nodes ? target.nodes[0] : null);
+    if (!targetNode) {
+        console.error('Invalid render target');
+        return this;
+    }
+    let ctxTarget;
+    if (targetNode.tagName.toLowerCase() === 'canvas') {
+        targetNode.width = this.node.width;
+        targetNode.height = this.node.height;
+        ctxTarget = targetNode.getContext('2d');
+        ctxTarget.drawImage(this.node, 0, 0);
+    } else if (targetNode.tagName.toLowerCase() === 'img') {
+        targetNode.src = this.node.toDataURL(`image/${this.options.format}`, this.options.quality);
+    } else {
+        console.error('Unsupported element for rendering');
+    }
+    return this;
+};
+Q.Image.prototype.Save = function(filename) {
+    const dataUrl = this.node.toDataURL('image/' + this.options.format, this.options.quality);
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = dataUrl;
+    link.click();
+    link.remove();
+    return this;
+};
+Q.Image.prototype.saveToHistory = function() {
+    if (this.history.isUndoRedoing || !this.options.autoSaveHistory) return;
+    if (this.node.width === 0 || this.node.height === 0) return;
+    const ctx = this.node.getContext('2d', { willReadFrequently: true });
+    const imageData = ctx.getImageData(0, 0, this.node.width, this.node.height);
+    if (this.history.position < this.history.states.length - 1) {
+        this.history.states.length = this.history.position + 1;
+    }
+    this.history.states.push(imageData);
+    if (this.history.states.length > this.options.historyLimit) {
+        this.history.states.shift();
+        if (this.history.position > 0) {
+            this.history.position--;
         }
-        return result;
-    };
-    CanvasRenderingContext2D.prototype.drawImage = function() {
-        const result = originalCtxDrawImage.apply(this, arguments);
-        if (this.canvas === canvas_node && options.autoSaveHistory && !history.isUndoRedoing) {
-            saveToHistory();
-        }
-        return result;
-    };
-    return Image;
+    } else {
+        this.history.position++;
+    }
+};
+/* 
+ * IMPORTANT: Every image manipulation method should call saveToHistory() 
+ * after modifying the canvas to ensure proper history tracking.
+ */
+Q.Image.prototype.Undo = function() {
+    return this.History(-1);
+};
+Q.Image.prototype.Redo = function() {
+    return this.History(1);
+};
+Q.Image.prototype.History = function(offset) {
+    if (this.history.states.length === 0) {
+        console.warn('No history states available.');
+        return this;
+    }
+    const target = this.history.position + offset;
+    if (target < 0 || target >= this.history.states.length) {
+        console.warn('Nem lehetséges további visszalépés vagy előreugrás.');
+        return this;
+    }
+    this.history.isUndoRedoing = true;
+    const ctx = this.node.getContext('2d', { willReadFrequently: true });
+    const historyState = this.history.states[target];
+    if (this.node.width !== historyState.width || this.node.height !== historyState.height) {
+        this.node.width = historyState.width;
+        this.node.height = historyState.height;
+    }
+    ctx.putImageData(historyState, 0, 0);
+    this.history.position = target;
+    this.history.isUndoRedoing = false;
+    return this;
 };
 Q.Image.prototype.Blur = function(blurOptions = {}) {
         const defaults = {
-            radius: 5,       // Blur radius
-            quality: 1       // Number of iterations for higher quality
+            type: 'gaussian', // gaussian, box, motion, lens
+            radius: 5,         // Basic blur radius
+            quality: 1,        // Number of iterations for higher quality
+            direction: 0,      // Angle in degrees
+            distance: 10,      // Distance of motion
+            focalDistance: 0.5,  // 0-1, center of focus
+            shape: 'circle',     // circle, hexagon, pentagon, octagon
+            blades: 6,           // Number of aperture blades (5-8)
+            bladeCurvature: 0,   // 0-1, curvature of blades
+            rotation: 0,         // Rotation angle of the aperture in degrees
+            specularHighlights: 0, // 0-1, brightness of highlights
+            noise: 0              // 0-1, amount of noise
         };
         const settings = Object.assign({}, defaults, blurOptions);
         const canvas_node = this.node;
-        const ctx = canvas_node.getContext('2d');
+        const ctx = canvas_node.getContext('2d', { willReadFrequently: true });
         const data = ctx.getImageData(0, 0, canvas_node.width, canvas_node.height);
         const pixels = data.data;
         const width = canvas_node.width;
         const height = canvas_node.height;
+        let blurredPixels;
+        switch(settings.type.toLowerCase()) {
+            case 'box':
+                blurredPixels = applyBoxBlur(pixels, width, height, settings);
+                break;
+            case 'motion':
+                blurredPixels = applyMotionBlur(pixels, width, height, settings);
+                break;
+            case 'lens':
+                blurredPixels = applyLensBlur(pixels, width, height, settings);
+                break;
+            case 'gaussian':
+            default:
+                blurredPixels = applyGaussianBlur(pixels, width, height, settings);
+                break;
+        }
+        for (let i = 0; i < pixels.length; i++) {
+            pixels[i] = blurredPixels[i];
+        }
+        ctx.putImageData(data, 0, 0);
+        this.saveToHistory();
+        return this;
+    };
+    function applyGaussianBlur(pixels, width, height, settings) {
         const { kernel, size } = gaussianKernel(settings.radius);
         const half = Math.floor(size / 2);
         const iterations = Math.round(settings.quality);
@@ -1830,13 +2167,107 @@ Q.Image.prototype.Blur = function(blurOptions = {}) {
         for (let i = 0; i < iterations; i++) {
             currentPixels = applyBlur(currentPixels, width, height, kernel, size, half);
         }
-        for (let i = 0; i < pixels.length; i++) {
-            pixels[i] = currentPixels[i];
+        return currentPixels;
+    }
+    function applyBoxBlur(pixels, width, height, settings) {
+        const radius = Math.round(settings.radius);
+        const iterations = Math.round(settings.quality);
+        const size = 2 * radius + 1;
+        const half = radius;
+        const kernel = new Float32Array(size * size);
+        const weight = 1 / (size * size);
+        for (let i = 0; i < size * size; i++) {
+            kernel[i] = weight;
         }
-        ctx.putImageData(data, 0, 0);
-        this.SaveHistory();
-        return this;
-    };
+        let currentPixels = new Uint8ClampedArray(pixels);
+        for (let i = 0; i < iterations; i++) {
+            currentPixels = applyBlur(currentPixels, width, height, kernel, size, half);
+        }
+        return currentPixels;
+    }
+    function applyMotionBlur(pixels, width, height, settings) {
+        const radius = Math.max(1, Math.round(settings.radius));
+        const distance = Math.max(1, Math.round(settings.distance));
+        const angle = settings.direction * Math.PI / 180; // Convert to radians
+        const size = 2 * distance + 1;
+        const kernel = new Float32Array(size * size).fill(0);
+        const half = Math.floor(size / 2);
+        let totalWeight = 0;
+        for (let t = -half; t <= half; t++) {
+            const x = Math.round(Math.cos(angle) * t) + half;
+            const y = Math.round(Math.sin(angle) * t) + half;
+            if (x >= 0 && x < size && y >= 0 && y < size) {
+                let weight = 1;
+                if (radius > 1) {
+                    const dist = Math.abs(t) / half;
+                    weight = Math.exp(-dist * dist / (2 * (radius / distance) * (radius / distance)));
+                }
+                kernel[y * size + x] = weight;
+                totalWeight += weight;
+            }
+        }
+        if (totalWeight > 0) {
+            for (let i = 0; i < kernel.length; i++) {
+                kernel[i] /= totalWeight;
+            }
+        }
+        return applyBlur(pixels, width, height, kernel, size, half);
+    }
+    function applyLensBlur(pixels, width, height, settings) {
+        const radius = Math.max(1, Math.round(settings.radius));
+        const size = 2 * radius + 1;
+        const half = radius;
+        const kernel = new Float32Array(size * size).fill(0);
+        const rotation = settings.rotation * Math.PI / 180; // Convert to radians
+        const blades = Math.max(5, Math.min(8, settings.blades));
+        const curvature = Math.max(0, Math.min(1, settings.bladeCurvature));
+        let totalWeight = 0;
+        const focalFactor = 1 - settings.focalDistance;
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                const dx = x - half;
+                const dy = y - half;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance <= radius) {
+                    const angle = Math.atan2(dy, dx) + rotation;
+                    let weight = 0;
+                    switch (settings.shape) {
+                        case 'hexagon':
+                        case 'pentagon':
+                        case 'octagon':
+                            const bladeAngle = 2 * Math.PI / blades;
+                            const normalizedAngle = (angle % bladeAngle) / bladeAngle - 0.5;
+                            const bladeDistance = radius * (1 - curvature * Math.abs(normalizedAngle));
+                            weight = distance <= bladeDistance ? 1 : 0;
+                            break;
+                        case 'circle':
+                        default:
+                            weight = 1;
+                            const normalizedDist = distance / radius;
+                            if (normalizedDist > focalFactor) {
+                                weight *= Math.max(0, 1 - (normalizedDist - focalFactor) / (1 - focalFactor));
+                            }
+                            break;
+                    }
+                    if (settings.specularHighlights > 0) {
+                        const highlightFactor = Math.max(0, 1 - distance / radius);
+                        weight *= 1 + settings.specularHighlights * highlightFactor * 2;
+                    }
+                    if (settings.noise > 0) {
+                        weight *= 1 + (Math.random() - 0.5) * settings.noise;
+                    }
+                    kernel[y * size + x] = Math.max(0, weight);
+                    totalWeight += kernel[y * size + x];
+                }
+            }
+        }
+        if (totalWeight > 0) {
+            for (let i = 0; i < kernel.length; i++) {
+                kernel[i] /= totalWeight;
+            }
+        }
+        return applyBlur(pixels, width, height, kernel, size, half);
+    }
     function gaussianKernel(radius) {
         const size = 2 * radius + 1;
         const kernel = new Float32Array(size * size);
@@ -1913,326 +2344,9 @@ Q.Image.prototype.Brightness = function(value, brightOptions = {}) {
             }
         }
         canvas_node.getContext('2d').putImageData(data, 0, 0);
+        this.saveToHistory();
         return this;
     };
-Q.Image.prototype.CRT = function(crtOptions = {}) {
-        const defaultOptions = {
-            noiseStrength: 10,        // Base noise strength
-            strongNoiseStrength: 100, // Stronger noise patches strength
-            strongNoiseCount: 5,      // Number of stronger noise patches
-            noiseMaxLength: 20000,    // Maximum length of noise patch
-            redShift: 3,              // Red channel shift (for chromatic aberration)
-            blueShift: 3,             // Blue channel shift (for chromatic aberration)
-            scanlineHeight: 1,        // Height of scanlines
-            scanlineMargin: 3,        // Space between scanlines
-            scanlineOpacity: 0.1,     // Opacity of scanlines
-            vignette: false,          // Apply vignette effect
-            vignetteStrength: 0.5,    // Vignette effect strength (0-1),
-            scanlineBrightness: 0.5,  // Brightness between scanlines (0-1)
-            rgbOffset: 0,             // RGB subpixel separation
-            curvature: true,          // Apply CRT screen curvature
-            curvatureAmount: 0.1,     // Amount of screen curvature (0-0.3),
-            verticalWobble: 5,        // Amplitude of vertical wobble
-            horizontalWobble: 2,      // Amplitude of horizontal wobble
-            wobbleSpeed: 10,          // Speed of wobble effect (1-50)
-            colorBleed: 0,            // Amount of color bleeding (0-5)
-            jitterChance: 0,          // Chance of frame jitter (0-100)
-        };
-        const finalOptions = Object.assign({}, defaultOptions, crtOptions);
-        const canvas_node = this.node;
-        let temp = Q('<canvas>', { 
-            width: canvas_node.width, 
-            height: canvas_node.height 
-        }).nodes[0];
-        let ctx = temp.getContext('2d', { willReadFrequently: true });
-        ctx.drawImage(canvas_node, 0, 0);
-        const imageData = ctx.getImageData(0, 0, temp.width, temp.height);
-        const data = imageData.data;
-        function clamp(value, min, max) {
-            return Math.min(Math.max(value, min), max);
-        }
-        function CRTRandomBetween(min, max) {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        }
-        const noiseStrength = finalOptions.noiseStrength;
-        for (let i = 0; i < data.length; i += 4) {
-            const noise = (Math.random() - 0.5) * noiseStrength;
-            data[i] = clamp(data[i] + noise, 0, 255);        // Red channel
-            data[i + 1] = clamp(data[i + 1] + noise, 0, 255); // Green channel
-            data[i + 2] = clamp(data[i + 2] + noise, 0, 255); // Blue channel
-        }
-        const strongNoiseStrength = finalOptions.strongNoiseStrength;
-        const strongNoiseCount = finalOptions.strongNoiseCount;
-        const noiseMaxLength = finalOptions.noiseMaxLength;
-        for (let i0 = 0; i0 < strongNoiseCount; i0++) {
-            const startPos = CRTRandomBetween(
-                CRTRandomBetween(0, data.length - noiseMaxLength), 
-                data.length - noiseMaxLength
-            );
-            const endPos = startPos + CRTRandomBetween(0, noiseMaxLength);
-            for (let i = startPos; i < endPos; i += 4) {
-                if (i + 2 < data.length) {  // Ensure we're within bounds
-                    const noise = (Math.random() - 0.4) * strongNoiseStrength;
-                    data[i] = clamp(data[i] + noise, 0, 255);        // Red channel
-                    data[i + 1] = clamp(data[i + 1] + noise, 0, 255); // Green channel
-                    data[i + 2] = clamp(data[i + 2] + noise, 0, 255); // Blue channel
-                }
-            }
-        }
-        let wobbleCanvas = Q('<canvas>', { 
-            width: canvas_node.width, 
-            height: canvas_node.height 
-        }).nodes[0];
-        let wobbleCtx = wobbleCanvas.getContext('2d', { willReadFrequently: true });
-        const tempData = new Uint8ClampedArray(data);
-        const redShift = finalOptions.redShift;
-        const blueShift = finalOptions.blueShift;
-        const rgbOffset = finalOptions.rgbOffset;
-        if (finalOptions.colorBleed > 0) {
-            const bleed = Math.floor(finalOptions.colorBleed);
-            for (let y = 0; y < temp.height; y++) {
-                for (let x = 0; x < temp.width; x++) {
-                    const currentIndex = (y * temp.width + x) * 4;
-                    if (x + bleed < temp.width) {
-                        const bleedIndex = (y * temp.width + (x + bleed)) * 4;
-                        data[bleedIndex] = Math.max(data[bleedIndex], data[currentIndex] * 0.7); // Red bleeds
-                    }
-                    if (y > bleed) {
-                        const bleedIndex = ((y - bleed) * temp.width + x) * 4 + 2;
-                        data[bleedIndex] = Math.max(data[bleedIndex], data[currentIndex + 2] * 0.7); // Blue bleeds
-                    }
-                }
-            }
-        }
-        ctx.putImageData(imageData, 0, 0);
-        wobbleCtx.drawImage(temp, 0, 0);
-        const resultCtx = canvas_node.getContext('2d', { willReadFrequently: true });
-        resultCtx.clearRect(0, 0, canvas_node.width, canvas_node.height);
-        let applyScanlines = !finalOptions.subpixelEmulation || !finalOptions.applyScanlineAfterSubpixel;
-        if (finalOptions.jitterChance > 0 && Math.random() * 100 < finalOptions.jitterChance) {
-            const jumpOffset = CRTRandomBetween(5, 20);
-            resultCtx.drawImage(wobbleCanvas, 0, jumpOffset, canvas_node.width, canvas_node.height - jumpOffset);
-            resultCtx.drawImage(wobbleCanvas, 0, 0, canvas_node.width, jumpOffset, 0, canvas_node.height - jumpOffset, canvas_node.width, jumpOffset);
-        } else {
-            const vWobbleAmp = finalOptions.verticalWobble;
-            const hWobbleAmp = finalOptions.horizontalWobble;
-            const wobbleSpeed = finalOptions.wobbleSpeed / 10;
-            const timePhase = Date.now() / 1000 * wobbleSpeed;
-            if (finalOptions.curvature) {
-                const curveAmount = finalOptions.curvatureAmount;
-                for (let y = 0; y < canvas_node.height; y++) {
-                    const ny = y / canvas_node.height * 2 - 1; // -1 to 1
-                    const vWobble = vWobbleAmp * Math.sin(y / 30 + timePhase);
-                    for (let x = 0; x < canvas_node.width; x++) {
-                        const nx = x / canvas_node.width * 2 - 1; // -1 to 1
-                        const hWobble = hWobbleAmp * Math.sin(x / 20 + timePhase * 0.7);
-                        const distSq = nx * nx + ny * ny;
-                        const distortion = 1 + distSq * curveAmount;
-                        const srcX = Math.round((nx / distortion + 1) / 2 * canvas_node.width + hWobble);
-                        const srcY = Math.round((ny / distortion + 1) / 2 * canvas_node.height + vWobble);
-                        if (srcX >= 0 && srcX < canvas_node.width && srcY >= 0 && srcY < canvas_node.height) {
-                            if (rgbOffset > 0) {
-                                const rOffset = Math.min(canvas_node.width - 1, srcX + Math.floor(rgbOffset));
-                                const gOffset = srcX;
-                                const bOffset = Math.max(0, srcX - Math.floor(rgbOffset));
-                                const rData = wobbleCtx.getImageData(rOffset, srcY, 1, 1).data;
-                                const gData = wobbleCtx.getImageData(gOffset, srcY, 1, 1).data;
-                                const bData = wobbleCtx.getImageData(bOffset, srcY, 1, 1).data;
-                                resultCtx.fillStyle = `rgb(${rData[0]}, ${gData[1]}, ${bData[2]})`;
-                                resultCtx.fillRect(x, y, 1, 1);
-                            } else {
-                                const pixelData = wobbleCtx.getImageData(srcX, srcY, 1, 1).data;
-                                resultCtx.fillStyle = `rgba(${pixelData[0]}, ${pixelData[1]}, ${pixelData[2]}, ${pixelData[3] / 255})`;
-                                resultCtx.fillRect(x, y, 1, 1);
-                            }
-                        }
-                    }
-                }
-            } else {
-                for (let y = 0; y < canvas_node.height; y++) {
-                    const vWobble = vWobbleAmp * Math.sin(y / 30 + timePhase);
-                    for (let x = 0; x < canvas_node.width; x++) {
-                        const hWobble = hWobbleAmp * Math.sin(x / 20 + timePhase * 0.7);
-                        const srcX = Math.round(x + hWobble);
-                        const srcY = Math.round(y + vWobble);
-                        if (srcX >= 0 && srcX < canvas_node.width && srcY >= 0 && srcY < canvas_node.height) {
-                            if (rgbOffset > 0) {
-                                const rOffset = Math.min(canvas_node.width - 1, srcX + Math.floor(rgbOffset));
-                                const gOffset = srcX;
-                                const bOffset = Math.max(0, srcX - Math.floor(rgbOffset));
-                                const rData = wobbleCtx.getImageData(rOffset, srcY, 1, 1).data;
-                                const gData = wobbleCtx.getImageData(gOffset, srcY, 1, 1).data;
-                                const bData = wobbleCtx.getImageData(bOffset, srcY, 1, 1).data;
-                                resultCtx.fillStyle = `rgb(${rData[0]}, ${gData[1]}, ${bData[2]})`;
-                                resultCtx.fillRect(x, y, 1, 1);
-                            } else {
-                                const pixelData = wobbleCtx.getImageData(srcX, srcY, 1, 1).data;
-                                resultCtx.fillStyle = `rgba(${pixelData[0]}, ${pixelData[1]}, ${pixelData[2]}, ${pixelData[3] / 255})`;
-                                resultCtx.fillRect(x, y, 1, 1);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        function drawHorizontalLines(ctx, width, height, totalHeight, margin, color, brightnessFactor) {
-            ctx.fillStyle = color;
-            for (let i = 0; i < totalHeight; i += (height + margin)) {
-                ctx.fillRect(0, i, width, height);
-                if (brightnessFactor > 0 && i + height < totalHeight) {
-                    const brightColor = `rgba(255, 255, 255, ${brightnessFactor * 0.1})`;
-                    ctx.fillStyle = brightColor;
-                    ctx.fillRect(0, i + height, width, margin);
-                    ctx.fillStyle = color; // Reset to scanline color
-                }
-            }
-        }
-        if (applyScanlines) {
-            drawHorizontalLines(
-                resultCtx, 
-                canvas_node.width, 
-                finalOptions.scanlineHeight, 
-                canvas_node.height, 
-                finalOptions.scanlineMargin, 
-                `rgba(0, 0, 0, ${finalOptions.scanlineOpacity})`,
-                finalOptions.scanlineBrightness
-            );
-        }
-        if (finalOptions.subpixelEmulation && finalOptions.applyScanlineAfterSubpixel) {
-            drawHorizontalLines(
-                resultCtx, 
-                canvas_node.width, 
-                finalOptions.scanlineHeight, 
-                canvas_node.height, 
-                finalOptions.scanlineMargin, 
-                `rgba(0, 0, 0, ${finalOptions.scanlineOpacity})`,
-                finalOptions.scanlineBrightness
-            );
-        }
-        if (finalOptions.vignette) {
-            const centerX = canvas_node.width / 2;
-            const centerY = canvas_node.height / 2;
-            const radius = Math.max(centerX, centerY);
-            const gradient = resultCtx.createRadialGradient(
-                centerX, centerY, radius * 0.5, 
-                centerX, centerY, radius * 1.5
-            );
-            gradient.addColorStop(0, 'rgba(0,0,0,0)');
-            gradient.addColorStop(1, `rgba(0,0,0,${finalOptions.vignetteStrength})`);
-            resultCtx.fillStyle = gradient;
-            resultCtx.globalCompositeOperation = 'multiply';
-            resultCtx.fillRect(0, 0, canvas_node.width, canvas_node.height);
-            resultCtx.globalCompositeOperation = 'source-over';
-        }
-        return this;
-    };
-Q.Image.prototype.ComicEffect = function(colorSteps = 4, effectOptions = {}) {
-        const defaultOptions = {
-            redSteps: colorSteps,      // Number of color steps for red channel
-            greenSteps: colorSteps,    // Number of color steps for green channel
-            blueSteps: colorSteps,     // Number of color steps for blue channel
-            edgeDetection: false,      // Whether to add edge detection
-            edgeThickness: 1,          // Edge thickness (when edge detection is enabled)
-            edgeThreshold: 20,         // Edge detection threshold
-            saturation: 1.2            // Saturation enhancement factor (1.0 = no change)
-        };
-        const finalOptions = Object.assign({}, defaultOptions, effectOptions);
-        const canvas_node = this.node;
-        let temp = Q('<canvas>', { 
-            width: canvas_node.width, 
-            height: canvas_node.height 
-        }).nodes[0];
-        let ctx = temp.getContext('2d', { willReadFrequently: true });
-        ctx.drawImage(canvas_node, 0, 0);
-        const imageData = ctx.getImageData(0, 0, temp.width, temp.height);
-        const pixels = imageData.data;
-        const redIntervalSize = 256 / finalOptions.redSteps;
-        const greenIntervalSize = 256 / finalOptions.greenSteps;
-        const blueIntervalSize = 256 / finalOptions.blueSteps;
-        for (let i = 0; i < pixels.length; i += 4) {
-            if (finalOptions.saturation !== 1.0) {
-                let r = pixels[i] / 255;
-                let g = pixels[i + 1] / 255;
-                let b = pixels[i + 2] / 255;
-                const max = Math.max(r, g, b);
-                const min = Math.min(r, g, b);
-                let h, s, l = (max + min) / 2;
-                if (max === min) {
-                    h = s = 0; // achromatic
-                } else {
-                    const d = max - min;
-                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-                    switch (max) {
-                        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-                        case g: h = (b - r) / d + 2; break;
-                        case b: h = (r - g) / d + 4; break;
-                    }
-                    h /= 6;
-                }
-                s = Math.min(1, s * finalOptions.saturation);
-                if (s === 0) {
-                    r = g = b = l; // achromatic
-                } else {
-                    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-                    const p = 2 * l - q;
-                    r = hue2rgb(p, q, h + 1/3);
-                    g = hue2rgb(p, q, h);
-                    b = hue2rgb(p, q, h - 1/3);
-                }
-                pixels[i] = Math.round(r * 255);
-                pixels[i + 1] = Math.round(g * 255);
-                pixels[i + 2] = Math.round(b * 255);
-            }
-            const redIndex = Math.floor(pixels[i] / redIntervalSize);
-            const greenIndex = Math.floor(pixels[i + 1] / greenIntervalSize);
-            const blueIndex = Math.floor(pixels[i + 2] / blueIntervalSize);
-            pixels[i] = redIndex * redIntervalSize;         // Red channel
-            pixels[i + 1] = greenIndex * greenIntervalSize; // Green channel
-            pixels[i + 2] = blueIndex * blueIntervalSize;   // Blue channel
-        }
-        if (finalOptions.edgeDetection) {
-            const edgeImageData = new ImageData(
-                new Uint8ClampedArray(pixels), 
-                temp.width, 
-                temp.height
-            );
-            for (let y = finalOptions.edgeThickness; y < temp.height - finalOptions.edgeThickness; y++) {
-                for (let x = finalOptions.edgeThickness; x < temp.width - finalOptions.edgeThickness; x++) {
-                    const pos = (y * temp.width + x) * 4;
-                    let edgeDetected = false;
-                    const leftPos = (y * temp.width + (x - finalOptions.edgeThickness)) * 4;
-                    const rightPos = (y * temp.width + (x + finalOptions.edgeThickness)) * 4;
-                    const topPos = ((y - finalOptions.edgeThickness) * temp.width + x) * 4;
-                    const bottomPos = ((y + finalOptions.edgeThickness) * temp.width + x) * 4;
-                    const diffH = Math.abs(pixels[leftPos] - pixels[rightPos]) +
-                                 Math.abs(pixels[leftPos + 1] - pixels[rightPos + 1]) +
-                                 Math.abs(pixels[leftPos + 2] - pixels[rightPos + 2]);
-                    const diffV = Math.abs(pixels[topPos] - pixels[bottomPos]) +
-                                 Math.abs(pixels[topPos + 1] - pixels[bottomPos + 1]) +
-                                 Math.abs(pixels[topPos + 2] - pixels[bottomPos + 2]);
-                    if (diffH > finalOptions.edgeThreshold || diffV > finalOptions.edgeThreshold) {
-                        edgeImageData.data[pos] = 0;
-                        edgeImageData.data[pos + 1] = 0;
-                        edgeImageData.data[pos + 2] = 0;
-                    }
-                }
-            }
-            ctx.putImageData(edgeImageData, 0, 0);
-        } else {
-            ctx.putImageData(imageData, 0, 0);
-        }
-        canvas_node.getContext('2d').clearRect(0, 0, canvas_node.width, canvas_node.height);
-        canvas_node.getContext('2d').drawImage(temp, 0, 0);
-        return this;
-    };
-    function hue2rgb(p, q, t) {
-        if (t < 0) t += 1;
-        if (t > 1) t -= 1;
-        if (t < 1/6) return p + (q - p) * 6 * t;
-        if (t < 1/2) return q;
-        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-        return p;
-    }
 (function() {
     const originalImage = Q.Image;
     Q.Image = function(options = {}) {
@@ -2260,1495 +2374,10 @@ Q.Image.prototype.ComicEffect = function(colorSteps = 4, effectOptions = {}) {
             }
         }
         canvas_node.getContext('2d').putImageData(data, 0, 0);
+        this.saveToHistory();
         return this;
     };
 })();
-Q.Image.prototype.Crop = function(x, y, width, height, cropOptions = {}) {
-        const defaultOptions = {
-            preserveContext: true // Whether to preserve the drawing context properties
-        };
-        const finalOptions = Object.assign({}, defaultOptions, cropOptions);
-        const canvas_node = this.node;
-        let temp = Q('<canvas>', { width: width, height: height }).nodes[0];
-        let tempCtx = temp.getContext('2d');
-        if (finalOptions.preserveContext) {
-            const ctx = canvas_node.getContext('2d');
-            tempCtx.globalAlpha = ctx.globalAlpha;
-            tempCtx.globalCompositeOperation = ctx.globalCompositeOperation;
-        }
-        tempCtx.drawImage(canvas_node, x, y, width, height, 0, 0, width, height);
-        canvas_node.width = width;
-        canvas_node.height = height;
-        canvas_node.getContext('2d').drawImage(temp, 0, 0);
-        return this;
-    };
-Q.Image.prototype.Emboss = function(embossOptions = {}) {
-        const defaults = {
-            strength: 1,              // Effect strength
-            direction: 'top-left',    // Direction of embossing: 'top-left', 'top-right', 'bottom-left', 'bottom-right'
-            blend: true,              // Blend with original image
-            grayscale: true           // Convert to grayscale
-        };
-        const settings = Object.assign({}, defaults, embossOptions);
-        const canvas_node = this.node;
-        const ctx = canvas_node.getContext('2d');
-        const data = ctx.getImageData(0, 0, canvas_node.width, canvas_node.height);
-        const pixels = data.data;
-        const width = canvas_node.width;
-        const height = canvas_node.height;
-        const dataCopy = new Uint8ClampedArray(pixels);
-        const kernels = {
-            'top-left': [-2, -1, 0, -1, 1, 1, 0, 1, 2],
-            'top-right': [0, -1, -2, 1, 1, -1, 2, 1, 0],
-            'bottom-left': [0, 1, 2, -1, 1, 1, -2, -1, 0],
-            'bottom-right': [2, 1, 0, 1, 1, -1, 0, -1, -2]
-        };
-        const kernel = kernels[settings.direction] || kernels['top-left'];
-        const kernelSize = Math.sqrt(kernel.length);
-        const half = Math.floor(kernelSize / 2);
-        const strength = settings.strength;
-        const divisor = 1;
-        const offset = 128; // Middle gray for emboss effect
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                let r = 0, g = 0, b = 0;
-                const dstOff = (y * width + x) * 4;
-                for (let cy = 0; cy < kernelSize; cy++) {
-                    for (let cx = 0; cx < kernelSize; cx++) {
-                        const scy = y + cy - half;
-                        const scx = x + cx - half;
-                        if (scy >= 0 && scy < height && scx >= 0 && scx < width) {
-                            const srcOff = (scy * width + scx) * 4;
-                            const wt = kernel[cy * kernelSize + cx];
-                            r += dataCopy[srcOff] * wt;
-                            g += dataCopy[srcOff + 1] * wt;
-                            b += dataCopy[srcOff + 2] * wt;
-                        }
-                    }
-                }
-                r = (r / divisor) * strength + offset;
-                g = (g / divisor) * strength + offset;
-                b = (b / divisor) * strength + offset;
-                if (settings.grayscale) {
-                    const avg = (r + g + b) / 3;
-                    r = g = b = avg;
-                }
-                r = Math.min(Math.max(r, 0), 255);
-                g = Math.min(Math.max(g, 0), 255);
-                b = Math.min(Math.max(b, 0), 255);
-                if (settings.blend) {
-                    pixels[dstOff] = (pixels[dstOff] + r) / 2;
-                    pixels[dstOff + 1] = (pixels[dstOff + 1] + g) / 2;
-                    pixels[dstOff + 2] = (pixels[dstOff + 2] + b) / 2;
-                } else {
-                    pixels[dstOff] = r;
-                    pixels[dstOff + 1] = g;
-                    pixels[dstOff + 2] = b;
-                }
-            }
-        }
-        ctx.putImageData(data, 0, 0);
-        this.SaveHistory();
-        return this;
-    };
-Q.Image.prototype.Flip = function(direction = 'horizontal', flipOptions = {}) {
-        const defaultOptions = {
-            smoothing: true,    // Whether to use smoothing
-            quality: 'high'     // Smoothing quality: 'low', 'medium', 'high'
-        };
-        const finalOptions = Object.assign({}, defaultOptions, flipOptions);
-        const canvas_node = this.node;
-        let temp = Q('<canvas>', { 
-            width: canvas_node.width, 
-            height: canvas_node.height 
-        }).nodes[0];
-        let ctx = temp.getContext('2d');
-        ctx.imageSmoothingEnabled = finalOptions.smoothing;
-        ctx.imageSmoothingQuality = finalOptions.quality;
-        if (direction === 'horizontal') {
-            ctx.translate(canvas_node.width, 0);
-            ctx.scale(-1, 1);
-        } else if (direction === 'vertical') {
-            ctx.translate(0, canvas_node.height);
-            ctx.scale(1, -1);
-        } else if (direction === 'both') {
-            ctx.translate(canvas_node.width, canvas_node.height);
-            ctx.scale(-1, -1);
-        }
-        ctx.drawImage(canvas_node, 0, 0);
-        canvas_node.getContext('2d').drawImage(temp, 0, 0);
-        return this;
-    };
-Q.Image.prototype.GaussianBlur = function(radius = 5, blurOptions = {}) {
-        const defaultOptions = {
-            sigma: radius / 2.0,         // Standard deviation of the Gaussian distribution
-            iterations: 1,               // Number of iterations (higher = stronger blur)
-            preserveAlpha: true,         // Whether to preserve alpha channel
-            separableKernel: true        // Use separable kernel for better performance
-        };
-        const finalOptions = Object.assign({}, defaultOptions, blurOptions);
-        const canvas_node = this.node;
-        const ctx = canvas_node.getContext('2d', { willReadFrequently: true });
-        const imageData = ctx.getImageData(0, 0, canvas_node.width, canvas_node.height);
-        const pixels = imageData.data;
-        const width = canvas_node.width;
-        const height = canvas_node.height;
-        const kernel = createGaussianKernel(radius, finalOptions.sigma);
-        for (let i = 0; i < finalOptions.iterations; i++) {
-            if (finalOptions.separableKernel) {
-                applySeparableGaussianBlur(pixels, width, height, kernel.kernel1D, kernel.size, finalOptions.preserveAlpha);
-            } else {
-                apply2DGaussianBlur(pixels, width, height, kernel.kernel2D, kernel.size, finalOptions.preserveAlpha);
-            }
-        }
-        ctx.putImageData(imageData, 0, 0);
-        return this;
-    };
-    function createGaussianKernel(radius, sigma) {
-        const size = Math.ceil(radius) * 2 + 1;
-        const center = Math.floor(size / 2);
-        const kernel2D = new Float32Array(size * size);
-        let sum = 0;
-        for (let y = 0; y < size; y++) {
-            for (let x = 0; x < size; x++) {
-                const distance = Math.sqrt(Math.pow(x - center, 2) + Math.pow(y - center, 2));
-                const value = Math.exp(-(distance * distance) / (2 * sigma * sigma));
-                kernel2D[y * size + x] = value;
-                sum += value;
-            }
-        }
-        for (let i = 0; i < kernel2D.length; i++) {
-            kernel2D[i] /= sum;
-        }
-        const kernel1D = new Float32Array(size);
-        sum = 0;
-        for (let i = 0; i < size; i++) {
-            const distance = Math.abs(i - center);
-            const value = Math.exp(-(distance * distance) / (2 * sigma * sigma));
-            kernel1D[i] = value;
-            sum += value;
-        }
-        for (let i = 0; i < size; i++) {
-            kernel1D[i] /= sum;
-        }
-        return { kernel1D, kernel2D, size };
-    }
-    function apply2DGaussianBlur(pixels, width, height, kernel, kernelSize, preserveAlpha) {
-        const tempPixels = new Uint8ClampedArray(pixels.length);
-        const half = Math.floor(kernelSize / 2);
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                let r = 0, g = 0, b = 0, a = 0;
-                const index = (y * width + x) * 4;
-                for (let ky = 0; ky < kernelSize; ky++) {
-                    for (let kx = 0; kx < kernelSize; kx++) {
-                        const pixelY = Math.min(height - 1, Math.max(0, y + ky - half));
-                        const pixelX = Math.min(width - 1, Math.max(0, x + kx - half));
-                        const pixelIndex = (pixelY * width + pixelX) * 4;
-                        const kernelValue = kernel[ky * kernelSize + kx];
-                        r += pixels[pixelIndex] * kernelValue;
-                        g += pixels[pixelIndex + 1] * kernelValue;
-                        b += pixels[pixelIndex + 2] * kernelValue;
-                        if (!preserveAlpha) {
-                            a += pixels[pixelIndex + 3] * kernelValue;
-                        }
-                    }
-                }
-                tempPixels[index] = r;
-                tempPixels[index + 1] = g;
-                tempPixels[index + 2] = b;
-                tempPixels[index + 3] = preserveAlpha ? pixels[index + 3] : a;
-            }
-        }
-        for (let i = 0; i < pixels.length; i++) {
-            pixels[i] = tempPixels[i];
-        }
-    }
-    function applySeparableGaussianBlur(pixels, width, height, kernel, kernelSize, preserveAlpha) {
-        const tempPixels = new Uint8ClampedArray(pixels.length);
-        const half = Math.floor(kernelSize / 2);
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                let r = 0, g = 0, b = 0, a = 0;
-                const index = (y * width + x) * 4;
-                for (let k = 0; k < kernelSize; k++) {
-                    const pixelX = Math.min(width - 1, Math.max(0, x + k - half));
-                    const pixelIndex = (y * width + pixelX) * 4;
-                    const kernelValue = kernel[k];
-                    r += pixels[pixelIndex] * kernelValue;
-                    g += pixels[pixelIndex + 1] * kernelValue;
-                    b += pixels[pixelIndex + 2] * kernelValue;
-                    if (!preserveAlpha) {
-                        a += pixels[pixelIndex + 3] * kernelValue;
-                    }
-                }
-                tempPixels[index] = r;
-                tempPixels[index + 1] = g;
-                tempPixels[index + 2] = b;
-                tempPixels[index + 3] = preserveAlpha ? pixels[index + 3] : a;
-            }
-        }
-        for (let i = 0; i < pixels.length; i++) {
-            pixels[i] = tempPixels[i];
-        }
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                let r = 0, g = 0, b = 0, a = 0;
-                const index = (y * width + x) * 4;
-                for (let k = 0; k < kernelSize; k++) {
-                    const pixelY = Math.min(height - 1, Math.max(0, y + k - half));
-                    const pixelIndex = (pixelY * width + x) * 4;
-                    const kernelValue = kernel[k];
-                    r += pixels[pixelIndex] * kernelValue;
-                    g += pixels[pixelIndex + 1] * kernelValue;
-                    b += pixels[pixelIndex + 2] * kernelValue;
-                    if (!preserveAlpha) {
-                        a += pixels[pixelIndex + 3] * kernelValue;
-                    }
-                }
-                tempPixels[index] = r;
-                tempPixels[index + 1] = g;
-                tempPixels[index + 2] = b;
-                tempPixels[index + 3] = preserveAlpha ? pixels[index + 3] : a;
-            }
-        }
-        for (let i = 0; i < pixels.length; i++) {
-            pixels[i] = tempPixels[i];
-        }
-    }
-Q.Image.prototype.Glow = function(glowOptions = {}) {
-        const defaultOptions = {
-            illuminanceThreshold: 200,  // Brightness threshold for glow (0-255)
-            blurRadius: 10,             // Radius of the glow blur
-            intensity: 1.0,             // Intensity multiplier for the glow
-            color: null                 // Optional color tint for the glow (null for original colors)
-        };
-        const finalOptions = Object.assign({}, defaultOptions, glowOptions);
-        const canvas_node = this.node;
-        let sourceCanvas = Q('<canvas>', { 
-            width: canvas_node.width, 
-            height: canvas_node.height 
-        }).nodes[0];
-        let glowCanvas = Q('<canvas>', { 
-            width: canvas_node.width, 
-            height: canvas_node.height 
-        }).nodes[0];
-        sourceCanvas.getContext('2d').drawImage(canvas_node, 0, 0);
-        const glowCtx = glowCanvas.getContext('2d', { willReadFrequently: true });
-        const imageData = sourceCanvas.getContext('2d').getImageData(
-            0, 0, sourceCanvas.width, sourceCanvas.height
-        );
-        const data = imageData.data;
-        for (let i = 0; i < data.length; i += 4) {
-            const red = data[i];
-            const green = data[i + 1];
-            const blue = data[i + 2];
-            const alpha = data[i + 3];
-            const brightness = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-            if (brightness > finalOptions.illuminanceThreshold) {
-                const x = (i / 4) % sourceCanvas.width;
-                const y = Math.floor((i / 4) / sourceCanvas.width);
-                if (finalOptions.color) {
-                    let tintColor;
-                    if (typeof finalOptions.color === 'string') {
-                        const tempCanvas = document.createElement('canvas');
-                        tempCanvas.width = 1;
-                        tempCanvas.height = 1;
-                        const tempCtx = tempCanvas.getContext('2d');
-                        tempCtx.fillStyle = finalOptions.color;
-                        tempCtx.fillRect(0, 0, 1, 1);
-                        const tempData = tempCtx.getImageData(0, 0, 1, 1).data;
-                        tintColor = {
-                            r: tempData[0],
-                            g: tempData[1],
-                            b: tempData[2]
-                        };
-                    } else if (typeof finalOptions.color === 'object') {
-                        tintColor = finalOptions.color;
-                    }
-                    if (tintColor) {
-                        glowCtx.fillStyle = `rgba(${tintColor.r}, ${tintColor.g}, ${tintColor.b}, ${(alpha / 255) * finalOptions.intensity})`;
-                    }
-                } else {
-                    glowCtx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${(alpha / 255) * finalOptions.intensity})`;
-                }
-                glowCtx.fillRect(x, y, 1, 1);
-            }
-        }
-        applyBoxBlur(glowCanvas, finalOptions.blurRadius);
-        const ctx = canvas_node.getContext('2d');
-        ctx.drawImage(sourceCanvas, 0, 0);
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.drawImage(glowCanvas, 0, 0);
-        ctx.globalCompositeOperation = 'source-over';
-        return this;
-        function applyBoxBlur(canvas, radius) {
-            const context = canvas.getContext('2d', { willReadFrequently: true });
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            const pixels = imageData.data;
-            const width = imageData.width;
-            const height = imageData.height;
-            const totalPixels = width * height;
-            const pixelsCopy = new Uint8ClampedArray(pixels);
-            for (let i = 0; i < totalPixels; i++) {
-                let blurValueR = 0;
-                let blurValueG = 0;
-                let blurValueB = 0;
-                let blurValueA = 0;
-                let blurCount = 0;
-                const startY = Math.max(0, Math.floor(i / width) - radius);
-                const endY = Math.min(height - 1, Math.floor(i / width) + radius);
-                const startX = Math.max(0, (i % width) - radius);
-                const endX = Math.min(width - 1, (i % width) + radius);
-                for (let y = startY; y <= endY; y++) {
-                    for (let x = startX; x <= endX; x++) {
-                        const index = (y * width + x) * 4;
-                        blurValueR += pixelsCopy[index];
-                        blurValueG += pixelsCopy[index + 1];
-                        blurValueB += pixelsCopy[index + 2];
-                        blurValueA += pixelsCopy[index + 3];
-                        blurCount++;
-                    }
-                }
-                const currentIndex = i * 4;
-                pixels[currentIndex] = blurValueR / blurCount;
-                pixels[currentIndex + 1] = blurValueG / blurCount;
-                pixels[currentIndex + 2] = blurValueB / blurCount;
-                pixels[currentIndex + 3] = blurValueA / blurCount;
-            }
-            context.putImageData(imageData, 0, 0);
-        }
-    };
-Q.Image.prototype.Grayscale = function(grayOptions = {}) {
-        const defaultGrayOptions = {
-            algorithm: 'average', // 'average', 'luminance', 'lightness'
-            intensity: 1.0       // 0.0 to 1.0 for partial grayscale effect
-        };
-        const finalOptions = Object.assign({}, defaultGrayOptions, grayOptions);
-        const canvas_node = this.node;
-        let data = canvas_node.getContext('2d').getImageData(0, 0, canvas_node.width, canvas_node.height);
-        let pixels = data.data;
-        for (let i = 0; i < pixels.length; i += 4) {
-            let r = pixels[i];
-            let g = pixels[i + 1];
-            let b = pixels[i + 2];
-            let gray;
-            switch (finalOptions.algorithm) {
-                case 'luminance':
-                    gray = 0.299 * r + 0.587 * g + 0.114 * b;
-                    break;
-                case 'lightness':
-                    gray = (Math.max(r, g, b) + Math.min(r, g, b)) / 2;
-                    break;
-                case 'average':
-                default:
-                    gray = (r + g + b) / 3;
-                    break;
-            }
-            if (finalOptions.intensity < 1.0) {
-                pixels[i] = r * (1 - finalOptions.intensity) + gray * finalOptions.intensity;
-                pixels[i + 1] = g * (1 - finalOptions.intensity) + gray * finalOptions.intensity;
-                pixels[i + 2] = b * (1 - finalOptions.intensity) + gray * finalOptions.intensity;
-            } else {
-                pixels[i] = gray;
-                pixels[i + 1] = gray;
-                pixels[i + 2] = gray;
-            }
-        }
-        canvas_node.getContext('2d').putImageData(data, 0, 0);
-        return this;
-    };
-Q.Image.prototype.HDR = function(hdrOptions = {}) {
-        const defaultOptions = {
-            shadowAdjust: 15,        // Shadow level adjustment
-            brightnessAdjust: 10,    // Brightness adjustment
-            contrastAdjust: 1.2,     // Contrast adjustment
-            vibrance: 0.2,           // Vibrance adjustment (saturation for less saturated colors)
-            highlights: -10,         // Highlight level adjustment
-            clarity: 10,             // Clarity/local contrast enhancement
-            tonal: true              // Apply tonal balancing
-        };
-        const finalOptions = Object.assign({}, defaultOptions, hdrOptions);
-        const canvas_node = this.node;
-        let temp = Q('<canvas>', { 
-            width: canvas_node.width, 
-            height: canvas_node.height 
-        }).nodes[0];
-        let ctx = temp.getContext('2d', { willReadFrequently: true });
-        ctx.drawImage(canvas_node, 0, 0);
-        const imageData = ctx.getImageData(0, 0, temp.width, temp.height);
-        const data = imageData.data;
-        let minBrightness = 255;
-        let maxBrightness = 0;
-        let avgBrightness = 0;
-        if (finalOptions.tonal) {
-            for (let i = 0; i < data.length; i += 4) {
-                const r = data[i];
-                const g = data[i + 1];
-                const b = data[i + 2];
-                const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-                minBrightness = Math.min(minBrightness, brightness);
-                maxBrightness = Math.max(maxBrightness, brightness);
-                avgBrightness += brightness;
-            }
-            avgBrightness /= (data.length / 4);
-        }
-        for (let i = 0; i < data.length; i += 4) {
-            let r = data[i];
-            let g = data[i + 1];
-            let b = data[i + 2];
-            const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-            const shadowFactor = Math.max(0, 1 - brightness / 128);
-            r += finalOptions.shadowAdjust * shadowFactor;
-            g += finalOptions.shadowAdjust * shadowFactor;
-            b += finalOptions.shadowAdjust * shadowFactor;
-            const highlightFactor = Math.max(0, brightness / 128 - 1);
-            r += finalOptions.highlights * highlightFactor;
-            g += finalOptions.highlights * highlightFactor;
-            b += finalOptions.highlights * highlightFactor;
-            r += finalOptions.brightnessAdjust;
-            g += finalOptions.brightnessAdjust;
-            b += finalOptions.brightnessAdjust;
-            r = (r - 128) * finalOptions.contrastAdjust + 128;
-            g = (g - 128) * finalOptions.contrastAdjust + 128;
-            b = (b - 128) * finalOptions.contrastAdjust + 128;
-            if (finalOptions.vibrance !== 0) {
-                const max = Math.max(r, g, b);
-                const min = Math.min(r, g, b);
-                const lightness = (max + min) / 510; // Normalize to 0-1
-                if (max - min < 100) {  // Lower values = less saturated
-                    const satAdjust = finalOptions.vibrance * (1 - (max - min) / 100);
-                    if (max === r) {
-                        g = g - satAdjust * (g - min);
-                        b = b - satAdjust * (b - min);
-                    } else if (max === g) {
-                        r = r - satAdjust * (r - min);
-                        b = b - satAdjust * (b - min);
-                    } else {
-                        r = r - satAdjust * (r - min);
-                        g = g - satAdjust * (g - min);
-                    }
-                }
-            }
-            if (finalOptions.tonal && maxBrightness > minBrightness) {
-                const normalizedBrightness = (brightness - minBrightness) / (maxBrightness - minBrightness);
-                const tonalFactor = (normalizedBrightness < 0.5) ? 
-                    2 * normalizedBrightness : 2 - 2 * normalizedBrightness;
-                const tonalAdjust = finalOptions.clarity * tonalFactor;
-                r += tonalAdjust;
-                g += tonalAdjust;
-                b += tonalAdjust;
-            }
-            data[i] = Math.min(255, Math.max(0, r));
-            data[i + 1] = Math.min(255, Math.max(0, g));
-            data[i + 2] = Math.min(255, Math.max(0, b));
-        }
-        ctx.putImageData(imageData, 0, 0);
-        canvas_node.getContext('2d').clearRect(0, 0, canvas_node.width, canvas_node.height);
-        canvas_node.getContext('2d').drawImage(temp, 0, 0);
-        return this;
-    };
-Q.Image.prototype.Halftone = function(halftoneOptions = {}) {
-        const defaultOptions = {
-            dotSize: 8,                  // Size of the halftone dots
-            shape: "dot",                // Shape of the dots: "dot", "rectangle", "hexagon"
-            colored: true,               // Whether to use color or black and white
-            backgroundColor: "black",    // Background color
-            foregroundColor: "white",    // Foreground color (for non-colored mode)
-            spacing: 2                   // Spacing multiplier between dots
-        };
-        const finalOptions = Object.assign({}, defaultOptions, halftoneOptions);
-        const canvas_node = this.node;
-        let temp = Q('<canvas>', { 
-            width: canvas_node.width, 
-            height: canvas_node.height 
-        }).nodes[0];
-        let tempCtx = temp.getContext('2d', { willReadFrequently: true });
-        tempCtx.drawImage(canvas_node, 0, 0);
-        const ctx = canvas_node.getContext('2d');
-        ctx.fillStyle = finalOptions.backgroundColor;
-        ctx.fillRect(0, 0, canvas_node.width, canvas_node.height);
-        const imageData = tempCtx.getImageData(0, 0, temp.width, temp.height);
-        const pixels = imageData.data;
-        const width = temp.width;
-        const height = temp.height;
-        function drawShape(x, y, size, color, shapeType) {
-            ctx.beginPath();
-            if (shapeType === "dot") {
-                ctx.arc(x, y, size, 0, Math.PI * 2);
-            } else if (shapeType === "rectangle") {
-                ctx.rect(x - size / 2, y - size / 2, size, size);
-            } else if (shapeType === "hexagon") {
-                const sideLength = size / 2;
-                const angleStep = (Math.PI * 2) / 6;
-                ctx.moveTo(x + sideLength * Math.cos(0), y + sideLength * Math.sin(0));
-                for (let i = 1; i <= 6; i++) {
-                    ctx.lineTo(
-                        x + sideLength * Math.cos(angleStep * i), 
-                        y + sideLength * Math.sin(angleStep * i)
-                    );
-                }
-            } else {
-                ctx.arc(x, y, size, 0, Math.PI * 2);
-            }
-            if (finalOptions.colored) {
-                ctx.fillStyle = color;
-            } else {
-                ctx.fillStyle = finalOptions.foregroundColor;
-            }
-            ctx.fill();
-        }
-        const dotSpacing = finalOptions.dotSize * finalOptions.spacing;
-        for (let y = 0; y < height; y += dotSpacing) {
-            for (let x = 0; x < width; x += dotSpacing) {
-                let r = 0, g = 0, b = 0, count = 0;
-                const sampleSize = finalOptions.dotSize;
-                for (let offsetY = 0; offsetY < sampleSize; offsetY++) {
-                    for (let offsetX = 0; offsetX < sampleSize; offsetX++) {
-                        const sampleX = x + offsetX;
-                        const sampleY = y + offsetY;
-                        if (sampleX < width && sampleY < height) {
-                            const index = (sampleY * width + sampleX) * 4;
-                            r += pixels[index];
-                            g += pixels[index + 1];
-                            b += pixels[index + 2];
-                            count++;
-                        }
-                    }
-                }
-                const avgR = Math.floor(r / count);
-                const avgG = Math.floor(g / count);
-                const avgB = Math.floor(b / count);
-                const color = finalOptions.colored ? `rgb(${avgR}, ${avgG}, ${avgB})` : "";
-                const brightness = (avgR + avgG + avgB) / 3;
-                const dotSizeBasedOnBrightness = finalOptions.dotSize * (1 - brightness / 255);
-                if (dotSizeBasedOnBrightness > 0) {
-                    if (x >= 0 && x < width && y >= 0 && y < height) {
-                        drawShape(x, y, dotSizeBasedOnBrightness, color, finalOptions.shape);
-                    }
-                }
-            }
-        }
-        return this;
-    };
-Q.Image.prototype.Hue = function(value, hueOptions = {}) {
-        const defaultOptions = {
-            preserveSaturation: true,  // Whether to preserve saturation during hue shift
-            preserveLightness: true    // Whether to preserve lightness during hue shift
-        };
-        const finalOptions = Object.assign({}, defaultOptions, hueOptions);
-        if (typeof Q.RGB2HSL !== 'function' || typeof Q.HSL2RGB !== 'function') {
-            console.error('Hue adjustment requires RGB2HSL and HSL2RGB utilities');
-            return this;
-        }
-        const canvas_node = this.node;
-        let ctx = canvas_node.getContext('2d');
-        let data = ctx.getImageData(0, 0, canvas_node.width, canvas_node.height);
-        let pixels = data.data;
-        for (let i = 0; i < pixels.length; i += 4) {
-            let r = pixels[i];
-            let g = pixels[i + 1];
-            let b = pixels[i + 2];
-            let hsl = Q.RGB2HSL(r, g, b);
-            hsl[0] = (hsl[0] * 360 + value) % 360;
-            if (hsl[0] < 0) hsl[0] += 360; // Handle negative values
-            hsl[0] = hsl[0] / 360; // Convert back to 0-1 range for HSL2RGB
-            let rgb = Q.HSL2RGB(hsl[0], hsl[1], hsl[2]);
-            pixels[i] = rgb[0];
-            pixels[i + 1] = rgb[1];
-            pixels[i + 2] = rgb[2];
-        }
-        ctx.putImageData(data, 0, 0);
-        return this;
-    };
-Q.Image.prototype.LensFlareAnamorphic = function(flareOptions = {}) {
-        const defaultOptions = {
-            brightnessThreshold: 200,  // Minimum brightness to consider as a flare source
-            widthModifier: 1.0,        // Size multiplier for the flare width
-            heightThreshold: 10,       // Height of the flare
-            maxFlares: 20,             // Maximum number of flares to render
-            opacity: 0.2,              // Opacity reduction factor (subtracted from brightness)
-            flareColor: null           // Optional fixed color for flares [r, g, b]
-        };
-        const finalOptions = Object.assign({}, defaultOptions, flareOptions);
-        const canvas_node = this.node;
-        let temp = Q('<canvas>', { 
-            width: canvas_node.width, 
-            height: canvas_node.height 
-        }).nodes[0];
-        let ctx = temp.getContext('2d', { willReadFrequently: true });
-        ctx.drawImage(canvas_node, 0, 0);
-        const sourceData = ctx.getImageData(0, 0, temp.width, temp.height).data;
-        let flareColor = finalOptions.flareColor;
-        if (!flareColor) {
-            const avgColor = { r: 0, g: 0, b: 0, count: 0 };
-            for (let y = 0; y < temp.height; y++) {
-                for (let x = 0; x < temp.width; x++) {
-                    const index = (y * temp.width + x) * 4;
-                    const brightness = (sourceData[index] + sourceData[index + 1] + sourceData[index + 2]) / 3;
-                    if (brightness >= finalOptions.brightnessThreshold) {
-                        avgColor.r += sourceData[index];
-                        avgColor.g += sourceData[index + 1];
-                        avgColor.b += sourceData[index + 2];
-                        avgColor.count++;
-                    }
-                }
-            }
-            if (avgColor.count > 0) {
-                flareColor = [
-                    Math.round(avgColor.r / avgColor.count),
-                    Math.round(avgColor.g / avgColor.count),
-                    Math.round(avgColor.b / avgColor.count)
-                ];
-            } else {
-                flareColor = [255, 255, 255]; // Default to white if no bright spots
-            }
-        }
-        const flareColorR = flareColor[0];
-        const flareColorG = flareColor[1];
-        const flareColorB = flareColor[2];
-        const flares = [];
-        for (let y = 0; y < temp.height; y++) {
-            for (let x = 0; x < temp.width; x++) {
-                const index = (y * temp.width + x) * 4;
-                const brightness = (sourceData[index] + sourceData[index + 1] + sourceData[index + 2]) / 3;
-                if (brightness >= finalOptions.brightnessThreshold) {
-                    flares.push({ x, y, brightness });
-                }
-            }
-        }
-        flares.sort((a, b) => b.brightness - a.brightness);
-        const targetCtx = canvas_node.getContext('2d');
-        for (let i = 0; i < Math.min(finalOptions.maxFlares, flares.length); i++) {
-            const flare = flares[i];
-            const size = flare.brightness / finalOptions.brightnessThreshold * (100 * finalOptions.widthModifier);
-            const height = finalOptions.heightThreshold;
-            const gradient = targetCtx.createLinearGradient(
-                flare.x - size / 2, flare.y, 
-                flare.x + size / 2, flare.y
-            );
-            gradient.addColorStop(0, `rgba(${flareColorR}, ${flareColorG}, ${flareColorB}, 0)`);
-            gradient.addColorStop(0.5, `rgba(${flareColorR}, ${flareColorG}, ${flareColorB}, ${(flare.brightness / 255) - finalOptions.opacity})`);
-            gradient.addColorStop(1, `rgba(${flareColorR}, ${flareColorG}, ${flareColorB}, 0)`);
-            targetCtx.globalCompositeOperation = "overlay";
-            targetCtx.beginPath();
-            targetCtx.fillStyle = gradient;
-            targetCtx.fillRect(flare.x - size / 2, flare.y - height / 2, size, height);
-        }
-        targetCtx.globalCompositeOperation = "source-over";
-        return this;
-    };
-Q.Image.prototype.Noise = function(noiseOptions = {}) {
-        const defaultOptions = {
-            threshold: 30,          // Maximum noise intensity
-            isBlackAndWhite: false, // Whether to apply the same noise to all color channels
-            mode: 'add',            // Mode: 'add', 'subtract', or 'mix'
-            intensity: 1.0,         // Overall noise intensity multiplier (0-1)
-            seed: Math.random()     // Random seed for noise generation
-        };
-        const finalOptions = Object.assign({}, defaultOptions, noiseOptions);
-        const canvas_node = this.node;
-        let temp = Q('<canvas>', { 
-            width: canvas_node.width, 
-            height: canvas_node.height 
-        }).nodes[0];
-        let ctx = temp.getContext('2d', { willReadFrequently: true });
-        ctx.drawImage(canvas_node, 0, 0);
-        const imageData = ctx.getImageData(0, 0, temp.width, temp.height);
-        const pixels = imageData.data;
-        function getRandomNoise(threshold) {
-            const adjustedThreshold = threshold * finalOptions.intensity;
-            switch(finalOptions.mode) {
-                case 'subtract':
-                    return -Math.floor(Math.random() * (adjustedThreshold + 1));
-                case 'mix':
-                    return Math.floor(Math.random() * (adjustedThreshold * 2 + 1)) - adjustedThreshold;
-                case 'add':
-                default:
-                    return Math.floor(Math.random() * (adjustedThreshold + 1));
-            }
-        }
-        for (let i = 0; i < pixels.length; i += 4) {
-            let red = pixels[i];
-            let green = pixels[i + 1];
-            let blue = pixels[i + 2];
-            if (finalOptions.isBlackAndWhite) {
-                const noise = getRandomNoise(finalOptions.threshold);
-                red = Math.min(255, Math.max(0, red + noise));
-                green = Math.min(255, Math.max(0, green + noise));
-                blue = Math.min(255, Math.max(0, blue + noise));
-            } else {
-                const noiseRed = getRandomNoise(finalOptions.threshold);
-                const noiseGreen = getRandomNoise(finalOptions.threshold);
-                const noiseBlue = getRandomNoise(finalOptions.threshold);
-                red = Math.min(255, Math.max(0, red + noiseRed));
-                green = Math.min(255, Math.max(0, green + noiseGreen));
-                blue = Math.min(255, Math.max(0, blue + noiseBlue));
-            }
-            pixels[i] = red;
-            pixels[i + 1] = green;
-            pixels[i + 2] = blue;
-        }
-        ctx.putImageData(imageData, 0, 0);
-        canvas_node.getContext('2d').clearRect(0, 0, canvas_node.width, canvas_node.height);
-        canvas_node.getContext('2d').drawImage(temp, 0, 0);
-        return this;
-    };
-Q.Image.prototype.NoiseSmooth = function(smoothOptions = {}) {
-        const defaultOptions = {
-            radius: 1,            // Smoothing radius (pixels)
-            strength: 0.5,        // Blend strength between original and smoothed image (0-1)
-            noiseAmount: 0,       // Amount of noise to add after smoothing (0 = no noise)
-            preserveEdges: false, // Whether to preserve edges while smoothing
-            edgeThreshold: 30     // Threshold for edge detection when preserveEdges is true
-        };
-        const finalOptions = Object.assign({}, defaultOptions, smoothOptions);
-        const canvas_node = this.node;
-        let temp = Q('<canvas>', { 
-            width: canvas_node.width, 
-            height: canvas_node.height 
-        }).nodes[0];
-        let ctx = temp.getContext('2d', { willReadFrequently: true });
-        ctx.drawImage(canvas_node, 0, 0);
-        const srcImageData = ctx.getImageData(0, 0, temp.width, temp.height);
-        const resultImageData = new ImageData(temp.width, temp.height);
-        const srcData = srcImageData.data;
-        const tgtData = resultImageData.data;
-        const diameter = finalOptions.radius * 2 + 1;
-        const area = diameter * diameter;
-        const halfRadius = Math.floor(finalOptions.radius);
-        for (let y = 0; y < temp.height; y++) {
-            for (let x = 0; x < temp.width; x++) {
-                let rSum = 0;
-                let gSum = 0;
-                let bSum = 0;
-                let aSum = 0;
-                let weightSum = 0;
-                let isEdge = false;
-                if (finalOptions.preserveEdges) {
-                    if (x > 0 && y > 0 && x < temp.width - 1 && y < temp.height - 1) {
-                        const centerIdx = (y * temp.width + x) * 4;
-                        const leftIdx = (y * temp.width + (x - 1)) * 4;
-                        const rightIdx = (y * temp.width + (x + 1)) * 4;
-                        const hDiff = Math.abs(srcData[leftIdx] - srcData[rightIdx]) +
-                                      Math.abs(srcData[leftIdx+1] - srcData[rightIdx+1]) +
-                                      Math.abs(srcData[leftIdx+2] - srcData[rightIdx+2]);
-                        const topIdx = ((y - 1) * temp.width + x) * 4;
-                        const bottomIdx = ((y + 1) * temp.width + x) * 4;
-                        const vDiff = Math.abs(srcData[topIdx] - srcData[bottomIdx]) +
-                                      Math.abs(srcData[topIdx+1] - srcData[bottomIdx+1]) +
-                                      Math.abs(srcData[topIdx+2] - srcData[bottomIdx+2]);
-                        if (hDiff > finalOptions.edgeThreshold || 
-                            vDiff > finalOptions.edgeThreshold) {
-                            isEdge = true;
-                        }
-                    }
-                }
-                if (isEdge) {
-                    const idx = (y * temp.width + x) * 4;
-                    tgtData[idx] = srcData[idx];
-                    tgtData[idx+1] = srcData[idx+1];
-                    tgtData[idx+2] = srcData[idx+2];
-                    tgtData[idx+3] = srcData[idx+3];
-                    continue;
-                }
-                for (let offsetY = -halfRadius; offsetY <= halfRadius; offsetY++) {
-                    for (let offsetX = -halfRadius; offsetX <= halfRadius; offsetX++) {
-                        const nx = x + offsetX;
-                        const ny = y + offsetY;
-                        if (nx >= 0 && ny >= 0 && nx < temp.width && ny < temp.height) {
-                            const srcIndex = (ny * temp.width + nx) * 4;
-                            const weight = 1;
-                            rSum += srcData[srcIndex] * weight;
-                            gSum += srcData[srcIndex + 1] * weight;
-                            bSum += srcData[srcIndex + 2] * weight;
-                            aSum += srcData[srcIndex + 3] * weight;
-                            weightSum += weight;
-                        }
-                    }
-                }
-                const tgtIndex = (y * temp.width + x) * 4;
-                const smoothedR = rSum / weightSum;
-                const smoothedG = gSum / weightSum;
-                const smoothedB = bSum / weightSum;
-                const smoothedA = aSum / weightSum;
-                const origIdx = (y * temp.width + x) * 4;
-                tgtData[tgtIndex] = smoothedR * finalOptions.strength + srcData[origIdx] * (1 - finalOptions.strength);
-                tgtData[tgtIndex + 1] = smoothedG * finalOptions.strength + srcData[origIdx + 1] * (1 - finalOptions.strength);
-                tgtData[tgtIndex + 2] = smoothedB * finalOptions.strength + srcData[origIdx + 2] * (1 - finalOptions.strength);
-                tgtData[tgtIndex + 3] = smoothedA * finalOptions.strength + srcData[origIdx + 3] * (1 - finalOptions.strength);
-                if (finalOptions.noiseAmount > 0) {
-                    const noise = (Math.random() - 0.5) * finalOptions.noiseAmount * 2;
-                    tgtData[tgtIndex] = Math.min(255, Math.max(0, tgtData[tgtIndex] + noise));
-                    tgtData[tgtIndex + 1] = Math.min(255, Math.max(0, tgtData[tgtIndex + 1] + noise));
-                    tgtData[tgtIndex + 2] = Math.min(255, Math.max(0, tgtData[tgtIndex + 2] + noise));
-                }
-            }
-        }
-        ctx.putImageData(resultImageData, 0, 0);
-        canvas_node.getContext('2d').clearRect(0, 0, canvas_node.width, canvas_node.height);
-        canvas_node.getContext('2d').drawImage(temp, 0, 0);
-        return this;
-    };
-Q.Image.prototype.Pixelize = function(pixelizeOptions = {}) {
-        const defaultOptions = {
-            blockSize: 10,        // Size of each pixel block
-            sampleMode: 'corner',  // How to sample pixel color: 'corner', 'center', 'average'
-            effect: 'normal',      // Effect type: 'normal', 'mosaic', 'ordered'
-            roundedCorners: false, // Whether to round the corners of each pixel block
-            cornerRadius: 2,       // Radius for rounded corners
-            spacing: 0             // Spacing between pixel blocks
-        };
-        const finalOptions = Object.assign({}, defaultOptions, pixelizeOptions);
-        const canvas_node = this.node;
-        let temp = Q('<canvas>', { 
-            width: canvas_node.width, 
-            height: canvas_node.height 
-        }).nodes[0];
-        let ctx = temp.getContext('2d', { willReadFrequently: true });
-        ctx.drawImage(canvas_node, 0, 0);
-        const imageData = ctx.getImageData(0, 0, temp.width, temp.height);
-        const pixels = imageData.data;
-        const resultCtx = canvas_node.getContext('2d');
-        resultCtx.clearRect(0, 0, canvas_node.width, canvas_node.height);
-        const blockSize = Math.max(1, finalOptions.blockSize);
-        const spacing = Math.max(0, finalOptions.spacing);
-        for (let y = 0; y < temp.height; y += blockSize) {
-            for (let x = 0; x < temp.width; x += blockSize) {
-                let r, g, b, a;
-                if (finalOptions.sampleMode === 'center') {
-                    const centerX = Math.min(temp.width - 1, x + Math.floor(blockSize / 2));
-                    const centerY = Math.min(temp.height - 1, y + Math.floor(blockSize / 2));
-                    const centerIndex = (centerY * temp.width + centerX) * 4;
-                    r = pixels[centerIndex];
-                    g = pixels[centerIndex + 1];
-                    b = pixels[centerIndex + 2];
-                    a = pixels[centerIndex + 3];
-                } 
-                else if (finalOptions.sampleMode === 'average') {
-                    let rSum = 0, gSum = 0, bSum = 0, aSum = 0;
-                    let count = 0;
-                    for (let by = 0; by < blockSize && y + by < temp.height; by++) {
-                        for (let bx = 0; bx < blockSize && x + bx < temp.width; bx++) {
-                            const idx = ((y + by) * temp.width + (x + bx)) * 4;
-                            rSum += pixels[idx];
-                            gSum += pixels[idx + 1];
-                            bSum += pixels[idx + 2];
-                            aSum += pixels[idx + 3];
-                            count++;
-                        }
-                    }
-                    r = Math.round(rSum / count);
-                    g = Math.round(gSum / count);
-                    b = Math.round(bSum / count);
-                    a = Math.round(aSum / count);
-                } 
-                else {
-                    const cornerIndex = (y * temp.width + x) * 4;
-                    r = pixels[cornerIndex];
-                    g = pixels[cornerIndex + 1];
-                    b = pixels[cornerIndex + 2];
-                    a = pixels[cornerIndex + 3];
-                }
-                resultCtx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a/255})`;
-                if (finalOptions.effect === 'ordered') {
-                    const actualSize = blockSize - spacing;
-                    if (finalOptions.roundedCorners) {
-                        resultCtx.beginPath();
-                        resultCtx.roundRect(
-                            x, y, actualSize, actualSize, 
-                            finalOptions.cornerRadius
-                        );
-                        resultCtx.fill();
-                    } else {
-                        resultCtx.fillRect(x, y, actualSize, actualSize);
-                    }
-                } 
-                else if (finalOptions.effect === 'mosaic') {
-                    const brightness = (r + g + b) / 3;
-                    const sizeVariation = Math.max(1, blockSize * (brightness / 255));
-                    if (finalOptions.roundedCorners) {
-                        resultCtx.beginPath();
-                        resultCtx.roundRect(
-                            x, y, sizeVariation, sizeVariation, 
-                            finalOptions.cornerRadius
-                        );
-                        resultCtx.fill();
-                    } else {
-                        resultCtx.fillRect(x, y, sizeVariation, sizeVariation);
-                    }
-                } 
-                else {
-                    const actualWidth = Math.min(blockSize, temp.width - x);
-                    const actualHeight = Math.min(blockSize, temp.height - y);
-                    if (finalOptions.roundedCorners && spacing > 0) {
-                        resultCtx.beginPath();
-                        resultCtx.roundRect(
-                            x, y, 
-                            actualWidth - spacing, actualHeight - spacing, 
-                            finalOptions.cornerRadius
-                        );
-                        resultCtx.fill();
-                    } else {
-                        resultCtx.fillRect(x, y, 
-                            actualWidth - spacing, 
-                            actualHeight - spacing);
-                    }
-                }
-            }
-        }
-        return this;
-    };
-Q.Image.prototype.RGBSubpixel = function(subpixelOptions = {}) {
-        const defaultOptions = {
-            subpixelLayout: 'rgb',         // Subpixel layout: 'rgb', 'bgr', 'vrgb' (vertical)
-            subpixelScale: 3.0,            // Scale factor for subpixel rendering (3 = each pixel becomes 3 subpixels)
-            phosphorSize: 0.8,             // Size of phosphor dots (0-1, where 1 fills the whole subpixel)
-            phosphorBloom: 0.2,            // Bloom effect around phosphors (0-1)
-            maxResolution: 640,            // Maximum "native resolution" width to simulate
-            resolutionScale: 1.0,          // Scale factor for the final resolution (1 = use maxResolution)
-            brightness: 1.0,               // Brightness adjustment for subpixels (0.5-2.0)
-            applyNoise: false,             // Apply CRT-like noise
-            noiseAmount: 5,                // Amount of noise to apply
-            fastMode: true,                // Use faster rendering algorithm (less authentic but much faster)
-            scanlines: false,              // Whether to apply scanlines
-            scanlineHeight: 1,             // Height of scanlines
-            scanlineMargin: 3,             // Space between scanlines
-            scanlineOpacity: 0.1,          // Opacity of scanlines
-            scanlineBrightness: 0.5        // Brightness between scanlines (0-1)
-        };
-        const finalOptions = Object.assign({}, defaultOptions, subpixelOptions);
-        const canvas_node = this.node;
-        let temp = Q('<canvas>', { 
-            width: canvas_node.width, 
-            height: canvas_node.height 
-        }).nodes[0];
-        let ctx = temp.getContext('2d', { willReadFrequently: true });
-        ctx.drawImage(canvas_node, 0, 0);
-        const resultCanvas = canvas_node;
-        const resultCtx = resultCanvas.getContext('2d', { willReadFrequently: true });
-        if (finalOptions.fastMode) {
-            const patternSize = finalOptions.subpixelLayout === 'vrgb' ? 1 : 3;
-            const patternCanvas = document.createElement('canvas');
-            patternCanvas.width = patternSize;
-            patternCanvas.height = 1;
-            const patternCtx = patternCanvas.getContext('2d');
-            if (finalOptions.subpixelLayout === 'rgb') {
-                patternCtx.fillStyle = `rgba(255,0,0,${finalOptions.phosphorSize})`;
-                patternCtx.fillRect(0, 0, 1, 1);
-                patternCtx.fillStyle = `rgba(0,255,0,${finalOptions.phosphorSize})`;
-                patternCtx.fillRect(1, 0, 1, 1);
-                patternCtx.fillStyle = `rgba(0,0,255,${finalOptions.phosphorSize})`;
-                patternCtx.fillRect(2, 0, 1, 1);
-            } else if (finalOptions.subpixelLayout === 'bgr') {
-                patternCtx.fillStyle = `rgba(0,0,255,${finalOptions.phosphorSize})`;
-                patternCtx.fillRect(0, 0, 1, 1);
-                patternCtx.fillStyle = `rgba(0,255,0,${finalOptions.phosphorSize})`;
-                patternCtx.fillRect(1, 0, 1, 1);
-                patternCtx.fillStyle = `rgba(255,0,0,${finalOptions.phosphorSize})`;
-                patternCtx.fillRect(2, 0, 1, 1);
-            } else if (finalOptions.subpixelLayout === 'vrgb') {
-                patternCanvas.width = 1;
-                patternCanvas.height = 3;
-                patternCtx.fillStyle = `rgba(255,0,0,${finalOptions.phosphorSize})`;
-                patternCtx.fillRect(0, 0, 1, 1);
-                patternCtx.fillStyle = `rgba(0,255,0,${finalOptions.phosphorSize})`;
-                patternCtx.fillRect(0, 1, 1, 1);
-                patternCtx.fillStyle = `rgba(0,0,255,${finalOptions.phosphorSize})`;
-                patternCtx.fillRect(0, 2, 1, 1);
-            }
-            const targetWidth = Math.min(temp.width, finalOptions.maxResolution);
-            const targetHeight = Math.round(temp.height * (targetWidth / temp.width));
-            const scaledCanvas = document.createElement('canvas');
-            scaledCanvas.width = targetWidth;
-            scaledCanvas.height = targetHeight;
-            const scaledCtx = scaledCanvas.getContext('2d', { willReadFrequently: true });
-            scaledCtx.drawImage(temp, 0, 0, targetWidth, targetHeight);
-            let rgbCanvas;
-            let rgbCtx;
-            if (finalOptions.subpixelLayout === 'vrgb') {
-                rgbCanvas = document.createElement('canvas');
-                rgbCanvas.width = targetWidth;
-                rgbCanvas.height = targetHeight * 3;
-                rgbCtx = rgbCanvas.getContext('2d', { willReadFrequently: true });
-                rgbCtx.drawImage(scaledCanvas, 0, 0);
-                rgbCtx.fillStyle = 'rgba(0, 255, 255, 1.0)'; // Cyan (removes red)
-                rgbCtx.globalCompositeOperation = 'multiply';
-                rgbCtx.fillRect(0, 0, targetWidth, targetHeight);
-                rgbCtx.globalCompositeOperation = 'source-over';
-                rgbCtx.drawImage(scaledCanvas, 0, targetHeight);
-                rgbCtx.fillStyle = 'rgba(255, 0, 255, 1.0)'; // Magenta (removes green)
-                rgbCtx.globalCompositeOperation = 'multiply';
-                rgbCtx.fillRect(0, targetHeight, targetWidth, targetHeight);
-                rgbCtx.globalCompositeOperation = 'source-over';
-                rgbCtx.drawImage(scaledCanvas, 0, targetHeight * 2);
-                rgbCtx.fillStyle = 'rgba(255, 255, 0, 1.0)'; // Yellow (removes blue)
-                rgbCtx.globalCompositeOperation = 'multiply';
-                rgbCtx.fillRect(0, targetHeight * 2, targetWidth, targetHeight);
-            } else {
-                rgbCanvas = document.createElement('canvas');
-                rgbCanvas.width = targetWidth * 3;
-                rgbCanvas.height = targetHeight;
-                rgbCtx = rgbCanvas.getContext('2d', { willReadFrequently: true });
-                rgbCtx.globalCompositeOperation = 'source-over';
-                rgbCtx.drawImage(scaledCanvas, 0, 0);
-                rgbCtx.fillStyle = 'rgba(0, 255, 255, 1.0)'; // Cyan (removes red)
-                rgbCtx.globalCompositeOperation = 'multiply';
-                rgbCtx.fillRect(0, 0, targetWidth, targetHeight);
-                rgbCtx.globalCompositeOperation = 'source-over';
-                rgbCtx.drawImage(scaledCanvas, targetWidth, 0);
-                rgbCtx.fillStyle = 'rgba(255, 0, 255, 1.0)'; // Magenta (removes green)
-                rgbCtx.globalCompositeOperation = 'multiply';
-                rgbCtx.fillRect(targetWidth, 0, targetWidth, targetHeight);
-                rgbCtx.globalCompositeOperation = 'source-over';
-                rgbCtx.drawImage(scaledCanvas, targetWidth * 2, 0);
-                rgbCtx.fillStyle = 'rgba(255, 255, 0, 1.0)'; // Yellow (removes blue)
-                rgbCtx.globalCompositeOperation = 'multiply';
-                rgbCtx.fillRect(targetWidth * 2, 0, targetWidth, targetHeight);
-            }
-            rgbCtx.globalCompositeOperation = 'destination-in';
-            const pattern = patternCtx.createPattern(patternCanvas, 'repeat');
-            rgbCtx.fillStyle = pattern;
-            rgbCtx.fillRect(0, 0, rgbCanvas.width, rgbCanvas.height);
-            if (finalOptions.applyNoise) {
-                const noiseCanvas = document.createElement('canvas');
-                noiseCanvas.width = rgbCanvas.width;
-                noiseCanvas.height = rgbCanvas.height;
-                const noiseCtx = noiseCanvas.getContext('2d', { willReadFrequently: true });
-                const noiseData = noiseCtx.createImageData(noiseCanvas.width, noiseCanvas.height);
-                const noisePixels = noiseData.data;
-                for (let i = 0; i < noisePixels.length; i += 4) {
-                    const noise = (Math.random() - 0.5) * finalOptions.noiseAmount;
-                    noisePixels[i] = noisePixels[i + 1] = noisePixels[i + 2] = 128 + noise;
-                    noisePixels[i + 3] = 30; // Low alpha for subtle noise
-                }
-                noiseCtx.putImageData(noiseData, 0, 0);
-                rgbCtx.globalCompositeOperation = 'overlay';
-                rgbCtx.drawImage(noiseCanvas, 0, 0);
-            }
-            resultCtx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
-            resultCtx.globalAlpha = finalOptions.brightness;
-            resultCtx.drawImage(
-                rgbCanvas, 0, 0, rgbCanvas.width, rgbCanvas.height,
-                0, 0, resultCanvas.width, resultCanvas.height
-            );
-            resultCtx.globalAlpha = 1.0;
-        }
-        else {
-            let subpixelCanvas = Q('<canvas>', { 
-                width: Math.ceil(temp.width * finalOptions.subpixelScale), 
-                height: Math.ceil(temp.height * finalOptions.subpixelScale) 
-            }).nodes[0];
-            let subpixelCtx = subpixelCanvas.getContext('2d', { willReadFrequently: true });
-            const targetWidth = Math.min(temp.width, finalOptions.maxResolution);
-            const targetHeight = Math.round(temp.height * (targetWidth / temp.width));
-            const resolutionScale = targetWidth / temp.width * finalOptions.resolutionScale;
-            subpixelCtx.drawImage(temp, 0, 0, subpixelCanvas.width, subpixelCanvas.height);
-            const imageData = ctx.getImageData(0, 0, temp.width, temp.height);
-            const subpixelData = subpixelCtx.getImageData(0, 0, subpixelCanvas.width, subpixelCanvas.height);
-            let processedCanvas = document.createElement('canvas');
-            processedCanvas.width = subpixelCanvas.width;
-            processedCanvas.height = subpixelCanvas.height;
-            let processedCtx = processedCanvas.getContext('2d', { willReadFrequently: true });
-            processedCtx.clearRect(0, 0, processedCanvas.width, processedCanvas.height);
-            const subpixelWidth = Math.ceil(finalOptions.subpixelScale / 3);
-            const phosphorWidth = Math.ceil(subpixelWidth * finalOptions.phosphorSize);
-            const phosphorBloom = finalOptions.phosphorBloom * subpixelWidth;
-            const colorRed = `rgba(255,0,0,1)`;
-            const colorGreen = `rgba(0,255,0,1)`;
-            const colorBlue = `rgba(0,0,255,1)`;
-            const colors = [colorRed, colorGreen, colorBlue];
-            const intensityLevels = 10; // Use 10 intensity levels instead of 256
-            const gradients = {
-                'red': [],
-                'green': [],
-                'blue': []
-            };
-            for (let level = 0; level < intensityLevels; level++) {
-                const intensity = level / (intensityLevels - 1);
-                ['red', 'green', 'blue'].forEach((color, colorIndex) => {
-                    const gradientSize = phosphorWidth + (phosphorBloom * 2);
-                    const centerX = subpixelWidth / 2;
-                    const centerY = subpixelWidth / 2;
-                    const gradient = processedCtx.createRadialGradient(
-                        centerX, centerY, 0,
-                        centerX, centerY, gradientSize / 2
-                    );
-                    gradient.addColorStop(0, `rgba(${colors[colorIndex].replace(/[^\d,]/g, '')},${intensity})`);
-                    gradient.addColorStop(phosphorWidth / gradientSize, 
-                        `rgba(${colors[colorIndex].replace(/[^\d,]/g, '')},${intensity * 0.7})`);
-                    gradient.addColorStop(1, `rgba(${colors[colorIndex].replace(/[^\d,]/g, '')},0)`);
-                    gradients[color].push(gradient);
-                });
-            }
-            if (finalOptions.subpixelLayout === 'rgb' || finalOptions.subpixelLayout === 'bgr') {
-                const isRGB = finalOptions.subpixelLayout === 'rgb';
-                const colorOrder = isRGB ? [0, 1, 2] : [2, 1, 0]; // RGB or BGR
-                const batchHeight = 20; // Process 20 rows at a time
-                for (let y = 0; y < temp.height; y += batchHeight) {
-                    const maxY = Math.min(temp.height, y + batchHeight);
-                    for (let cy = y; cy < maxY; cy++) {
-                        for (let x = 0; x < temp.width; x++) {
-                            const srcIndex = (cy * temp.width + x) * 4;
-                            const r = imageData.data[srcIndex];
-                            const g = imageData.data[srcIndex + 1];
-                            const b = imageData.data[srcIndex + 2];
-                            const baseX = Math.floor(x * finalOptions.subpixelScale);
-                            const baseY = Math.floor(cy * finalOptions.subpixelScale);
-                            const components = [r, g, b];
-                            for (let i = 0; i < 3; i++) {
-                                const intensity = components[colorOrder[i]] / 255;
-                                const gradientIndex = Math.floor(intensity * (intensityLevels - 1));
-                                const colorName = i === 0 ? 'red' : (i === 1 ? 'green' : 'blue');
-                                const subpixelX = baseX + (i * subpixelWidth);
-                                processedCtx.fillStyle = gradients[colorName][gradientIndex];
-                                processedCtx.fillRect(
-                                    subpixelX, baseY, 
-                                    subpixelWidth, finalOptions.subpixelScale
-                                );
-                            }
-                        }
-                    }
-                }
-            } 
-            else if (finalOptions.subpixelLayout === 'vrgb') {
-                for (let y = 0; y < temp.height; y++) {
-                    for (let x = 0; x < temp.width; x++) {
-                        const srcIndex = (y * temp.width + x) * 4;
-                        const r = imageData.data[srcIndex];
-                        const g = imageData.data[srcIndex + 1];
-                        const b = imageData.data[srcIndex + 2];
-                        const baseX = Math.floor(x * finalOptions.subpixelScale);
-                        const baseY = Math.floor(y * finalOptions.subpixelScale);
-                        const components = [r, g, b];
-                        for (let i = 0; i < 3; i++) {
-                            const intensity = components[i] / 255;
-                            const gradientIndex = Math.floor(intensity * (intensityLevels - 1));
-                            const colorName = i === 0 ? 'red' : (i === 1 ? 'green' : 'blue');
-                            const subpixelY = baseY + (i * subpixelWidth);
-                            processedCtx.fillStyle = gradients[colorName][gradientIndex];
-                            processedCtx.fillRect(
-                                baseX, subpixelY, 
-                                finalOptions.subpixelScale, subpixelWidth
-                            );
-                        }
-                    }
-                }
-            }
-            if (finalOptions.applyNoise) {
-                const noiseData = processedCtx.getImageData(0, 0, processedCanvas.width, processedCanvas.height);
-                const noisePixels = noiseData.data;
-                for (let i = 0; i < noisePixels.length; i += 4) {
-                    if (noisePixels[i+3] > 0) { // Only apply to visible pixels
-                        const noise = (Math.random() - 0.5) * finalOptions.noiseAmount;
-                        noisePixels[i] = Math.min(255, Math.max(0, noisePixels[i] + noise));
-                        noisePixels[i+1] = Math.min(255, Math.max(0, noisePixels[i+1] + noise));
-                        noisePixels[i+2] = Math.min(255, Math.max(0, noisePixels[i+2] + noise));
-                    }
-                }
-                processedCtx.putImageData(noiseData, 0, 0);
-            }
-            resultCtx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
-            resultCtx.globalAlpha = finalOptions.brightness;
-            resultCtx.drawImage(
-                processedCanvas, 0, 0, 
-                processedCanvas.width, processedCanvas.height,
-                0, 0, resultCanvas.width, resultCanvas.height
-            );
-            resultCtx.globalAlpha = 1.0;
-        }
-        if (finalOptions.scanlines) {
-            function drawHorizontalLines(ctx, width, height, totalHeight, margin, color, brightnessFactor) {
-                ctx.fillStyle = color;
-                for (let i = 0; i < totalHeight; i += (height + margin)) {
-                    ctx.fillRect(0, i, width, height);
-                    if (brightnessFactor > 0 && i + height < totalHeight) {
-                        const brightColor = `rgba(255, 255, 255, ${brightnessFactor * 0.1})`;
-                        ctx.fillStyle = brightColor;
-                        ctx.fillRect(0, i + height, width, margin);
-                        ctx.fillStyle = color; // Reset to scanline color
-                    }
-                }
-            }
-            drawHorizontalLines(
-                resultCtx, 
-                resultCanvas.width, 
-                finalOptions.scanlineHeight, 
-                resultCanvas.height, 
-                finalOptions.scanlineMargin, 
-                `rgba(0, 0, 0, ${finalOptions.scanlineOpacity})`,
-                finalOptions.scanlineBrightness
-            );
-        }
-        return this;
-    };
-Q.Image.prototype.Resize = function(width, height, resizeOptions = {}) {
-        const defaultOptions = {
-            size: 'auto',            // 'auto', 'contain', 'cover'
-            keepDimensions: false,   // Keep original dimensions with padding
-            fill: 'transparent',     // Background fill color
-            smoothing: true,         // Use image smoothing
-            quality: 'high'          // 'low', 'medium', 'high'
-        };
-        const finalOptions = Object.assign({}, defaultOptions, resizeOptions);
-        const canvas_node = this.node;
-        const temp = document.createElement('canvas');
-        temp.width = width;
-        temp.height = height;
-        const ctx = temp.getContext('2d');
-        ctx.imageSmoothingEnabled = finalOptions.smoothing;
-        ctx.imageSmoothingQuality = finalOptions.quality;
-        const canvasWidth = canvas_node.width;
-        const canvasHeight = canvas_node.height;
-        if (finalOptions.size === 'contain') {
-            if (finalOptions.keepDimensions) {
-                const widthRatio = width / canvasWidth;
-                const heightRatio = height / canvasHeight;
-                const ratio = Math.min(widthRatio, heightRatio);
-                const newWidth = canvasWidth * ratio;
-                const newHeight = canvasHeight * ratio;
-                const xOffset = (width - newWidth) / 2;
-                const yOffset = (height - newHeight) / 2;
-                ctx.fillStyle = finalOptions.fill;
-                ctx.fillRect(0, 0, width, height);
-                ctx.drawImage(canvas_node, 0, 0, canvasWidth, canvasHeight, xOffset, yOffset, newWidth, newHeight);
-            } else {
-                const widthRatio = width / canvasWidth;
-                const heightRatio = height / canvasHeight;
-                const ratio = Math.min(widthRatio, heightRatio);
-                const newWidth = canvasWidth * ratio;
-                const newHeight = canvasHeight * ratio;
-                ctx.drawImage(canvas_node, 0, 0, canvasWidth, canvasHeight, 0, 0, newWidth, newHeight);
-            }
-        } else if (finalOptions.size === 'cover') {
-            const widthRatio = width / canvasWidth;
-            const heightRatio = height / canvasHeight;
-            const ratio = Math.max(widthRatio, heightRatio);
-            const newWidth = canvasWidth * ratio;
-            const newHeight = canvasHeight * ratio;
-            const sourceX = (canvasWidth - width / ratio) / 2;
-            const sourceY = (canvasHeight - height / ratio) / 2;
-            ctx.drawImage(canvas_node, sourceX, sourceY, width / ratio, height / ratio, 0, 0, width, height);
-        } else if (finalOptions.size === 'auto') {
-            const ratio = Math.min(width / canvasWidth, height / canvasHeight);
-            const newWidth = canvasWidth * ratio;
-            const newHeight = canvasHeight * ratio;
-            ctx.fillStyle = finalOptions.fill;
-            ctx.fillRect(0, 0, width, height);
-            ctx.drawImage(canvas_node, 0, 0, canvasWidth, canvasHeight, 0, 0, newWidth, newHeight);
-        }
-        canvas_node.width = width;
-        canvas_node.height = height;
-        canvas_node.getContext('2d').drawImage(temp, 0, 0);
-        this.SaveHistory();
-        return this;
-    };
-Q.Image.prototype.Rotate = function(degrees, rotateOptions = {}) {
-        const defaultOptions = {
-            keepSize: false,     // Whether to keep original canvas size
-            smoothing: true,     // Whether to use smoothing
-            quality: 'high',     // Smoothing quality: 'low', 'medium', 'high'
-            centerOrigin: true   // Whether to rotate around the center
-        };
-        const finalOptions = Object.assign({}, defaultOptions, rotateOptions);
-        const canvas_node = this.node;
-        let width = canvas_node.width;
-        let height = canvas_node.height;
-        if (!finalOptions.keepSize) {
-            const radians = degrees * Math.PI / 180;
-            const newWidth = Math.abs(Math.cos(radians) * width) + Math.abs(Math.sin(radians) * height);
-            const newHeight = Math.abs(Math.sin(radians) * width) + Math.abs(Math.cos(radians) * height);
-            width = newWidth;
-            height = newHeight;
-        }
-        let temp = Q('<canvas>', { width: width, height: height }).nodes[0];
-        let ctx = temp.getContext('2d');
-        ctx.imageSmoothingEnabled = finalOptions.smoothing;
-        ctx.imageSmoothingQuality = finalOptions.quality;
-        ctx.translate(width / 2, height / 2);
-        ctx.rotate(degrees * Math.PI / 180);
-        ctx.drawImage(
-            canvas_node, 
-            -canvas_node.width / 2, 
-            -canvas_node.height / 2
-        );
-        canvas_node.width = width;
-        canvas_node.height = height;
-        canvas_node.getContext('2d').drawImage(temp, 0, 0);
-        return this;
-    };
-Q.Image.prototype.Sharpen = function(sharpenOptions = {}) {
-        const defaults = {
-            amount: 1.0,     // Sharpening amount (0.0 to 4.0)
-            radius: 1.0,     // Sharpening radius
-            threshold: 0,    // Edge threshold
-            details: 0.5     // Detail preservation (0.0 to 1.0)
-        };
-        const settings = Object.assign({}, defaults, sharpenOptions);
-        const canvas_node = this.node;
-        settings.amount = Math.max(0, Math.min(4, settings.amount));
-        const ctx = canvas_node.getContext('2d');
-        const imgData = ctx.getImageData(0, 0, canvas_node.width, canvas_node.height);
-        const pixels = imgData.data;
-        const width = canvas_node.width;
-        const height = canvas_node.height;
-        const dataCopy = new Uint8ClampedArray(pixels);
-        applyGaussianBlur(dataCopy, width, height, settings.radius);
-        const sharpAmount = settings.amount * 0.75; // Scale for better visual match
-        const detailFactor = settings.details * 2; // Amplify detail preservation
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                const i = (y * width + x) * 4;
-                const diffR = pixels[i] - dataCopy[i];
-                const diffG = pixels[i + 1] - dataCopy[i + 1];
-                const diffB = pixels[i + 2] - dataCopy[i + 2];
-                const edgeIntensity = Math.sqrt(diffR * diffR + diffG * diffG + diffB * diffB);
-                if (edgeIntensity > settings.threshold) {
-                    const factor = sharpAmount + (detailFactor * edgeIntensity / 255);
-                    pixels[i] = clamp(pixels[i] + diffR * factor);
-                    pixels[i + 1] = clamp(pixels[i + 1] + diffG * factor);
-                    pixels[i + 2] = clamp(pixels[i + 2] + diffB * factor);
-                }
-            }
-        }
-        ctx.putImageData(imgData, 0, 0);
-        this.SaveHistory();
-        return this;
-    };
-    function clamp(value) {
-        return Math.min(255, Math.max(0, value));
-    }
-    function applyGaussianBlur(data, width, height, radius) {
-        const iterations = 3; // Multiple passes for better Gaussian approximation
-        const size = Math.ceil(radius) * 2 + 1;
-        const halfSize = Math.floor(size / 2);
-        const temp = new Uint8ClampedArray(data.length);
-        for (let i = 0; i < iterations; i++) {
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < width; x++) {
-                    let r = 0, g = 0, b = 0;
-                    let count = 0;
-                    for (let j = -halfSize; j <= halfSize; j++) {
-                        const cx = Math.min(Math.max(0, x + j), width - 1);
-                        const idx = (y * width + cx) * 4;
-                        r += data[idx];
-                        g += data[idx + 1];
-                        b += data[idx + 2];
-                        count++;
-                    }
-                    const idx = (y * width + x) * 4;
-                    temp[idx] = r / count;
-                    temp[idx + 1] = g / count;
-                    temp[idx + 2] = b / count;
-                    temp[idx + 3] = data[idx + 3];
-                }
-            }
-            for (let x = 0; x < width; x++) {
-                for (let y = 0; y < height; y++) {
-                    let r = 0, g = 0, b = 0;
-                    let count = 0;
-                    for (let j = -halfSize; j <= halfSize; j++) {
-                        const cy = Math.min(Math.max(0, y + j), height - 1);
-                        const idx = (cy * width + x) * 4;
-                        r += temp[idx];
-                        g += temp[idx + 1];
-                        b += temp[idx + 2];
-                        count++;
-                    }
-                    const idx = (y * width + x) * 4;
-                    data[idx] = r / count;
-                    data[idx + 1] = g / count;
-                    data[idx + 2] = b / count;
-                }
-            }
-        }
-    }
-Q.Image.prototype.Vivid = function(value, vividOptions = {}) {
-        const defaultOptions = {
-            method: 'multiply',  // 'multiply', 'hsl'
-            clamp: true          // Whether to clamp values to 0-255 range
-        };
-        const finalOptions = Object.assign({}, defaultOptions, vividOptions);
-        const canvas_node = this.node;
-        let data = canvas_node.getContext('2d').getImageData(0, 0, canvas_node.width, canvas_node.height);
-        let pixels = data.data;
-        if (finalOptions.method === 'hsl' && typeof Q.RGB2HSL === 'function' && typeof Q.HSL2RGB === 'function') {
-            for (let i = 0; i < pixels.length; i += 4) {
-                let r = pixels[i];
-                let g = pixels[i + 1];
-                let b = pixels[i + 2];
-                let hsl = Q.RGB2HSL(r, g, b);
-                hsl[1] *= value; // Adjust saturation
-                if (finalOptions.clamp) {
-                    hsl[1] = Math.min(1, Math.max(0, hsl[1]));
-                }
-                let rgb = Q.HSL2RGB(hsl[0], hsl[1], hsl[2]);
-                pixels[i] = rgb[0];
-                pixels[i + 1] = rgb[1];
-                pixels[i + 2] = rgb[2];
-            }
-        } else {
-            for (let i = 0; i < pixels.length; i += 4) {
-                let luminance = 0.299 * pixels[i] + 0.587 * pixels[i + 1] + 0.114 * pixels[i + 2];
-                pixels[i] = luminance + (pixels[i] - luminance) * value;
-                pixels[i + 1] = luminance + (pixels[i + 1] - luminance) * value;
-                pixels[i + 2] = luminance + (pixels[i + 2] - luminance) * value;
-                if (finalOptions.clamp) {
-                    pixels[i] = Math.min(255, Math.max(0, pixels[i]));
-                    pixels[i + 1] = Math.min(255, Math.max(0, pixels[i + 1]));
-                    pixels[i + 2] = Math.min(255, Math.max(0, pixels[i + 2]));
-                }
-            }
-        }
-        canvas_node.getContext('2d').putImageData(data, 0, 0);
-        return this;
-    };
-Q.Image.prototype.Zoom = function(factor = 1.5, zoomOptions = {}) {
-        const defaultOptions = {
-            centerX: this.node.width / 2,   // Default center point X
-            centerY: this.node.height / 2,  // Default center point Y
-            smoothing: true,                // Whether to use smoothing
-            quality: 'high',                // Smoothing quality: 'low', 'medium', 'high'
-            background: 'transparent'       // Background for areas outside the image when zooming out
-        };
-        const finalOptions = Object.assign({}, defaultOptions, zoomOptions);
-        const canvas_node = this.node;
-        let temp = Q('<canvas>', { 
-            width: canvas_node.width, 
-            height: canvas_node.height 
-        }).nodes[0];
-        let ctx = temp.getContext('2d');
-        ctx.imageSmoothingEnabled = finalOptions.smoothing;
-        ctx.imageSmoothingQuality = finalOptions.quality;
-        ctx.fillStyle = finalOptions.background;
-        ctx.fillRect(0, 0, temp.width, temp.height);
-        if (factor >= 1) {
-            const sWidth = canvas_node.width / factor;
-            const sHeight = canvas_node.height / factor;
-            const sx = finalOptions.centerX - (sWidth / 2);
-            const sy = finalOptions.centerY - (sHeight / 2);
-            const boundedSx = Math.max(0, Math.min(canvas_node.width - sWidth, sx));
-            const boundedSy = Math.max(0, Math.min(canvas_node.height - sHeight, sy));
-            ctx.drawImage(
-                canvas_node,
-                boundedSx, boundedSy, sWidth, sHeight,
-                0, 0, canvas_node.width, canvas_node.height
-            );
-        } else {
-            const scaledWidth = canvas_node.width * factor;
-            const scaledHeight = canvas_node.height * factor;
-            const dx = (canvas_node.width - scaledWidth) / 2;
-            const dy = (canvas_node.height - scaledHeight) / 2;
-            ctx.drawImage(
-                canvas_node,
-                0, 0, canvas_node.width, canvas_node.height,
-                dx, dy, scaledWidth, scaledHeight
-            );
-        }
-        canvas_node.getContext('2d').clearRect(0, 0, canvas_node.width, canvas_node.height);
-        canvas_node.getContext('2d').drawImage(temp, 0, 0);
-        return this;
-    };
 Q.ImageViewer = function () {
     let classes = Q.style(`
 .image_viewer_wrapper {

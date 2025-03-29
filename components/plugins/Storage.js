@@ -27,7 +27,6 @@ Q.Storage = (function () {
         }
         return result;
     };
-
     const lzw_decompress = (input) => {
         let dictionary = {}, current = String.fromCharCode(input.charCodeAt(0)),
             previous = current, result = current, code = 256, entry;
@@ -47,7 +46,6 @@ Q.Storage = (function () {
         }
         return result;
     };
-
     return function (storageKey, storageValue, compressionEnabled = false) {
         if (arguments.length > 1) { 
             if (storageValue === null || storageValue === '') {

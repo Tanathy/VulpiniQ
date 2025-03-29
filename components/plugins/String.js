@@ -17,7 +17,6 @@ Q.String.prototype.capitalize = function () {
 Q.String.prototype.levenshtein = function (string) {
     const a = this.string, b = string;
     const matrix = Array.from({ length: a.length + 1 }, (_, i) => Array.from({ length: b.length + 1 }, (_, j) => i || j));
-
     for (let i = 1; i <= a.length; i++) {
         for (let j = 1; j <= b.length; j++) {
             matrix[i][j] = Math.min(

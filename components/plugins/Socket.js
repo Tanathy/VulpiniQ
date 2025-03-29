@@ -17,10 +17,8 @@ Q.Socket = function (url, onMessage, onStatus, options = {}) {
         onClose = null,                // Additional callback on close
         onError = null                 // Additional callback on error
     } = options;
-
     let socket, attempts = 0, currentDelay = delay, pingId = null;
     const messageQueue = [];
-
     const connect = () => {
         socket = new WebSocket(url, protocols);
         socket.onopen = () => {
@@ -64,9 +62,7 @@ Q.Socket = function (url, onMessage, onStatus, options = {}) {
             }
         };
     };
-
     connect();
-
     return {
         send: message => {
             if (socket && socket.readyState === WebSocket.OPEN) {

@@ -1,0 +1,8 @@
+{
+  "Name": "Form.Tags",
+  "Method": "Component",
+  "Desc": "Tags component for Form plugin",
+  "Type": "Component",
+  "Example": "var tags = Q.Form.Tags('tag1,tag2,tag3', 'Add tags...'); tags.change(function(value) { console.log(value); });",
+  "Dependencies": ["Form", "style", "addClass", "removeClass", "on", "attr", "val", "prop", "html", "before", "after", "css", "find", "focus", "children"]
+}

@@ -51,7 +51,6 @@ Q.Timer = (callback, identifier, options = {}) => {
     Q.Timer.activeTimers.set(identifier, timerControl);
     return timerControl;
   };
-  
   Q.Timer.stop = (identifier) => {
     if (Q.Timer.activeTimers?.has(identifier)) {
       const timerControl = Q.Timer.activeTimers.get(identifier);
@@ -59,7 +58,6 @@ Q.Timer = (callback, identifier, options = {}) => {
       Q.Timer.activeTimers.delete(identifier);
     }
   };
-  
   Q.Timer.stopAll = () => {
     if (Q.Timer.activeTimers) {
       Q.Timer.activeTimers.forEach(timerControl => clearTimeout(timerControl.timerHandle));

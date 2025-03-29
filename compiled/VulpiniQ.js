@@ -105,13 +105,16 @@ const Q = (() => {
         (Q.prototype[methodName] = functionImplementation, Q);
     Q.getGLOBAL = key => GLOBAL[key];
     Q.setGLOBAL = value => (GLOBAL = { ...GLOBAL, ...value });
-    Q.style = (root = '', style = '', responsive = _n, mapping = _n) => {
+    Q.style = (root = _n, style = '', responsive = _n, mapping = _n) => {
         if (mapping) {
             const keys = _ob.keys(mapping);
             keys.forEach((key) => {
                 let newKey = Q.ID ? Q.ID(5, '_') : `_${_ma.random().toString(36).substring(2, 7)}`;
                 if (style && typeof style === 'string') {
-                    style = style.replace(new _re(`\\b${key}\\b`, 'gm'), newKey);
+                    style = style.replace(new _re(`\\.${key}\\b`, 'gm'), `.${newKey}`);
+                    style = style.replace(new _re(`^\\s*\\.${key}\\s*{`, 'gm'), `.${newKey} {`);
+                    style = style.replace(new _re(`(,\\s*)\\.${key}\\b`, 'gm'), `$1.${newKey}`);
+                    style = style.replace(new _re(`(\\s+)\\.${key}\\b`, 'gm'), `$1.${newKey}`);
                 }
                 mapping[key] = mapping[key].replace(key, newKey);
             });
@@ -153,6 +156,44 @@ const Q = (() => {
         nodes[i].classList.add.apply(nodes[i].classList, b);
     }
     return this;
+});
+Q.Ext('after', function (...contents) {
+  const nodes = this.nodes;
+  for (let i = 0, len = nodes.length; i < len; i++) {
+    const target = nodes[i];
+    const parent = target.parentNode;
+    if (!parent) continue;
+    for (let j = 0, clen = contents.length; j < clen; j++) {
+      const content = contents[j];
+      if (typeof content === "string") {
+        target.insertAdjacentHTML('afterend', content);
+      } else if (content?.nodeType === 1) {
+        if (target.nextSibling) {
+          parent.insertBefore(content, target.nextSibling);
+        } else {
+          parent.appendChild(content);
+        }
+      } else if (content instanceof Q) {
+        if (target.nextSibling) {
+          parent.insertBefore(content.nodes[0], target.nextSibling);
+        } else {
+          parent.appendChild(content.nodes[0]);
+        }
+      } else if (Array.isArray(content) || content?.constructor === NodeList) {
+        const subNodes = Array.from(content);
+        let nextSibling = target.nextSibling;
+        for (let k = 0, slen = subNodes.length; k < slen; k++) {
+          if (nextSibling) {
+            parent.insertBefore(subNodes[k], nextSibling);
+            nextSibling = subNodes[k].nextSibling;
+          } else {
+            parent.appendChild(subNodes[k]);
+          }
+        }
+      }
+    }
+  }
+  return this;
 });
 Q.Ext('animate', function (duration, b, e) {
   var nodes = this.nodes;
@@ -217,6 +258,30 @@ Q.Ext('attr', function (attribute, value) {
         return this;
     }
 });
+Q.Ext('before', function (...contents) {
+  const nodes = this.nodes;
+  for (let i = 0, len = nodes.length; i < len; i++) {
+    const target = nodes[i];
+    const parent = target.parentNode;
+    if (!parent) continue;
+    for (let j = 0, clen = contents.length; j < clen; j++) {
+      const content = contents[j];
+      if (typeof content === "string") {
+        target.insertAdjacentHTML('beforebegin', content);
+      } else if (content?.nodeType === 1) {
+        parent.insertBefore(content, target);
+      } else if (content instanceof Q) {
+        parent.insertBefore(content.nodes[0], target);
+      } else if (Array.isArray(content) || content?.constructor === NodeList) {
+        const subNodes = Array.from(content);
+        for (let k = 0, slen = subNodes.length; k < slen; k++) {
+          parent.insertBefore(subNodes[k], target);
+        }
+      }
+    }
+  }
+  return this;
+});
 Q.Ext('bind', function (event, handler) {
     if (!this._eventDelegation) {
         this._eventDelegation = {};
@@ -240,6 +305,30 @@ Q.Ext('blur', function () {
         nodes[i].blur();
     }
     return this;
+});
+Q.Ext('children', function (selector) {
+  const result = [];
+  const nodes = this.nodes;
+  for (let i = 0, len = nodes.length; i < len; i++) {
+    const parent = nodes[i];
+    const children = parent.children; // Get HTMLCollection of children
+    if (children) {
+      const childrenArray = Array.from(children);
+      if (selector) {
+        for (let j = 0, clen = childrenArray.length; j < clen; j++) {
+          const child = childrenArray[j];
+          if (child.matches && child.matches(selector)) {
+            result.push(child);
+          }
+        }
+      } else {
+        for (let j = 0, clen = childrenArray.length; j < clen; j++) {
+          result.push(childrenArray[j]);
+        }
+      }
+    }
+  }
+  return new Q(result);
 });
 Q.Ext('click', function () {
     var nodes = this.nodes;
