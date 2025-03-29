@@ -59,7 +59,7 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
     const container = Q('<div class="' + Form.classes.q_form + ' ' + Form.checkBoxClasses.q_form_checkbox + '">');
     const checkbox_container = Q('<div class="' + Form.checkBoxClasses.q_form_cb + '">');
     const input = Q(`<input type="checkbox" id="${ID}">`);
-    const label = Q(`<label for="${ID}">${text}</label>`);
+    const label = Q(`<label for="${ID}"></label>`);
     const labeltext = Q(`<div class="${Form.checkBoxClasses.q_form_label}">${text}</div>`);
     if (checked) {
         input.prop('checked', true);

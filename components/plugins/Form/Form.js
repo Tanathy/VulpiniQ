@@ -1,12 +1,11 @@
-
 function Form(options = {}) {
     if (!(this instanceof Form)) {
         return new Form(options);
     }
-    
+
     this.elements = [];
     this.options = options;
-    
+
     if (!Form.initialized) {
         Form.classes = Q.style(`
             --form-default-border-radius: 5px;
@@ -34,7 +33,31 @@ function Form(options = {}) {
                 color: #fff;
                 pointer-events: none;
             }
-        `, null, {});
+            
+            .form_close_button {
+            user-select: none;
+                -webkit-user-select: none;
+                position: absolute;
+                top: 0px;
+                right: 0px;
+                width: 18px;
+                height: 18px;
+                background-color: rgba(0, 0, 0, 0.5);
+                color: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                cursor: pointer;
+            }
+            
+            .form_close_button:hover {
+                background-color: rgba(220, 53, 69, 0.8);
+            }
+        `, null, {
+            'form_icon': 'form_icon',
+            'form_close_button': 'form_close_button'
+        });
         Form.initialized = true;
         console.log('Form core initialized');
     }

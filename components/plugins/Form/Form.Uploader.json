@@ -1,0 +1,8 @@
+{
+  "Name": "Form.Uploader",
+  "Method": "Component",
+  "Desc": "File upload component with drag and drop functionality",
+  "Type": "Component",
+  "Example": "var uploader = Q.Form.Uploader({ fileTypes: '.jpg,.png', preview: true }); uploader.change(function(files) { console.log(files); });",
+  "Dependencies": ["Form", "style", "addClass", "removeClass", "on", "attr", "val", "prop", "html", "append", "css", "text", "remove"]
+}
