@@ -1,10 +1,10 @@
-// Name: ImageViewer
-// Method: Plugin
-// Desc: A simple image viewer plugin
-// Type: Plugin
-// Example: Q.ImageViewer().selector('.image').open(['image1.jpg', 'image2.jpg']);
-// Dependencies: Style, Icons
-// Status: Experimental, Unstable
+
+
+
+
+
+
+
 Q.ImageViewer = function () {
     let classes = Q.style(`
 .image_viewer_wrapper {

@@ -1,0 +1,8 @@
+{
+  "Name": "detach",
+  "Method": "Method",
+  "Desc": "Removes the elements from the DOM but keeps them in memory for later reattachment",
+  "Type": "Method",
+  "Example": "const element = Q('#myElement').detach(); // Element is removed from DOM but preserved\nQ('#container').append(element); // Reattach the element later",
+  "Dependencies": []
+}

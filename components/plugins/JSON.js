@@ -1,17 +1,17 @@
-// Name: JSON
-// Method: Plugin
-// Desc: Provides methods to parse, deflate, inflate, merge, sort, and flatten JSON objects.
-// Type: Plugin
-// Example:
-//   let json = Q.JSON({ key: 'value' });
-//   json.Parse({ modify: true, recursive: true }, (key, value) => value + ' modified');
-//   let merged = json.merge({ newKey: 'newValue' });
-//   let sortedKeys = json.sortKeys(true, true); // recursively sort keys in reverse order
-//   let sortedValues = json.sortValues(true);   // sort object entries by value in reverse order
-//   json.json = [{ a: 'apple', b: 'banana' }, { a: 'avocado', b: 'blueberry' }];
-//   let sortedBy = json.sortByValues('a','b',true); // sort array of objects by properties 'a' then 'b' in reverse order
-//   let flat = json.flatten();
-//   let unflat = json.unflatten(flat);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Q.JSON = function (jsonData) {
     if (!(this instanceof Q.JSON)) return new Q.JSON(jsonData);

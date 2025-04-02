@@ -1,21 +1,21 @@
-// Name: Socket
-// Method: Plugin
-// Desc: Provides a WebSocket implementation with automatic reconnection and status callbacks.
-// Type: Plugin
-// Example: var socket = Q.Socket('ws://localhost:8080', console.log, console.log);
+
+
+
+
+
 Q.Socket = function (url, onMessage, onStatus, options = {}) {
     const {
-        retries = 5,                   // Number of reconnection attempts (0 means unlimited)
-        delay = 1000,                  // Initial delay between reconnections in ms
-        protocols = [],                // WebSocket sub-protocols
-        backoff = false,               // Exponential backoff toggle
-        pingInterval = 0,              // Interval for heartbeat pings (ms); 0 disables
-        pingMessage = 'ping',          // Message to send for heartbeat
-        queueMessages = false,         // Queue messages if socket is not open yet
-        autoReconnect = true,          // Automatically reconnect on close
-        onOpen = null,                 // Additional callback on open
-        onClose = null,                // Additional callback on close
-        onError = null                 // Additional callback on error
+        retries = 5,                   
+        delay = 1000,                  
+        protocols = [],                
+        backoff = false,               
+        pingInterval = 0,              
+        pingMessage = 'ping',          
+        queueMessages = false,         
+        autoReconnect = true,          
+        onOpen = null,                 
+        onClose = null,                
+        onError = null                 
     } = options;
     let socket, attempts = 0, currentDelay = delay, pingId = null;
     const messageQueue = [];
@@ -73,7 +73,7 @@ Q.Socket = function (url, onMessage, onStatus, options = {}) {
         },
         reconnect: () => connect(),
         close: () => {
-            // Disable autoReconnect on manual close.
+            
             autoReconnect = false;
             pingId && clearInterval(pingId);
             socket.close();

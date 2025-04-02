@@ -1,9 +1,9 @@
-// Name: isDarkColor
-// Method: Utility
-// Desc: Determines if a color is dark or light based on the HSP (Hue, Saturation, Perceived brightness) model. <br> This utility helps in designing user interfaces by ensuring adequate contrast between text and background colors, enhancing readability and accessibility. <br> Users can adjust the margin and threshold parameters to fine-tune sensitivity according to their design needs.
-// Type: Color
-// Example: Q.isDarkColor('#000000'); // true <br> Q.isDarkColor('#ffffff'); // false <br> Q.isDarkColor('#4c4c4c', 30, 90); // true
-// Variables: color, margin, threshold, parseHex, hsp, hex, rgba
+
+
+
+
+
+
 Q.isDarkColor = (color, margin = 20, threshold = 100) => {
     let red, green, blue;
     if (color[0] === '#') {

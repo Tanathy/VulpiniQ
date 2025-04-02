@@ -105,8 +105,8 @@ const Q = (() => {
         (Q.prototype[methodName] = functionImplementation, Q);
     Q.getGLOBAL = key => GLOBAL[key];
     Q.setGLOBAL = value => (GLOBAL = { ...GLOBAL, ...value });
-    Q.style = (root = _n, style = '', responsive = _n, mapping = _n) => {
-        if (mapping) {
+    Q.style = (root = _n, style = '', responsive = _n, mapping = _n, enable_mapping = true) => {
+        if (mapping && enable_mapping) {
             const keys = _ob.keys(mapping);
             keys.forEach((key) => {
                 let newKey = Q.ID ? Q.ID(5, '_') : `_${_ma.random().toString(36).substring(2, 7)}`;
@@ -311,20 +311,17 @@ Q.Ext('children', function (selector) {
   const nodes = this.nodes;
   for (let i = 0, len = nodes.length; i < len; i++) {
     const parent = nodes[i];
-    const children = parent.children; // Get HTMLCollection of children
-    if (children) {
-      const childrenArray = Array.from(children);
-      if (selector) {
-        for (let j = 0, clen = childrenArray.length; j < clen; j++) {
-          const child = childrenArray[j];
-          if (child.matches && child.matches(selector)) {
-            result.push(child);
-          }
+    if (!parent || !parent.children) continue;
+    const childElements = parent.children;
+    if (selector) {
+      for (let j = 0; j < childElements.length; j++) {
+        if (childElements[j].matches && childElements[j].matches(selector)) {
+          result.push(childElements[j]);
         }
-      } else {
-        for (let j = 0, clen = childrenArray.length; j < clen; j++) {
-          result.push(childrenArray[j]);
-        }
+      }
+    } else {
+      for (let j = 0; j < childElements.length; j++) {
+        result.push(childElements[j]);
       }
     }
   }
@@ -375,6 +372,20 @@ Q.Ext('data', function (key, value) {
     for (let i = 0, len = nodes.length; i < len; i++) {
         nodes[i].dataset[key] = value;
     }
+    return this;
+});
+Q.Ext('detach', function() {
+    const nodes = this.nodes;
+    const detachedNodes = [];
+    for (let i = 0, len = nodes.length; i < len; i++) {
+        const node = nodes[i];
+        const parent = node.parentNode;
+        if (parent) {
+            detachedNodes.push(node);
+            parent.removeChild(node);
+        }
+    }
+    this.nodes = detachedNodes;
     return this;
 });
 Q.Ext('each', function (callback) {
@@ -1058,176 +1069,1332 @@ Q.isDarkColor = (color, b = 20, c = 100) => {
     } else throw Error('Unsupported color format');
     return Math.sqrt(0.299 * red ** 2 + 0.587 * green ** 2 + 0.114 * blue ** 2) + b < c;
   };
-Q.Container = function (options = {}) {
-    const Container = {};
-    Container.Icon = function (icon) {
-        let iconElement = Q('<div>');
-        iconElement.addClass('svg_' + icon + ' container_icon');
-        return iconElement;
-    };
-    Q.Icons();
-    Container.classes = Q.style('', `
-        .container_icon {
-            width: 100%;
-            height: 100%;
-            color: #777; /* Default color */
-            pointer-events: none;
-            z-index: 1;
-        }
-    `, null, {
-        'container_icon': 'container_icon'
-    });
-    return Container;
+function Container(options = {}) {
+    if (!(this instanceof Container)) {
+        return new Container(options);
+    }
+    this.elements = [];
+    this.options = options;
+    if (!Container.initialized) {
+        Container.classes = Q.style('', `
+            .container_icon {
+                width: 100%;
+                height: 100%;
+                color: #777; /* Default color */
+                pointer-events: none;
+                z-index: 1;
+            }
+        `, null, {
+            'container_icon': 'container_icon'
+        });
+        Q.Icons();
+        Container.initialized = true;
+        console.log('Container core initialized');
+    }
+}
+Container.prototype.Icon = function(icon) {
+    const iconInstance = Q.Icons();
+    return iconInstance.get(icon, 'container_icon');
 };
-Q.Container.Tab = function (options = {}) {
-    const Container = Q.Container();
-    const Icon = Container.Icon;
-    const sharedClasses = Container.classes;
-    const classes = Object.assign({}, sharedClasses, Q.style('', `
-        .tab_navigation_buttons {
-            box-sizing: border-box;
-            width: 20px;
-            background-color: #333;
-            display: flex;
-            justify-content: center;
-            padding: 4px;
-        }
-        .tab_navigation_buttons_vertical {
-            width: auto;
-            height: 20px;
-        }
-        .tab_navigation_buttons:hover {
-            background-color: #555;
-        }
-        .tab_container {
-            width: 100%;
-            height: 300px;
-        }
-        .tab_container_vertical {
-            display: flex;
-        }
-        .tab_navigation_header {
-            background-color: #333;
-            display: flex;
-        }
-        .tab_navigation_header_vertical {
-            flex-direction: column;
-            width: auto;
-        }
-        .tab_navigation_tabs {
-            user-select: none;
-            display: flex;
-            flex-direction: row;
-            width: 100%;
-            overflow: hidden;
-        }
-        .tab_navigation_tabs_vertical {
-            flex-direction: column;
-        }
-        .tab_active {
-            background-color: #555;
-            color: #fff;
-        }
-        .tab {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: default;
-            padding: 5px 25px;
-        }
-        .tab_disabled {
-            background-color: #333;
-            color: #555;
-        }
-    `, null, {
-        'tab_navigation_buttons': 'tab_navigation_buttons',
-        'tab_navigation_buttons_vertical': 'tab_navigation_buttons_vertical',
-        'tab_container': 'tab_container',
-        'tab_container_vertical': 'tab_container_vertical',
-        'tab_navigation_header': 'tab_navigation_header',
-        'tab_navigation_header_vertical': 'tab_navigation_header_vertical',
-        'tab_navigation_tabs': 'tab_navigation_tabs',
-        'tab_navigation_tabs_vertical': 'tab_navigation_tabs_vertical',
-        'tab_active': 'tab_active',
-        'tab': 'tab',
-        'tab_disabled': 'tab_disabled'
-    }));
-    return function (data, horizontal = true) {
-        let wrapper = Q('<div>', { class: classes.tab_container });
-        let tabs_wrapper = Q('<div>', { class: classes.tab_navigation_header });
-        let tabs_nav_left = Q('<div>', { class: classes.tab_navigation_buttons });
-        let tabs_nav_right = Q('<div>', { class: classes.tab_navigation_buttons });
-        let tabs = Q('<div>', { class: classes.tab_navigation_tabs });
-        tabs_wrapper.append(tabs_nav_left, tabs, tabs_nav_right);
-        let content = Q('<div>');
-        wrapper.append(tabs_wrapper, content);
-        if (!horizontal) {
-            wrapper.addClass(classes.tab_container_vertical);
-            tabs.addClass(classes.tab_navigation_tabs_vertical);
-            tabs_wrapper.addClass(classes.tab_navigation_header_vertical);
-            tabs_nav_left.addClass(classes.tab_navigation_buttons_vertical);
-            tabs_nav_right.addClass(classes.tab_navigation_buttons_vertical);
-            tabs_nav_left.append(Icon('arrow-up'));
-            tabs_nav_right.append(Icon('arrow-down'));
-        }
-        else {
-            tabs_nav_left.append(Icon('arrow-left'));
-            tabs_nav_right.append(Icon('arrow-right'));
-        }
-        let data_tabs = {};
-        let data_contents = {};
-        data.forEach((item) => {
-            const tab = Q('<div>', { class: classes.tab, 'data-value': item.value }).text(item.title);
-            if (item.disabled) {
-                tab.addClass(classes.tab_disabled);
+Q.Container = Container;
+Container.prototype.Tab = function(data, horizontal = true) {
+    if (!Container.tabClassesInitialized) {
+        Container.tabClasses = Q.style('', `
+            .tab_navigation_buttons {
+                box-sizing: border-box;
+                width: 20px;
+                background-color: #333;
+                display: flex;
+                justify-content: center;
+                padding: 4px;
             }
-            data_tabs[item.value] = tab;
-            data_contents[item.value] = item.content;
-            tab.on('click', function () {
-                if (item.disabled) {
-                    return;
-                }
-                let foundTabs = tabs.find('.' + classes.tab_active);
-                if (foundTabs) {
-                    foundTabs.removeClass(classes.tab_active);
-                }
-                tab.addClass(classes.tab_active);
-                content.html(data_contents[item.value]);
-            });
-            tabs.append(tab);
+            .tab_navigation_buttons_vertical {
+                width: auto;
+                height: 20px;
+            }
+            .tab_navigation_buttons:hover {
+                background-color: #555;
+            }
+            .tab_container {
+                width: 100%;
+                height: 300px;
+            }
+            .tab_container_vertical {
+                display: flex;
+            }
+            .tab_navigation_header {
+                background-color: #333;
+                display: flex;
+            }
+            .tab_navigation_header_vertical {
+                flex-direction: column;
+                width: auto;
+            }
+            .tab_navigation_tabs {
+                user-select: none;
+                display: flex;
+                flex-direction: row;
+                width: 100%;
+                overflow: hidden;
+            }
+            .tab_navigation_tabs_vertical {
+                flex-direction: column;
+            }
+            .tab_active {
+                background-color: #555;
+                color: #fff;
+            }
+            .tab {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                cursor: default;
+                padding: 5px 25px;
+            }
+            .tab_disabled {
+                background-color: #333;
+                color: #555;
+            }
+            .tab_content {
+                display: none;
+                width: 100%;
+                height: 100%;
+                overflow: auto;
+            }
+            .tab_content_active {
+                display: block;
+            }
+            .tab_content_container {
+                width: 100%;
+                height: 100%;
+                overflow: auto;
+                position: relative;
+            }
+        `, null, {
+            'tab_navigation_buttons': 'tab_navigation_buttons',
+            'tab_navigation_buttons_vertical': 'tab_navigation_buttons_vertical',
+            'tab_container': 'tab_container',
+            'tab_container_vertical': 'tab_container_vertical',
+            'tab_navigation_header': 'tab_navigation_header',
+            'tab_navigation_header_vertical': 'tab_navigation_header_vertical',
+            'tab_navigation_tabs': 'tab_navigation_tabs',
+            'tab_navigation_tabs_vertical': 'tab_navigation_tabs_vertical',
+            'tab_active': 'tab_active',
+            'tab': 'tab',
+            'tab_disabled': 'tab_disabled',
+            'tab_content_container': 'tab_content_container'
         });
-        tabs_nav_left.on('click', function () {
-            if (!horizontal) {
-                tabs.scrollTop(-tabs.height(), true);
-            } else {
-                tabs.scrollLeft(-tabs.width(), true);
-            }
+        Container.tabClassesInitialized = true;
+    }
+    const wrapper = Q('<div>', { class: Container.tabClasses.tab_container });
+    const header = Q('<div>', { class: Container.tabClasses.tab_navigation_header });
+    const prevBtn = Q('<div>', { class: Container.tabClasses.tab_navigation_buttons });
+    const nextBtn = Q('<div>', { class: Container.tabClasses.tab_navigation_buttons });
+    const tabs = Q('<div>', { class: Container.tabClasses.tab_navigation_tabs });
+    const contentContainer = Q('<div>', { class: Container.tabClasses.tab_content_container });
+    if (!horizontal) {
+        wrapper.addClass(Container.tabClasses.tab_container_vertical);
+        header.addClass(Container.tabClasses.tab_navigation_header_vertical);
+        tabs.addClass(Container.tabClasses.tab_navigation_tabs_vertical);
+        prevBtn.addClass(Container.tabClasses.tab_navigation_buttons_vertical);
+        nextBtn.addClass(Container.tabClasses.tab_navigation_buttons_vertical);
+        prevBtn.append(Q('<div>', { class: 'svg_arrow-up container_icon' }));
+        nextBtn.append(Q('<div>', { class: 'svg_arrow-down container_icon' }));
+    } else {
+        prevBtn.append(Q('<div>', { class: 'svg_arrow-left container_icon' }));
+        nextBtn.append(Q('<div>', { class: 'svg_arrow-right container_icon' }));
+    }
+    header.append(prevBtn, tabs, nextBtn);
+    wrapper.append(header, contentContainer);
+    const data_tabs = {};
+    const data_contents = {};
+    let activeTab = null;
+    prevBtn.on('click', () => {
+        const scrollAmount = horizontal ? tabs.width() : tabs.height();
+        horizontal ? tabs.scrollLeft(-scrollAmount, true) : tabs.scrollTop(-scrollAmount, true);
+    });
+    nextBtn.on('click', () => {
+        const scrollAmount = horizontal ? tabs.width() : tabs.height();
+        horizontal ? tabs.scrollLeft(scrollAmount, true) : tabs.scrollTop(scrollAmount, true);
+    });
+    data.forEach(item => {
+        const tab = Q('<div>', { class: Container.tabClasses.tab })
+            .attr('data-value', item.value)
+            .text(item.title);
+        if (item.disabled) {
+            tab.addClass(Container.tabClasses.tab_disabled);
+        }
+        let content;
+        if (typeof item.content === 'string') {
+            content = Q('<div>').html(item.content);
+        } else if (item.content instanceof Element) {
+            content = Q(item.content);
+        } else if (item.content instanceof Q) {
+            content = item.content;
+        } else {
+            content = Q('<div>');
+        }
+        data_tabs[item.value] = tab;
+        data_contents[item.value] = content;
+        tab.on('click', function() {
+            if (item.disabled) return;
+            const activeTabs = tabs.find('.' + Container.tabClasses.tab_active);
+            if (activeTabs) activeTabs.removeClass(Container.tabClasses.tab_active);
+            tab.addClass(Container.tabClasses.tab_active);
+            showContent(item.value);
         });
-        tabs_nav_right.on('click', function () {
-            if (!horizontal) {
-                tabs.scrollTop(tabs.height(), true);
-            } else {
-                tabs.scrollLeft(tabs.width(), true);
-            }
-        });
-        wrapper.select = function (value) {
-            Object.keys(data_tabs).forEach(key => {
-                if (data_tabs[key].data('value') === value) {
-                    data_tabs[key].click();
-                }
-            });
-        };
-        wrapper.disabled = function (value, state) {
-            if (data_tabs[value]) {
-                if (state) {
-                    data_tabs[value].addClass(classes.tab_disabled);
-                } else {
-                    data_tabs[value].removeClass(classes.tab_disabled);
-                }
-            }
-        };
-        return wrapper;
+        tabs.append(tab);
+    });
+    function showContent(value) {
+        if (!data_contents[value]) return;
+        if (activeTab && data_contents[activeTab]) {
+            data_contents[activeTab].detach();
+        }
+        activeTab = value;
+        contentContainer.append(data_contents[value]);
+    }
+    wrapper.select = function(value) {
+        const tab = data_tabs[value];
+        if (tab) tab.click();
+        return this;
     };
+    wrapper.disabled = function(value, state) {
+        const tab = data_tabs[value];
+        if (tab) {
+            state ? tab.addClass(Container.tabClasses.tab_disabled) : 
+                  tab.removeClass(Container.tabClasses.tab_disabled);
+        }
+        return this;
+    };
+    wrapper.addTab = function(tabData) {
+        if (!tabData) return null;
+        const tab = Q('<div>', { class: Container.tabClasses.tab })
+            .attr('data-value', tabData.value)
+            .text(tabData.title);
+        if (tabData.disabled) {
+            tab.addClass(Container.tabClasses.tab_disabled);
+        }
+        let content;
+        if (typeof tabData.content === 'string') {
+            content = Q('<div>').html(tabData.content);
+        } else if (tabData.content instanceof Element) {
+            content = Q(tabData.content);
+        } else if (tabData.content instanceof Q) {
+            content = tabData.content;
+        } else {
+            content = Q('<div>');
+        }
+        data_tabs[tabData.value] = tab;
+        data_contents[tabData.value] = content;
+        tab.on('click', function() {
+            if (tabData.disabled) return;
+            const activeTabs = tabs.find('.' + Container.tabClasses.tab_active);
+            if (activeTabs) activeTabs.removeClass(Container.tabClasses.tab_active);
+            tab.addClass(Container.tabClasses.tab_active);
+            showContent(tabData.value);
+        });
+        tabs.append(tab);
+        return tab;
+    };
+    wrapper.removeTab = function(value) {
+        if (data_tabs[value]) {
+            data_tabs[value].remove();
+            if (activeTab === value) {
+                const availableTab = Object.keys(data_tabs).find(key => key !== value);
+                if (availableTab) {
+                    this.select(availableTab);
+                } else {
+                    contentContainer.empty();
+                    activeTab = null;
+                }
+            }
+            if (data_contents[value]) {
+                data_contents[value].remove();
+            }
+            delete data_tabs[value];
+            delete data_contents[value];
+        }
+        return this;
+    };
+    wrapper.getContent = function(value) {
+        return data_contents[value] || null;
+    };
+    wrapper.updateContent = function(value, newContent) {
+        if (!data_contents[value]) return this;
+        if (typeof newContent === 'string') {
+            data_contents[value].html(newContent);
+        } else if (newContent instanceof Element || newContent instanceof Q) {
+            data_contents[value].empty().append(newContent);
+        }
+        return this;
+    };
+    this.elements.push(wrapper);
+    return wrapper;
+};
+Container.prototype.Window = function(options = {}) {
+    if (!Container.windowClassesInitialized) {
+        Container.windowClasses = Q.style(`
+            --window-bg-color:rgb(37, 37, 37);
+            --window-border-color: rgba(255, 255, 255, 0.2);
+            --window-shadow-color: rgba(0, 0, 0, 0.1);
+            --window-titlebar-bg:rgb(17, 17, 17);
+            --window-titlebar-text: #ffffff;
+            --window-button-bg:rgb(17, 17, 17);
+            --window-button-hover-bg: #777777;
+            --window-button-text: #ffffff;
+            --window-close-color: #e74c3c;
+            --window-titlebar-height: 28px; /* Add fixed titlebar height */
+        `, `
+            .window_container {
+                position: fixed; /* Change from absolute to fixed */
+                min-width: 200px;
+                background-color: var(--window-bg-color);
+                border: 1px solid var(--window-border-color);
+                border-radius: 4px;
+                box-shadow: 0 4px 8px var(--window-shadow-color);
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                z-index: 1000;
+                transition-property: opacity, transform, width, height, top, left;
+                transition-timing-function: ease-out;
+            }
+            .window_titlebar {
+                background-color: var(--window-titlebar-bg);
+                color: var(--window-titlebar-text);
+                font-size: 12px;
+                cursor: default;
+                user-select: none;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                box-sizing: border-box;
+                height: var(--window-titlebar-height); /* Fixed height for titlebar */
+            }
+            .window_title {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                flex: 1;
+                margin: 0 10px;
+            }
+            .window_controls {
+                display: flex;
+                height:100%;
+            }
+            .window_button {
+                background-color: var(--window-button-bg);
+                cursor: default;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                height: 100%;
+                width: 30px;
+            }
+            .window_button:hover {
+                background-color: var(--window-button-hover-bg);
+            }
+            .window_close:hover {
+                background-color: var(--window-close-color);
+            }
+            .window_content {
+                flex: 1;
+                overflow: auto;
+                padding: 10px;
+                position: relative;
+                background-color: var(--window-bg-color);
+                box-sizing: border-box;
+            }
+            .window_content:empty {
+            padding: 0;
+            }
+            .window_resize_handle {
+                position: absolute;
+                z-index: 1;
+            }
+            .window_resize_n {
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 5px;
+                cursor: n-resize;
+            }
+            .window_resize_e {
+                top: 0;
+                right: 0;
+                bottom: 0;
+                width: 5px;
+                cursor: e-resize;
+            }
+            .window_resize_s {
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 5px;
+                cursor: s-resize;
+            }
+            .window_resize_w {
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: 5px;
+                cursor: w-resize;
+            }
+            .window_resize_nw {
+                top: 0;
+                left: 0;
+                width: 10px;
+                height: 10px;
+                cursor: nw-resize;
+            }
+            .window_resize_ne {
+                top: 0;
+                right: 0;
+                width: 10px;
+                height: 10px;
+                cursor: ne-resize;
+            }
+            .window_resize_se {
+                bottom: 0;
+                right: 0;
+                width: 10px;
+                height: 10px;
+                cursor: se-resize;
+            }
+            .window_resize_sw {
+                bottom: 0;
+                left: 0;
+                width: 10px;
+                height: 10px;
+                cursor: sw-resize;
+            }
+            .window_minimized {
+                height: var(--window-titlebar-height) !important; /* Fixed to titlebar height */
+                width: auto !important;
+                min-width: 200px;
+                position: fixed !important;
+                bottom: 10px;
+                left: 10px;
+                overflow: hidden;
+            }
+            .window_minimized .window_content {
+                display: none !important; /* Biztosítjuk, hogy valóban ne jelenjen meg */
+                height: 0 !important;
+            }
+            .window_minimized .window_resize_handle {
+                display: none;
+            }
+            .window_maximized {
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                border-radius: 0;
+                position: fixed !important;
+            }
+            .window_maximized .window_resize_handle {
+                display: none;
+            }
+            .window_button_icon {
+                width: 10px;
+                height: 10px;
+                color: var(--window-button-text);
+                pointer-events: none;
+            }
+        `, null, {
+            'window_container': 'window_container',
+            'window_titlebar': 'window_titlebar',
+            'window_title': 'window_title',
+            'window_controls': 'window_controls',
+            'window_button': 'window_button',
+            'window_minimize': 'window_minimize',
+            'window_maximize': 'window_maximize',
+            'window_restore': 'window_restore',
+            'window_close': 'window_close',
+            'window_content': 'window_content',
+            'window_resize_handle': 'window_resize_handle',
+            'window_resize_n': 'window_resize_n',
+            'window_resize_e': 'window_resize_e',
+            'window_resize_s': 'window_resize_s',
+            'window_resize_w': 'window_resize_w',
+            'window_resize_nw': 'window_resize_nw',
+            'window_resize_ne': 'window_resize_ne',
+            'window_resize_se': 'window_resize_se',
+            'window_resize_sw': 'window_resize_sw',
+            'window_minimized': 'window_minimized',
+            'window_maximized': 'window_maximized',
+            'window_button_icon': 'window_button_icon'
+        });
+        Container.windowClassesInitialized = true;
+    }
+    const defaults = {
+        title: 'Window',
+        content: '',
+        resizable: true,
+        minimizable: true,
+        maximizable: true,
+        closable: true,
+        draggable: true,
+        x: 50,     
+        y: 50,     
+        width: 400, 
+        height: 300, 
+        minWidth: 200,
+        minHeight: 150,
+        zIndex: 1000,
+        minimizePosition: 'bottom-left', 
+        minimizeContainer: null, 
+        minimizeOffset: 10, 
+        animate: 150
+    };
+    const settings = Object.assign({}, defaults, options);
+    const windowElement = Q('<div>', { class: Container.windowClasses.window_container });
+    const titlebar = Q('<div>', { class: Container.windowClasses.window_titlebar });
+    const titleElement = Q('<div>', { class: Container.windowClasses.window_title }).text(settings.title);
+    const controls = Q('<div>', { class: Container.windowClasses.window_controls });
+    const contentContainer = Q('<div>', { class: Container.windowClasses.window_content });
+    if (settings.minimizable) {
+        const minimizeButton = Q('<div>', { 
+            class: Container.windowClasses.window_button + ' ' + Container.windowClasses.window_minimize
+        });
+        minimizeButton.append(this.Icon('window-minimize').addClass(Container.windowClasses.window_button_icon));
+        controls.append(minimizeButton);
+    }
+    if (settings.maximizable) {
+        const maximizeButton = Q('<div>', { 
+            class: Container.windowClasses.window_button + ' ' + Container.windowClasses.window_maximize
+        });
+        maximizeButton.append(this.Icon('window-full').addClass(Container.windowClasses.window_button_icon));
+        controls.append(maximizeButton);
+    }
+    if (settings.closable) {
+        const closeButton = Q('<div>', { 
+            class: Container.windowClasses.window_button + ' ' + Container.windowClasses.window_close
+        });
+        closeButton.append(this.Icon('window-close').addClass(Container.windowClasses.window_button_icon));
+        controls.append(closeButton);
+    }
+    titlebar.append(titleElement, controls);
+    windowElement.append(titlebar, contentContainer);
+    if (settings.resizable) {
+        const resizeHandles = [
+            Q('<div>', { class: Container.windowClasses.window_resize_handle + ' ' + Container.windowClasses.window_resize_n, 'data-resize': 'n' }),
+            Q('<div>', { class: Container.windowClasses.window_resize_handle + ' ' + Container.windowClasses.window_resize_e, 'data-resize': 'e' }),
+            Q('<div>', { class: Container.windowClasses.window_resize_handle + ' ' + Container.windowClasses.window_resize_s, 'data-resize': 's' }),
+            Q('<div>', { class: Container.windowClasses.window_resize_handle + ' ' + Container.windowClasses.window_resize_w, 'data-resize': 'w' }),
+            Q('<div>', { class: Container.windowClasses.window_resize_handle + ' ' + Container.windowClasses.window_resize_nw, 'data-resize': 'nw' }),
+            Q('<div>', { class: Container.windowClasses.window_resize_handle + ' ' + Container.windowClasses.window_resize_ne, 'data-resize': 'ne' }),
+            Q('<div>', { class: Container.windowClasses.window_resize_handle + ' ' + Container.windowClasses.window_resize_se, 'data-resize': 'se' }),
+            Q('<div>', { class: Container.windowClasses.window_resize_handle + ' ' + Container.windowClasses.window_resize_sw, 'data-resize': 'sw' })
+        ];
+        for (let i = 0; i < resizeHandles.length; i++) {
+            windowElement.append(resizeHandles[i]);
+        }
+    }
+    if (settings.content) {
+        if (typeof settings.content === 'string') {
+            contentContainer.html(settings.content);
+        } else if (settings.content instanceof Element || settings.content instanceof Q) {
+            contentContainer.append(settings.content);
+        }
+    }
+    let isMinimized = false;
+    let isMaximized = false;
+    let previousState = {
+        width: settings.width,
+        height: settings.height,
+        x: 0,
+        y: 0
+    };
+    let isOpen = false;
+    let isAnimating = false;
+    function setTransitionDuration(duration) {
+        if (!settings.animate) return;
+        windowElement.css('transition-duration', duration + 'ms');
+    }
+    function resetTransition() {
+        setTimeout(() => {
+            windowElement.css('transition-duration', '');
+            isAnimating = false;
+        }, settings.animate);
+    }
+    function calculateInitialPosition() {
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const windowWidth = settings.width;
+        const windowHeight = settings.height;
+        let left = (viewportWidth * settings.x / 100) - (windowWidth / 2);
+        let top = (viewportHeight * settings.y / 100) - (windowHeight / 2);
+        left = Math.max(0, Math.min(left, viewportWidth - windowWidth));
+        top = Math.max(0, Math.min(top, viewportHeight - windowHeight));
+        return { left, top };
+    }
+    function setInitialPositionAndSize() {
+        const position = calculateInitialPosition();
+        windowElement.css({
+            position: 'fixed', // Use fixed instead of absolute
+            width: settings.width + 'px',
+            height: settings.height + 'px',
+            left: position.left + 'px',
+            top: position.top + 'px',
+            zIndex: settings.zIndex
+        });
+        previousState.x = position.left;
+        previousState.y = position.top;
+    }
+    function bringToFront() {
+        const windowIndex = Container.openWindows.indexOf(windowElement.nodes[0]);
+        if (windowIndex !== -1) {
+            Container.openWindows.splice(windowIndex, 1);
+        }
+        Container.openWindows.push(windowElement.nodes[0]);
+        updateZIndices();
+    }
+    function updateZIndices() {
+        const baseZIndex = settings.zIndex;
+        for (let i = 0; i < Container.openWindows.length; i++) {
+            const windowNode = Container.openWindows[i];
+            windowNode.style.zIndex = baseZIndex + i;
+        }
+        Container.highestZIndex = baseZIndex + Container.openWindows.length - 1;
+    }
+    function setupDraggable() {
+        if (!settings.draggable) return;
+        let isDragging = false;
+        let startX, startY, startLeft, startTop;
+        titlebar.on('mousedown', function(e) {
+            if (isMaximized) return;
+            if (isMinimized) {
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                if (windowElement.css('left') !== 'auto') {
+                    startLeft = parseInt(windowElement.css('left'), 10);
+                } else {
+                    const viewportWidth = window.innerWidth;
+                    startLeft = viewportWidth - parseInt(windowElement.css('right'), 10) - windowElement.width();
+                }
+                if (windowElement.css('top') !== 'auto') {
+                    startTop = parseInt(windowElement.css('top'), 10);
+                } else {
+                    const viewportHeight = window.innerHeight;
+                    startTop = viewportHeight - parseInt(windowElement.css('bottom'), 10) - windowElement.height();
+                }
+                bringToFront();
+                e.preventDefault();
+                return;
+            }
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startLeft = parseInt(windowElement.css('left'), 10);
+            startTop = parseInt(windowElement.css('top'), 10);
+            bringToFront();
+            e.preventDefault();
+        });
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            const newLeft = startLeft + dx;
+            const newTop = startTop + dy;
+            if (isMinimized) {
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                const minWidth = windowElement.width();
+                const minHeight = windowElement.height();
+                const constrainedLeft = Math.max(0, Math.min(newLeft, viewportWidth - minWidth));
+                const constrainedTop = Math.max(0, Math.min(newTop, viewportHeight - minHeight));
+                windowElement.css({
+                    left: constrainedLeft + 'px',
+                    top: constrainedTop + 'px',
+                    right: 'auto',
+                    bottom: 'auto'
+                });
+                return;
+            }
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const windowWidth = windowElement.width();
+            const windowHeight = windowElement.height();
+            const constrainedLeft = Math.max(0, Math.min(newLeft, viewportWidth - windowWidth));
+            const constrainedTop = Math.max(0, Math.min(newTop, viewportHeight - windowHeight));
+            windowElement.css({
+                left: constrainedLeft + 'px',
+                top: constrainedTop + 'px',
+                right: 'auto',
+                bottom: 'auto'
+            });
+            previousState.x = constrainedLeft;
+            previousState.y = constrainedTop;
+        });
+        document.addEventListener('mouseup', function() {
+            isDragging = false;
+            if (isMinimized) {
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                const currentLeft = parseInt(windowElement.css('left'), 10);
+                const currentTop = parseInt(windowElement.css('top'), 10);
+                const isRight = currentLeft > viewportWidth / 2;
+                const isBottom = currentTop > viewportHeight / 2;
+                if (isRight && isBottom) {
+                    settings.minimizePosition = 'bottom-right';
+                } else if (isRight && !isBottom) {
+                    settings.minimizePosition = 'top-right';
+                } else if (!isRight && isBottom) {
+                    settings.minimizePosition = 'bottom-left';
+                } else {
+                    settings.minimizePosition = 'top-left';
+                }
+            }
+        });
+    }
+    function setupResizable() {
+        if (!settings.resizable) return;
+        let isResizing = false;
+        let resizeDirection = '';
+        let startX, startY, startWidth, startHeight, startLeft, startTop;
+        const resizeHandles = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_resize_handle);
+        for (let i = 0; i < resizeHandles.length; i++) {
+            const handle = resizeHandles[i];
+            handle.addEventListener('mousedown', function(e) {
+                if (isMaximized) return;
+                isResizing = true;
+                resizeDirection = this.getAttribute('data-resize');
+                startX = e.clientX;
+                startY = e.clientY;
+                startWidth = windowElement.width();
+                startHeight = windowElement.height();
+                startLeft = parseInt(windowElement.css('left'), 10);
+                startTop = parseInt(windowElement.css('top'), 10);
+                windowElement.css('zIndex', settings.zIndex + 10);
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        }
+        document.addEventListener('mousemove', function(e) {
+            if (!isResizing) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            let newWidth = startWidth;
+            let newHeight = startHeight;
+            let newLeft = startLeft;
+            let newTop = startTop;
+            if (resizeDirection.includes('e')) {
+                newWidth = startWidth + dx;
+            }
+            if (resizeDirection.includes('s')) {
+                newHeight = startHeight + dy;
+            }
+            if (resizeDirection.includes('w')) {
+                newWidth = startWidth - dx;
+                newLeft = startLeft + dx;
+            }
+            if (resizeDirection.includes('n')) {
+                newHeight = startHeight - dy;
+                newTop = startTop + dy;
+            }
+            if (newWidth < settings.minWidth) {
+                if (resizeDirection.includes('w')) {
+                    newLeft = startLeft + startWidth - settings.minWidth;
+                }
+                newWidth = settings.minWidth;
+            }
+            if (newHeight < settings.minHeight) {
+                if (resizeDirection.includes('n')) {
+                    newTop = startTop + startHeight - settings.minHeight;
+                }
+                newHeight = settings.minHeight;
+            }
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            if (newLeft + newWidth > viewportWidth) {
+                if (resizeDirection.includes('e')) {
+                    newWidth = viewportWidth - newLeft;
+                }
+            }
+            if (newTop + newHeight > viewportHeight) {
+                if (resizeDirection.includes('s')) {
+                    newHeight = viewportHeight - newTop;
+                }
+            }
+            if (newLeft < 0) {
+                if (resizeDirection.includes('w')) {
+                    const adjustment = -newLeft;
+                    newLeft = 0;
+                    newWidth -= adjustment;
+                }
+            }
+            if (newTop < 0) {
+                if (resizeDirection.includes('n')) {
+                    const adjustment = -newTop;
+                    newTop = 0;
+                    newHeight -= adjustment;
+                }
+            }
+            windowElement.css({
+                width: newWidth + 'px',
+                height: newHeight + 'px',
+                left: newLeft + 'px',
+                top: newTop + 'px'
+            });
+            previousState.width = newWidth;
+            previousState.height = newHeight;
+            previousState.x = newLeft;
+            previousState.y = newTop;
+        });
+        document.addEventListener('mouseup', function() {
+            isResizing = false;
+        });
+    }
+    function setupControls() {
+        const minimizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_minimize);
+        if (minimizeButtons.length) {
+            for (let i = 0; i < minimizeButtons.length; i++) {
+                minimizeButtons[i].addEventListener('click', function() {
+                    bringToFront(); 
+                    toggleMinimize();
+                });
+            }
+        }
+        const maximizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_maximize);
+        if (maximizeButtons.length) {
+            for (let i = 0; i < maximizeButtons.length; i++) {
+                maximizeButtons[i].addEventListener('click', function() {
+                    bringToFront(); 
+                    toggleMaximize();
+                });
+            }
+        }
+        const closeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_close);
+        if (closeButtons.length) {
+            for (let i = 0; i < closeButtons.length; i++) {
+                closeButtons[i].addEventListener('click', function() {
+                    closeWindow();
+                });
+            }
+        }
+        contentContainer.on('mousedown', function() {
+            bringToFront();
+        });
+    }
+    if (!Container.highestZIndex) {
+        Container.highestZIndex = settings.zIndex;
+        Container.openWindows = [];
+    }
+    function toggleMinimize() {
+        if (isAnimating) return;
+        isAnimating = true;
+        if (isMaximized) {
+            isMaximized = false;
+            windowElement.removeClass(Container.windowClasses.window_maximized);
+        }
+        isMinimized = !isMinimized;
+        let detachedContent = null;
+        if (isMinimized) {
+            let minimizedPosition = {};
+            if (settings.minimizeContainer) {
+                let container;
+                if (typeof settings.minimizeContainer === 'string') {
+                    container = document.querySelector(settings.minimizeContainer);
+                } else if (settings.minimizeContainer instanceof Element) {
+                    container = settings.minimizeContainer;
+                } else if (settings.minimizeContainer instanceof Q) {
+                    container = settings.minimizeContainer.nodes[0];
+                }
+                if (container) {
+                    container.appendChild(windowElement.nodes[0]);
+                    minimizedPosition = {
+                        position: 'relative',
+                        left: 'auto',
+                        right: 'auto',
+                        top: 'auto',
+                        bottom: 'auto',
+                        margin: settings.minimizeOffset + 'px'
+                    };
+                }
+            } else {
+                switch (settings.minimizePosition) {
+                    case 'bottom-right':
+                        minimizedPosition = {
+                            position: 'fixed',
+                            left: 'auto',
+                            right: settings.minimizeOffset + 'px',
+                            top: 'auto',
+                            bottom: settings.minimizeOffset + 'px'
+                        };
+                        break;
+                    case 'top-left':
+                        minimizedPosition = {
+                            position: 'fixed',
+                            left: settings.minimizeOffset + 'px',
+                            right: 'auto',
+                            top: settings.minimizeOffset + 'px',
+                            bottom: 'auto'
+                        };
+                        break;
+                    case 'top-right':
+                        minimizedPosition = {
+                            position: 'fixed',
+                            left: 'auto',
+                            right: settings.minimizeOffset + 'px',
+                            top: settings.minimizeOffset + 'px',
+                            bottom: 'auto'
+                        };
+                        break;
+                    case 'bottom-left':
+                    default:
+                        minimizedPosition = {
+                            position: 'fixed',
+                            left: settings.minimizeOffset + 'px',
+                            right: 'auto',
+                            top: 'auto',
+                            bottom: settings.minimizeOffset + 'px'
+                        };
+                        break;
+                }
+            }
+            if (settings.animate) {
+                setTransitionDuration(settings.animate);
+                detachedContent = contentContainer.children();
+                if (detachedContent.nodes && detachedContent.nodes.length > 0) {
+                    windowElement.data('detached-content', detachedContent.detach());
+                }
+                const currentHeight = windowElement.height();
+                const titlebarHeight = parseInt(getComputedStyle(titlebar.nodes[0]).height, 10);
+                windowElement.css({
+                    height: titlebarHeight + 'px'
+                });
+                setTimeout(() => {
+                    windowElement.addClass(Container.windowClasses.window_minimized);
+                    windowElement.css(minimizedPosition);
+                    resetTransition();
+                }, settings.animate / 2);
+            } else {
+                detachedContent = contentContainer.children();
+                if (detachedContent.nodes && detachedContent.nodes.length > 0) {
+                    windowElement.data('detached-content', detachedContent.detach());
+                }
+                windowElement.addClass(Container.windowClasses.window_minimized);
+                windowElement.css(minimizedPosition);
+                isAnimating = false;
+            }
+            const maximizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_maximize);
+            if (maximizeButtons.length) {
+                for (let i = 0; i < maximizeButtons.length; i++) {
+                    maximizeButtons[i].innerHTML = '';
+                    const iconElement = Container.prototype.Icon('window-full');
+                    iconElement.addClass(Container.windowClasses.window_button_icon);
+                    maximizeButtons[i].appendChild(iconElement.nodes[0]);
+                }
+            }
+        } else {
+            if (settings.animate) {
+                setTransitionDuration(settings.animate);
+                windowElement.css({
+                    position: 'fixed',
+                    left: previousState.x + 'px',
+                    top: previousState.y + 'px',
+                    right: 'auto',
+                    bottom: 'auto',
+                    margin: '0'
+                });
+                windowElement.removeClass(Container.windowClasses.window_minimized);
+                windowElement.css({
+                    height: previousState.height + 'px'
+                });
+                if (settings.minimizeContainer) {
+                    document.body.appendChild(windowElement.nodes[0]);
+                }
+                setTimeout(() => {
+                    const savedContent = windowElement.data('detached-content');
+                    if (savedContent) {
+                        contentContainer.append(savedContent);
+                        windowElement.removeData('detached-content');
+                    }
+                    resetTransition();
+                }, settings.animate / 2);
+            } else {
+                windowElement.removeClass(Container.windowClasses.window_minimized);
+                windowElement.css({
+                    position: 'fixed',
+                    left: previousState.x + 'px',
+                    top: previousState.y + 'px',
+                    right: 'auto',
+                    bottom: 'auto',
+                    margin: '0',
+                    height: previousState.height + 'px',
+                    width: previousState.width + 'px'
+                });
+                if (settings.minimizeContainer) {
+                    document.body.appendChild(windowElement.nodes[0]);
+                }
+                const savedContent = windowElement.data('detached-content');
+                if (savedContent) {
+                    contentContainer.append(savedContent);
+                    windowElement.removeData('detached-content');
+                }
+                isAnimating = false;
+            }
+        }
+    }
+    function toggleMaximize() {
+        if (isAnimating) return;
+        isAnimating = true;
+        isMaximized = !isMaximized;
+        if (isMaximized) {
+            if (!isMinimized) {
+                previousState.width = windowElement.width();
+                previousState.height = windowElement.height();
+                previousState.x = parseInt(windowElement.css('left'), 10);
+                previousState.y = parseInt(windowElement.css('top'), 10);
+            } else {
+                windowElement.removeClass(Container.windowClasses.window_minimized);
+                if (previousState.width < settings.minWidth) {
+                    previousState.width = settings.width;
+                    previousState.height = settings.height;
+                    const position = calculateInitialPosition();
+                    previousState.x = position.left;
+                    previousState.y = position.top;
+                }
+            }
+            if (settings.animate) {
+                setTransitionDuration(settings.animate);
+                windowElement.css({
+                    position: 'fixed',
+                    top: previousState.y + 'px',
+                    left: previousState.x + 'px',
+                    width: previousState.width + 'px',
+                    height: previousState.height + 'px'
+                });
+                void windowElement.nodes[0].offsetWidth;
+                windowElement.css({
+                    top: '0',
+                    left: '0',
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '0'
+                });
+                setTimeout(() => {
+                    windowElement.addClass(Container.windowClasses.window_maximized);
+                    resetTransition();
+                }, settings.animate);
+            } else {
+                windowElement.addClass(Container.windowClasses.window_maximized);
+                isAnimating = false;
+            }
+            const maximizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_maximize);
+            if (maximizeButtons.length) {
+                for (let i = 0; i < maximizeButtons.length; i++) {
+                    maximizeButtons[i].innerHTML = '';
+                    const iconElement = Container.prototype.Icon('window-windowed');
+                    iconElement.addClass(Container.windowClasses.window_button_icon);
+                    maximizeButtons[i].appendChild(iconElement.nodes[0]);
+                }
+            }
+        } else {
+            if (settings.animate) {
+                windowElement.removeClass(Container.windowClasses.window_maximized);
+                setTransitionDuration(settings.animate);
+                windowElement.css({
+                    position: 'fixed',
+                    top: previousState.y + 'px',
+                    left: previousState.x + 'px',
+                    width: previousState.width + 'px',
+                    height: previousState.height + 'px',
+                    borderRadius: '4px' 
+                });
+                resetTransition();
+            } else {
+                windowElement.removeClass(Container.windowClasses.window_maximized);
+                windowElement.css({
+                    position: 'fixed',
+                    width: previousState.width + 'px',
+                    height: previousState.height + 'px',
+                    left: previousState.x + 'px',
+                    top: previousState.y + 'px',
+                    borderRadius: '4px'
+                });
+                isAnimating = false;
+            }
+            const maximizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_maximize);
+            if (maximizeButtons.length) {
+                for (let i = 0; i < maximizeButtons.length; i++) {
+                    maximizeButtons[i].innerHTML = '';
+                    const iconElement = Container.prototype.Icon('window-full');
+                    iconElement.addClass(Container.windowClasses.window_button_icon);
+                    maximizeButtons[i].appendChild(iconElement.nodes[0]);
+                }
+            }
+        }
+    }
+    function closeWindow() {
+        if (isAnimating) return;
+        const savedContent = windowElement.data('detached-content');
+        if (savedContent) {
+            windowElement.removeData('detached-content');
+        }
+        if (settings.animate) {
+            isAnimating = true;
+            setTransitionDuration(settings.animate);
+            windowElement.css({
+                opacity: '0',
+                transform: 'scale(0.90)'
+            });
+            setTimeout(() => {
+                if (windowElement.nodes[0]._resizeHandler) {
+                    window.removeEventListener('resize', windowElement.nodes[0]._resizeHandler);
+                    windowElement.nodes[0]._resizeHandler = null;
+                }
+                const windowIndex = Container.openWindows.indexOf(windowElement.nodes[0]);
+                if (windowIndex !== -1) {
+                    Container.openWindows.splice(windowIndex, 1);
+                    updateZIndices();
+                }
+                windowElement.remove();
+                isOpen = false;
+            }, settings.animate);
+        } else {
+            if (windowElement.nodes[0]._resizeHandler) {
+                window.removeEventListener('resize', windowElement.nodes[0]._resizeHandler);
+                windowElement.nodes[0]._resizeHandler = null;
+            }
+            const windowIndex = Container.openWindows.indexOf(windowElement.nodes[0]);
+            if (windowIndex !== -1) {
+                Container.openWindows.splice(windowIndex, 1);
+                updateZIndices();
+            }
+            windowElement.remove();
+            isOpen = false;
+        }
+    }
+    function handleWindowResize() {
+        if (isMaximized) {
+            return;
+        }
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const currentWidth = windowElement.width();
+        const currentHeight = windowElement.height();
+        let currentLeft = parseInt(windowElement.css('left'), 10);
+        let currentTop = parseInt(windowElement.css('top'), 10);
+        let needsUpdate = false;
+        if (currentWidth > viewportWidth) {
+            windowElement.css('width', viewportWidth + 'px');
+            previousState.width = viewportWidth;
+            needsUpdate = true;
+        }
+        if (currentHeight > viewportHeight) {
+            windowElement.css('height', viewportHeight + 'px');
+            previousState.height = viewportHeight;
+            needsUpdate = true;
+        }
+        if (currentLeft + currentWidth > viewportWidth) {
+            currentLeft = Math.max(0, viewportWidth - currentWidth);
+            needsUpdate = true;
+        }
+        if (currentTop + currentHeight > viewportHeight) {
+            currentTop = Math.max(0, viewportHeight - currentHeight);
+            needsUpdate = true;
+        }
+        if (needsUpdate) {
+            windowElement.css({
+                left: currentLeft + 'px',
+                top: currentTop + 'px'
+            });
+            previousState.x = currentLeft;
+            previousState.y = currentTop;
+        }
+    }
+    function setupWindowResizeHandler() {
+        function resizeHandler() {
+            handleWindowResize();
+        }
+        windowElement.nodes[0]._resizeHandler = resizeHandler;
+        window.addEventListener('resize', resizeHandler);
+    }
+    const windowAPI = {
+        Open: function() {
+            if (!isOpen) {
+                document.body.appendChild(windowElement.nodes[0]);
+                setInitialPositionAndSize(); // This now uses fixed positioning
+                if (settings.animate) {
+                    windowElement.css({
+                        opacity: '0',
+                        transform: 'scale(0.90)'
+                    });
+                    void windowElement.nodes[0].offsetWidth;
+                    isAnimating = true;
+                    setTransitionDuration(settings.animate);
+                    windowElement.css({
+                        opacity: '1',
+                        transform: 'scale(1)'
+                    });
+                    resetTransition();
+                }
+                setupDraggable();
+                setupResizable();
+                setupControls();
+                setupWindowResizeHandler();
+                isOpen = true;
+                bringToFront();
+            } else {
+                windowElement.show();
+                bringToFront();
+            }
+            return this;
+        },
+        Close: function() {
+            closeWindow();
+            return this;
+        },
+        Content: function(content) {
+            if (content === undefined) {
+                return contentContainer.html();
+            }
+            contentContainer.empty();
+            if (typeof content === 'string') {
+                contentContainer.html(content);
+            } else if (content instanceof Element || content instanceof Q) {
+                contentContainer.append(content);
+            }
+            return this;
+        },
+        Title: function(title) {
+            if (title === undefined) {
+                return titleElement.text();
+            }
+            titleElement.text(title);
+            return this;
+        },
+        Position: function(x, y) {
+            if (x === undefined || y === undefined) {
+                return {
+                    x: parseInt(windowElement.css('left'), 10),
+                    y: parseInt(windowElement.css('top'), 10)
+                };
+            }
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const windowWidth = windowElement.width();
+            const windowHeight = windowElement.height();
+            let left = typeof x === 'string' && x.endsWith('%') 
+                ? (viewportWidth * parseInt(x, 10) / 100) - (windowWidth / 2)
+                : x;
+            let top = typeof y === 'string' && y.endsWith('%')
+                ? (viewportHeight * parseInt(y, 10) / 100) - (windowHeight / 2)
+                : y;
+            left = Math.max(0, Math.min(left, viewportWidth - windowWidth));
+            top = Math.max(0, Math.min(top, viewportHeight - windowHeight));
+            windowElement.css({
+                left: left + 'px',
+                top: top + 'px'
+            });
+            previousState.x = left;
+            previousState.y = top;
+            return this;
+        },
+        Size: function(width, height) {
+            if (width === undefined || height === undefined) {
+                return {
+                    width: windowElement.width(),
+                    height: windowElement.height()
+                };
+            }
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            let currentLeft = parseInt(windowElement.css('left'), 10);
+            let currentTop = parseInt(windowElement.css('top'), 10);
+            width = Math.max(settings.minWidth, width);
+            height = Math.max(settings.minHeight, height);
+            if (currentLeft + width > viewportWidth) {
+                currentLeft = Math.max(0, viewportWidth - width);
+                windowElement.css('left', currentLeft + 'px');
+                previousState.x = currentLeft;
+            }
+            if (currentTop + height > viewportHeight) {
+                currentTop = Math.max(0, viewportHeight - height);
+                windowElement.css('top', currentTop + 'px');
+                previousState.y = currentTop;
+            }
+            windowElement.css({
+                width: width + 'px',
+                height: height + 'px'
+            });
+            previousState.width = width;
+            previousState.height = height;
+            return this;
+        },
+        Minimize: function() {
+            if (!isMinimized) {
+                toggleMinimize();
+            }
+            return this;
+        },
+        Maximize: function() {
+            if (!isMaximized) {
+                toggleMaximize();
+            }
+            return this;
+        },
+        Restore: function() {
+            if (isMinimized) {
+                toggleMinimize();
+            } else if (isMaximized) {
+                toggleMaximize();
+            }
+            return this;
+        },
+        IsMinimized: function() {
+            return isMinimized;
+        },
+        IsMaximized: function() {
+            return isMaximized;
+        },
+        IsOpen: function() {
+            return isOpen;
+        },
+        Element: function() {
+            return windowElement;
+        },
+        BringToFront: function() {
+            bringToFront();
+            return this;
+        },
+        MinimizePosition: function(position, container, offset) {
+            if (position === undefined) {
+                return {
+                    position: settings.minimizePosition,
+                    container: settings.minimizeContainer,
+                    offset: settings.minimizeOffset
+                };
+            }
+            if (position) {
+                settings.minimizePosition = position;
+            }
+            if (container !== undefined) {
+                settings.minimizeContainer = container;
+            }
+            if (offset !== undefined) {
+                settings.minimizeOffset = offset;
+            }
+            if (isMinimized) {
+                toggleMinimize();
+                toggleMinimize();
+            }
+            return this;
+        },
+        Animation: function(duration) {
+            if (duration === undefined) {
+                return settings.animate;
+            }
+            settings.animate = parseInt(duration) || 0;
+            return this;
+        }
+    };
+    this.elements.push(windowAPI);
+    return windowAPI;
 };
 Q.Cookie = function (a, b, c = {}) {
     const buildOptions = (options) => {
@@ -1353,7 +2520,29 @@ function Form(options = {}) {
                 color: #fff;
                 pointer-events: none;
             }
-        `, null, {});
+            .form_close_button {
+            user-select: none;
+                -webkit-user-select: none;
+                position: absolute;
+                top: 0px;
+                right: 0px;
+                width: 18px;
+                height: 18px;
+                background-color: rgba(0, 0, 0, 0.5);
+                color: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                cursor: pointer;
+            }
+            .form_close_button:hover {
+                background-color: rgba(220, 53, 69, 0.8);
+            }
+        `, null, {
+            'form_icon': 'form_icon',
+            'form_close_button': 'form_close_button'
+        });
         Form.initialized = true;
         console.log('Form core initialized');
     }
@@ -1480,7 +2669,7 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
     const container = Q('<div class="' + Form.classes.q_form + ' ' + Form.checkBoxClasses.q_form_checkbox + '">');
     const checkbox_container = Q('<div class="' + Form.checkBoxClasses.q_form_cb + '">');
     const input = Q(`<input type="checkbox" id="${ID}">`);
-    const label = Q(`<label for="${ID}">${text}</label>`);
+    const label = Q(`<label for="${ID}"></label>`);
     const labeltext = Q(`<div class="${Form.checkBoxClasses.q_form_label}">${text}</div>`);
     if (checked) {
         input.prop('checked', true);
@@ -1596,11 +2785,13 @@ Form.prototype.Tags = function(value = '', placeholder = '', options = {}) {
         draggedTag: null,
         currentEditTag: null
     };
-    if (value) {
-        const initialTags = value.split(options.separator).map(tag => tag.trim()).filter(Boolean);
+    container.append(input);
+    if (value && typeof value === 'string' && value.trim() !== '') {
+        const initialTags = value.split(options.separator)
+                               .map(tag => tag.trim())
+                               .filter(Boolean);
         initialTags.forEach(tag => addTag(tag));
     }
-    container.append(input);
     function addTag(text) {
         if (!text || text.length < options.minChars) return;
         if (options.maxTags !== null && state.tags.length >= options.maxTags) return;
@@ -1628,7 +2819,7 @@ Form.prototype.Tags = function(value = '', placeholder = '', options = {}) {
                     finishEditing(editInput.val());
                     e.preventDefault();
                 } else if (e.key === 'Escape') {
-                    finishEditing(text); // Restore original text
+                    finishEditing(text); 
                     e.preventDefault();
                 }
             });
@@ -1687,7 +2878,7 @@ Form.prototype.Tags = function(value = '', placeholder = '', options = {}) {
         });
         tag.on('dragover', function(e) {
             if (e.preventDefault) {
-                e.preventDefault(); // Allows drop
+                e.preventDefault(); 
             }
             return false;
         });
@@ -1732,12 +2923,10 @@ Form.prototype.Tags = function(value = '', placeholder = '', options = {}) {
             }
         }
         else if (e.key === 'Backspace' && input.val() === '' && state.tags.length > 0) {
-            const allTags = Array.from(container.children()).filter(
-                el => el.classList.contains(Form.tagsClasses.form_tag.split(' ')[0])
-            );
-            if (allTags.length > 0) {
-                const lastTag = allTags[allTags.length - 1];
-                lastTag.click(); // Trigger click to start editing
+            const tagElements = container.nodes[0].querySelectorAll(`.${Form.tagsClasses.form_tag.split(' ')[0]}`);
+            if (tagElements.length > 0) {
+                const lastTag = Q(tagElements[tagElements.length - 1]);
+                lastTag.click(); 
             }
         }
     });
@@ -1768,18 +2957,22 @@ Form.prototype.Tags = function(value = '', placeholder = '', options = {}) {
             return state.tags.join(options.separator);
         }
         if (value === '') {
-            const tagElements = container.element.querySelectorAll(`.${Form.tagsClasses.form_tag.split(' ')[0]}`);
-            for (let i = 0; i < tagElements.length; i++) {
-                if (tagElements[i].parentNode) {
-                    tagElements[i].parentNode.removeChild(tagElements[i]);
+            if (container.nodes && container.nodes.length > 0) {
+                const tagElements = container.nodes[0].querySelectorAll(`.${Form.tagsClasses.form_tag.split(' ')[0]}`);
+                for (let i = 0; i < tagElements.length; i++) {
+                    if (tagElements[i].parentNode) {
+                        tagElements[i].parentNode.removeChild(tagElements[i]);
+                    }
                 }
             }
             state.tags = [];
         } else {
-            const tagElements = container.element.querySelectorAll(`.${Form.tagsClasses.form_tag.split(' ')[0]}`);
-            for (let i = 0; i < tagElements.length; i++) {
-                if (tagElements[i].parentNode) {
-                    tagElements[i].parentNode.removeChild(tagElements[i]);
+            if (container.nodes && container.nodes.length > 0) {
+                const tagElements = container.nodes[0].querySelectorAll(`.${Form.tagsClasses.form_tag.split(' ')[0]}`);
+                for (let i = 0; i < tagElements.length; i++) {
+                    if (tagElements[i].parentNode) {
+                        tagElements[i].parentNode.removeChild(tagElements[i]);
+                    }
                 }
             }
             state.tags = [];
@@ -1912,6 +3105,337 @@ Form.prototype.TextBox = function(type = 'text', value = '', placeholder = '') {
     this.elements.push(input);
     return input;
 };
+Form.prototype.Uploader = function (options = {}) {
+    const defaultOptions = {
+        fileTypes: '*', // Accepted file types: 'image/jpeg,image/png' or '.jpg,.png'
+        preview: true,  // Show previews for images/videos
+        thumbSize: 100, // Thumbnail size (px)
+        allowDrop: true, // Allow drag and drop
+        multiple: false, // Allow multiple file selection
+        placeholder: 'Drop files here or click to select'
+    };
+    options = Object.assign({}, defaultOptions, options);
+    if (!Form.uploaderClassesInitialized) {
+        Form.uploaderClasses = Q.style('', `
+            .form_uploader_container {
+            user-select: none;
+                -webkit-user-select: none;
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                border: 2px dashed var(--form-default-input-border-color);
+                border-radius: var(--form-default-border-radius);
+                background-color: var(--form-default-input-background-color);
+                padding: 10px;
+            }
+            .form_uploader_container.drag_over {
+                border-color: var(--form-default-button-background-color);
+                background-color: rgba(100, 60, 240, 0.05);
+            }
+            .form_uploader_drop_area {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                text-align: center;
+                cursor: pointer;
+                color: var(--form-default-input-text-color);
+                min-height: 120px;
+            }
+            .form_uploader_icon {
+                font-size: 32px;
+                margin-bottom: 10px;
+                opacity: 0.7;
+            }
+            .form_uploader_text {
+                margin-bottom: 10px;
+                font-family: var(--form-default-font-family);
+                font-size: var(--form-default-font-size);
+            }
+            .form_uploader_button {
+                padding: var(--form-default-padding);
+                background-color: var(--form-default-button-background-color);
+                color: var(--form-default-button-text-color);
+                border: none;
+                border-radius: var(--form-default-border-radius);
+                cursor: pointer;
+                font-family: var(--form-default-font-family);
+                font-size: var(--form-default-font-size);
+            }
+            .form_uploader_button:hover {
+                background-color: var(--form-default-button-hover-background-color);
+            }
+            .form_uploader_input {
+                display: none;
+            }
+            .form_uploader_preview_container {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 5px;
+                margin-top: 5px;
+            }
+            .form_uploader_preview_item {
+                position: relative;
+                border-radius: var(--form-default-border-radius);
+                overflow: hidden;
+                border: 1px solid var(--form-default-input-border-color);
+            }
+            .form_uploader_preview_image {
+                object-fit: cover;
+                display: block;
+            }
+            .form_uploader_preview_video {
+                object-fit: cover;
+                display: block;
+            }
+            .form_uploader_preview_icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--form-default-input-text-color);
+                background-color: rgba(37, 37, 37, 0.8);
+                font-size: 24px;
+            }
+            .form_uploader_preview_info {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                padding: 4px 6px;
+                background: rgba(0, 0, 0, 0.7);
+                color: #fff;
+                font-size: 10px;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                overflow: hidden;
+            }
+        `, null, {
+            'form_uploader_container': 'form_uploader_container',
+            'drag_over': 'drag_over',
+            'form_uploader_drop_area': 'form_uploader_drop_area',
+            'form_uploader_icon': 'form_uploader_icon',
+            'form_uploader_text': 'form_uploader_text',
+            'form_uploader_button': 'form_uploader_button',
+            'form_uploader_input': 'form_uploader_input',
+            'form_uploader_preview_container': 'form_uploader_preview_container',
+            'form_uploader_preview_item': 'form_uploader_preview_item',
+            'form_uploader_preview_image': 'form_uploader_preview_image',
+            'form_uploader_preview_video': 'form_uploader_preview_video',
+            'form_uploader_preview_icon': 'form_uploader_preview_icon',
+            'form_uploader_preview_info': 'form_uploader_preview_info'
+        });
+        Form.uploaderClassesInitialized = true;
+    }
+    const container = Q(`<div class="${Form.classes.q_form} ${Form.uploaderClasses.form_uploader_container}"></div>`);
+    const dropArea = Q(`<div class="${Form.uploaderClasses.form_uploader_drop_area}"></div>`);
+    const uploadIcon = Q(`<div class="${Form.uploaderClasses.form_uploader_icon}">📂</div>`);
+    const text = Q(`<div class="${Form.uploaderClasses.form_uploader_text}">${options.placeholder}</div>`);
+    const browseButton = Q(`<button type="button" class="${Form.uploaderClasses.form_uploader_button}">Browse Files</button>`);
+    const fileInput = Q(`<input type="file" class="${Form.uploaderClasses.form_uploader_input}">`);
+    if (options.multiple) {
+        fileInput.attr('multiple', true);
+    }
+    if (options.fileTypes && options.fileTypes !== '*') {
+        fileInput.attr('accept', options.fileTypes);
+    }
+    dropArea.append(uploadIcon, text, browseButton);
+    container.append(dropArea, fileInput);
+    let previewContainer = null;
+    if (options.preview) {
+        previewContainer = Q(`<div class="${Form.uploaderClasses.form_uploader_preview_container}"></div>`);
+        container.append(previewContainer);
+    }
+    const state = {
+        files: [],
+        fileObjects: []
+    };
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    function getFileExtension(filename) {
+        return filename.split('.').pop().toUpperCase();
+    }
+    function handleFiles(files) {
+        if (!files || files.length === 0) return;
+        Array.from(files).forEach(file => {
+            const fileInfo = {
+                name: file.name,
+                size: file.size,
+                formattedSize: formatFileSize(file.size),
+                type: file.type,
+                extension: getFileExtension(file.name)
+            };
+            state.files.push(fileInfo);
+            state.fileObjects.push(file);
+            if (options.preview) {
+                generatePreview(file, fileInfo);
+            }
+        });
+        if (typeof container.changeCallback === 'function') {
+            container.changeCallback(state.files);
+        }
+    }
+    function generatePreview(file, fileInfo) {
+        const previewItem = Q(`<div class="${Form.uploaderClasses.form_uploader_preview_item}"></div>`);
+        const fileInfoElement = Q(`<div class="${Form.uploaderClasses.form_uploader_preview_info}">${file.name} (${fileInfo.formattedSize})</div>`);
+        const removeButton = Q(`<div class="${Form.classes.form_close_button}">×</div>`);
+        previewItem.css({
+            width: options.thumbSize + 'px',
+            height: options.thumbSize + 'px'
+        });
+        const titleInfo = `Name: ${file.name}\nSize: ${fileInfo.formattedSize}\nType: ${file.type}`;
+        previewItem.attr('title', titleInfo);
+        if (file.type.startsWith('image/')) {
+            const img = Q(`<img class="${Form.uploaderClasses.form_uploader_preview_image}" alt="${file.name}">`);
+            img.css({
+                width: '100%',
+                height: '100%'
+            });
+            img.attr('title', titleInfo);
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                img.attr('src', e.target.result);
+                fileInfo.preview = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            previewItem.append(img);
+        }
+        else if (file.type.startsWith('video/')) {
+            const video = Q(`<video class="${Form.uploaderClasses.form_uploader_preview_video}" controls muted>`);
+            video.css({
+                width: '100%',
+                height: '100%'
+            });
+            video.attr('title', titleInfo);
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                video.attr('src', e.target.result);
+                fileInfo.preview = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            previewItem.append(video);
+        }
+        else {
+            const fileIcon = Q(`<div class="${Form.uploaderClasses.form_uploader_preview_icon}"></div>`);
+            fileIcon.css({
+                width: '100%',
+                height: '100%'
+            });
+            fileIcon.attr('title', titleInfo);
+            fileIcon.text(fileInfo.extension);
+            previewItem.append(fileIcon);
+        }
+        previewItem.append(fileInfoElement, removeButton);
+        fileInfo.element = previewItem;
+        if (previewContainer) {
+            previewContainer.append(previewItem);
+        }
+        removeButton.on('click', () => {
+            removeFile(fileInfo);
+        });
+    }
+    function removeFile(fileInfo) {
+        const index = state.files.indexOf(fileInfo);
+        if (index !== -1) {
+            state.files.splice(index, 1);
+            state.fileObjects.splice(index, 1);
+            if (fileInfo.element) {
+                fileInfo.element.remove();
+            }
+            if (typeof container.changeCallback === 'function') {
+                container.changeCallback(state.files);
+            }
+        }
+    }
+    function resetUploader() {
+        state.files = [];
+        state.fileObjects = [];
+        if (previewContainer) {
+            previewContainer.html('');
+        }
+        fileInput.val('');
+    }
+    if (options.allowDrop) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.on(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.on(eventName, () => {
+                container.addClass(Form.uploaderClasses.drag_over);
+            });
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.on(eventName, () => {
+                container.removeClass(Form.uploaderClasses.drag_over);
+            });
+        });
+        dropArea.on('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (!options.multiple && files.length > 1) {
+                handleFiles([files[0]]);
+            } else {
+                handleFiles(files);
+            }
+        });
+    }
+    browseButton.on('click', function () {
+        fileInput.nodes[0].click();
+    });
+    dropArea.on('click', function (e) {
+        if (e.target !== browseButton.nodes[0]) {
+            fileInput.nodes[0].click();
+        }
+    });
+    fileInput.on('change', function () {
+        if (!options.multiple) {
+            resetUploader(); // Clear previous files if not multiple
+        }
+        handleFiles(this.files);
+    });
+    container.val = function (value) {
+        if (value === undefined) {
+            return {
+                files: state.files,
+                fileObjects: state.fileObjects
+            };
+        }
+        if (value === '' || value === null) {
+            resetUploader();
+            return container;
+        }
+        return container;
+    };
+    container.reset = function () {
+        resetUploader();
+        return container;
+    };
+    container.disabled = function (state) {
+        if (state) {
+            container.css('opacity', '0.5');
+            container.css('pointer-events', 'none');
+            fileInput.prop('disabled', true);
+        } else {
+            container.css('opacity', '1');
+            container.css('pointer-events', 'auto');
+            fileInput.prop('disabled', false);
+        }
+        return container;
+    };
+    container.change = function (callback) {
+        container.changeCallback = callback;
+        return container;
+    };
+    this.elements.push(container);
+    return container;
+};
 Q.Icons = function () {
   let glob = Q.getGLOBAL('icons');
   let classes = {};
@@ -1919,7 +3443,7 @@ Q.Icons = function () {
     classes = glob.icons;
   }
   else {
-    classes = Q.style(`:root {
+    classes = Q.style(`
 	--icon_arrow-down: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 134.49459 62.707709"><path d="M 100.93685,31.353867 C 82.480099,48.598492 67.319803,62.707709 67.247301,62.707709 c -0.0725,0 -15.232809,-14.109215 -33.689561,-31.353842 L 3.5365448e-8,6.6845858e-7 H 67.247301 134.4946 Z"/></svg>');
 	--icon_arrow-left: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62.707704 134.4946"><path d="M 31.353844,100.93685 C 14.109219,82.480099 1.6018623e-6,67.319803 1.6018623e-6,67.247301 1.6018623e-6,67.174801 14.109217,52.014492 31.353844,33.55774 L 62.70771,0 V 67.247301 134.4946 Z"/></svg>');
 	--icon_arrow-right: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62.707704 134.4946"><path d="m 31.353868,33.55775 c 17.244625,18.456749 31.353842,33.617045 31.353842,33.689547 0,0.0725 -14.109215,15.232809 -31.353842,33.689563 L 1.6018623e-6,134.4946 V 67.247297 0 Z"/></svg>');
@@ -1933,7 +3457,7 @@ Q.Icons = function () {
 	--icon_window-windowed: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 101.7211 101.72111"><path d="M 17.303708,50.860554 V 17.303708 h 8.389212 8.389212 V 8.9144961 0.52528408 H 67.638978 101.19582 V 34.082131 67.638977 h -8.389207 -8.38921 v 8.389212 8.389212 H 50.860555 17.303708 Z m 58.724482,0 V 25.692919 H 50.860555 25.69292 V 50.860554 76.028189 H 50.860555 76.02819 Z M 92.806613,34.082131 V 8.9144961 H 67.638978 42.471343 v 4.1946059 4.194606 h 20.973029 20.973031 v 20.973029 20.973029 h 4.1946 4.19461 z"/></svg>');
 	--icon_zoom-in: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0V0z"/></svg>');
 	--icon_zoom-out: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0V0z"/></svg>');
-}
+`,`
 .svg_icon {-webkit-mask-size: cover;mask-size: cover;-webkit-mask-repeat: no-repeat;mask-repeat: no-repeat;-webkit-mask-position: center;mask-position: center;background-color: currentColor;}
 .svg_iconsize { width:100%;height:100%; }
 .arrow-down { mask-image: var(--icon_arrow-down);}
@@ -1949,7 +3473,7 @@ Q.Icons = function () {
 .window-windowed { mask-image: var(--icon_window-windowed);}
 .zoom-in { mask-image: var(--icon_zoom-in);}
 .zoom-out { mask-image: var(--icon_zoom-out);}
-`
+`,null
 ,{
   "arrow-down": "arrow-down",
   "arrow-left": "arrow-left",
@@ -1966,7 +3490,7 @@ Q.Icons = function () {
   "zoom-out": "zoom-out",
   "svg_icon": "svg_icon",
   "svg_iconsize": "svg_iconsize"
-}, true);
+}, false);
   }
   return {
     get: function (name, additional = '') {

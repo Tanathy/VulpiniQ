@@ -47,8 +47,9 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 |----------|------------|----------|-----------------|
 | AvgColor | Utility | Image Processing | Calculates the average color of an image by creating a canvas element, drawing the image on it, and analyzing the pixel data to determine the average color\. <br> This technique is useful for generating color palettes, creating visual effects, or enhancing user interface elements based on the predominant colors in an image\. |
 | ColorBrightness | Utility | Color | Adjusts the brightness of a given color by a specified percentage, making the color lighter or darker\. <br> This function can be used to dynamically change colors for various UI elements, providing visual feedback or creating color schemes with different shades\. <br> It supports both hexadecimal and RGB/RGBA color formats, making it flexible for different use cases in web design or graphics\. |
-| Container | Plugin | Plugin | Useful to create containers for your elements, like tabs, accordions, etc\. |
-| Container\.Tab | Component | Component | Tab component for Container plugin |
+| Container | Plugin | Constructor | Useful to create containers for your elements, like tabs, accordions, etc\. |
+| Container\.Tab | Method | Method | Tab component for Container plugin |
+| Container\.Window | Plugin | Method | Creates a draggable, resizable window container with title bar and control buttons |
 | Cookie | Plugin | Plugin | Provides methods to store and retrieve data from the browser cookies\. |
 | Debounce | Utility | Event Handling | Debounces a function to ensure it is only called after a specified delay since the last invocation, effectively preventing multiple calls in rapid succession\. <br> This technique is particularly useful in scenarios like resizing windows, scrolling, or typing events, where multiple triggers can lead to performance issues or unintended behavior\. <br> By controlling the rate at which a function can fire, developers can optimize performance and enhance user experience\. |
 | Done | Static | Event Handling | Registers one or more callback functions to be executed once the window has completely loaded\. |
@@ -59,6 +60,7 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | Form\.Tags | Component | Component | Tags component for Form plugin |
 | Form\.TextArea | Component | Component | TextArea component for Form plugin |
 | Form\.TextBox | Component | Component | TextBox component for Form plugin |
+| Form\.Uploader | Component | Component | File upload component with drag and drop functionality |
 | HSL2RGB | Utility | Color | Converts HSL \(Hue, Saturation, Lightness\) color values to RGB \(Red, Green, Blue\) format\. <br> This function is essential for applications that require color transformations, allowing developers to switch between different color representations easily\. <br> Understanding color models is key in design, and this utility helps bridge the gap between HSL, which is often more intuitive for humans, and RGB, which is commonly used in digital displays\. |
 | ID | Utility | Utility | It's useful for creating unique identifiers for users, sessions, or any items requiring distinct identification\. <br> The ID is generated using random hexadecimal digits \(0\-9 and a\-f\) and can be customized with a prefix for better context or categorization\. |
 | Icons | Plugin | Plugin | Additional icons for the VulpiniQ library\. |
@@ -91,6 +93,7 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | closest | Prototype | Traversal | Finds the nearest ancestor node of the first node that matches a given selector\. |
 | css | Prototype | Style Manipulation | Retrieves or sets CSS styles on the selected nodes\. Supports setting multiple styles if provided as an object\. |
 | data | Prototype | Data Manipulation | Retrieves or sets data\-\* attributes on the selected nodes\. Provides an easy way to store and access custom data associated with the elements\. |
+| detach | Method | Method | Removes the elements from the DOM but keeps them in memory for later reattachment |
 | each | Prototype | Iteration | Iterates over all nodes in the Q object and executes a callback on each node, providing access to the index and element\. |
 | empty | Prototype | Content Manipulation | Empties the innerHTML of each node\. |
 | eq | Prototype | Traversal | Returns a specific node by index\. |

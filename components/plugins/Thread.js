@@ -1,9 +1,9 @@
-// Name: Thread
-// Method: Plugin
-// Desc: Thread is a utility for managing Web Workers in a thread pool. It allows developers to execute functions in parallel, offloading heavy tasks to separate threads and improving performance. <br> Thread provides a simple interface for creating, managing, and controlling worker threads, enabling developers to execute multiple tasks concurrently without blocking the main thread. <br> By distributing workloads across multiple threads, developers can optimize performance and enhance user experience.
-// Type: Plugin
-// Example: const thread = Q.Thread(4); // Creates a thread pool with 4 workers <br> thread.Push(() => heavyTask(1, 2, 3)).then(result => console.log(result)); // Executes heavyTask in a worker thread <br> thread.Push(heavyTask, 1, 2, 3).then(result => console.log(result)); // Executes heavyTask in a worker thread <br> thread.Workers(2); // Sets the number of workers to 2 <br> thread.Result(({ id, result, error }) => console.log(id, result, error)); // Logs the result of each task <br> thread.Done(() => console.log('All tasks completed')); // Logs when all tasks are completed <br> thread.Abort(); // Aborts all tasks and terminates worker threads
-// Status: Experimental, Unstable
+
+
+
+
+
+
 (() => {
     class ThreadPool {
       constructor(maxWorkers = 1) {

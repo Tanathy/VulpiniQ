@@ -1,9 +1,9 @@
-// Name: Cookie
-// Method: Plugin
-// Desc: Provides methods to store and retrieve data from the browser cookies.
-// Type: Plugin
-// Example: Q.Cookie('key', 'value to store'); Q.Cookie('key'); // returns 'value to store'
-// Variables: cookieKey, cookieValue, cookieOptions
+
+
+
+
+
+
 Q.Cookie = function (cookieKey, cookieValue, cookieOptions = {}) {
     const buildOptions = (options) => {
       let optionsStr = '';

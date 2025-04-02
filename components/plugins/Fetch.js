@@ -1,9 +1,9 @@
-// Name: Fetch
-// Method: Plugin
-// Desc: Fetches data from a URL and returns it to a callback function. Supports retries, timeouts, and custom response validation.
-// Type: Plugin
-// Example: Q.fetch('https://api.example.com/data', (error, data) => console.log(error, data));
-// Variables: url, callback, options, controller, signal, attempt, fetchWithRetry, timeoutId, response, data, error
+
+
+
+
+
+
 Q.Fetch = function (url, callback, options = {}) {
     const {
         method = 'GET',
@@ -20,13 +20,13 @@ Q.Fetch = function (url, callback, options = {}) {
         query = null,
         signal: externalSignal = null
     } = options;
-    // Append query parameters if provided.
+    
     if (query && typeof query === 'object') {
         const urlObject = new URL(url, location.origin);
         Object.entries(query).forEach(([key, value]) => urlObject.searchParams.append(key, value));
         url = urlObject.toString();
     }
-    // Auto serialize body if needed.
+    
     let requestBody = body;
     if (body && typeof body === 'object' && contentType === 'application/json' && !(body instanceof FormData)) {
         try { requestBody = JSON.stringify(body); } catch (error) { callback(new Error('Failed to serialize request body'), null); return; }

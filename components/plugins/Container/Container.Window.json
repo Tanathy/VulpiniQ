@@ -1,0 +1,8 @@
+{
+  "Name": "Container.Window",
+  "Method": "Plugin",
+  "Desc": "Creates a draggable, resizable window container with title bar and control buttons",
+  "Type": "Method",
+  "Example": "var win = Q.Container().Window({ title: 'My Window', content: 'Hello World' }); win.Open();",
+  "Dependencies": ["style", "on", "off", "addClass", "removeClass", "append", "css", "attr", "html", "text", "width", "height", "data", "detach", "show", "hide", "css", "bind", "Icons"]
+}

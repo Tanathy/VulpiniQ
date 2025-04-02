@@ -105,8 +105,8 @@ const Q = (() => {
         (Q.prototype[methodName] = functionImplementation, Q);
     Q.getGLOBAL = key => GLOBAL[key];
     Q.setGLOBAL = value => (GLOBAL = { ...GLOBAL, ...value });
-    Q.style = (root = _n, style = '', responsive = _n, mapping = _n) => {
-        if (mapping) {
+    Q.style = (root = _n, style = '', responsive = _n, mapping = _n, enable_mapping = true) => {
+        if (mapping && enable_mapping) {
             const keys = _ob.keys(mapping);
             keys.forEach((key) => {
                 let newKey = Q.ID ? Q.ID(5, '_') : `_${_ma.random().toString(36).substring(2, 7)}`;
@@ -311,20 +311,17 @@ Q.Ext('children', function (selector) {
   const nodes = this.nodes;
   for (let i = 0, len = nodes.length; i < len; i++) {
     const parent = nodes[i];
-    const children = parent.children; // Get HTMLCollection of children
-    if (children) {
-      const childrenArray = Array.from(children);
-      if (selector) {
-        for (let j = 0, clen = childrenArray.length; j < clen; j++) {
-          const child = childrenArray[j];
-          if (child.matches && child.matches(selector)) {
-            result.push(child);
-          }
+    if (!parent || !parent.children) continue;
+    const childElements = parent.children;
+    if (selector) {
+      for (let j = 0; j < childElements.length; j++) {
+        if (childElements[j].matches && childElements[j].matches(selector)) {
+          result.push(childElements[j]);
         }
-      } else {
-        for (let j = 0, clen = childrenArray.length; j < clen; j++) {
-          result.push(childrenArray[j]);
-        }
+      }
+    } else {
+      for (let j = 0; j < childElements.length; j++) {
+        result.push(childElements[j]);
       }
     }
   }
@@ -375,6 +372,20 @@ Q.Ext('data', function (key, value) {
     for (let i = 0, len = nodes.length; i < len; i++) {
         nodes[i].dataset[key] = value;
     }
+    return this;
+});
+Q.Ext('detach', function() {
+    const nodes = this.nodes;
+    const detachedNodes = [];
+    for (let i = 0, len = nodes.length; i < len; i++) {
+        const node = nodes[i];
+        const parent = node.parentNode;
+        if (parent) {
+            detachedNodes.push(node);
+            parent.removeChild(node);
+        }
+    }
+    this.nodes = detachedNodes;
     return this;
 });
 Q.Ext('each', function (callback) {

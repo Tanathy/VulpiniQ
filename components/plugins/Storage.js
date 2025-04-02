@@ -1,9 +1,9 @@
-// Q.Storage supports getting/setting localStorage with optional LZW compression.
-// Usage:
-//   // Set value with compression enabled
-//   Q.Storage('myKey', {a:1, b:2}, true);
-//   // Get value
-//   const data = Q.Storage('myKey');
+
+
+
+
+
+
 Q.Storage = (function () {
     const lzw_compress = (input) => {
         let dictionary = {}, current = "", result = "", code = 256;
@@ -52,7 +52,7 @@ Q.Storage = (function () {
                 localStorage.removeItem(storageKey);
                 return;
             }
-            // Mark type: S for string, J for JSON (including numbers, booleans, objects)
+            
             let dataString = typeof storageValue === 'string'
                 ? 'S|' + storageValue
                 : 'J|' + JSON.stringify(storageValue);

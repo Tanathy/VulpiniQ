@@ -1,8 +1,8 @@
-// Name: AvgColor
-// Method: Utility
-// Desc: Calculates the average color of an image by creating a canvas element, drawing the image on it, and analyzing the pixel data to determine the average color. <br> This technique is useful for generating color palettes, creating visual effects, or enhancing user interface elements based on the predominant colors in an image.
-// Type: Image Processing
-// Example: Q.AvgColor('image.jpg or canvas', sampleSize, callback); // Returns the average color of the image or canvas
+
+
+
+
+
 
 Q.AvgColor = (source, sampleSize, callback) => {
     const image = new Image();
