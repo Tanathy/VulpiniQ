@@ -1,4 +1,3 @@
-
 Form.prototype.Tags = function(value = '', placeholder = '', options = {}) {
     const defaultOptions = {
         separator: ',',

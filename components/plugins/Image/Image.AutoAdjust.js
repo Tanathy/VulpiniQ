@@ -310,15 +310,12 @@ function lerp(a, b, t) {
 Q.Image.prototype.AutoTone = function(options = {}) {
     return this.AutoAdjust(Object.assign({}, options, { mode: 'autoTone' }));
 };
-
 Q.Image.prototype.AutoContrast = function(options = {}) {
     return this.AutoAdjust(Object.assign({}, options, { mode: 'autoContrast' }));
 };
-
 Q.Image.prototype.AutoBrightness = function(options = {}) {
     return this.AutoAdjust(Object.assign({}, options, { mode: 'autoBrightness' }));
 };
-
 Q.Image.prototype.AutoColor = function(options = {}) {
     return this.AutoAdjust(Object.assign({}, options, { mode: 'autoColor' }));
 };

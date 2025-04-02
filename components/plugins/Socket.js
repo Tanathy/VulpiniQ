@@ -1,8 +1,3 @@
-
-
-
-
-
 Q.Socket = function (url, onMessage, onStatus, options = {}) {
     const {
         retries = 5,                   
@@ -73,7 +68,6 @@ Q.Socket = function (url, onMessage, onStatus, options = {}) {
         },
         reconnect: () => connect(),
         close: () => {
-            
             autoReconnect = false;
             pingId && clearInterval(pingId);
             socket.close();

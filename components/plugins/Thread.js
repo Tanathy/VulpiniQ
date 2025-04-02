@@ -1,9 +1,3 @@
-
-
-
-
-
-
 (() => {
     class ThreadPool {
       constructor(maxWorkers = 1) {

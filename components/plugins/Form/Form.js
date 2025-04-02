@@ -2,10 +2,8 @@ function Form(options = {}) {
     if (!(this instanceof Form)) {
         return new Form(options);
     }
-
     this.elements = [];
     this.options = options;
-
     if (!Form.initialized) {
         Form.classes = Q.style(`
             --form-default-border-radius: 5px;
@@ -33,7 +31,6 @@ function Form(options = {}) {
                 color: #fff;
                 pointer-events: none;
             }
-            
             .form_close_button {
             user-select: none;
                 -webkit-user-select: none;
@@ -50,7 +47,6 @@ function Form(options = {}) {
                 font-size: 12px;
                 cursor: pointer;
             }
-            
             .form_close_button:hover {
                 background-color: rgba(220, 53, 69, 0.8);
             }
@@ -62,11 +58,9 @@ function Form(options = {}) {
         console.log('Form core initialized');
     }
 }
-
 Form.prototype.Icon = function (icon) {
     let iconElement = Q('<div>');
     iconElement.addClass('svg_' + icon + ' form_icon');
     return iconElement;
 };
-
 Q.Form = Form;

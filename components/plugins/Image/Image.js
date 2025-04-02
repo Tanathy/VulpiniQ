@@ -23,8 +23,6 @@ Q.Image = function (options) {
     };
     // Don't save initial empty state automatically
 };
-
-
 Q.Image.prototype.Load = function(src, callback) {
     const img = new Image();
     img.crossOrigin = 'Anonymous';
@@ -54,7 +52,6 @@ Q.Image.prototype.Load = function(src, callback) {
     img.src = typeof src === 'string' ? src : src.src;
     return this; // Láncolhatóság!
 };
-
 Q.Image.prototype.Clear = function(fill = this.options.fill) {
     let ctx = this.node.getContext('2d');
     ctx.fillStyle = fill;
@@ -62,7 +59,6 @@ Q.Image.prototype.Clear = function(fill = this.options.fill) {
     this.saveToHistory();
     return this; 
 };
-
 Q.Image.prototype.Render = function(target) {
     const targetNode = (typeof target === 'string')
         ? document.querySelector(target)
@@ -86,7 +82,6 @@ Q.Image.prototype.Render = function(target) {
     }
     return this;
 };
-
 Q.Image.prototype.Save = function(filename) {
     const dataUrl = this.node.toDataURL('image/' + this.options.format, this.options.quality);
     const link = document.createElement('a');
@@ -96,7 +91,6 @@ Q.Image.prototype.Save = function(filename) {
     link.remove();
     return this;
 };
-
 Q.Image.prototype.saveToHistory = function() {
     if (this.history.isUndoRedoing || !this.options.autoSaveHistory) return;
     // Only save if canvas has valid dimensions
@@ -122,15 +116,12 @@ Q.Image.prototype.saveToHistory = function() {
  * IMPORTANT: Every image manipulation method should call saveToHistory() 
  * after modifying the canvas to ensure proper history tracking.
  */
-
 Q.Image.prototype.Undo = function() {
     return this.History(-1);
 };
-
 Q.Image.prototype.Redo = function() {
     return this.History(1);
 };
-
 Q.Image.prototype.History = function(offset) {
     // Check if we have any history states
     if (this.history.states.length === 0) {

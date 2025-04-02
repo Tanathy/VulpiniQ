@@ -1,4 +1,3 @@
-
 Form.prototype.TextBox = function(type = 'text', value = '', placeholder = '') {
     if (!Form.textBoxClassesInitialized) {
         Form.textBoxClasses = Q.style('', `

@@ -1,9 +1,3 @@
-
-
-
-
-
-
 Q.RGB2HSL = (r, g, b) => {
     r /= 255, g /= 255, b /= 255;
     const max = Math.max(r, g, b), min = Math.min(r, g, b);

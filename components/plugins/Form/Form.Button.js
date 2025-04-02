@@ -1,4 +1,3 @@
-
 Form.prototype.Button = function(text = '') {
     if (!Form.buttonClassesInitialized) {
         Form.buttonClasses = Q.style(null, `

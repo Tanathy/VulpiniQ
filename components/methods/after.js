@@ -3,12 +3,9 @@ Q.Ext('after', function (...contents) {
   for (let i = 0, len = nodes.length; i < len; i++) {
     const target = nodes[i];
     const parent = target.parentNode;
-    
     if (!parent) continue;
-    
     for (let j = 0, clen = contents.length; j < clen; j++) {
       const content = contents[j];
-      
       if (typeof content === "string") {
         target.insertAdjacentHTML('afterend', content);
       } else if (content instanceof HTMLElement) {
@@ -26,7 +23,6 @@ Q.Ext('after', function (...contents) {
       } else if (Array.isArray(content) || content instanceof NodeList) {
         const subNodes = Array.from(content);
         let nextSibling = target.nextSibling;
-        
         for (let k = 0, slen = subNodes.length; k < slen; k++) {
           if (nextSibling) {
             parent.insertBefore(subNodes[k], nextSibling);

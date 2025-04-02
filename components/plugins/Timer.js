@@ -1,8 +1,3 @@
-
-
-
-
-
 Q.Timer = (callback, identifier, options = {}) => {
     const defaults = { tick: 1, delay: 1000, interrupt: false, autoStart: true, done: null };
     const config = { ...defaults, ...options };

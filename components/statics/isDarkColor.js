@@ -1,9 +1,3 @@
-
-
-
-
-
-
 Q.isDarkColor = (color, margin = 20, threshold = 100) => {
     let red, green, blue;
     if (color[0] === '#') {

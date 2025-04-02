@@ -3,12 +3,9 @@ Q.Ext('before', function (...contents) {
   for (let i = 0, len = nodes.length; i < len; i++) {
     const target = nodes[i];
     const parent = target.parentNode;
-    
     if (!parent) continue;
-    
     for (let j = 0, clen = contents.length; j < clen; j++) {
       const content = contents[j];
-      
       if (typeof content === "string") {
         target.insertAdjacentHTML('beforebegin', content);
       } else if (content instanceof HTMLElement) {

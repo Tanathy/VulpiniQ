@@ -1,9 +1,3 @@
-
-
-
-
-
-
 Q.HSL2RGB = (h, s, l) => {
     if (s === 0) {
       const gray = l * 255;

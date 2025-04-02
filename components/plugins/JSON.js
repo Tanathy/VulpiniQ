@@ -1,23 +1,7 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 Q.JSON = function (jsonData) {
     if (!(this instanceof Q.JSON)) return new Q.JSON(jsonData);
     this.json = jsonData;
 };
-
 Q.JSON.prototype.Parse = function (options = { modify: false, recursive: false }, callback) {
     const { modify, recursive } = options;
     const process = (data) => {
@@ -34,7 +18,6 @@ Q.JSON.prototype.Parse = function (options = { modify: false, recursive: false }
     process(this.json);
     return this.json;
 };
-
 Q.JSON.prototype.deflate = function (level) {
     const map = {}, deflateCounter = { count: 1 };
     const replaceRecursive = (obj) => {
@@ -57,7 +40,6 @@ Q.JSON.prototype.deflate = function (level) {
     replaceRecursive(deflatedData);
     return { data: deflatedData, map: map };
 };
-
 Q.JSON.prototype.inflate = function (deflatedJson) {
     const { data, map } = deflatedJson;
     const reverseMap = Object.fromEntries(Object.entries(map).map(([k, v]) => [v, k]));
@@ -79,7 +61,6 @@ Q.JSON.prototype.inflate = function (deflatedJson) {
     restoreRecursive(inflatedData);
     return inflatedData;
 };
-
 Q.JSON.prototype.merge = function (otherJson) {
     const deepMerge = (target, source) => {
         for (const key in source) {
@@ -95,7 +76,6 @@ Q.JSON.prototype.merge = function (otherJson) {
     };
     return deepMerge(this.json, otherJson);
 };
-
 Q.JSON.prototype.sortKeys = function (recursive = false, reverse = false) {
     const sortObject = (obj) => {
         const keys = Object.keys(obj).sort();
@@ -109,7 +89,6 @@ Q.JSON.prototype.sortKeys = function (recursive = false, reverse = false) {
     this.json = sortObject(this.json);
     return this.json;
 };
-
 Q.JSON.prototype.sortValues = function (reverse = false) {
     if (typeof this.json !== 'object' || !this.json) return this.json;
     const entries = Object.entries(this.json).sort((a, b) => {
@@ -122,7 +101,6 @@ Q.JSON.prototype.sortValues = function (reverse = false) {
     this.json = sorted;
     return this.json;
 };
-
 Q.JSON.prototype.sortByValues = function (keyProp, valueProp, reverse = false) {
     if (!Array.isArray(this.json)) return this.json;
     this.json.sort((a, b) => {
@@ -133,7 +111,6 @@ Q.JSON.prototype.sortByValues = function (keyProp, valueProp, reverse = false) {
     });
     return this.json;
 };
-
 Q.JSON.prototype.flatten = function (prefix = '') {
     const result = {};
     const flattenRec = (obj, path) => {
@@ -151,7 +128,6 @@ Q.JSON.prototype.flatten = function (prefix = '') {
     flattenRec(this.json, prefix);
     return result;
 };
-
 Q.JSON.prototype.unflatten = function (flatObject) {
     const result = {};
     Object.keys(flatObject).forEach(compoundKey => {

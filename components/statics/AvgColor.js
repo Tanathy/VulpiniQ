@@ -1,16 +1,9 @@
-
-
-
-
-
-
 Q.AvgColor = (source, sampleSize, callback) => {
     const image = new Image();
     image.crossOrigin = 'Anonymous';
     if (typeof source === 'string') image.src = source;
     else if (source instanceof HTMLCanvasElement) image.src = source.toDataURL();
     else return console.error("Invalid image source provided.");
-  
     image.onload = () => {
       const canvas = Object.assign(document.createElement('canvas'), { width: image.width, height: image.height });
       const context = canvas.getContext('2d');
@@ -29,6 +22,5 @@ Q.AvgColor = (source, sampleSize, callback) => {
       const avgColor = { r: (totalRed / count) | 0, g: (totalGreen / count) | 0, b: (totalBlue / count) | 0 };
       typeof callback === 'function' && callback(avgColor);
     };
-  
     image.onerror = () => console.error("Failed to load image.");
   };

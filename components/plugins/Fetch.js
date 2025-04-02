@@ -1,9 +1,3 @@
-
-
-
-
-
-
 Q.Fetch = function (url, callback, options = {}) {
     const {
         method = 'GET',
@@ -20,13 +14,11 @@ Q.Fetch = function (url, callback, options = {}) {
         query = null,
         signal: externalSignal = null
     } = options;
-    
     if (query && typeof query === 'object') {
         const urlObject = new URL(url, location.origin);
         Object.entries(query).forEach(([key, value]) => urlObject.searchParams.append(key, value));
         url = urlObject.toString();
     }
-    
     let requestBody = body;
     if (body && typeof body === 'object' && contentType === 'application/json' && !(body instanceof FormData)) {
         try { requestBody = JSON.stringify(body); } catch (error) { callback(new Error('Failed to serialize request body'), null); return; }

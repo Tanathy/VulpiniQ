@@ -1,9 +1,3 @@
-
-
-
-
-
-
 Q.Cookie = function (cookieKey, cookieValue, cookieOptions = {}) {
     const buildOptions = (options) => {
       let optionsStr = '';

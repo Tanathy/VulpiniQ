@@ -1,4 +1,3 @@
-
 Form.prototype.CheckBox = function(checked = false, text = '') {
     if (!Form.checkBoxClassesInitialized) {
         Form.checkBoxClasses = Q.style('', `

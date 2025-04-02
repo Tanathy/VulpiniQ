@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 Q.ImageViewer = function () {
     let classes = Q.style(`
 .image_viewer_wrapper {

@@ -1,11 +1,3 @@
-
-
-
-
-
-
-
-
 Q.NodeBlock = function (selector, width, height, options) {
     let classes = Q.style(`
 .node_preferences {
@@ -186,7 +178,6 @@ padding: 0 5px;
             this.appearance = Object.assign({}, this.appearance, custom_style);
             this.darkText = '#ffffff';
             this.lightText = '#000000';
-            
             this.update = true;
             this.compiled_render = document.createElement('canvas');
             this.block_context = this.compiled_render.getContext('2d');
@@ -209,12 +200,10 @@ padding: 0 5px;
                 darkTextColor,
                 lightTextColor
             } = this.appearance;
-            
             const titleBg = Q.ColorBrightness(background, factorTitleBackground);
             const isDark = Q.isDarkColor(background, factorDarkColorMargin, factorDarkColorThreshold);
             const textColor = isDark ? darkTextColor : lightTextColor;
             const borderColor = Q.ColorBrightness(background, isDark ? factorLightColors : factorDarkColors);
-            
             Object.assign(this.appearance, {
                 titleBackground: titleBg,
                 titleColor: textColor,
@@ -223,21 +212,9 @@ padding: 0 5px;
                 node_table_color: borderColor
             });
         }
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         _drawContainer(ctx, x, y, width, height) {
             const { shadowColor, shadowBlur, shadowOffsetX, shadowOffsetY, background, radius, connectionPointSize } = this.appearance;
-            
             ctx.save();
-            
             Object.assign(ctx, {
                 fillStyle: background,
                 shadowColor,
@@ -245,7 +222,6 @@ padding: 0 5px;
                 shadowOffsetX,
                 shadowOffsetY
             });
-            
             ctx.beginPath();
             ctx.moveTo(x + radius, y);
             ctx.lineTo(x + width - radius, y);
@@ -257,7 +233,6 @@ padding: 0 5px;
             ctx.lineTo(x, y + radius);
             ctx.quadraticCurveTo(x, y, x + radius, y);
             ctx.fill();
-            
             ctx.restore();
         }
         _drawTitle(ctx, x, y, width, height, title) {
@@ -283,13 +258,11 @@ padding: 0 5px;
                     return;
                 }
                 this.t_text = html;
-                
                 let tempContainer = document.createElement('div');
                 tempContainer.style.position = 'absolute';
                 tempContainer.style.visibility = 'hidden';
                 tempContainer.style.width = (this.width - this.appearance.fontSize) + 'px';
                 document.body.appendChild(tempContainer);
-                
                 let style = document.createElement('style');
                 let st = `
         table {border-collapse: collapse; width: 100%;}
@@ -311,14 +284,10 @@ padding: 0 5px;
                     `;
                 style.innerHTML = st;
                 document.head.appendChild(style);
-                
                 tempContainer.innerHTML = html;
-                
                 this.contentHeight = tempContainer.offsetHeight + this.appearance.padding;
-                
                 document.body.removeChild(tempContainer);
                 document.head.removeChild(style);
-                
                 this.content = document.createElement('canvas');
                 this.content.width = this.width;
                 this.content.height = this.contentHeight;
@@ -344,12 +313,9 @@ padding: 0 5px;
                 };
                 img.src = url;
             };
-            
             html = html.replace(/style="[^"]*"/g, '');
             let images = [];
-            
             html = html.replace(/<br>/g, '');
-            
             if (html.includes('<img')) {
                 let imgTags = html.match(/<img[^>]+>/g);
                 imgTags.forEach((imgTag, index) => {
@@ -367,7 +333,6 @@ padding: 0 5px;
             else {
                 renderElements();
             }
-            
         }
         draw(main_context) {
             const TITLE_HEIGHT = this.appearance.fontSizeTitle + (this.appearance.padding * 2);
@@ -375,8 +340,6 @@ padding: 0 5px;
             const CONNECTION_PADDING = (this.appearance.connectionPointSize * 2) + this.appearance.connectionPointPadding;
             const maxConnectionsHeight = Math.max(this.connLeft.length, this.connRight.length) * CONNECTION_PADDING;
             if (this.update) {
-                
-                
                 const updateContainerHeight = (contentHeight) => {
                     this.height = TITLE_HEIGHT + (this.appearance.padding * 2) + maxConnectionsHeight + contentHeight + this.appearance.padding;
                     this.block_context.canvas.height = this.height;
@@ -384,15 +347,12 @@ padding: 0 5px;
                 };
                 this.parseHTML2Canvas(this.text, (canvas, contentHeight) => {
                     updateContainerHeight(contentHeight);
-                    
                     this._drawContainer(this.block_context, this.appearance.connectionPointSize, 0, this.width - 5, this.height, this.appearance.radius);
                     this._drawTitle(this.block_context, this.appearance.connectionPointSize, 0, this.width - this.appearance.connectionPointSize, TITLE_HEIGHT, this.name);
                     this.block_context.drawImage(canvas, this.appearance.padding, TITLE_HEIGHT + this.appearance.padding + maxConnectionsHeight);
-                    
                     this.drawConnectionPoints(this.block_context, CONNECTION_HEIGHT, CONNECTION_PADDING);
                     main_context.drawImage(this.compiled_render, this.x, this.y);
                 });
-                
                 this.update = false;
             }
             else {
@@ -444,9 +404,6 @@ padding: 0 5px;
                 ...this.rightConnCoords.map(coord => ({ x: coord.x + this.x, y: coord.y + this.y }))
             ];
         }
-        
-        
-        
         getConnectionCoord(point, index) {
             return point === 'left' ? this.leftConnCoords[index] : this.rightConnCoords[index];
         }
@@ -480,9 +437,7 @@ padding: 0 5px;
             this.canvas.on('contextmenu', this._event_click_right.bind(this), false);
         }
         import(uml) {
-            
             const blockCreationPromises = uml.blocks.map(async (block) => {
-                
                 const newBlock = new UMLBlock(
                     block.custom_style,
                     this.appearance,
@@ -493,9 +448,7 @@ padding: 0 5px;
                 );
                 this.addBlock(newBlock);
             });
-            
             Promise.all(blockCreationPromises).then(() => {
-                
                 uml.connections.forEach(conn => {
                     const startBlock = this.blocks.find(b => b.id === conn.id);
                     const endBlock = this.blocks.find(b => b.id === conn.target);
@@ -549,7 +502,6 @@ padding: 0 5px;
             this.render();
         }
         getJointContent() {
-            
             let block = this.blocks[0];
             let content = block.text;
             let connections = block.connections;
@@ -594,7 +546,6 @@ padding: 0 5px;
         render() {
             this.canvas_context.clearRect(0, 0, this.width, this.height);
             this.render_grid();
-            
             this.connections.forEach(conn => {
                 let startBlock = conn.start.block;
                 let endBlock = conn.end.block;
@@ -602,9 +553,7 @@ padding: 0 5px;
                 let endColor = this._getConnectionColor(endBlock, conn.end.point);
                 this.canvas_context.strokeStyle = 'rgb(150, 150, 150)';
                 this.canvas_context.beginPath();
-                
                 this.canvas_context.lineWidth = 2;
-                
                 let gradient = this.canvas_context.createLinearGradient(
                     startBlock.x + conn.start.x, startBlock.y + conn.start.y,
                     endBlock.x + conn.end.x, endBlock.y + conn.end.y
@@ -615,13 +564,11 @@ padding: 0 5px;
                 this.canvas_context.moveTo(startBlock.x + conn.start.x, startBlock.y + conn.start.y);
                 this.canvas_context.lineTo(endBlock.x + conn.end.x, endBlock.y + conn.end.y);
                 this.canvas_context.stroke();
-                
                 let dx = (endBlock.x + conn.end.x) - (startBlock.x + conn.start.x);
                 let dy = (endBlock.y + conn.end.y) - (startBlock.y + conn.start.y);
                 let length = Math.sqrt(dx * dx + dy * dy);
                 let unitDx = dx / length;
                 let unitDy = dy / length;
-                
                 let arrowLength = 10;
                 let arrowWidth = 5;
                 for (let i = 100; i < length; i += 200) {
@@ -636,7 +583,6 @@ padding: 0 5px;
                     this.canvas_context.fill();
                 }
             });
-            
             if (this.connection_start && this.connection_end === null) {
                 let startBlock = this.connection_start.block;
                 let startColor = this._getConnectionColor(startBlock, this.connection_start.point);
@@ -657,9 +603,7 @@ padding: 0 5px;
             });
             this._connection_update();
         }
-        
         _getConnectionColor(block, pointId) {
-            
             const connection = [...block.connLeft, ...block.connRight]
                 .find(conn => conn.id === pointId);
             return connection ? connection.color : null;
@@ -700,7 +644,6 @@ padding: 0 5px;
             else {
                 block = this.blocks.find(b => b.id === preferences.id());
             }
-            
             let name = preferences.find('#' + classes.name).text();
             let content = preferences.find('#' + classes.content).html();
             block.name = name;
@@ -728,7 +671,6 @@ padding: 0 5px;
                 let block = this.blocks[i];
                 if (block.isMouseOver(mouseX, mouseY)) {
                     this.isDraggingBlock = true;
-                    
                     this.draggingBlock = block;
                     this.offsetX = mouseX - block.x;
                     this.offsetY = mouseY - block.y;
@@ -742,26 +684,20 @@ padding: 0 5px;
             const mouseY = event.offsetY;
             if (this.draggingBlock) {
                 if (this.appearance.snapToGrid) {
-                    
                     this.draggingBlock.x = Math.round(this.draggingBlock.x / this.appearance.gridSize) * this.appearance.gridSize;
                     this.draggingBlock.y = Math.round(this.draggingBlock.y / this.appearance.gridSize) * this.appearance.gridSize;
-                    
                     if (!this.lastMouseX || Math.abs(mouseX - this.lastMouseX) >= this.appearance.gridSize || Math.abs(mouseY - this.lastMouseY) >= this.appearance.gridSize) {
                         this.draggingBlock.x = mouseX - this.offsetX;
                         this.draggingBlock.y = mouseY - this.offsetY;
-                        
                         this.render();
-                        
                         this.lastMouseX = mouseX;
                         this.lastMouseY = mouseY;
                     }
                 } else {
-                    
                     if (!this.lastMouseX || Math.abs(mouseX - this.lastMouseX) >= this.appearance.movementResolution || Math.abs(mouseY - this.lastMouseY) >= this.appearance.movementResolution) {
                         this.draggingBlock.x = mouseX - this.offsetX;
                         this.draggingBlock.y = mouseY - this.offsetY;
                         this.render();
-                        
                         this.lastMouseX = mouseX;
                         this.lastMouseY = mouseY;
                     }
@@ -779,7 +715,6 @@ padding: 0 5px;
                 this.render();
             }
             this.connections.forEach(conn => {
-                
                 if (this._point_line_segment(
                     mouseX, mouseY,
                     conn.start.block.x + conn.start.x, conn.start.block.y + conn.start.y,
@@ -808,11 +743,9 @@ padding: 0 5px;
                 this.isDraggingBlock = false;
                 this.draggingBlock.isDragging = false;
                 this.draggingBlock = null;
-                
                 this.render();
             }
             if (this.connection_start && this.connection_end === null) {
-                
                 setTimeout(() => {
                     this.connection_start = null;
                     this.mouseX = 0;
@@ -831,10 +764,8 @@ padding: 0 5px;
                     }
                     else if (this.connection_end === null) {
                         this.connection_end = this._point_details(block, mouseX, mouseY);
-                        
                         if (this.connection_start.block !== this.connection_end.block &&
                             !this._connection_exists(this.connection_start, this.connection_end)) {
-                            
                             this._connection_create(this.connection_start, this.connection_end);
                             block.addConnection({ id: this.connection_start.block.id, point: this.connection_start.point });
                         } else {
@@ -842,7 +773,6 @@ padding: 0 5px;
                             this.connection_end = null;
                             this.render();
                         }
-                        
                         this.connection_start = null;
                         this.connection_end = null;
                     }
@@ -856,7 +786,6 @@ padding: 0 5px;
             let add = Q('<div>', { class: ['button_nodes_big'], text: 'Create Block' });
             add.on('click', () => {
                 let id = this._id();
-                
                 let nodes = this.blocks.length + 1;
                 let block = new UMLBlock({}, this.appearance, id, 'Node ' + nodes, 'Content', x, y, this.appearance.blockWidth, [{ id: this._id(), title: '', color: this.appearance.connectionColor }], [{ id: this._id(), title: '', color: this.appearance.connectionColor }]);
                 this.addBlock(block);
@@ -881,7 +810,6 @@ padding: 0 5px;
                 this._menu_remove();
                 this.render();
             }
-            
             for (let i = this.blocks.length - 1; i >= 0; i--) {
                 const block = this.blocks[i];
                 if (block.isMouseOver(mouseX, mouseY)) {
@@ -890,7 +818,6 @@ padding: 0 5px;
                     return;
                 }
             }
-            
             for (let i = 0; i < this.connections.length; i++) {
                 const conn = this.connections[i];
                 if (this._point_line_segment(
@@ -918,7 +845,6 @@ padding: 0 5px;
             Q('.' + classes.node_preferences).remove();
             this.isMenuPreferences = false;
         }
-        
         _menu_item_section(title, content) {
             let div = Q('<div>', { class: [classes.pref_section] });
             let titleDiv = Q('<div>', { class: [classes.pref_title], text: title });
@@ -1083,21 +1009,6 @@ padding: 0 5px;
                 Object.assign(conn.end, this._point_coords(conn.end.block, conn.end.point));
             });
         }
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         _point_coords(block, pointId) {
             const connections = [
                 { coords: block.leftConnCoords, conns: block.connLeft },
@@ -1109,7 +1020,6 @@ padding: 0 5px;
                     return { x: coords[index].x, y: coords[index].y };
                 }
             }
-            
             return { x: block.x, y: block.y };
         }
         _connection_over_point(block, x, y) {
@@ -1141,11 +1051,6 @@ padding: 0 5px;
             const lineLen = Math.hypot(x2 - x1, y2 - y1);
             return d1 + d2 >= lineLen - 0.1 && d1 + d2 <= lineLen + 0.1;
         }
-        
-        
-        
-        
-        
         _point_line_distance(px, py, x1, y1, x2, y2) {
             const dx = x2 - x1;
             const dy = y2 - y1;
@@ -1180,7 +1085,6 @@ padding: 0 5px;
         connectionPointPadding: 5,
         connectionTextPaddingX: 5,
         connectionTextPaddingY: 5,
-        
         shadowBlur: 10,
         shadowColor: 'rgba(0, 0, 0, 0.2)',
         shadowOffsetX: 0,
@@ -1191,7 +1095,6 @@ padding: 0 5px;
         fontSizeConnection: 10,
         padding: 5,
         radius: 10
-        
     };
     appearance = Object.assign(appearance, options);
     let uml = new UMLCanvas(selector, width, height, appearance, classes);

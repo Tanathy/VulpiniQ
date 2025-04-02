@@ -7,9 +7,7 @@ Form.prototype.Uploader = function (options = {}) {
         multiple: false, // Allow multiple file selection
         placeholder: 'Drop files here or click to select'
     };
-
     options = Object.assign({}, defaultOptions, options);
-
     // Initialize uploader CSS if not done yet
     if (!Form.uploaderClassesInitialized) {
         Form.uploaderClasses = Q.style('', `
@@ -123,7 +121,6 @@ Form.prototype.Uploader = function (options = {}) {
         });
         Form.uploaderClassesInitialized = true;
     }
-
     // Create container elements
     const container = Q(`<div class="${Form.classes.q_form} ${Form.uploaderClasses.form_uploader_container}"></div>`);
     const dropArea = Q(`<div class="${Form.uploaderClasses.form_uploader_drop_area}"></div>`);
@@ -131,33 +128,27 @@ Form.prototype.Uploader = function (options = {}) {
     const text = Q(`<div class="${Form.uploaderClasses.form_uploader_text}">${options.placeholder}</div>`);
     const browseButton = Q(`<button type="button" class="${Form.uploaderClasses.form_uploader_button}">Browse Files</button>`);
     const fileInput = Q(`<input type="file" class="${Form.uploaderClasses.form_uploader_input}">`);
-
     // Set file input attributes
     if (options.multiple) {
         fileInput.attr('multiple', true);
     }
-
     if (options.fileTypes && options.fileTypes !== '*') {
         fileInput.attr('accept', options.fileTypes);
     }
-
     // Add elements to container
     dropArea.append(uploadIcon, text, browseButton);
     container.append(dropArea, fileInput);
-
     // Create preview container if previews are enabled
     let previewContainer = null;
     if (options.preview) {
         previewContainer = Q(`<div class="${Form.uploaderClasses.form_uploader_preview_container}"></div>`);
         container.append(previewContainer);
     }
-
     // File storage
     const state = {
         files: [],
         fileObjects: []
     };
-
     // Format file size function
     function formatFileSize(bytes) {
         if (bytes === 0) return '0 B';
@@ -166,16 +157,13 @@ Form.prototype.Uploader = function (options = {}) {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
-
     // Get file extension without the dot
     function getFileExtension(filename) {
         return filename.split('.').pop().toUpperCase();
     }
-
     // Handle files function
     function handleFiles(files) {
         if (!files || files.length === 0) return;
-
         Array.from(files).forEach(file => {
             // Create file metadata
             const fileInfo = {
@@ -185,41 +173,33 @@ Form.prototype.Uploader = function (options = {}) {
                 type: file.type,
                 extension: getFileExtension(file.name)
             };
-
             // Add file to state
             state.files.push(fileInfo);
             state.fileObjects.push(file);
-
             // Generate preview if enabled
             if (options.preview) {
                 generatePreview(file, fileInfo);
             }
         });
-
         // Trigger change callback
         if (typeof container.changeCallback === 'function') {
             container.changeCallback(state.files);
         }
     }
-
     // Generate preview function
     function generatePreview(file, fileInfo) {
         const previewItem = Q(`<div class="${Form.uploaderClasses.form_uploader_preview_item}"></div>`);
         const fileInfoElement = Q(`<div class="${Form.uploaderClasses.form_uploader_preview_info}">${file.name} (${fileInfo.formattedSize})</div>`);
-
         // Use the common close button class from Form.js
         const removeButton = Q(`<div class="${Form.classes.form_close_button}">×</div>`);
-
         // Set dimensions based on thumbSize
         previewItem.css({
             width: options.thumbSize + 'px',
             height: options.thumbSize + 'px'
         });
-
         // Add title attribute with file details
         const titleInfo = `Name: ${file.name}\nSize: ${fileInfo.formattedSize}\nType: ${file.type}`;
         previewItem.attr('title', titleInfo);
-
         // Handle based on file type
         if (file.type.startsWith('image/')) {
             // Create image preview
@@ -228,17 +208,14 @@ Form.prototype.Uploader = function (options = {}) {
                 width: '100%',
                 height: '100%'
             });
-
             // Also add title to the image element
             img.attr('title', titleInfo);
-
             const reader = new FileReader();
             reader.onload = function (e) {
                 img.attr('src', e.target.result);
                 fileInfo.preview = e.target.result;
             };
             reader.readAsDataURL(file);
-
             previewItem.append(img);
         }
         else if (file.type.startsWith('video/')) {
@@ -248,17 +225,14 @@ Form.prototype.Uploader = function (options = {}) {
                 width: '100%',
                 height: '100%'
             });
-
             // Also add title to the video element
             video.attr('title', titleInfo);
-
             const reader = new FileReader();
             reader.onload = function (e) {
                 video.attr('src', e.target.result);
                 fileInfo.preview = e.target.result;
             };
             reader.readAsDataURL(file);
-
             previewItem.append(video);
         }
         else {
@@ -268,33 +242,25 @@ Form.prototype.Uploader = function (options = {}) {
                 width: '100%',
                 height: '100%'
             });
-
             // Also add title to the icon element
             fileIcon.attr('title', titleInfo);
-
             // Display file extension as icon text without the dot
             fileIcon.text(fileInfo.extension);
-
             previewItem.append(fileIcon);
         }
-
         // Add file info and remove button
         previewItem.append(fileInfoElement, removeButton);
-
         // Store reference to the preview element
         fileInfo.element = previewItem;
-
         // Add to preview container
         if (previewContainer) {
             previewContainer.append(previewItem);
         }
-
         // Set up remove button handler
         removeButton.on('click', () => {
             removeFile(fileInfo);
         });
     }
-
     // Remove file function
     function removeFile(fileInfo) {
         const index = state.files.indexOf(fileInfo);
@@ -302,31 +268,25 @@ Form.prototype.Uploader = function (options = {}) {
             // Remove from arrays
             state.files.splice(index, 1);
             state.fileObjects.splice(index, 1);
-
             // Remove preview element
             if (fileInfo.element) {
                 fileInfo.element.remove();
             }
-
             // Trigger change callback
             if (typeof container.changeCallback === 'function') {
                 container.changeCallback(state.files);
             }
         }
     }
-
     // Reset uploader function
     function resetUploader() {
         state.files = [];
         state.fileObjects = [];
-
         if (previewContainer) {
             previewContainer.html('');
         }
-
         fileInput.val('');
     }
-
     // Set up event handlers
     if (options.allowDrop) {
         // Prevent default drag behaviors
@@ -336,25 +296,21 @@ Form.prototype.Uploader = function (options = {}) {
                 e.stopPropagation();
             });
         });
-
         // Highlight drop area when dragging over it
         ['dragenter', 'dragover'].forEach(eventName => {
             dropArea.on(eventName, () => {
                 container.addClass(Form.uploaderClasses.drag_over);
             });
         });
-
         // Remove highlight when leaving or after drop
         ['dragleave', 'drop'].forEach(eventName => {
             dropArea.on(eventName, () => {
                 container.removeClass(Form.uploaderClasses.drag_over);
             });
         });
-
         // Handle file drop
         dropArea.on('drop', (e) => {
             const files = e.dataTransfer.files;
-
             // Check if multiple files allowed
             if (!options.multiple && files.length > 1) {
                 // If not multiple, just take the first file
@@ -364,13 +320,11 @@ Form.prototype.Uploader = function (options = {}) {
             }
         });
     }
-
     // Browse button click handler - FIX HERE
     browseButton.on('click', function () {
         // Use this.element instead of fileInput.element
         fileInput.nodes[0].click();
     });
-
     // Drop area click handler - FIX HERE
     dropArea.on('click', function (e) {
         // Check if the click target is not the browse button
@@ -378,19 +332,15 @@ Form.prototype.Uploader = function (options = {}) {
             fileInput.nodes[0].click();
         }
     });
-
     // File input change handler
     fileInput.on('change', function () {
         if (!options.multiple) {
             resetUploader(); // Clear previous files if not multiple
         }
-
         // Use this.element instead of fileInput.element
         handleFiles(this.files);
     });
-
     // API methods
-
     // Get/set value
     container.val = function (value) {
         // Getter
@@ -400,22 +350,18 @@ Form.prototype.Uploader = function (options = {}) {
                 fileObjects: state.fileObjects
             };
         }
-
         // Setter - Reset to empty
         if (value === '' || value === null) {
             resetUploader();
             return container;
         }
-
         return container;
     };
-
     // Reset uploader
     container.reset = function () {
         resetUploader();
         return container;
     };
-
     // Disable/enable uploader
     container.disabled = function (state) {
         if (state) {
@@ -429,13 +375,11 @@ Form.prototype.Uploader = function (options = {}) {
         }
         return container;
     };
-
     // Change callback
     container.change = function (callback) {
         container.changeCallback = callback;
         return container;
     };
-
     // Add to Form elements
     this.elements.push(container);
     return container;

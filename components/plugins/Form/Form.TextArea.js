@@ -1,4 +1,3 @@
-
 Form.prototype.TextArea = function(value = '', placeholder = '') {
     if (!Form.textAreaClassesInitialized) {
         Form.textAreaClasses = Q.style('', `

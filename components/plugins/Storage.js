@@ -1,9 +1,3 @@
-
-
-
-
-
-
 Q.Storage = (function () {
     const lzw_compress = (input) => {
         let dictionary = {}, current = "", result = "", code = 256;
@@ -52,7 +46,6 @@ Q.Storage = (function () {
                 localStorage.removeItem(storageKey);
                 return;
             }
-            
             let dataString = typeof storageValue === 'string'
                 ? 'S|' + storageValue
                 : 'J|' + JSON.stringify(storageValue);
