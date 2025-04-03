@@ -1,0 +1,13 @@
+{
+  "Name": "HSL to RGB Converter",
+  "Method": "Static",
+  "Desc": "Converts HSL (Hue, Saturation, Lightness) color values to RGB (Red, Green, Blue) format.",
+  "Long Desc": "The HSL2RGB utility transforms color representations from the HSL color space to the RGB color space. HSL is often more intuitive for humans to work with as it separates the color components into hue (color type), saturation (color intensity), and lightness (brightness). This conversion is essential when working with color manipulations that are easier to perform in HSL space before converting back to RGB for display purposes. The function handles special cases such as grayscale colors (when saturation is 0) and implements the standard algorithm for HSL to RGB conversion. This utility is particularly valuable for generating color palettes, creating smooth color transitions, implementing color pickers, or performing color calculations where the HSL model is more convenient to work with.",
+  "Type": "Color Conversion",
+  "Example": [
+    "// Convert pure red in HSL to RGB\nconst hue = 0;        // Red in HSL has 0 hue\nconst saturation = 1;  // Full saturation\nconst lightness = 0.5; // Medium lightness\nconst rgbColor = Q.HSL2RGB(hue, saturation, lightness);\nconsole.log(`Red: ${Math.round(rgbColor[0])}, Green: ${Math.round(rgbColor[1])}, Blue: ${Math.round(rgbColor[2])}`);",
+    "// Generate a rainbow color palette\nlet rainbowColors = [];\nfor (let i = 0; i < 360; i += 30) {\n  const h = i / 360;\n  const rgb = Q.HSL2RGB(h, 0.8, 0.5);\n  rainbowColors.push(`rgb(${Math.round(rgb[0])}, ${Math.round(rgb[1])}, ${Math.round(rgb[2])}`);\n}",
+    "var h = 0.33; // Green hue\nvar s = 0.5;  // Medium saturation\nvar l = 0.7;  // Slightly lighter\nvar buttonColor = Q.HSL2RGB(h, s, l);\ndocument.querySelector('.success-button').style.backgroundColor = `rgb(${Math.round(buttonColor[0])}, ${Math.round(buttonColor[1])}, ${Math.round(buttonColor[2])})`;"
+  ],
+  "Variables": ["h", "s", "l", "gray", "q", "p", "hueToRgb", "t"]
+}

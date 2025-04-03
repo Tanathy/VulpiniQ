@@ -1,9 +1,14 @@
 {
   "Name": "Leaving",
   "Method": "Static",
-  "Desc": "Registers callbacks to be executed when the window is about to be unloaded.",
-  "Long Desc": "Registers callbacks to be executed when the window is about to be unloaded, providing a chance to run cleanup tasks or warn the user about unsaved changes. This can be useful for saving state, logging actions, or preventing accidental navigation away from the page. Multiple callbacks can be registered, and they will be executed in the order they were added whenever the beforeunload event is triggered.",
+  "Desc": "Attaches a function to the window's beforeunload event, allowing actions before the page is closed or refreshed.",
+  "Long Desc": "The Leaving utility provides a convenient way to execute code just before a user navigates away from the current page. This is crucial for implementing features like unsaved changes warnings, session cleanup, analytics tracking of exit events, or saving application state. The utility handles the complexities of the beforeunload event across browsers and ensures your callback functions receive the event object, allowing you to potentially prevent navigation by using preventDefault() and setting a return value. Unlike direct event binding, this utility manages multiple callbacks efficiently and handles edge cases like repeated triggers.",
   "Type": "Event Handling",
-  "Example": "// Warn about unsaved changes\nQ.Leaving((event) => {\n    if (hasUnsavedChanges()) {\n        event.returnValue = 'You have unsaved changes. Are you sure you want to leave?';\n    }\n});\n\n// Save application state\nQ.Leaving((event) => {\n    localStorage.setItem('appState', JSON.stringify(getCurrentState()));\n    sessionStorage.setItem('lastVisited', new Date().toISOString());\n});",
-  "Variables": ["callbacks", "event", "callback"]
+  "Example": [
+    "Q.Leaving(e => e.preventDefault());",
+    "let goodbyeMessage = e => { e.preventDefault(); e.returnValue = 'Are you sure you want to leave?'; }; Q.Leaving(goodbyeMessage);",
+    "Q.Leaving(event => { if (document.querySelector('form').dataset.modified === 'true') { event.preventDefault(); event.returnValue = 'You have unsaved changes'; } });",
+    "const saveState = e => { localStorage.setItem('appState', JSON.stringify(currentState)); }; Q.Leaving(saveState);"
+  ],
+  "Variables": []
 }

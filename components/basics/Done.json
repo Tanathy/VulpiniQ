@@ -1,9 +1,14 @@
 {
   "Name": "Done",
   "Method": "Static",
-  "Desc": "Registers one or more callback functions to be executed once the window has completely loaded.",
-  "Long Desc": "Registers one or more callback functions to be executed once the window has completely loaded, ensuring that all resources are available. Useful for executing scripts that depend on the DOM, images, or other resources being fully loaded. This function allows for multiple callbacks to be registered, which will all be executed in the order they were added when the load event occurs.",
+  "Desc": "Executes a function once the window's load event is fired, indicating all resources are loaded.",
+  "Long Desc": "The Done utility allows you to register functions that will execute after all page resources (including images, stylesheets, scripts, iframes, etc.) have completely loaded. Unlike the Ready utility which fires when just the DOM is ready, Done waits for everything to finish loading. This is particularly useful for operations that depend on knowing final element dimensions (which may change once images load), performing calculations based on rendered content, initializing components that need the complete page, or starting animations that should only begin when the page is fully rendered. The utility efficiently manages multiple callbacks and ensures they only execute once the page loading is truly complete.",
   "Type": "Event Handling",
-  "Example": "// Basic usage - single callback\nQ.Done(() => {\n    console.log('Window has fully loaded');\n    document.body.style.opacity = '1';\n});\n\n// Multiple callbacks - executed in order\nQ.Done(() => {\n    // Initialize main application\n    initApp();\n});\n\nQ.Done(() => {\n    // Show UI elements\n    document.querySelector('#app').style.display = 'block';\n    document.querySelector('#loader').style.display = 'none';\n});",
-  "Variables": ["callbacks", "callback"]
+  "Example": [
+    "Q.Done(() => console.log('All resources loaded!'));",
+    "let postLoad = () => { document.body.classList.add('loaded'); }; Q.Done(postLoad);",
+    "Q.Done(() => { document.getElementById('preloader').classList.add('fade-out'); });",
+    "const calculateLayout = () => { const imageHeights = Array.from(document.images).map(img => img.height); console.log('All image heights:', imageHeights); }; Q.Done(calculateLayout);"
+  ],
+  "Variables": []
 }

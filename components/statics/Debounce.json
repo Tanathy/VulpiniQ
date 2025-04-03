@@ -1,0 +1,13 @@
+{
+  "Name": "Debounce",
+  "Method": "Static",
+  "Desc": "Delays the execution of a function until after a specified wait period has elapsed since the last invocation.",
+  "Long Desc": "The Debounce utility prevents excessive function calls by postponing execution until a period of inactivity has passed. It uses a unique identifier to track and manage multiple debounce operations simultaneously across your application. This method is essential for performance optimization in scenarios involving frequent event triggering, such as resize events, scroll handlers, input validation, or API calls based on user typing. By limiting the rate of function execution, it significantly reduces computational overhead, prevents race conditions, and improves user experience by eliminating unnecessary operations. The implementation leverages a global storage mechanism to maintain state across multiple debounce calls, allowing for efficient memory usage.",
+  "Type": "Performance Optimization",
+  "Example": [
+    "// Debounce search input to reduce API calls\nconst searchInput = document.getElementById('search');\nsearchInput.addEventListener('input', function() {\n  Q.Debounce('search-query', 500, function() {\n    fetchSearchResults(searchInput.value);\n  });\n});",
+    "// Debounce window resize handler\nlet chartWidth;\nwindow.addEventListener('resize', function() {\n  Q.Debounce('resize-chart', 250, function() {\n    chartWidth = window.innerWidth * 0.8;\n    redrawChart(chartWidth);\n  });\n});",
+    "var saveButton = document.getElementById('save-form');\nvar formData = {};\nsaveButton.addEventListener('click', function() {\n  Q.Debounce('form-save', 300, function() {\n    saveData(formData);\n  });\n});"
+  ],
+  "Variables": ["id", "time", "callback", "debounceStorage"]
+}

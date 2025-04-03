@@ -1,9 +1,14 @@
 {
   "Name": "Ready",
   "Method": "Static",
-  "Desc": "Registers callbacks to be executed once the DOM is fully loaded and parsed.",
-  "Long Desc": "Registers callbacks to be executed once the DOM is fully loaded and parsed, ensuring your scripts can safely interact with the document's structure. Ideal for initializing features, manipulating elements, or setting up event listeners without waiting for the entire page (images, styles) to load. Multiple callbacks can be added, and they will be executed in sequence when the DOMContentLoaded event fires, or immediately if the DOM is already ready.",
+  "Desc": "Executes a function when the document is fully loaded, ensuring all elements are accessible.",
+  "Long Desc": "The Ready utility ensures that your code executes at the appropriate time during page loading. It handles the complexity of checking the document's readiness state and manages the timing of your callbacks. If the DOM is already loaded when your code runs, your function executes immediately. Otherwise, it queues the function to run once the DOMContentLoaded event fires. This approach prevents errors that occur when scripts try to access DOM elements before they exist, while also avoiding the unnecessary delay of waiting for all assets (like images) to load completely, which would occur when using the window's load event.",
   "Type": "Event Handling",
-  "Example": "// Basic initialization\nQ.Ready(() => {\n    const app = document.querySelector('#app');\n    app.classList.remove('loading');\n});\n\n// Set up event listeners\nQ.Ready(() => {\n    document.querySelectorAll('.nav-link').forEach(link => {\n        link.addEventListener('click', handleNavigation);\n    });\n});",
-  "Variables": ["callbacks", "callback"]
+  "Example": [
+    "Q.Ready(() => console.log('Document is ready!'));",
+    "let init = () => { console.log('Initialization complete.'); }; Q.Ready(init);",
+    "Q.Ready(() => { document.getElementById('loader').style.display = 'none'; document.getElementById('content').style.display = 'block'; });",
+    "const setupEventListeners = () => { document.querySelectorAll('.clickable').forEach(el => el.addEventListener('click', handleClick)); }; Q.Ready(setupEventListeners);"
+  ],
+  "Variables": []
 }
