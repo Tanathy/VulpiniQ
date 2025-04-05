@@ -158,36 +158,36 @@ const Q = (() => {
     return this;
 });
 Q.Ext('after', function (...contents) {
-  const nodes = this.nodes;
-  for (let i = 0, len = nodes.length; i < len; i++) {
-    const target = nodes[i];
-    const parent = target.parentNode;
-    if (!parent) continue;
+  const a = this.a;
+  for (let i = 0, len = a.length; i < len; i++) {
+    const b = a[i];
+    const c = b.parentNode;
+    if (!c) continue;
     for (let j = 0, clen = contents.length; j < clen; j++) {
-      const content = contents[j];
-      if (typeof content === "string") {
-        target.insertAdjacentHTML('afterend', content);
-      } else if (content?.nodeType === 1) {
-        if (target.nextSibling) {
-          parent.insertBefore(content, target.nextSibling);
+      const d = contents[j];
+      if (typeof d === "string") {
+        b.insertAdjacentHTML('afterend', d);
+      } else if (d?.nodeType === 1) {
+        if (b.f) {
+          c.insertBefore(d, b.f);
         } else {
-          parent.appendChild(content);
+          c.appendChild(d);
         }
-      } else if (content instanceof Q) {
-        if (target.nextSibling) {
-          parent.insertBefore(content.nodes[0], target.nextSibling);
+      } else if (d instanceof Q) {
+        if (b.f) {
+          c.insertBefore(d.a[0], b.f);
         } else {
-          parent.appendChild(content.nodes[0]);
+          c.appendChild(d.a[0]);
         }
-      } else if (Array.isArray(content) || content?.constructor === NodeList) {
-        const subNodes = Array.from(content);
-        let nextSibling = target.nextSibling;
-        for (let k = 0, slen = subNodes.length; k < slen; k++) {
-          if (nextSibling) {
-            parent.insertBefore(subNodes[k], nextSibling);
-            nextSibling = subNodes[k].nextSibling;
+      } else if (Array.isArray(d) || d?.constructor === NodeList) {
+        const e = Array.from(d);
+        let f = b.f;
+        for (let k = 0, slen = e.length; k < slen; k++) {
+          if (f) {
+            c.insertBefore(e[k], f);
+            f = e[k].f;
           } else {
-            parent.appendChild(subNodes[k]);
+            c.appendChild(e[k]);
           }
         }
       }
@@ -195,14 +195,14 @@ Q.Ext('after', function (...contents) {
   }
   return this;
 });
-Q.Ext('animate', function (duration, b, e) {
+Q.Ext('animate', function (a, b, e) {
   var nodes = this.nodes;
   for (var i = 0, len = nodes.length; i < len; i++) {
     var f = nodes[i],
         keys = Object.keys(b),
         c = '';
     for (var j = 0, klen = keys.length; j < klen; j++) {
-      c += keys[j] + ' ' + duration + 'ms' + (j < klen - 1 ? ', ' : '');
+      c += keys[j] + ' ' + a + 'ms' + (j < klen - 1 ? ', ' : '');
     }
     f.style.transition = c;
     for (var j = 0; j < klen; j++) {
@@ -212,7 +212,7 @@ Q.Ext('animate', function (duration, b, e) {
     if (typeof e === 'function') {
       setTimeout((function(g){
           return function(){ e.call(g); };
-      })(f), duration);
+      })(f), a);
     }
   }
   return this;
@@ -220,102 +220,102 @@ Q.Ext('animate', function (duration, b, e) {
 Q.Ext('append', function (...contents) {
   const nodes = this.nodes;
   for (let i = 0, len = nodes.length; i < len; i++) {
-    const parent = nodes[i];
+    const b = nodes[i];
     for (let j = 0, clen = contents.length; j < clen; j++) {
-      const child = contents[j];
-      if (typeof child === "string") {
-        parent.insertAdjacentHTML('beforeend', child);
-      } else if (child?.nodeType === 1 || child instanceof Q) {
-        parent.appendChild(child.nodes ? child.nodes[0] : child);
-      } else if (Array.isArray(child) || child?.constructor === NodeList) {
-        const subNodes = Array.from(child);
+      const c = contents[j];
+      if (typeof c === "string") {
+        b.insertAdjacentHTML('beforeend', c);
+      } else if (c?.nodeType === 1 || c instanceof Q) {
+        b.appendChild(c.nodes ? c.nodes[0] : c);
+      } else if (Array.isArray(c) || c?.constructor === NodeList) {
+        const subNodes = Array.from(c);
         for (let k = 0, slen = subNodes.length; k < slen; k++) {
-          parent.appendChild(subNodes[k]);
+          b.appendChild(subNodes[k]);
         }
       }
     }
   }
   return this;
 });
-Q.Ext('attr', function (attribute, value) {
+Q.Ext('attr', function (a, b) {
     var nodes = this.nodes;
-    if (typeof attribute === 'object') {
-        var keys = Object.keys(attribute);
+    if (typeof a === 'object') {
+        var keys = Object.keys(a);
         for (var i = 0, len = nodes.length; i < len; i++) {
             var node = nodes[i];
             for (var j = 0, klen = keys.length; j < klen; j++) {
-                node.setAttribute(keys[j], attribute[keys[j]]);
+                node.setAttribute(keys[j], a[keys[j]]);
             }
         }
         return this;
     } else {
-        if (value === undefined) {
-            return nodes[0] && nodes[0].getAttribute(attribute) || null;
+        if (b === undefined) {
+            return nodes[0] && nodes[0].getAttribute(a) || null;
         }
         for (var i = 0, len = nodes.length; i < len; i++) {
-            nodes[i].setAttribute(attribute, value);
+            nodes[i].setAttribute(a, b);
         }
         return this;
     }
 });
 Q.Ext('before', function (...contents) {
-  const nodes = this.nodes;
-  for (let i = 0, len = nodes.length; i < len; i++) {
-    const target = nodes[i];
-    const parent = target.parentNode;
-    if (!parent) continue;
+  const a = this.a;
+  for (let i = 0, len = a.length; i < len; i++) {
+    const b = a[i];
+    const c = b.parentNode;
+    if (!c) continue;
     for (let j = 0, clen = contents.length; j < clen; j++) {
-      const content = contents[j];
-      if (typeof content === "string") {
-        target.insertAdjacentHTML('beforebegin', content);
-      } else if (content?.nodeType === 1) {
-        parent.insertBefore(content, target);
-      } else if (content instanceof Q) {
-        parent.insertBefore(content.nodes[0], target);
-      } else if (Array.isArray(content) || content?.constructor === NodeList) {
-        const subNodes = Array.from(content);
-        for (let k = 0, slen = subNodes.length; k < slen; k++) {
-          parent.insertBefore(subNodes[k], target);
+      const d = contents[j];
+      if (typeof d === "string") {
+        b.insertAdjacentHTML('beforebegin', d);
+      } else if (d?.nodeType === 1) {
+        c.insertBefore(d, b);
+      } else if (d instanceof Q) {
+        c.insertBefore(d.a[0], b);
+      } else if (Array.isArray(d) || d?.constructor === NodeList) {
+        const e = Array.from(d);
+        for (let k = 0, slen = e.length; k < slen; k++) {
+          c.insertBefore(e[k], b);
         }
       }
     }
   }
   return this;
 });
-Q.Ext('bind', function (event, handler) {
-    if (!this._eventDelegation) {
-        this._eventDelegation = {};
+Q.Ext('bind', function (a, b) {
+    if (!this.d) {
+        this.d = {};
     }
-    if (!this._eventDelegation[event]) {
-        document.addEventListener(event, (e) => {
+    if (!this.d[a]) {
+        document.addEventListener(a, (e) => {
             var nodes = this.nodes;
             for (var i = 0, l = nodes.length; i < l; i++) {
                 if (nodes[i].contains(e.target)) {
-                    handler.call(e.target, e);
+                    b.call(e.target, e);
                 }
             }
         });
-        this._eventDelegation[event] = true;
+        this.d[a] = true;
     }
     return this;
 });
 Q.Ext('blur', function () {
-    var nodes = this.nodes; // ...existing code...
+    var nodes = this.nodes;
     for (var i = 0, l = nodes.length; i < l; i++) {
         nodes[i].blur();
     }
     return this;
 });
-Q.Ext('children', function (selector) {
+Q.Ext('c', function (d) {
   const result = [];
-  const nodes = this.nodes;
-  for (let i = 0, len = nodes.length; i < len; i++) {
-    const parent = nodes[i];
-    if (!parent || !parent.children) continue;
-    const childElements = parent.children;
-    if (selector) {
+  const a = this.a;
+  for (let i = 0, len = a.length; i < len; i++) {
+    const parent = a[i];
+    if (!parent || !parent.c) continue;
+    const childElements = parent.c;
+    if (d) {
       for (let j = 0; j < childElements.length; j++) {
-        if (childElements[j].matches && childElements[j].matches(selector)) {
+        if (childElements[j].matches && childElements[j].matches(d)) {
           result.push(childElements[j]);
         }
       }
@@ -347,30 +347,30 @@ Q.Ext('closest', function (selector) {
     }
     return null;
 });
-Q.Ext('css', function(property, value) {
+Q.Ext('css', function(a, b) {
   const nodes = this.nodes;
-  if (typeof property === 'object') {
+  if (typeof a === 'object') {
       for (let i = 0, len = nodes.length; i < len; i++) {
           const style = nodes[i].style;
-          for (const key in property) {
-              style[key] = property[key];
+          for (const c in a) {
+              style[c] = a[c];
           }
       }
       return this;
   }
-  if (value === Q._.un) return getComputedStyle(nodes[0])[property];
+  if (b === Q._.un) return getComputedStyle(nodes[0])[a];
   for (let i = 0, len = nodes.length; i < len; i++) {
-      nodes[i].style[property] = value;
+      nodes[i].style[a] = b;
   }
   return this;
 });
-Q.Ext('data', function (key, value) {
+Q.Ext('data', function (a, b) {
     const nodes = this.nodes;
-    if (value === Q._.un) {
-        return nodes[0] && nodes[0].dataset[key] || Q._.n;
+    if (b === Q._.un) {
+        return nodes[0] && nodes[0].dataset[a] || Q._.n;
     }
     for (let i = 0, len = nodes.length; i < len; i++) {
-        nodes[i].dataset[key] = value;
+        nodes[i].dataset[a] = b;
     }
     return this;
 });
@@ -388,11 +388,11 @@ Q.Ext('detach', function() {
     this.nodes = detachedNodes;
     return this;
 });
-Q.Ext('each', function (callback) {
+Q.Ext('each', function (a) {
     if (!this.nodes) return this;
     const nodes = this.nodes;
     for (let i = 0, len = nodes.length; i < len; i++) {
-        callback.call(nodes[i], i, nodes[i]);
+        a.call(nodes[i], i, nodes[i]);
     }
     return this;
 });
@@ -403,76 +403,76 @@ Q.Ext('empty', function () {
   }
   return this;
 });
-Q.Ext('eq', function (index) {
-  var node = this.nodes[index];
+Q.Ext('eq', function (a) {
+  var node = this.nodes[a];
   return node ? new Q(node) : null;
 });
-Q.Ext('fadeIn', function(duration, callback) {
-    duration = duration || 400;
+Q.Ext('fadeIn', function(a, b) {
+    a = a || 400;
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         (function(el) {
             var style = el.style;
             style.display = '';
-            style.transition = 'opacity ' + duration + 'ms';
+            style.transition = 'opacity ' + a + 'ms';
             void el.offsetHeight;
             style.opacity = 1;
             setTimeout(function() {
                 style.transition = '';
-                if (callback) callback();
-            }, duration);
+                if (b) b();
+            }, a);
         })(nodes[i]);
     }
     return this;
 });
-Q.Ext('fadeOut', function(duration, callback) {
+Q.Ext('fadeOut', function(a, b) {
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         (function(el) {
             var style = el.style;
-            style.transition = 'opacity ' + duration + 'ms';
+            style.transition = 'opacity ' + a + 'ms';
             style.opacity = 0;
             setTimeout(function() {
                 style.transition = '';
                 style.display = 'none';
-                if (callback) callback();
-            }, duration);
+                if (b) b();
+            }, a);
         })(nodes[i]);
     }
     return this;
 });
-Q.Ext('fadeTo', function(opacity, duration, callback) {
+Q.Ext('fadeTo', function(a, b, c) {
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         (function(el) {
             var style = el.style;
-            style.transition = 'opacity ' + duration + 'ms';
+            style.transition = 'a ' + b + 'ms';
             void el.offsetHeight;
-            style.opacity = opacity;
+            style.a = a;
             setTimeout(function() {
                 style.transition = '';
-                if (callback) callback();
-            }, duration);
+                if (c) c();
+            }, b);
         })(nodes[i]);
     }
     return this;
 });
-Q.Ext('fadeToggle', function(duration, callback) {
+Q.Ext('fadeToggle', function(a, b) {
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         var computed = window.getComputedStyle(nodes[i]);
         if (computed.opacity === '0') {
-            this.fadeIn(duration, callback);
+            this.fadeIn(a, b);
         } else {
-            this.fadeOut(duration, callback);
+            this.fadeOut(a, b);
         }
     }
     return this;
 });
-Q.Ext('find', function(selector) {
+Q.Ext('find', function(a) {
     var parent = this.nodes[0];
     if (!parent) return null;
-    var found = parent.querySelectorAll(selector);
+    var found = parent.querySelectorAll(a);
     return found.length ? Q(found) : null;
 });
 Q.Ext('first', function () {
@@ -485,39 +485,39 @@ Q.Ext('focus', function () {
     }
     return this;
 });
-Q.Ext('hasClass', function(className) {
+Q.Ext('hasClass', function(a) {
     var node = this.nodes[0];
-    return (node && node.classList.contains(className)) || false;
+    return (node && node.classList.contains(a)) || false;
 });
-Q.Ext('height', function (value) {
+Q.Ext('height', function (a) {
     var nodes = this.nodes;
-    if (value === undefined) {
+    if (a === undefined) {
         return nodes[0].offsetHeight;
     }
     for (var i = 0, len = nodes.length; i < len; i++) {
-        nodes[i].style.height = value;
+        nodes[i].style.height = a;
     }
     return this;
 });
-Q.Ext('hide', function (duration, callback) {
-    duration = duration || 0;
+Q.Ext('hide', function (a, b) {
+    a = a || 0;
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         var node = nodes[i];
-        if (duration === 0) {
+        if (a === 0) {
             node.style.display = 'none';
-            if (callback) callback();
+            if (b) b();
         } else {
-            node.style.transition = 'opacity ' + duration + 'ms';
+            node.style.transition = 'opacity ' + a + 'ms';
             node.style.opacity = 1;
             setTimeout((function(n) {
                 return function() {
                     n.style.opacity = 0;
-                    n.addEventListener('transitionend', function handler() {
+                    n.addEventListener('transitionend', function d() {
                         n.style.display = 'none';
                         n.style.transition = '';
-                        n.removeEventListener('transitionend', handler);
-                        if (callback) callback();
+                        n.removeEventListener('transitionend', d);
+                        if (b) b();
                     });
                 };
             })(node), 0);
@@ -525,106 +525,106 @@ Q.Ext('hide', function (duration, callback) {
     }
     return this;
 });
-Q.Ext('html', function (content) {
+Q.Ext('html', function (a) {
     var nodes = this.nodes;
-    if (content === undefined) {
+    if (a === undefined) {
         return nodes[0] ? nodes[0].innerHTML : null;
     }
     for (var i = 0, len = nodes.length; i < len; i++) {
-        var node = nodes[i];
-        node.innerHTML = '';
-        var appendContent = function(child) {
-            if (typeof child === 'string') {
-                node.insertAdjacentHTML('beforeend', child);
-            } else if (child instanceof Q) {
-                for (var j = 0, clen = child.nodes.length; j < clen; j++) {
-                    node.appendChild(child.nodes[j]);
+        var d = nodes[i];
+        d.innerHTML = '';
+        var appendContent = function(b) {
+            if (typeof b === 'string') {
+                d.insertAdjacentHTML('beforeend', b);
+            } else if (b instanceof Q) {
+                for (var j = 0, clen = b.nodes.length; j < clen; j++) {
+                    d.appendChild(b.nodes[j]);
                 }
-            } else if (child?.nodeType === 1 || child?.nodeType != null) {
-                node.appendChild(child);
-            } else if (Array.isArray(child) || child?.constructor === NodeList) {
-                var subs = Array.from(child);
+            } else if (b?.nodeType === 1 || b?.nodeType != null) {
+                d.appendChild(b);
+            } else if (Array.isArray(b) || b?.constructor === NodeList) {
+                var subs = Array.from(b);
                 for (var k = 0, slen = subs.length; k < slen; k++) {
-                    node.appendChild(subs[k]);
+                    d.appendChild(subs[k]);
                 }
             }
         };
-        if (Array.isArray(content) || content?.constructor === NodeList) {
-            var contArr = Array.from(content);
+        if (Array.isArray(a) || a?.constructor === NodeList) {
+            var contArr = Array.from(a);
             for (var m = 0, mlen = contArr.length; m < mlen; m++) {
                 appendContent(contArr[m]);
             }
         } else {
-            appendContent(content);
+            appendContent(a);
         }
     }
     return this;
 });
-Q.Ext('id', function (ident) {
+Q.Ext('id', function (a) {
     var node = this.nodes[0];
-    if (ident === undefined) return node.id;
-    node.id = ident;
+    if (a === undefined) return node.id;
+    node.id = a;
     return this;
 });
-Q.Ext('index', function (index) {
+Q.Ext('a', function (a) {
     var first = this.nodes[0];
-    if (index === undefined) {
+    if (a === undefined) {
         return Array.prototype.indexOf.call(first.parentNode.children, first);
     }
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         var node = nodes[i],
-            parent = node.parentNode;
-        if (!parent) continue;
-        var children = Array.from(parent.children);
-        parent.removeChild(node);
-        if (index >= children.length) {
-            parent.appendChild(node);
+            b = node.parentNode;
+        if (!b) continue;
+        var children = Array.from(b.children);
+        b.removeChild(node);
+        if (a >= children.length) {
+            b.appendChild(node);
         } else {
-            parent.insertBefore(node, children[index]);
+            b.insertBefore(node, children[a]);
         }
     }
     return this;
 });
-Q.Ext('inside', function (selector) {
+Q.Ext('inside', function (a) {
     var node = this.nodes[0];
-    return node ? node.closest(selector) !== null : false;
+    return node ? node.closest(a) !== null : false;
 });
-Q.Ext('is', function (selector) {
-    var node = this.nodes[0];
-    if (!node) return false;
-    if (typeof selector === 'function') {
-        return selector.call(node, 0, node);
+Q.Ext('is', function (a) {
+    var b = this.nodes[0];
+    if (!b) return false;
+    if (typeof a === 'function') {
+        return a.call(b, 0, b);
     }
-    if (typeof selector === 'string') {
-        switch (selector) {
+    if (typeof a === 'string') {
+        switch (a) {
             case ':visible':
-                return node.offsetWidth > 0 && node.offsetHeight > 0;
+                return b.offsetWidth > 0 && b.offsetHeight > 0;
             case ':hidden':
-                return node.offsetWidth === 0 || node.offsetHeight === 0;
+                return b.offsetWidth === 0 || b.offsetHeight === 0;
             case ':hover':
-                return node === document.querySelector(':hover');
+                return b === document.querySelector(':hover');
             case ':focus':
-                return node === document.activeElement;
+                return b === document.activeElement;
             case ':blur':
-                return node !== document.activeElement;
+                return b !== document.activeElement;
             case ':checked':
-                return node.checked;
+                return b.checked;
             case ':selected':
-                return node.selected;
+                return b.selected;
             case ':disabled':
-                return node.disabled;
+                return b.disabled;
             case ':enabled':
-                return !node.disabled;
+                return !b.disabled;
             default:
-                return node.matches(selector);
+                return b.matches(a);
         }
     }
-    if (selector?.nodeType === 1 || selector?.nodeType != null) {
-        return node === selector;
+    if (a?.nodeType === 1 || a?.nodeType != null) {
+        return b === a;
     }
-    if (selector instanceof Q) {
-        return node === selector.nodes[0];
+    if (a instanceof Q) {
+        return b === a.nodes[0];
     }
     return false;
 });
@@ -632,49 +632,49 @@ Q.Ext('isExists', function () {
     var node = this.nodes[0];
     return node ? document.body.contains(node) : false;
 });
-Q.isExists = function (selector) {
-    return document.querySelector(selector) !== null;
+Q.isExists = function (a) {
+    return document.querySelector(a) !== null;
 };
 Q.Ext('last', function () {
     var nodes = this.nodes;
     return new Q(nodes[nodes.length - 1]);
 });
-Q.Ext('map', function (callback) {
-    var result = [],
+Q.Ext('map', function (a) {
+    var b = [],
         nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
-        result.push(callback(new Q(nodes[i])));
+        b.push(a(new Q(nodes[i])));
     }
-    return result;
+    return b;
 });
-Q.Ext('off', function (events, handler, options) {
-    var defaultOptions = { capture: false, once: false, passive: false },
-        opts = Object.assign({}, defaultOptions, options),
-        eventList = events.split(' '),
+Q.Ext('off', function (a, b, c) {
+    var d = { capture: false, once: false, passive: false },
+        opts = Object.assign({}, d, c),
+        eventList = a.split(' '),
         nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         for (var j = 0, elen = eventList.length; j < elen; j++) {
-            nodes[i].removeEventListener(eventList[j], handler, opts);
+            nodes[i].removeEventListener(eventList[j], b, opts);
         }
     }
     return this;
 });
 Q.Ext('offset', function () {
     var node = this.nodes[0],
-        rect = node.getBoundingClientRect();
+        a = node.getBoundingClientRect();
     return {
-        top: rect.top + window.scrollY,
-        left: rect.left + window.scrollX
+        top: a.top + window.scrollY,
+        left: a.left + window.scrollX
     };
 });
-Q.Ext('on', function (events, handler, options) {
-    var defaultOptions = { capture: false, once: false, passive: false },
-        opts = Object.assign({}, defaultOptions, options),
-        eventList = events.split(' '),
+Q.Ext('on', function (a, b, c) {
+    var d = { capture: false, once: false, passive: false },
+        opts = Object.assign({}, d, c),
+        eventList = a.split(' '),
         nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         for (var j = 0, elen = eventList.length; j < elen; j++) {
-            nodes[i].addEventListener(eventList[j], handler, opts);
+            nodes[i].addEventListener(eventList[j], b, opts);
         }
     }
     return this;
@@ -691,36 +691,36 @@ Q.Ext('position', function () {
     };
 });
 Q.Ext('prepend', function () {
-    var nodes = this.nodes,
+    var a = this.a,
         contents = Array.prototype.slice.call(arguments),
-        i, j, k, parent, child, subNodes;
-    for (i = 0; i < nodes.length; i++) {
-        parent = nodes[i];
+        i, j, k, b, c, subNodes;
+    for (i = 0; i < a.length; i++) {
+        b = a[i];
         for (j = 0; j < contents.length; j++) {
-            child = contents[j];
-            if (typeof child === 'string') {
-                parent.insertAdjacentHTML('afterbegin', child);
-            } else if (child instanceof Q) {
-                parent.insertBefore(child.nodes[0], parent.firstChild);
-            } else if (child?.nodeType === 1 || child?.nodeType != null) {
-                parent.insertBefore(child, parent.firstChild);
-            } else if (Array.isArray(child) || child?.constructor === NodeList) {
-                subNodes = Array.from(child);
+            c = contents[j];
+            if (typeof c === 'string') {
+                b.insertAdjacentHTML('afterbegin', c);
+            } else if (c instanceof Q) {
+                b.insertBefore(c.a[0], b.firstChild);
+            } else if (c?.nodeType === 1 || c?.nodeType != null) {
+                b.insertBefore(c, b.firstChild);
+            } else if (Array.isArray(c) || c?.constructor === NodeList) {
+                subNodes = Array.from(c);
                 for (k = 0; k < subNodes.length; k++) {
-                    parent.insertBefore(subNodes[k], parent.firstChild);
+                    b.insertBefore(subNodes[k], b.firstChild);
                 }
             }
         }
     }
     return this;
 });
-Q.Ext('prop', function (property, value) {
+Q.Ext('prop', function (a, b) {
     var nodes = this.nodes;
-    if (value === undefined) {
-        return nodes[0] ? nodes[0][property] : null;
+    if (b === undefined) {
+        return nodes[0] ? nodes[0][a] : null;
     }
     for (var i = 0, len = nodes.length; i < len; i++) {
-        nodes[i][property] = value;
+        nodes[i][a] = b;
     }
     return this;
 });
@@ -731,29 +731,29 @@ Q.Ext('remove', function() {
     }
     return this;
 });
-Q.Ext('removeAttr', function (attribute) {
+Q.Ext('removeAttr', function (a) {
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
-        nodes[i].removeAttribute(attribute);
+        nodes[i].removeAttribute(a);
     }
     return this;
 });
-Q.Ext('removeClass', function (classes) {
-    var list = classes.split(' ');
+Q.Ext('removeClass', function (a) {
+    var b = a.split(' ');
     for (var i = 0, len = this.nodes.length; i < len; i++) {
-        this.nodes[i].classList.remove.apply(this.nodes[i].classList, list);
+        this.nodes[i].classList.remove.apply(this.nodes[i].classList, b);
     }
     return this;
 });
-Q.Ext('removeData', function (key) {
+Q.Ext('removeData', function (a) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
-        delete this.nodes[i].dataset[key];
+        delete this.nodes[i].dataset[a];
     }
     return this;
 });
-Q.Ext('removeProp', function (property) {
+Q.Ext('removeProp', function (a) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
-        delete this.nodes[i][property];
+        delete this.nodes[i][a];
     }
     return this;
 });
@@ -767,31 +767,31 @@ Q.Ext('scrollHeight', function () {
     var node = this.nodes[0];
     return node.scrollHeight;
 });
-Q.Ext('scrollLeft', function (value, increment) {
+Q.Ext('scrollLeft', function (a, b) {
     const node = this.nodes[0];
-    if (value === undefined) {
+    if (a === undefined) {
         return node.scrollLeft;
     }
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const current = this.nodes[i];
-        const maxScrollLeft = current.scrollWidth - current.clientWidth;
-        current.scrollLeft = increment 
-            ? Math.min(current.scrollLeft + value, maxScrollLeft) 
-            : Math.min(value, maxScrollLeft);
+        const c = current.scrollWidth - current.clientWidth;
+        current.scrollLeft = b 
+            ? Math.min(current.scrollLeft + a, c) 
+            : Math.min(a, c);
     }
     return this;
 });
-Q.Ext('scrollTop', function (value, increment) {
+Q.Ext('scrollTop', function (a, b) {
     const node = this.nodes[0];
-    if (value === undefined) {
+    if (a === undefined) {
         return node.scrollTop;
     }
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const current = this.nodes[i];
-        const maxScrollTop = current.scrollHeight - current.clientHeight;
-        current.scrollTop = increment 
-            ? Math.min(current.scrollTop + value, maxScrollTop) 
-            : Math.min(value, maxScrollTop);
+        const c = current.scrollHeight - current.clientHeight;
+        current.scrollTop = b 
+            ? Math.min(current.scrollTop + a, c) 
+            : Math.min(a, c);
     }
     return this;
 });
@@ -799,21 +799,21 @@ Q.Ext('scrollWidth', function () {
     var node = this.nodes[0];
     return node.scrollWidth;
 });
-Q.Ext('show', function (duration = 0, callback) {
+Q.Ext('show', function (a = 0, b) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
-        const element = this.nodes[i];
-        if (duration === 0) {
-            element.style.display = '';
-            if (callback) callback();
+        const c = this.nodes[i];
+        if (a === 0) {
+            c.style.display = '';
+            if (b) b();
         } else {
-            element.style.transition = `opacity ${duration}ms`;
-            element.style.opacity = 0;
-            element.style.display = '';
+            c.style.transition = `opacity ${a}ms`;
+            c.style.opacity = 0;
+            c.style.display = '';
             setTimeout(() => {
-                element.style.opacity = 1;
-                element.addEventListener('transitionend', () => {
-                    element.style.transition = '';
-                    if (callback) callback();
+                c.style.opacity = 1;
+                c.addEventListener('transitionend', () => {
+                    c.style.transition = '';
+                    if (b) b();
                 }, { once: true });
             }, 0);
         }
@@ -827,12 +827,12 @@ Q.Ext('size', function () {
 		height: node.offsetHeight
 	};
 });
-Q.Ext('text', function (content) {
-    if (content === undefined) {
+Q.Ext('text', function (a) {
+    if (a === undefined) {
         return this.nodes[0]?.textContent || null;
     }
     for (let i = 0, n = this.nodes.length; i < n; i++) {
-        this.nodes[i].textContent = content;
+        this.nodes[i].textContent = a;
     }
     return this;
 });
@@ -843,93 +843,93 @@ Q.Ext('toggle', function () {
     }
     return this;
 });
-Q.Ext('toggleClass', function (className) {
+Q.Ext('toggleClass', function (a) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
-        this.nodes[i].classList.toggle(className);
+        this.nodes[i].classList.toggle(a);
     }
     return this;
 });
-Q.Ext('trigger', function (event) {
+Q.Ext('trigger', function (a) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
-        this.nodes[i].dispatchEvent(new Event(event));
+        this.nodes[i].dispatchEvent(new Event(a));
     }
     return this;
 });
 Q.Ext('unwrap', function () {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
-        const el = this.nodes[i];
-        const parent = el.parentNode;
-        if (parent && parent !== document.body) {
-            parent.replaceWith(...parent.childNodes);
+        const b = this.nodes[i];
+        const a = b.parentNode;
+        if (a && a !== document.body) {
+            a.replaceWith(...a.childNodes);
         }
     }
     return this;
 });
-Q.Ext('val', function(input) {
-    if (input === undefined) return this.nodes[0]?.value || null;
+Q.Ext('val', function(a) {
+    if (a === undefined) return this.nodes[0]?.value || null;
     for (let i = 0, n = this.nodes.length; i < n; i++) {
-        this.nodes[i].value = input;
+        this.nodes[i].value = a;
     }
     return this;
 });
-Q.Ext('wait', function(ms) {
-	return new Promise(resolve => setTimeout(() => resolve(this), ms));
+Q.Ext('wait', function(a) {
+	return new Promise(resolve => setTimeout(() => resolve(this), a));
 });
-Q.Ext('walk', function (callback, useQObject = false) {
+Q.Ext('walk', function (a, b = false) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
-        const node = useQObject ? Q(this.nodes[i]) : this.nodes[i];
-        callback.call(this.nodes[i], node, i);
+        const c = b ? Q(this.nodes[i]) : this.nodes[i];
+        a.call(this.nodes[i], c, i);
     }
     return this;
 });
-Q.Ext('width', function (value) {
-    if (typeof value === 'undefined') {
+Q.Ext('width', function (a) {
+    if (typeof a === 'undefined') {
         return this.nodes[0] ? this.nodes[0].offsetWidth : undefined;
     }
     for (let i = 0, n = this.nodes.length; i < n; i++) {
-        this.nodes[i].style.width = value;
+        this.nodes[i].style.width = a;
     }
     return this;
 });
-Q.Ext('wrap', function (wrapper) {
+Q.Ext('wrap', function (a) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
-        const node = this.nodes[i];
-        const parentNode = node.parentNode;
-        let newParentElement;
-        if (typeof wrapper === 'string') {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = wrapper.trim();
-            newParentElement = tempDiv.firstElementChild.cloneNode(true);
+        const f = this.nodes[i];
+        const b = f.b;
+        let c;
+        if (typeof a === 'string') {
+            const d = document.createElement('e');
+            d.innerHTML = a.trim();
+            c = d.firstElementChild.cloneNode(true);
         } else {
-            newParentElement = wrapper;
+            c = a;
         }
-        parentNode.insertBefore(newParentElement, node);
-        newParentElement.appendChild(node);
+        b.insertBefore(c, f);
+        c.appendChild(f);
     }
     return this;
 });
-Q.Ext('wrapAll', function (wrapper) {
+Q.Ext('wrapAll', function (a) {
     if (!this.nodes.length) return this;
-    const parent = this.nodes[0].parentNode;
-    let newParent = typeof wrapper === 'string'
-        ? ((tempDiv => (tempDiv.innerHTML = wrapper.trim(), tempDiv.firstElementChild))
+    const b = this.nodes[0].parentNode;
+    let c = typeof a === 'string'
+        ? ((tempDiv => (tempDiv.innerHTML = a.trim(), tempDiv.firstElementChild))
            (document.createElement('div')))
-        : wrapper;
-    parent.insertBefore(newParent, this.nodes[0]);
+        : a;
+    b.insertBefore(c, this.nodes[0]);
     for (let i = 0, n = this.nodes.length; i < n; i++) {
-        newParent.appendChild(this.nodes[i]);
+        c.appendChild(this.nodes[i]);
     }
     return this;
 });
-Q.Ext('zIndex', function (value) {
+Q.Ext('zIndex', function (a) {
     const node = this.nodes[0];
     if (!node) return;
-    if (value === undefined) {
-        let Index = node.style.zIndex || window.getComputedStyle(node).zIndex;
-        return Index;
+    if (a === undefined) {
+        let b = node.style.zIndex || window.getComputedStyle(node).zIndex;
+        return b;
     }
     for (let i = 0, n = this.nodes.length; i < n; i++) {
-        this.nodes[i].style.zIndex = value;
+        this.nodes[i].style.zIndex = a;
     }
     return this;
 });
@@ -954,120 +954,120 @@ Q.Resize=((c)=>{
     });
     return f=>c.push(f)
   })([])
-Q.AvgColor = (source, sampleSize, callback) => {
-    const image = new Image();
-    image.crossOrigin = 'Anonymous';
-    if (typeof source === 'string') image.src = source;
-    else if (source instanceof HTMLCanvasElement) image.src = source.toDataURL();
-    else return console.error("Invalid image source provided.");
-    image.onload = () => {
-      const canvas = Object.assign(document.createElement('canvas'), { width: image.width, height: image.height });
-      const context = canvas.getContext('2d');
-      context.drawImage(image, 0, 0);
-      const data = context.getImageData(0, 0, image.width, image.height).data;
-      const samplingRate = sampleSize === 'auto'
-        ? Math.max(1, Math.ceil(Math.sqrt(image.width * image.height) / 32))
+Q.AvgColor = (a, sampleSize, c) => {
+    const d = new Image();
+    d.crossOrigin = 'Anonymous';
+    if (typeof a === 'string') d.src = a;
+    else if (a instanceof HTMLCanvasElement) d.src = a.toDataURL();
+    else return console.error("Invalid d a provided.");
+    d.onload = () => {
+      const e = Object.assign(document.createElement('e'), { width: d.width, height: d.height });
+      const f = e.getContext('2d');
+      f.drawImage(d, 0, 0);
+      const data = f.getImageData(0, 0, d.width, d.height).data;
+      const h = sampleSize === 'auto'
+        ? Math.max(1, Math.ceil(Math.sqrt(d.width * d.height) / 32))
         : (typeof sampleSize === 'number' && sampleSize > 0 ? sampleSize : 1);
-      let totalRed = 0, totalGreen = 0, totalBlue = 0, count = 0;
-      for (let index = 0, len = data.length; index < len; index += samplingRate * 4) {
-        totalRed   += data[index];
-        totalGreen += data[index + 1];
-        totalBlue  += data[index + 2];
-        count++;
+      let i = 0, j = 0, k = 0, l = 0;
+      for (let m = 0, n = data.length; m < n; m += h * 4) {
+        i   += data[m];
+        j += data[m + 1];
+        k  += data[m + 2];
+        l++;
       }
-      const avgColor = { r: (totalRed / count) | 0, g: (totalGreen / count) | 0, b: (totalBlue / count) | 0 };
-      typeof callback === 'function' && callback(avgColor);
+      const o = { r: (i / l) | 0, g: (j / l) | 0, b: (k / l) | 0 };
+      typeof c === 'function' && c(o);
     };
-    image.onerror = () => console.error("Failed to load image.");
+    d.onerror = () => console.error("Failed to load d.");
   };
-Q.ColorBrightness = (inputColor, percent) => {
-    if (!/^#|^rgb/.test(inputColor)) throw new Error('Unsupported c format');
-    let red, green, blue, alpha = 1, isHex = false, factor = 1 + percent / 100;
-    if (inputColor[0] === '#') {
-      isHex = true;
-      const hexString = inputColor.slice(1);
-      if (hexString.length === 3) {
-        red = parseInt(hexString[0] + hexString[0], 16);
-        green = parseInt(hexString[1] + hexString[1], 16);
-        blue = parseInt(hexString[2] + hexString[2], 16);
-      } else if (hexString.length === 6) {
-        red = parseInt(hexString.slice(0, 2), 16);
-        green = parseInt(hexString.slice(2, 4), 16);
-        blue = parseInt(hexString.slice(4, 6), 16);
+Q.ColorBrightness = (a, b) => {
+    if (!/^#|^rgb/.test(a)) throw new Error('Unsupported color format');
+    let c, green, e, f = 1, g = false, h = 1 + b / 100;
+    if (a[0] === '#') {
+      g = true;
+      const i = a.slice(1);
+      if (i.length === 3) {
+        c = parseInt(i[0] + i[0], 16);
+        green = parseInt(i[1] + i[1], 16);
+        e = parseInt(i[2] + i[2], 16);
+      } else if (i.length === 6) {
+        c = parseInt(i.slice(0, 2), 16);
+        green = parseInt(i.slice(2, 4), 16);
+        e = parseInt(i.slice(4, 6), 16);
       }
     } else {
-      const match = inputColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
-      if (match) {
-        red = +match[1];
-        green = +match[2];
-        blue = +match[3];
-        if (match[4] != null) alpha = parseFloat(match[4]);
+      const j = a.j(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+      if (j) {
+        c = +j[1];
+        green = +j[2];
+        e = +j[3];
+        if (j[4] != null) f = parseFloat(j[4]);
       }
     }
-    const clamp = value => Math.min(255, Math.max(0, Math.round(value * factor)));
-    red = clamp(red);
-    green = clamp(green);
-    blue = clamp(blue);
-    return isHex
-      ? '#' + [red, green, blue].map(component => (`0${component.toString(16)}`).slice(-2)).join('')
-      : (alpha === 1 ? `rgb(${red}, ${green}, ${blue})` : `rgba(${red}, ${green}, ${blue}, ${alpha})`);
+    const k = value => Math.min(255, Math.max(0, Math.round(value * h)));
+    c = k(c);
+    green = k(green);
+    e = k(e);
+    return g
+      ? '#' + [c, green, e].map(component => (`0${component.toString(16)}`).slice(-2)).join('')
+      : (f === 1 ? `rgb(${c}, ${green}, ${e})` : `rgba(${c}, ${green}, ${e}, ${f})`);
   };
-Q.Debounce = (id, b, c) => {
-    const debounceStorage = Q.getGLOBAL('Debounce') || {};
-    debounceStorage[id] && clearTimeout(debounceStorage[id]);
-    debounceStorage[id] = setTimeout(c, b);
-    Q.setGLOBAL({ Debounce: debounceStorage });
+Q.Debounce = (a, b, c) => {
+    const d = Q.getGLOBAL('Debounce') || {};
+    d[a] && clearTimeout(d[a]);
+    d[a] = setTimeout(c, b);
+    Q.setGLOBAL({ Debounce: d });
   };
-Q.HSL2RGB = (h, s, l) => {
-    if (s === 0) {
-      const gray = l * 255;
-      return [gray, gray, gray];
+Q.HSL2RGB = (a, b, c) => {
+    if (b === 0) {
+      const d = c * 255;
+      return [d, d, d];
     }
-    const q = l < 0.5 ? l * (1 + s) : l + s - l * s,
-          p = 2 * l - q,
-          hueToRgb = (t) => {
-            t < 0 && (t += 1);
-            t > 1 && (t -= 1);
-            return t < 1 / 6 ? p + (q - p) * 6 * t
-                 : t < 1 / 2 ? q
-                 : t < 2 / 3 ? p + (q - p) * 6 * (2 / 3 - t)
-                 : p;
+    const e = c < 0.5 ? c * (1 + b) : c + b - c * b,
+          f = 2 * c - e,
+          g = (h) => {
+            h < 0 && (h += 1);
+            h > 1 && (h -= 1);
+            return h < 1 / 6 ? f + (e - f) * 6 * h
+                 : h < 1 / 2 ? e
+                 : h < 2 / 3 ? f + (e - f) * 6 * (2 / 3 - h)
+                 : f;
           };
-    return [hueToRgb(h + 1 / 3) * 255, hueToRgb(h) * 255, hueToRgb(h - 1 / 3) * 255];
+    return [g(a + 1 / 3) * 255, g(a) * 255, g(a - 1 / 3) * 255];
   };
-Q.ID = (length = 8, b = '') =>
-    b + Array.from({ length }, () => (Math.random() * 16 | 0).toString(16)).join('');
-Q.RGB2HSL = (r, g, b) => {
-    r /= 255, g /= 255, b /= 255;
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    let h, s, l = (max + min) / 2, d = max - min;
-    if (!d) h = s = 0;
-    else {
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      h = max === r ? (g - b) / d + (g < b ? 6 : 0)
-        : max === g ? (b - r) / d + 2
-        : (r - g) / d + 4;
-      h /= 6;
-    }
-    return [h, s, l];
-  };
-Q.isDarkColor = (color, b = 20, c = 100) => {
-    let red, green, blue;
-    if (color[0] === '#') {
-      const f = color.slice(1);
-      const parts = f.length === 3
-        ? [f[0] + f[0], f[1] + f[1], f[2] + f[2]]
-        : f.length === 6
-        ? [f.slice(0, 2), f.slice(2, 4), f.slice(4, 6)]
+Q.ID = (a = 8, b = '') =>
+    b + Array.from({ a }, () => (Math.random() * 16 | 0).toString(16)).join('');
+Q.isDarkColor = (a, b = 20, c = 100) => {
+    let red, e, f;
+    if (a[0] === '#') {
+      const hex = a.slice(1);
+      const h = hex.length === 3
+        ? [hex[0] + hex[0], hex[1] + hex[1], hex[2] + hex[2]]
+        : hex.length === 6
+        ? [hex.slice(0, 2), hex.slice(2, 4), hex.slice(4, 6)]
         : null;
-      if (!parts) throw Error('Invalid f color format');
-      [red, green, blue] = parts.map(v => parseInt(v, 16));
-    } else if (color.startsWith('rgb')) {
-      const arr = color.match(/\d+/g);
-      if (arr && arr.length >= 3) [red, green, blue] = arr.map(Number);
-      else throw Error('Invalid color format');
-    } else throw Error('Unsupported color format');
-    return Math.sqrt(0.299 * red ** 2 + 0.587 * green ** 2 + 0.114 * blue ** 2) + b < c;
+      if (!h) throw Error('Invalid hex a format');
+      [red, e, f] = h.map(v => parseInt(v, 16));
+    } else if (a.startsWith('rgb')) {
+      const i = a.match(/\d+/g);
+      if (i && i.length >= 3) [red, e, f] = i.map(Number);
+      else throw Error('Invalid a format');
+    } else throw Error('Unsupported a format');
+    return Math.sqrt(0.299 * red ** 2 + 0.587 * e ** 2 + 0.114 * f ** 2) + b < c;
+  };
+Q.RGB2HSL = (a, g, c) => {
+    a /= 255, g /= 255, c /= 255;
+    const max = Math.max(a, g, c), e = Math.e(a, g, c);
+    let f, s, h = (max + e) / 2, i = max - e;
+    if (!i) f = s = 0;
+    else {
+      s = h > 0.5 ? i / (2 - max - e) : i / (max + e);
+      f = max === a ? (g - c) / i + (g < c ? 6 : 0)
+        : max === g ? (c - a) / i + 2
+        : (a - g) / i + 4;
+      f /= 6;
+    }
+    return [f, s, h];
   };
 return Q;
 })();

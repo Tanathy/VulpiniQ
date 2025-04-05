@@ -1,0 +1,24 @@
+{
+  "Name": "Cookie",
+  "Method": "Static",
+  "Desc": "A utility function to set, get, and delete cookies.",
+  "Long Desc": "This function provides a simple way to manage cookies in JavaScript. It can be used to set a cookie with specified value and options like expiration days, path, domain, and secure flag. It can also be used to retrieve the value of a cookie by its name. If the cookie value is set to null or an empty string, the cookie will be deleted by setting its expiration days to -1.",
+  "Type": "Utility",
+  "Example": [
+    "// Set a cookie named 'myCookie' with the value 'myValue' that expires in 7 days\nQ.Cookie('myCookie', 'myValue', { days: 7 });",
+    "// Get the value of the cookie named 'myCookie'\nlet cookieValue = Q.Cookie('myCookie');\nconsole.log(cookieValue); // Output: myValue",
+    "// Delete the cookie named 'myCookie'\nQ.Cookie('myCookie', null);"
+  ],
+  "Variables": [
+    "cookieKey",
+    "cookieValue",
+    "cookieOptions",
+    "options",
+    "optionsStr",
+    "allCookies",
+    "i",
+    "len",
+    "currentCookie",
+    "indexEqual"
+  ]
+}

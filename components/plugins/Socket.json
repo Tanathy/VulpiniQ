@@ -1,0 +1,41 @@
+{
+  "Name": "Socket",
+  "Method": "Static",
+  "Desc": "A utility function to create and manage WebSocket connections.",
+  "Long Desc": "This function simplifies the creation and management of WebSocket connections. It handles automatic reconnection, message queuing, pinging, and provides callbacks for open, close, error, and message events. Options include setting the number of retries, delay between retries, protocols, backoff strategy, ping interval, ping message, message queuing, and auto-reconnect behavior.",
+  "Type": "Utility",
+  "Example": [
+    "// Create a new WebSocket connection\nlet socket = Q.Socket('ws://example.com', (data) => {\n  console.log('Message received:', data);\n}, (status) => {\n  console.log('Status:', status);\n}, {\n  retries: 5,\n  delay: 1000,\n  pingInterval: 30000,\n  pingMessage: 'ping',\n  queueMessages: true\n});",
+    "// Send a message\nsocket.send('Hello, server!');",
+    "// Reconnect the socket\nsocket.reconnect();",
+    "// Close the socket\nsocket.close();",
+    "// Get the socket state\nlet state = socket.getState();\nconsole.log('Socket state:', state);"
+  ],
+  "Variables": [
+    "url",
+    "onMessage",
+    "onStatus",
+    "options",
+    "retries",
+    "delay",
+    "protocols",
+    "backoff",
+    "pingInterval",
+    "pingMessage",
+    "queueMessages",
+    "autoReconnect",
+    "onOpen",
+    "onClose",
+    "onError",
+    "socket",
+    "attempts",
+    "currentDelay",
+    "pingId",
+    "messageQueue",
+    "connect",
+    "event",
+    "error",
+    "message",
+    "state"
+  ]
+}
