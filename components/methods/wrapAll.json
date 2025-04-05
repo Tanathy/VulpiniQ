@@ -2,8 +2,14 @@
     "Name": "wrapAll",
     "Method": "Prototype",
     "Desc": "Wraps all nodes together in a single wrapper element.",
+    "Long Desc": "Wraps all matched elements as a single group within an HTML structure. This method is useful for inserting a new parent structure around a set of elements without disrupting their existing document position. Unlike 'wrap', which wraps each element individually, 'wrapAll' places all elements within a single container, making it ideal for grouping related elements together for styling or JavaScript manipulation.",
     "Type": "DOM Manipulation",
-    "Example": "Q(selector).wrapAll(\"<div class='wrapper'></div>\");",
+    "Example": [
+        "Q(selector).wrapAll(\"<div class='wrapper'></div>\");",
+        "Q('.items').wrapAll('<section id=\"container\"></section>');",
+        "const wrapperElement = document.createElement('div');",
+        "Q('.related-posts').wrapAll(wrapperElement);"
+    ],
     "Dependencies": [],
-    "Variables": ["wrapper", "parent", "newParent", "child", "el"]
+    "Variables": ["wrapper", "tempDiv", "newParent", "parent"]
 }

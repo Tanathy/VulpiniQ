@@ -2,8 +2,14 @@
     "Name": "height",
     "Method": "Prototype",
     "Desc": "Gets or sets the height of the first node.",
+    "Long Desc": "Controls the height dimension of elements. When called without parameters, returns the current height of the first element in the set including padding and border (offsetHeight). When provided with a value, sets the CSS height property for all elements in the set, accepting values in pixels, percentages, or other CSS units. This method provides a convenient way to manage element dimensions programmatically for responsive layouts, animations, or dynamic content areas.",
     "Type": "Dimensions",
-    "Example": "Q(selector).height(value);",
+    "Example": [
+        "Q(selector).height();", 
+        "Q('#content').height('300px');",
+        "const elemHeight = Q('.box').height();",
+        "Q('.panel').height('50vh');"
+    ],
     "Dependencies": [],
-    "Variables": ["value", "el"]
+    "Variables": ["value"]
 }

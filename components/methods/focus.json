@@ -2,8 +2,13 @@
     "Name": "focus",
     "Method": "Prototype",
     "Desc": "Focuses on the first node.",
+    "Long Desc": "The focus method applies focus to each element in the collection sequentially. This is particularly useful for directing user attention to specific form elements or interactive components. When an element receives focus, it becomes the active element on the page and can respond to keyboard events, making this method essential for keyboard navigation and accessibility features.",
     "Type": "Form Manipulation",
-    "Example": "Q(selector).focus();",
+    "Example": [
+        "Q('input#username').focus();",
+        "Q('.search-box').focus();",
+        "Q(selector).click(function() { Q('#target-field').focus(); });"
+    ],
     "Dependencies": [],
-    "Variables": ["el"]
+    "Variables": ["i", "len"]
 }

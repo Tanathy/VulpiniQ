@@ -1,9 +1,15 @@
 {
     "Name": "fadeOut",
     "Method": "Prototype",
-    "Desc": "Fades out each node.",
-    "Type": "Display",
-    "Example": "Q(selector).fadeOut(duration, callback);",
+    "Desc": "Fades out all nodes over a specified duration and then sets display to none.",
+    "Long Desc": "Gradually decreases the opacity of all matched elements over a specified duration until they reach zero opacity, then sets their display property to 'none' to remove them from the document flow. This method provides a smooth visual transition when removing elements from view, rather than abruptly hiding them. An optional callback function can be specified to execute once the animation completes, allowing for sequenced animations or cleanup operations.",
+    "Type": "Animation",
+    "Example": [
+        "Q('#notification').fadeOut(500);",
+        "Q('.temporary-message').fadeOut();", 
+        "Q('.modal').fadeOut(300, () => Q('.modal-backdrop').fadeOut());",
+        "const duration = 800; Q('#splash-screen').fadeOut(duration, () => console.log('Animation complete'));"
+    ],
     "Dependencies": [],
-    "Variables": ["duration", "callback", "elementStyle", "nodeElements", "elementIndex"]
+    "Variables": ["duration", "callback", "el", "i", "n"]
 }

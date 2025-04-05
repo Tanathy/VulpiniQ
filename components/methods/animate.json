@@ -2,9 +2,12 @@
   "Name": "animate",
   "Method": "Prototype",
   "Desc": "Animates each node using specified CSS properties over a given duration, with an optional callback when complete.",
-  "Long Desc": "Animates each node using specified CSS properties over a given duration in milliseconds. You can animate multiple CSS properties, such as opacity, position, or color. The callback function will be called after the animation ends, allowing for further actions.",
+  "Long Desc": "The 'animate' method provides a way to apply smooth transitions to CSS properties for each element in the current set of matched elements. You can specify the duration in milliseconds, the CSS properties to animate, and an optional callback function to execute once the animation is complete. This method supports animating multiple properties simultaneously, such as opacity, position, or color. It is ideal for creating visually engaging effects, enhancing user experience, and providing feedback through animations.",
   "Type": "Animation",
-  "Example": "Q(selector).animate(500, { opacity: 0 }, () => { console.log('Fade out complete'); }); // Fades out over 500ms\nQ(selector).animate(1000, { left: \"100px\", top: \"50px\" }); // Moves to new position in 1 second\nQ(selector).animate(700, { opacity: 1, backgroundColor: \"#ff0000\" }, () => { alert('Animation finished!'); }); // Changes opacity and background color",
-  "Variables": ["duration", "properties", "transitionProperties", "prop", "callback", "element", "el"],
-  "Dependencies": ["each"]
+  "Example": [
+    "Q(selector).animate(500, { opacity: 0 }, () => { console.log('Fade out complete'); }); // Fades out over 500ms",
+    "Q(selector).animate(1000, { left: \"100px\", top: \"50px\" }); // Moves to new position in 1 second",
+    "Q(selector).animate(700, { opacity: 1, backgroundColor: \"#ff0000\" }, () => { alert('Animation finished!'); }); // Changes opacity and background color"
+  ],
+  "Variables": ["element", "keys", "transitionProperties", "prop"]
 }

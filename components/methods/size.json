@@ -2,8 +2,14 @@
     "Name": "size",
     "Method": "Prototype",
     "Desc": "Returns the width and height of the first node.",
+    "Long Desc": "Provides a convenient way to get the dimensions of an element in a single method call. Returns an object with width and height properties, based on the element's offsetWidth and offsetHeight which include padding and borders. This method is useful for calculations related to layout, positioning, or responsive design where both dimensions are needed simultaneously.",
     "Type": "Dimensions",
-    "Example": "Q(selector).size();",
+    "Example": [
+        "const dimensions = Q('#box').size();",
+        "const { width, height } = Q('.container').size();",
+        "if (Q('#element').size().width > 500) { /* logic here */ }",
+        "const ratio = Q('.image').size().width / Q('.image').size().height;"
+    ],
     "Dependencies": "",
-    "Variables": []
+    "Variables": ["node", "width", "height"]
 }

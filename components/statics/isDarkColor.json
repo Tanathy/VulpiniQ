@@ -9,5 +9,5 @@
     "// Using RGB format with custom margin\nlet buttonColor = 'rgb(52, 152, 219)';\nlet textShade = Q.isDarkColor(buttonColor, 15) ? 'white' : 'black';\ndocument.getElementById('action-button').classList.add(`text-${textShade}`);",
     "// Custom threshold for special design cases\nvar headerBg = '#6a1b9a';\nvar customThreshold = 120;\nvar headerTextClass = Q.isDarkColor(headerBg, 10, customThreshold) ? 'light-text' : 'dark-text';\ndocument.querySelector('header').classList.add(headerTextClass);"
   ],
-  "Variables": ["color", "margin", "threshold", "red", "green", "blue", "hex", "parts", "arr"]
+  "Variables": ["hex","parts","red","green","blue","color","margin","threshold","arr"]
 }

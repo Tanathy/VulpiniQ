@@ -2,8 +2,14 @@
     "Name": "scrollHeight",
     "Method": "Prototype",
     "Desc": "Returns the scroll height of the first node.",
-    "Type": "Scroll Manipulation",
-    "Example": "Q(selector).scrollHeight();",
-    "Dependencies": "",
-    "Variables": []
+    "Long Desc": "Provides access to the element's full content height, including areas that are not visible due to overflow settings. This measurement includes padding but not borders, margins, or scrollbars. It represents the minimum height the element would require to fit all content without vertical scrolling. This method is particularly useful for detecting when content is overflowing vertically or implementing custom scroll functionality.",
+    "Type": "Dimensions",
+    "Example": [
+        "const height = Q('#content').scrollHeight();",
+        "if (Q('.panel').scrollHeight() > Q('.panel').height()) { /* content is overflowing */ }",
+        "const totalHeight = Q('#long-text').scrollHeight();",
+        "const scrollPercentage = Q('#container').scrollTop() / (Q('#container').scrollHeight() - Q('#container').height());"
+    ],
+    "Dependencies": [],
+    "Variables": ["node"]
 }

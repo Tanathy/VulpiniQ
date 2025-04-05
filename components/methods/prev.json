@@ -1,0 +1,15 @@
+{
+    "Name": "prev",
+    "Method": "Prototype",
+    "Desc": "Gets the previous sibling element of each node, optionally filtered by a selector.",
+    "Long Desc": "Returns the immediate previous sibling element for each element in the set, with an optional filter to match specific elements. This traversal method provides a way to navigate to adjacent elements in the DOM that share the same parent. It's particularly useful for navigating through lists, steps in a process, or tabular data where you need to access the previous element in sequence, or for implementing keyboard navigation, pagination, or other reverse-directional UI components.",
+    "Type": "Traversal",
+    "Example": [
+        "const previousElement = Q('#current').prev();",
+        "Q('li.active').prev().addClass('completed');",
+        "Q('.step-3').prev('.step').trigger('focus');",
+        "const prevSlide = Q('.current-slide').prev('.slide');"
+    ],
+    "Dependencies": [],
+    "Variables": ["selector", "node", "previous", "i", "n", "result", "instance"]
+}

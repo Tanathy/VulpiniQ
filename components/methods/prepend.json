@@ -1,9 +1,15 @@
 {
-  "Name": "prepend",
-  "Method": "Prototype",
-  "Desc": "Prepends child nodes or HTML to each node.",
-  "Type": "DOM Manipulation",
-  "Example": "Q(selector).prepend(\"<div>Prepended</div>\");",
-  "Dependencies": [],
-  "Variables": ["nodes", "parent", "child", "subchild", "el"]
+    "Name": "prepend",
+    "Method": "Prototype",
+    "Desc": "Inserts content at the beginning of each node.",
+    "Long Desc": "Inserts the specified content as the first child of each element in the matched set. The content can be HTML strings, DOM elements, or Q objects. Unlike append() which adds content at the end of elements, prepend() adds it at the beginning. This method is especially useful for adding introductory content, prefixes, headers, or notifications to existing elements without replacing their current content.",
+    "Type": "DOM Manipulation",
+    "Example": [
+        "Q(selector).prepend('<span>New content</span>');",
+        "Q('.list').prepend('<li>First item</li>');",
+        "const newElement = document.createElement('div'); Q('#container').prepend(newElement);",
+        "Q('.message').prepend(`<strong class=\"prefix\">${prefix}:</strong> `);"
+    ],
+    "Dependencies": [],
+    "Variables": ["content", "node", "i", "n"]
 }

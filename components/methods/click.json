@@ -2,8 +2,12 @@
     "Name": "click",
     "Method": "Prototype",
     "Desc": "Simulates a click event on each node in the selection.",
+    "Long Desc": "The 'click' method triggers a click event on each DOM node in the selection. This is useful for programmatically simulating user interactions, such as clicking buttons or links. It can be used to automate UI testing or to trigger event handlers bound to the click event.",
     "Type": "Event Handling",
-    "Example": "Q(selector).click();",
+    "Example": [
+        "Q(selector).click();",
+        "Q('.button').click();"
+    ],
     "Dependencies": [],
-    "Variables": []
+    "Variables": ["i", "l"]
 }

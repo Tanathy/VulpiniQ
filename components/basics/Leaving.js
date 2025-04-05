@@ -4,4 +4,4 @@ Q.Leaving=((c)=>{
       ev=e;while(c.length)c.shift()(e);c=0
     });
     return f=>c?c.push(f):f(ev)
-  })([])
+  })([]);

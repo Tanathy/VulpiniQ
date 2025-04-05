@@ -1,9 +1,15 @@
 {
     "Name": "find",
     "Method": "Prototype",
-    "Desc": "Finds child nodes of the first node that match a specific selector.",
+    "Desc": "Finds descendants of each node that match the selector.",
+    "Long Desc": "Searches through the descendants of each element in the current set and returns a new Q object containing all elements that match the specified selector. This method performs a depth-first traversal of the DOM tree, making it powerful for narrowing down selection contexts. Unlike global selectors, find() restricts the search to within already selected elements, making it more efficient and contextually relevant for targeting nested elements in complex DOM structures.",
     "Type": "Traversal",
-    "Example": "Q(selector).find(\".child\");",
+    "Example": [
+        "Q('#container').find('.item');",
+        "const nestedImages = Q('.article').find('img');",
+        "const selector = '[data-role=\"button\"]'; Q('nav').find(selector);",
+        "Q('form').find('input:invalid').addClass('error');"
+    ],
     "Dependencies": [],
-    "Variables": ["selector", "parentElement", "foundElements"]
+    "Variables": ["selector", "node", "i", "n"]
 }

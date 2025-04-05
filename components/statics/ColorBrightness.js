@@ -1,5 +1,5 @@
 Q.ColorBrightness = (inputColor, percent) => {
-    if (!/^#|^rgb/.test(inputColor)) throw new Error('Unsupported color format');
+    if (!/^#|^rgb/.test(inputColor)) throw new Error('Unsupported format');
     let red, green, blue, alpha = 1, isHex = false, factor = 1 + percent / 100;
     if (inputColor[0] === '#') {
       isHex = true;

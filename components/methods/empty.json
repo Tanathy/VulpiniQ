@@ -2,8 +2,14 @@
     "Name": "empty",
     "Method": "Prototype",
     "Desc": "Empties the innerHTML of each node.",
+    "Long Desc": "The 'empty' method is used to clear the content of all matched elements. This is particularly useful when you need to reset or remove all child elements and text content from a set of elements. It ensures that the elements themselves remain in the DOM, but their innerHTML is cleared. This method is commonly used in scenarios where dynamic content needs to be refreshed or replaced without removing the parent elements. By using 'empty', developers can ensure a clean slate for inserting new content, improving performance and reducing potential errors caused by leftover elements or text.",
     "Type": "Content Manipulation",
-    "Example": "Q(selector).empty();",
+    "Example": [
+        "Q(selector).empty();",
+        "Q('.container').empty(); // Clears all content inside elements with the class 'container'",
+        "Q('#main').empty(); // Clears all content inside the element with the ID 'main'",
+        "Q('div').empty(); // Clears all content inside all <div> elements"
+    ],
     "Dependencies": [],
-    "Variables": ["el"]
+    "Variables": ["node", "i", "len"]
 }

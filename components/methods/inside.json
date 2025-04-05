@@ -2,8 +2,13 @@
   "Name": "inside",
   "Method": "Prototype",
   "Desc": "Checks if the first node is inside another node, determined by a specific selector.",
+  "Long Desc": "The inside method provides a way to check if an element is contained within another specified parent element. It leverages the DOM's closest() method to determine if the first node in the collection has an ancestor that matches the given selector. This is particularly useful for event delegation, checking containment relationships, or implementing conditional logic based on DOM hierarchy. Unlike direct parent checks, inside() can find ancestors at any level in the DOM tree.",
   "Type": "Traversal",
-  "Example": "Q(selector).inside(\".parent\");",
+  "Example": [
+    "Q(selector).inside(\".parent\");",
+    "if(Q('.child').inside('#container')) { /* do something */ }",
+    "Q('.item').inside('section.content')"
+  ],
   "Dependencies": [],
-  "Variables": ["selector"]
+  "Variables": ["selector", "node"]
 }

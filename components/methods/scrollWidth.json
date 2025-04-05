@@ -2,8 +2,14 @@
     "Name": "scrollWidth",
     "Method": "Prototype",
     "Desc": "Returns the scroll width of the first node.",
+    "Long Desc": "Provides access to the element's full content width, including areas that are not visible due to overflow settings. This measurement includes padding but not borders, margins, or scrollbars. It represents the minimum width the element would require to fit all content without horizontal scrolling. This method is particularly useful for detecting overflow content or implementing custom scrolling functionality.",
     "Type": "Dimensions",
-    "Example": "Q(selector).scrollWidth();",
-    "Dependencies": "",
-    "Variables": []
+    "Example": [
+        "const width = Q('#content').scrollWidth();",
+        "if (Q('.panel').scrollWidth() > Q('.panel').width()) { /* content is overflowing */ }",
+        "const scrollableWidth = Q('#scrollable-area').scrollWidth();",
+        "const scrollPercentage = Q('#container').scrollLeft() / (Q('#container').scrollWidth() - Q('#container').width());"
+    ],
+    "Dependencies": [],
+    "Variables": ["node"]
 }

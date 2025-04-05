@@ -2,8 +2,14 @@
   "Name": "append",
   "Method": "Prototype",
   "Desc": "Appends child nodes, HTML, or multiple elements to each node.",
-  "Long Desc": "Appends child nodes, HTML, or multiple elements to each node. Accepts a string for HTML, an HTMLElement, a Q object, an array of elements, or a NodeList. Strings are added as raw HTML, while elements and objects are appended as child nodes. Arrays and NodeLists append each element individually.",
+  "Long Desc": "The 'append' method allows you to add content to the end of each element in the current set of matched elements. It accepts a variety of inputs, including strings for raw HTML, HTMLElements, Q objects, arrays of elements, or NodeLists. Strings are added as raw HTML, while elements and objects are appended as child nodes. Arrays and NodeLists are iterated over, appending each element individually. This method is particularly useful for dynamically building or modifying the DOM, enabling seamless integration of new content into existing structures.",
   "Type": "DOM Manipulation",
-  "Example": "Q(selector).append(\"<p>New paragraph</p>\"); // Adds a paragraph as HTML\nQ(selector).append(document.createElement(\"div\")); // Adds a div element\nQ(selector).append(Q(otherSelector)); // Appends a Q object\nQ(selector).append([document.createElement(\"span\"), document.createElement(\"img\")]); // Appends multiple elements\nQ(selector).append(document.querySelectorAll(\".items\")); // Appends a NodeList of elements",
-  "Variables": ["allNodes", "parent", "child", "subchild"]
+  "Example": [
+    "Q(selector).append(\"<p>New paragraph</p>\"); // Adds a paragraph as HTML",
+    "Q(selector).append(document.createElement(\"div\")); // Adds a div element",
+    "Q(selector).append(Q(otherSelector)); // Appends a Q object",
+    "Q(selector).append([document.createElement(\"span\"), document.createElement(\"img\")]); // Appends multiple elements",
+    "Q(selector).append(document.querySelectorAll(\".items\")); // Appends a NodeList of elements"
+  ],
+  "Variables": ["parent", "child", "subNodes"]
 }

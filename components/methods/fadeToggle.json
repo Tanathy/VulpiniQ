@@ -2,8 +2,13 @@
     "Name": "fadeToggle",
     "Method": "Prototype",
     "Desc": "Toggles the fade state of each node.",
+    "Long Desc": "The fadeToggle method provides a convenient way to toggle the visibility of elements with a smooth fade animation. It checks the current opacity of each element and applies either fadeIn or fadeOut accordingly. This method is useful for creating interactive UI components like collapsible panels, dropdown menus, or any element that needs to smoothly appear or disappear based on user interaction.",
     "Type": "Display",
-    "Example": "Q(selector).fadeToggle(duration, callback);",
+    "Example": [
+        "Q(selector).fadeToggle(1000);",
+        "Q('.menu-items').fadeToggle(500);",
+        "Q('#notification').fadeToggle(800, function() { console.log('Animation complete'); });"
+    ],
     "Dependencies": [],
-    "Variables": ["duration", "callback", "nodeElements", "computedStyle", "elementIndex"]
+    "Variables": ["duration", "callback", "i", "len", "computed"]
 }

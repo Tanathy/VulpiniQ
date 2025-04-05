@@ -2,8 +2,16 @@
   "Name": "is",
   "Method": "Prototype",
   "Desc": "Checks if the first node matches a specific selector or condition, allowing for dynamic queries and element comparisons.",
+  "Long Desc": "The is method provides a versatile way to test if an element matches a given condition. It accepts various types of inputs: CSS selectors, special pseudo-selectors (like :visible, :checked), function callbacks, direct element references, or even another Q object for comparison. This flexibility makes it a powerful tool for conditional logic in DOM manipulation, form validation, and interactive UI development. Using predefined states like ':visible' or ':disabled' simplifies common conditional checks without requiring custom implementation.",
   "Type": "Utilities",
-  "Example": "Q(selector).is(\":visible\"); // Checks if the element is currently visible",
+  "Example": [
+    "Q(selector).is(':visible');", 
+    "Q(selector).is('.active');",
+    "Q(selector).is(function() { return this.tagName === 'DIV'; });",
+    "Q(selector).is(anotherElement);",
+    "Q(selector).is(Q('.comparable'));",
+    "if(Q('input').is(':checked')) { /* process checked input */ }"
+  ],
   "Dependencies": [],
   "Variables": ["selector", "node"]
 }

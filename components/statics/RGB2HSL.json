@@ -9,5 +9,5 @@
     "// Generate a lighter shade of a color\nlet baseRed = 64;\nlet baseGreen = 128;\nlet baseBlue = 255;\nlet hsl = Q.RGB2HSL(baseRed, baseGreen, baseBlue);\nlet lighterHSL = [hsl[0], hsl[1], Math.min(1, hsl[2] + 0.2)];",
     "var rgb = {r: 142, g: 68, b: 173};\nvar hsl = Q.RGB2HSL(rgb.r, rgb.g, rgb.b);\nvar adjustedHue = (hsl[0] + 0.5) % 1; // Complementary color\nvar complementaryHsl = [adjustedHue, hsl[1], hsl[2]];"
   ],
-  "Variables": ["r", "g", "b", "max", "min", "h", "s", "l", "d"]
+  "Variables": []
 }

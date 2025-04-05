@@ -1,0 +1,15 @@
+{
+    "Name": "siblings",
+    "Method": "Prototype",
+    "Desc": "Gets all sibling elements of each node, optionally filtered by a selector.",
+    "Long Desc": "Returns all sibling elements of each element in the matched set, with an optional filter to narrow down the results. Siblings are elements that share the same parent node. This method is particularly useful for traversal and selection operations that need to affect elements at the same hierarchical level, such as selecting related navigation items, managing tab interfaces, or implementing accordion-type components where only one sibling should be active at a time.",
+    "Type": "Traversal",
+    "Example": [
+        "const allSiblings = Q('#middle').siblings();",
+        "Q('.active').siblings().removeClass('active');",
+        "Q('li.selected').siblings('li.optional').hide();",
+        "const siblingLinks = Q('.current-page').siblings('a');"
+    ],
+    "Dependencies": [],
+    "Variables": ["selector", "node", "parent", "children", "i", "j", "n", "result", "instance"]
+}

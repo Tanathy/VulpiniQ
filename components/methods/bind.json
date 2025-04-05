@@ -1,9 +1,12 @@
 {
-    "Name": "bind",
-    "Method": "Prototype",
-    "Desc": "Adds an event listener to each node, allowing for event delegation to improve performance.",
-    "Type": "Event Handling",
-    "Example": "Q(selector).bind(\"click\", () => console.log(\"Clicked\")); // Logs \"Clicked\" when any matching node is clicked <br> Q('.btn').bind(\"mouseover\", (e) => { console.log(`Hovered over: ${e.target.tagName}`); }); // Logs the tag name of the hovered element",
-    "Dependencies": [],
-    "Variables": ["event", "handler", "el", "_eventDelegation"]
+  "Name": "bind",
+  "Method": "Prototype",
+  "Desc": "Adds an event listener to each node, allowing for event delegation to improve performance.",
+  "Long Desc": "The 'bind' method attaches an event listener to each element in the set of matched elements. It supports event delegation, which improves performance by allowing a single event listener to handle events for multiple child elements. This method is particularly useful for dynamic content where elements are added or removed frequently.",
+  "Type": "Event Handling",
+  "Example": [
+    "Q(selector).bind(\"click\", () => console.log(\"Clicked\")); // Logs 'Clicked' when any matching node is clicked",
+    "Q('.btn').bind(\"mouseover\", (e) => { console.log(`Hovered over: ${e.target.tagName}`); }); // Logs the tag name of the hovered element"
+  ],
+  "Variables": ["event", "handler"]
 }

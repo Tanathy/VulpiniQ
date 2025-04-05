@@ -2,8 +2,14 @@
     "Name": "wait",
     "Method": "Prototype",
     "Desc": "Returns a promise that resolves after a given time. Useful for delaying actions.",
+    "Long Desc": "Creates a timing-based promise that resolves with the original Q object after a specified delay in milliseconds. This method enables clean, readable code for sequential animations or delayed operations without nested callbacks. It's particularly useful in asynchronous workflows where you want to pause before continuing with a chain of operations, providing a more intuitive alternative to setTimeout when working with promises.",
     "Type": "Utility",
-    "Example": "Q('.text').wait(1000).text('Hello, World!');",
+    "Example": [
+        "Q('.text').wait(1000).text('Hello, World!');",
+        "async function animate() { await Q('#element').addClass('start').wait(500).addClass('end'); }",
+        "Q('.notification').show().wait(3000).then(q => q.hide());",
+        "const delay = 800; Q('.message').fadeIn().wait(delay).fadeOut();"
+    ],
     "Dependencies": [],
-    "Variables": ["ms"]
+    "Variables": ["ms", "resolve"]
 }

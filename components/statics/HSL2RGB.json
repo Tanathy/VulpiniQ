@@ -9,5 +9,5 @@
     "// Generate a rainbow color palette\nlet rainbowColors = [];\nfor (let i = 0; i < 360; i += 30) {\n  const h = i / 360;\n  const rgb = Q.HSL2RGB(h, 0.8, 0.5);\n  rainbowColors.push(`rgb(${Math.round(rgb[0])}, ${Math.round(rgb[1])}, ${Math.round(rgb[2])}`);\n}",
     "var h = 0.33; // Green hue\nvar s = 0.5;  // Medium saturation\nvar l = 0.7;  // Slightly lighter\nvar buttonColor = Q.HSL2RGB(h, s, l);\ndocument.querySelector('.success-button').style.backgroundColor = `rgb(${Math.round(buttonColor[0])}, ${Math.round(buttonColor[1])}, ${Math.round(buttonColor[2])})`;"
   ],
-  "Variables": ["h", "s", "l", "gray", "q", "p", "hueToRgb", "t"]
+  "Variables": []
 }

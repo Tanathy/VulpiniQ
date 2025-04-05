@@ -2,8 +2,14 @@
     "Name": "trigger",
     "Method": "Prototype",
     "Desc": "Triggers a specific event on each node.",
+    "Long Desc": "Executes all handlers attached to the selected elements for the specified event type. This method provides a way to manually fire event handlers bound to elements without user interaction. It's useful for simulating user actions programmatically, testing event handlers, or creating custom interaction flows that need to trigger existing event bindings at specific times.",
     "Type": "Event Handling",
-    "Example": "Q(selector).trigger(\"click\");",
+    "Example": [
+        "Q('#submitButton').trigger('click');",
+        "Q('.accordion-header').trigger('mouseenter');",
+        "const eventName = 'change'; Q('input').trigger(eventName);",
+        "Q('.custom-element').trigger('customEvent');"
+    ],
     "Dependencies": [],
-    "Variables": ["event", "el", "index"]
+    "Variables": ["event", "i", "n"]
 }
