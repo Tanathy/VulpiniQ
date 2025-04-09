@@ -1,0 +1,26 @@
+{
+  "Name": "Form.Dropdown",
+  "Method": "Form",
+  "Desc": "A customizable dropdown list component for selecting options from a list.",
+  "Long Desc": "The Form Dropdown component provides a simple, customizable dropdown list using only HTML elements (not input-based). When a user clicks on the dropdown, it expands to show a scrollable list of options with a configurable maximum height. Users can scroll through the list to find and select options. The component supports various functionalities including dynamically adding, removing, or modifying options, enabling or disabling specific options, programmatically selecting an option, and retrieving the current selection. The dropdown can be initialized with default values, set as disabled, and configured with custom styling through CSS variables. It handles outside clicks automatically to close when clicking elsewhere on the page and provides callback functionality for responding to selection changes.",
+  "Type": "UI Component",
+  "Example": [
+    "// Basic dropdown with options\nconst dropdown = form.Dropdown({\n  values: [\n    {value: '1', text: 'Option 1'},\n    {value: '2', text: 'Option 2'},\n    {value: '3', text: 'Option 3', default: true},\n    {value: '4', text: 'Option 4', disabled: true}\n  ]\n});\n\n// Listen for selection changes\ndropdown.change((value, text, index) => {\n  console.log(`Selected: ${text} with value ${value} at index ${index}`);\n});\n\n// Add dropdown to container\nQ('#myContainer').append(dropdown);",
+    "// Create an empty dropdown and add options later\nconst dropdown = form.Dropdown({\"max-height\": 300});\n\n// Add options programmatically\ndropdown.add('val1', 'First Option');\ndropdown.add('val2', 'Second Option');\ndropdown.add('val3', 'Third Option');\n\n// Disable the second option\ndropdown.disable([1]);\n\n// Programmatically select first option\ndropdown.select(0);",
+    "// Get current selection\nconst dropdown = form.Dropdown(options);\n// Later in code\nconst selected = dropdown.val();\nconsole.log(`Current value: ${selected.value}`);\nconsole.log(`Current text: ${selected.text}`);\nconsole.log(`Current index: ${selected.index}`);\n\n// Completely replace all options\ndropdown.val([\n  {value: 'new1', text: 'New Option 1'},\n  {value: 'new2', text: 'New Option 2'}\n]);"
+  ],
+  "Dependencies": ["Form", "Icons"],
+  "Variables": [
+    "dropdownClassesInitialized", 
+    "dropdownClasses", 
+    "activeDropdown", 
+    "value", 
+    "text", 
+    "index", 
+    "isDisabled", 
+    "changeCallback",
+    "selectedDisplay",
+    "selectedText",
+    "dropdownItems"
+  ]
+}

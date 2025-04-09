@@ -11,7 +11,7 @@ Q.Ext('css', function(property, value) {
   }
   if (value === Q._.un) return getComputedStyle(nodes[0])[property];
   for (let i = 0, len = nodes.length; i < len; i++) {
-      nodes[i].elemStyle[property] = value;
+      nodes[i].style[property] = value;
   }
   return this;
 });
