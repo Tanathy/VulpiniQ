@@ -1,0 +1,8 @@
+{
+  "Name": "Form.ColorPicker",
+  "Method": "Component",
+  "Desc": "Photoshop-like Color Picker component for Form plugin. Renders a canvas with an outer detail (16–color) ring, a full–rainbow middle ring, an inner triangle (mixing full color, white and black) and bottom hue/saturation stripes.",
+  "Type": "Component",
+  "Example": "var cp = Q.Form.ColorPicker({ width: 300, height: 350 }); cp.change(function(color) { console.log(color); });",
+  "Dependencies": ["Form", "canvas", "on", "attr", "val"]
+}

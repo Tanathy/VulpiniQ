@@ -57,6 +57,7 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | Form | Plugin | Plugin | Form is a simple library for creating forms and windows in the browser\. It provides a set of methods for creating form elements, windows, and other UI components\. |
 | Form\.Button | Component | Component | Button component for Form plugin |
 | Form\.CheckBox | Component | Component | CheckBox component for Form plugin |
+| Form\.ColorPicker | Component | Component | Photoshop\-like Color Picker component for Form plugin\. Renders a canvas with an outer detail \(16–color\) ring, a full–rainbow middle ring, an inner triangle \(mixing full color, white and black\) and bottom hue/saturation stripes\. |
 | Form\.Dropdown | Form | UI Component | A customizable dropdown list component for selecting options from a list\. |
 | Form\.Tags | Component | Component | Tags component for Form plugin |
 | Form\.TextArea | Component | Component | TextArea component for Form plugin |

@@ -2767,6 +2767,211 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
     this.elements.push(container);
     return container;
 };
+Form.prototype.ColorPicker = function(options = {}) {
+    const width = options.width || 300;
+    const height = options.height || 350;
+    const wrapper = Q('<div>').addClass('q_form_color_picker_wrapper');
+    wrapper.css({
+        'width': width + 'px',
+        'height': height + 'px',
+        'position': 'relative',
+        'background-color': '#222',
+        'border': '1px solid #444',
+        'border-radius': '4px',
+        'overflow': 'hidden',
+        'display': 'block'
+    });
+    const canvas = Q(`<canvas width="${width}" height="${height}"></canvas>`);
+    canvas.css({
+        'display': 'block',
+        'width': '100%',
+        'height': '100%'
+    });
+    wrapper.append(canvas);
+    const ctx = canvas.nodes[0].getContext('2d');
+    const centerX = width / 2;
+    const ringCenterY = 100;
+    const outerRadius = 70;
+    const innerRadius = 60;
+    const triangleTopY = ringCenterY - 30;
+    const triangleBottomY = ringCenterY + 20;
+    const triangleHalfWidth = 25;
+    const stripeHeight = 20;
+    let selectedHue = "#FF0000";
+    let markers = {
+        outer: { x: centerX, y: ringCenterY },
+        triangle: { x: centerX, y: ringCenterY },
+        hueStripe: { x: centerX - 50, y: height - 2 * stripeHeight - 5 },
+        satStripe: { x: centerX + 50, y: height - stripeHeight - 5 }
+    };
+    const outerColors = [
+      "#FF0000", "#FF7F00", "#FFFF00", "#7FFF00",
+      "#00FF00", "#00FF7F", "#00FFFF", "#007FFF",
+      "#0000FF", "#7F00FF", "#FF00FF", "#FF007F",
+      "#FF3333", "#FF9933", "#FFFF33", "#99FF33"
+    ];
+    function drawPicker() {
+        ctx.clearRect(0, 0, width, height);
+        drawOuterRing();
+        drawMiddleRing();
+        drawTriangle();
+        drawBottomStripes();
+        drawMarkers();
+    }
+    function drawOuterRing() {
+        const segAngle = (2*Math.PI)/outerColors.length;
+        for(let i=0; i<outerColors.length; i++){
+            const startAngle = i * segAngle;
+            const endAngle = startAngle + segAngle;
+            ctx.beginPath();
+            ctx.arc(centerX, ringCenterY, outerRadius, startAngle, endAngle);
+            ctx.arc(centerX, ringCenterY, innerRadius, endAngle, startAngle, true);
+            ctx.closePath();
+            ctx.fillStyle = outerColors[i];
+            ctx.fill();
+        }
+    }
+    function drawMiddleRing() {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(centerX, ringCenterY, innerRadius - 2, 0, 2 * Math.PI);
+        ctx.clip();
+        if(ctx.createConicGradient){
+            const grad = ctx.createConicGradient(0, centerX, ringCenterY);
+            grad.addColorStop(0, "#FF0000");
+            grad.addColorStop(0.17, "#FFFF00");
+            grad.addColorStop(0.33, "#00FF00");
+            grad.addColorStop(0.50, "#00FFFF");
+            grad.addColorStop(0.67, "#0000FF");
+            grad.addColorStop(0.83, "#FF00FF");
+            grad.addColorStop(1, "#FF0000");
+            ctx.fillStyle = grad;
+        } else {
+            const grad = ctx.createLinearGradient(centerX- innerRadius, 0, centerX+ innerRadius, 0);
+            grad.addColorStop(0, "#FF0000");
+            grad.addColorStop(0.5, "#00FF00");
+            grad.addColorStop(1, "#0000FF");
+            ctx.fillStyle = grad;
+        }
+        ctx.fillRect(centerX - innerRadius, ringCenterY - innerRadius, innerRadius * 2, innerRadius * 2);
+        ctx.restore();
+    }
+    function drawTriangle() {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(centerX, triangleTopY);
+        ctx.lineTo(centerX - triangleHalfWidth, triangleBottomY);
+        ctx.lineTo(centerX + triangleHalfWidth, triangleBottomY);
+        ctx.closePath();
+        ctx.clip();
+        let gradVert = ctx.createLinearGradient(0, triangleTopY, 0, triangleBottomY);
+        gradVert.addColorStop(0, selectedHue);
+        gradVert.addColorStop(1, "#000");
+        ctx.fillStyle = gradVert;
+        ctx.fillRect(centerX - triangleHalfWidth, triangleTopY, triangleHalfWidth*2, triangleBottomY - triangleTopY);
+        let gradHoriz = ctx.createLinearGradient(centerX - triangleHalfWidth, 0, centerX + triangleHalfWidth, 0);
+        gradHoriz.addColorStop(0, "rgba(255,255,255,0.5)");
+        gradHoriz.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = gradHoriz;
+        ctx.fillRect(centerX - triangleHalfWidth, triangleTopY, triangleHalfWidth*2, triangleBottomY - triangleTopY);
+        ctx.restore();
+    }
+    function drawBottomStripes() {
+        let hueY = height - 2*stripeHeight;
+        let gradHue = ctx.createLinearGradient(0, 0, width, 0);
+        gradHue.addColorStop(0, "#FF0000");
+        gradHue.addColorStop(0.17, "#FFFF00");
+        gradHue.addColorStop(0.33, "#00FF00");
+        gradHue.addColorStop(0.50, "#00FFFF");
+        gradHue.addColorStop(0.67, "#0000FF");
+        gradHue.addColorStop(0.83, "#FF00FF");
+        gradHue.addColorStop(1, "#FF0000");
+        ctx.fillStyle = gradHue;
+        ctx.fillRect(0, hueY, width, stripeHeight);
+        let satY = height - stripeHeight;
+        let gradSat = ctx.createLinearGradient(0, 0, width, 0);
+        gradSat.addColorStop(0, "rgba(255,255,255,0)");
+        gradSat.addColorStop(1, "rgba(0,0,0,0.7)");
+        ctx.fillStyle = gradSat;
+        ctx.fillRect(0, satY, width, stripeHeight);
+    }
+    function drawMarkers() {
+        ctx.save();
+        ctx.strokeStyle = "#FFF";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(markers.outer.x, markers.outer.y, 5, 0, 2*Math.PI);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(markers.triangle.x, markers.triangle.y, 5, 0, 2*Math.PI);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(markers.hueStripe.x, markers.hueStripe.y, 5, 0, 2*Math.PI);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(markers.satStripe.x, markers.satStripe.y, 5, 0, 2*Math.PI);
+        ctx.stroke();
+        ctx.restore();
+    }
+    function computeColor() {
+        const hueRatio = markers.hueStripe.x / width;
+        const hueDeg = Math.round(hueRatio*360);
+        const satRatio = markers.satStripe.x / width;
+        const saturation = Math.round(satRatio*100);
+        return `hsl(${hueDeg}, ${saturation}%, 50%)`;
+    }
+    let dragging = null;
+    function handleEvent(e) {
+        const rect = canvas.nodes[0].getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        if(y < ringCenterY + outerRadius && y > ringCenterY - outerRadius) {
+            markers.outer = { x, y };
+            let angle = Math.atan2(y - ringCenterY, x - centerX);
+            if(angle < 0) angle += 2*Math.PI;
+            const seg = Math.floor(angle / ((2*Math.PI) / outerColors.length));
+            selectedHue = outerColors[seg];
+        } else if(y >= triangleTopY && y <= triangleBottomY) {
+            markers.triangle = { x, y };
+        } else if(y >= height - 2*stripeHeight && y < height - stripeHeight) {
+            markers.hueStripe = { x, y };
+        } else if(y >= height - stripeHeight) {
+            markers.satStripe = { x, y };
+        }
+        drawPicker();
+        if(typeof wrapper.changeCallback === 'function') {
+            wrapper.changeCallback(computeColor());
+        }
+    }
+    canvas.nodes[0].addEventListener('mousedown', e => {
+        dragging = true;
+        handleEvent(e);
+    });
+    window.addEventListener('mousemove', e => {
+        if(dragging) handleEvent(e);
+    });
+    window.addEventListener('mouseup', () => { dragging = false; });
+    wrapper.change = function(callback) {
+        wrapper.changeCallback = callback;
+    };
+    wrapper.val = function(color) {
+        if (!color) {
+            return computeColor();
+        }
+        if (color.startsWith('#')) {
+            selectedHue = color;
+            drawPicker();
+            if(typeof wrapper.changeCallback === 'function') {
+                wrapper.changeCallback(color);
+            }
+        }
+        return this;
+    };
+    drawPicker();
+    console.log('ColorPicker drawn on canvas');
+    this.elements.push(wrapper);
+    return wrapper;
+};
 Form.prototype.Dropdown = function(options = {}) {
     if (!Form.dropdownStyles) {
         Form.dropdownStyles = Q.style('', `
