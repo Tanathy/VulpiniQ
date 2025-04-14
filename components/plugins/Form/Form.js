@@ -10,7 +10,8 @@ function Form(options = {}) {
             --form-default-padding: 5px 10px;
             --form-default-font-size: 12px;
             --form-default-font-family: Arial, sans-serif;
-            --form-default-input-background-color: rgb(51, 51, 51);
+            --form-default-input-background-color: rgb(0,0,0,0.1);
+            --form-default-input-background-color_active: rgb(0,0,0,0.2);
             --form-default-input-text-color: rgb(153, 153, 153);
             --form-default-input-border-color: rgba(255, 255, 255, 0.03);
             --form-default-checkbox-background-color: rgb(68, 68, 68);

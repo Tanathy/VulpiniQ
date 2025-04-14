@@ -1,0 +1,12 @@
+{
+  "Name": "RGB to CMYK Converter",
+  "Method": "Static",
+  "Desc": "Converts RGB (Red, Green, Blue) color values to CMYK (Cyan, Magenta, Yellow, Key/Black) format.",
+  "Long Desc": "The RGB2CMYK utility transforms color representations from the RGB color space (used for digital displays) to the CMYK color space (used for print media). While RGB is an additive color model where colors are created by adding light, CMYK is a subtractive color model where colors are created by subtracting light via ink absorption. The conversion is essential for preparing digital content for accurate printing. Each component in CMYK represents the amount of the respective ink (from 0 to 1 or 0% to 100%): Cyan, Magenta, Yellow, and Key (black). The function handles the special case of pure black (K=1) and implements the standard conversion algorithm. This utility is particularly valuable for design applications, print preparation tools, and any software that needs to bridge the gap between screen display and printed output.",
+  "Type": "Color Conversion",
+  "Example": [
+    "// Convert a vivid red from RGB to CMYK\nconst red = 255;\nconst green = 0;\nconst blue = 0;\nconst cmykColor = Q.RGB2CMYK(red, green, blue);\nconsole.log(`C: ${(cmykColor[0] * 100).toFixed(0)}%, M: ${(cmykColor[1] * 100).toFixed(0)}%, Y: ${(cmykColor[2] * 100).toFixed(0)}%, K: ${(cmykColor[3] * 100).toFixed(0)}%`);",
+    "// Compare ink usage between two colors\nconst color1 = Q.RGB2CMYK(200, 50, 50);\nconst color2 = Q.RGB2CMYK(50, 50, 200);\nconst inkUsage1 = color1[0] + color1[1] + color1[2] + color1[3];\nconst inkUsage2 = color2[0] + color2[1] + color2[2] + color2[3];\nconsole.log(`Color 1 ink usage: ${(inkUsage1 * 100).toFixed(1)}%`);\nconsole.log(`Color 2 ink usage: ${(inkUsage2 * 100).toFixed(1)}%`);"
+  ],
+  "Variables": []
+}

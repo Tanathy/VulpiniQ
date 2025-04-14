@@ -46,6 +46,7 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | **Name** | **Method** | **Type** | **Description** |
 |----------|------------|----------|-----------------|
 | Average Color | Static | Image Processing | Calculates the average color of an image from a given source\. |
+| CMYK to RGB Converter | Static | Color Conversion | Converts CMYK \(Cyan, Magenta, Yellow, Key/Black\) color values to RGB \(Red, Green, Blue\) format\. |
 | Color Brightness | Static | Color Manipulation | Adjusts the brightness of a color by a specified percentage\. |
 | Container | Plugin | Constructor | Useful to create containers for your elements, like tabs, accordions, etc\. |
 | Container\.Tab | Method | Method | Tab component for Container plugin |
@@ -57,7 +58,7 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | Form | Plugin | Plugin | Form is a simple library for creating forms and windows in the browser\. It provides a set of methods for creating form elements, windows, and other UI components\. |
 | Form\.Button | Component | Component | Button component for Form plugin |
 | Form\.CheckBox | Component | Component | CheckBox component for Form plugin |
-| Form\.ColorPicker | Component | Component | Photoshop\-like Color Picker component for Form plugin\. Renders a canvas with an outer detail \(16–color\) ring, a full–rainbow middle ring, an inner triangle \(mixing full color, white and black\) and bottom hue/saturation stripes\. |
+| Form\.ColorPicker | Component | Component | Photoshop\-like Color Picker component for Form plugin\. Renders a canvas with an outer detail \(24–color\) ring, a full–rainbow middle ring, and an inner triangle for selecting saturation and brightness by mixing the selected hue with white and black\. |
 | Form\.Dropdown | Form | UI Component | A customizable dropdown list component for selecting options from a list\. |
 | Form\.Tags | Component | Component | Tags component for Form plugin |
 | Form\.TextArea | Component | Component | TextArea component for Form plugin |
@@ -72,8 +73,11 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | Image\.Contrast | Plugin | Component | Adjust image contrast\. |
 | Is Dark Color | Static | Color Analysis | Determines if a color is considered dark based on its luminance value\. |
 | JSON | Instance | Utility | A utility class to parse, deflate, inflate, merge, sort, flatten, and unflatten JSON data\. |
+| LAB to RGB Converter | Static | Color Conversion | Converts LAB \(Lightness, a\*, b\*\) color values to RGB \(Red, Green, Blue\) format\. |
 | Leaving | Static | Event Handling | Attaches a function to the window's beforeunload event, allowing actions before the page is closed or refreshed\. |
+| RGB to CMYK Converter | Static | Color Conversion | Converts RGB \(Red, Green, Blue\) color values to CMYK \(Cyan, Magenta, Yellow, Key/Black\) format\. |
 | RGB to HSL Converter | Static | Color Conversion | Converts RGB \(Red, Green, Blue\) color values to HSL \(Hue, Saturation, Lightness\) format\. |
+| RGB to LAB Converter | Static | Color Conversion | Converts RGB \(Red, Green, Blue\) color values to LAB \(Lightness, a\*, b\*\) color space format\. |
 | Ready | Static | Event Handling | Executes a function when the document is fully loaded, ensuring all elements are accessible\. |
 | Resize | Static | Event Handling | Attaches a function to the window's resize event, executing it with the new innerWidth and innerHeight\. |
 | Socket | Static | Utility | A utility function to create and manage WebSocket connections\. |

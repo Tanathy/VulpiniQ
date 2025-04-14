@@ -1026,6 +1026,12 @@ Q.AvgColor = (source, sampleSize, callback) => {
     };
     image.onerror = () => console.error("Failed to load image.");
   };
+Q.CMYK2RGB = (c, m, y, k) => {
+  const r = 255 * (1 - c) * (1 - k);
+  const g = 255 * (1 - m) * (1 - k);
+  const b = 255 * (1 - y) * (1 - k);
+  return [Math.round(r), Math.round(g), Math.round(b)];
+};
 Q.ColorBrightness = (inputColor, percent) => {
     if (!/^#|^rgb/.test(inputColor)) throw new Error('Unsupported format');
     let red, green, blue, alpha = 1, isHex = false, factor = 1 + percent / 100;
@@ -1101,6 +1107,41 @@ Q.isDarkColor = (color, margin = 20, threshold = 100) => {
     } else throw Error('Unsupported format');
     return Math.sqrt(0.299 * red ** 2 + 0.587 * green ** 2 + 0.114 * blue ** 2) + margin < threshold;
   };
+Q.LAB2RGB = (L, a, b) => {
+  const fy = (L + 16) / 116;
+  const fx = a / 500 + fy;
+  const fz = fy - b / 200;
+  const xRef = 95.047;
+  const yRef = 100.0;
+  const zRef = 108.883;
+  const fx3 = Math.pow(fx, 3);
+  const fy3 = Math.pow(fy, 3);
+  const fz3 = Math.pow(fz, 3);
+  const x = xRef * (fx3 > 0.008856 ? fx3 : (fx - 16/116) / 7.787);
+  const y = yRef * (fy3 > 0.008856 ? fy3 : (fy - 16/116) / 7.787);
+  const z = zRef * (fz3 > 0.008856 ? fz3 : (fz - 16/116) / 7.787);
+  let r = (x * 0.032406 + y * -0.015372 + z * -0.004986) / 100;
+  let g = (x * -0.009689 + y * 0.018758 + z * 0.000415) / 100;
+  let b_val = (x * 0.000557 + y * -0.002040 + z * 0.010570) / 100;
+  r = r > 0.0031308 ? 1.055 * Math.pow(r, 1/2.4) - 0.055 : 12.92 * r;
+  g = g > 0.0031308 ? 1.055 * Math.pow(g, 1/2.4) - 0.055 : 12.92 * g;
+  b_val = b_val > 0.0031308 ? 1.055 * Math.pow(b_val, 1/2.4) - 0.055 : 12.92 * b_val;
+  r = Math.max(0, Math.min(1, r));
+  g = Math.max(0, Math.min(1, g));
+  b_val = Math.max(0, Math.min(1, b_val));
+  return [Math.round(r * 255), Math.round(g * 255), Math.round(b_val * 255)];
+};
+Q.RGB2CMYK = (r, g, b) => {
+  r = r / 255;
+  g = g / 255;
+  b = b / 255;
+  const k = 1 - Math.max(r, g, b);
+  if (k === 1) return [0, 0, 0, 1];
+  const c = (1 - r - k) / (1 - k);
+  const m = (1 - g - k) / (1 - k);
+  const y = (1 - b - k) / (1 - k);
+  return [c, m, y, k];
+};
 Q.RGB2HSL = (r, g, b) => {
     r /= 255, g /= 255, b /= 255;
     const max = Math.max(r, g, b), min = Math.min(r, g, b);
@@ -1115,5 +1156,29 @@ Q.RGB2HSL = (r, g, b) => {
     }
     return [h, s, l];
   };
+Q.RGB2LAB = (r, g, b) => {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
+  g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
+  b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
+  const x = (r * 0.4124 + g * 0.3576 + b * 0.1805) * 100;
+  const y = (r * 0.2126 + g * 0.7152 + b * 0.0722) * 100;
+  const z = (r * 0.0193 + g * 0.1192 + b * 0.9505) * 100;
+  const xRef = 95.047;
+  const yRef = 100.0;
+  const zRef = 108.883;
+  const xNorm = x / xRef;
+  const yNorm = y / yRef;
+  const zNorm = z / zRef;
+  const fx = xNorm > 0.008856 ? Math.pow(xNorm, 1/3) : (7.787 * xNorm) + (16/116);
+  const fy = yNorm > 0.008856 ? Math.pow(yNorm, 1/3) : (7.787 * yNorm) + (16/116);
+  const fz = zNorm > 0.008856 ? Math.pow(zNorm, 1/3) : (7.787 * zNorm) + (16/116);
+  const L = (116 * fy) - 16;
+  const a = 500 * (fx - fy);
+  const b_val = 200 * (fy - fz);
+  return [L, a, b_val];
+};
 return Q;
 })();

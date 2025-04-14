@@ -1,8 +1,29 @@
 {
   "Name": "Form.ColorPicker",
   "Method": "Component",
-  "Desc": "Photoshop-like Color Picker component for Form plugin. Renders a canvas with an outer detail (16–color) ring, a full–rainbow middle ring, an inner triangle (mixing full color, white and black) and bottom hue/saturation stripes.",
+  "Desc": "Photoshop-like Color Picker component for Form plugin. Renders a canvas with an outer detail (24–color) ring, a full–rainbow middle ring, and an inner triangle for selecting saturation and brightness by mixing the selected hue with white and black.",
   "Type": "Component",
-  "Example": "var cp = Q.Form.ColorPicker({ width: 300, height: 350 }); cp.change(function(color) { console.log(color); });",
-  "Dependencies": ["Form", "canvas", "on", "attr", "val"]
+  "Example": [
+    "// Basic usage",
+    "var cp = Q.Form.ColorPicker();",
+    "",
+    "// With custom dimensions and callback",
+    "var cp = Q.Form.ColorPicker({ width: 300, height: 350 });",
+    "cp.change(function(color) { console.log('Selected color:', color); });",
+    "",
+    "// Setting a color programmatically",
+    "cp.val('#FF0000'); // Set to red",
+    "cp.val('rgb(0, 255, 0)'); // Set to green",
+    "",
+    "// Getting the current color value",
+    "var currentColor = cp.val();",
+    "",
+    "// Adding to a container element",
+    "Q('#color-picker-container').append(cp);",
+    "",
+    "// Using with a preview element",
+    "var preview = Q('<div>').css({ width: '50px', height: '50px', border: '1px solid #999' });",
+    "cp.change(function(color) { preview.css('background-color', color); });"
+  ],
+  "Dependencies": ["Form", "canvas", "on", "attr", "val", "Debounce"]
 }
