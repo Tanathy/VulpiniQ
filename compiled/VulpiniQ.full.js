@@ -2855,11 +2855,14 @@ Form.prototype.ColorPicker = function (options = {}) {
                 background-color: rgba(0, 0, 0, 0.1);
                 flex: 1;
             }
-            .section_snatches, .section_first, .section_second, .section_third, .section_fourth {
+            .section_snatches, .section_second, .section_third, .section_fourth {
                 flex: 1;
                 display: flex;
                 flex-direction: column;
             }
+            .section_first {
+                display: flex;
+        }
             .sections {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
@@ -2902,25 +2905,50 @@ Form.prototype.ColorPicker = function (options = {}) {
                 display: flex;
                 align-items: center;
             }
+            .half_snatch {
+                height: 50%;
+                width: 100%;
+        }
+            .input_snatches {
+            width:50px;
+            height:50px;
+            border-radius: 10px;
+            background-color: var(--form-default-input-background-color);
+            color: var(--form-default-input-text-color);
+            font-family: var(--form-default-font-family);
+            font-size: var(--form-default-font-size);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .input_snatch_wrapper {
+            display: flex;
+            flex-direction: column;
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
             .input_prefix {
+            user-select: none;
                 width: 20px;
                 font-size: var(--form-default-font-size);
                 color: var(--form-default-input-text-color);
                 display:block;
             }
             .input_suffix {
+            user-select: none;
                 margin-left: 5px;
                 font-size: var(--form-default-font-size);
                 color: var(--form-default-input-text-color);
                 display:block;
             }
             .block_header {
+            user-select: none;
                 font-weight: bold;
                 color: var(--form-default-input-text-color);
                 font-family: var(--form-default-font-family);
                 font-size: var(--form-default-font-size);
-                padding: 2px;
-                margin-bottom: 5px;
                 text-align: center;
                 border-bottom: 1px solid var(--form-default-input-border-color);
                 grid-column: 1 / -1;
@@ -2939,6 +2967,9 @@ Form.prototype.ColorPicker = function (options = {}) {
             'section_second': 'section_second',
             'section_third': 'section_third',
             'section_fourth': 'section_fourth',
+            'input_snatches': 'input_snatches',
+            'input_snatch_wrapper': 'input_snatch_wrapper',
+            'half_snatch': 'half_snatch',
             'block_hsb': 'block_hsb',
             'block_rgb': 'block_rgb',
             'block_lab': 'block_lab',
@@ -2977,7 +3008,7 @@ Form.prototype.ColorPicker = function (options = {}) {
     const showDetails = options.showDetails || true;
     const wrapper = Q('<div>');
     const canvas = Q(`<canvas width="${width}" height="${height}"></canvas>`);
-    let input_h, input_s, input_b, input_r, input_g, input_b2, input_l, input_a, input_b3, input_c, input_m, input_y, input_k, input_rgb888, input_rgb565, input_rgb, input_hex, input_hsl, input_lab, input_cmyk;
+    let current_color, previous_color, input_h, input_s, input_b, input_r, input_g, input_b2, input_l, input_a, input_b3, input_c, input_m, input_y, input_k, input_rgb888, input_rgb565, input_rgb, input_hex, input_hsl, input_lab, input_cmyk;
     if (showDetails) {
         canvas.css({
             'width': '100%',
@@ -2987,7 +3018,7 @@ Form.prototype.ColorPicker = function (options = {}) {
         const left_wrapper = Q('<div>', { class: Form.colorPickerClasses.left_wrapper });
         const right_wrapper = Q('<div>', { class: Form.colorPickerClasses.right_wrapper });
         const section_snatches = Q('<div>', { class: Form.colorPickerClasses.section_snatches });
-        const section_first = Q('<div>', { class: Form.colorPickerClasses.section_first + ' ' + Form.colorPickerClasses.sections });
+        const section_first = Q('<div>', { class: Form.colorPickerClasses.section_first });
         const section_second = Q('<div>', { class: Form.colorPickerClasses.section_second + ' ' + Form.colorPickerClasses.sections });
         const section_third = Q('<div>', { class: Form.colorPickerClasses.section_third + ' ' + Form.colorPickerClasses.sections });
         const section_fourth = Q('<div>', { class: Form.colorPickerClasses.section_fourth + ' ' + Form.colorPickerClasses.sections });
@@ -3047,6 +3078,11 @@ Form.prototype.ColorPicker = function (options = {}) {
             }
             return { wrapper, input };
         };
+        const snatch_add = Q('<div>', { class: Form.colorPickerClasses.input_snatches, text: '+' });
+        const snatch_prev_current_wrapper = Q('<div>', { class: Form.colorPickerClasses.input_snatch_wrapper });
+        current_color = Q('<div>', { class: Form.colorPickerClasses.half_snatch });
+        previous_color = Q('<div>', { class: Form.colorPickerClasses.half_snatch });
+        snatch_prev_current_wrapper.append(current_color,previous_color);
         const input_h_obj = createInputWithLabel('number', Form.colorPickerClasses.input_h, 0, 0, 360, 'H:', '°');
         const input_s_obj = createInputWithLabel('number', Form.colorPickerClasses.input_s, 0, 0, 100, 'S:', '%');
         const input_b_obj = createInputWithLabel('number', Form.colorPickerClasses.input_b, 0, 0, 100, 'B:', '%');
@@ -3223,9 +3259,9 @@ Form.prototype.ColorPicker = function (options = {}) {
             input_r.val(r);
             input_g.val(g);
             input_b2.val(b);
-            const hex = '#' + 
-                r.toString(16).padStart(2, '0') + 
-                g.toString(16).padStart(2, '0') + 
+            const hex = '#' +
+                r.toString(16).padStart(2, '0') +
+                g.toString(16).padStart(2, '0') +
                 b.toString(16).padStart(2, '0');
             input_hex.val(hex);
             input_rgb.val(`rgb(${r},${g},${b})`);
@@ -3245,9 +3281,9 @@ Form.prototype.ColorPicker = function (options = {}) {
             input_y.val(Math.round(y * 100));
             input_k.val(Math.round(k * 100));
             input_cmyk.val(`cmyk(${Math.round(c * 100)}%,${Math.round(m * 100)}%,${Math.round(y * 100)}%,${Math.round(k * 100)}%)`);
-            input_rgb888.val('0x' + 
-                r.toString(16).padStart(2, '0') + 
-                g.toString(16).padStart(2, '0') + 
+            input_rgb888.val('0x' +
+                r.toString(16).padStart(2, '0') +
+                g.toString(16).padStart(2, '0') +
                 b.toString(16).padStart(2, '0'));
             const r5 = Math.round(r * 31 / 255) & 0x1F;
             const g6 = Math.round(g * 63 / 255) & 0x3F;
@@ -3272,8 +3308,9 @@ Form.prototype.ColorPicker = function (options = {}) {
         block_rgb888.append(header_rgb888, input_rgb888_obj.wrapper);
         block_rgb565.append(header_rgb565, input_rgb565_obj.wrapper);
         block_hsl.append(header_hsl, input_hsl_obj.wrapper);
-        section_first.append(block_hsb, block_rgb, block_lab, block_cmyk);
-        section_second.append(block_rgb888, block_rgb565, block_hsl);
+        section_first.append(snatch_prev_current_wrapper, snatch_add);
+        section_second.append(block_hsb, block_rgb, block_lab, block_cmyk);
+        section_third.append(block_rgb888, block_rgb565, block_hsl);
         left_wrapper.append(canvas);
         right_wrapper.append(section_snatches, section_first, section_second, section_third, section_fourth);
         wrapper.append(left_wrapper, right_wrapper);
@@ -3316,7 +3353,7 @@ Form.prototype.ColorPicker = function (options = {}) {
         outer: { x: centerX, y: ringCenterY },
         triangle: { x: centerX, y: ringCenterY }
     };
-    const outerSegments = options.outerSegments || 24;
+    const outerSegments = options.outerSegments || 18;
     const outerColors = Array.from({ length: outerSegments }, (_, i) => {
         const hue = i * (1 / outerSegments);
         const [r, g, b] = Q.HSL2RGB(hue, 1, 0.5);
@@ -3336,6 +3373,9 @@ Form.prototype.ColorPicker = function (options = {}) {
         y: topVertex.y
     };
     function drawPicker() {
+        current_color.css({
+            'background-color': `rgb(${input_r.val()},${input_g.val()},${input_b2.val()})`
+        });
         ctx.clearRect(0, 0, width, height);
         drawOuterRing();
         drawMiddleRing();
@@ -3438,21 +3478,22 @@ Form.prototype.ColorPicker = function (options = {}) {
     function drawMarkers() {
         ctx.save();
         ctx.strokeStyle = "#FFF";
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 4;
         ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
         ctx.shadowBlur = 5;
-        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 2;
         if (activeArea === 'inner') {
+            const markerSize = innerRingThickness / 3; // Half the thickness for better visibility
             ctx.beginPath();
-            ctx.arc(markers.outer.x, markers.outer.y, 5, 0, 2 * Math.PI);
+            ctx.arc(markers.outer.x, markers.outer.y, markerSize, 0, 2 * Math.PI);
             ctx.stroke();
         } else if (activeArea === 'outer' && selectedOuterSegment !== null) {
             const segAngle = (2 * Math.PI) / outerSegments;
             const startAngle = selectedOuterSegment * segAngle;
             const endAngle = startAngle + segAngle;
             ctx.strokeStyle = "#FFFFFF";
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 5;
             ctx.beginPath();
             ctx.arc(centerX, ringCenterY, outerRadius, startAngle, endAngle);
             ctx.arc(centerX, ringCenterY, outerRadius - outerRingThickness, endAngle, startAngle, true);
@@ -3460,7 +3501,7 @@ Form.prototype.ColorPicker = function (options = {}) {
             ctx.stroke();
         }
         ctx.strokeStyle = "#FFF";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.arc(markers.triangle.x, markers.triangle.y, 5, 0, 2 * Math.PI);
         ctx.stroke();
@@ -3505,6 +3546,28 @@ Form.prototype.ColorPicker = function (options = {}) {
         const scaleY = height / rect.height;
         const canvasX = (e.clientX - rect.left) * scaleX;
         const canvasY = (e.clientY - rect.top) * scaleY;
+        if (dragging === 'triangle') {
+            const constrained = constrainToTriangle(canvasX, canvasY, topVertex, bottomLeftVertex, bottomRightVertex);
+            markers.triangle = constrained;
+            const triangleColor = computeTriangleColor(constrained.x, constrained.y);
+            if (typeof wrapper.changeCallback === 'function') {
+                wrapper.changeCallback(triangleColor);
+            }
+            drawPicker();
+            return; // Exit early as we've handled the drag event
+        }
+        if (dragging === 'inner_ring') {
+            const constrained = constrainToHueRing(canvasX, canvasY);
+            markers.outer = constrained;
+            const angle = Math.atan2(constrained.y - ringCenterY, constrained.x - centerX);
+            const hue = (angle >= 0 ? angle : angle + 2 * Math.PI) / (2 * Math.PI);
+            selectedHue = hue;
+            if (typeof wrapper.changeCallback === 'function') {
+                wrapper.changeCallback(computeTriangleColor(markers.triangle.x, markers.triangle.y));
+            }
+            drawPicker();
+            return; // Exit early as we've handled the drag event
+        }
         const distFromCenter = Math.sqrt(Math.pow(canvasX - centerX, 2) + Math.pow(canvasY - ringCenterY, 2));
         if (distFromCenter <= outerRadius && distFromCenter >= outerRadius - outerRingThickness) {
             const angle = Math.atan2(canvasY - ringCenterY, canvasX - centerX);
@@ -3550,6 +3613,14 @@ Form.prototype.ColorPicker = function (options = {}) {
         }
         drawPicker();
     }
+    function constrainToHueRing(x, y) {
+        const angle = Math.atan2(y - ringCenterY, x - centerX);
+        const innerRingMiddleRadius = innerRadius - innerRingThickness / 2;
+        return {
+            x: centerX + innerRingMiddleRadius * Math.cos(angle),
+            y: ringCenterY + innerRingMiddleRadius * Math.sin(angle)
+        };
+    }
     function computeTriangleColor(x, y) {
         const totalHeight = bottomLeftVertex.y - topVertex.y;
         const relativeY = Math.max(0, Math.min(1, (y - topVertex.y) / totalHeight));
@@ -3578,30 +3649,36 @@ Form.prototype.ColorPicker = function (options = {}) {
     function sign(p1x, p1y, p2x, p2y, p3x, p3y) {
         return (p1x - p3x) * (p2y - p3y) - (p2x - p3x) * (p1y - p3y);
     }
-    canvas.nodes[0].addEventListener('mousedown', e => {
-        dragging = true;
+    let onMouseMoveHandler, onMouseUpHandler;
+    function attachGlobalListeners() {
+        onMouseMoveHandler = handleMouseMove.bind(this);
+        onMouseUpHandler = handleMouseUp.bind(this);
+        Q(document).on('mousemove', onMouseMoveHandler);
+        Q(document).on('mouseup', onMouseUpHandler);
+    }
+    function removeGlobalListeners() {
+        Q(document).off('mousemove', onMouseMoveHandler);
+        Q(document).off('mouseup', onMouseUpHandler);
+    }
+    function handleMouseDown(e) {
         handleEvent(e);
-    });
-    window.addEventListener('mousemove', e => {
-        if (dragging === 'inner_ring' || dragging === 'hue_stripe' ||
-            dragging === 'sat_stripe') {
-            handleEvent(e);
-        } else if (dragging === 'triangle') {
-            const rect = canvas.nodes[0].getBoundingClientRect();
-            const scaleX = width / rect.width;
-            const scaleY = height / rect.height;
-            const canvasX = (e.clientX - rect.left) * scaleX;
-            const canvasY = (e.clientY - rect.top) * scaleY;
-            const constrainedPosition = constrainToTriangle(canvasX, canvasY, topVertex, bottomLeftVertex, bottomRightVertex);
-            markers.triangle = constrainedPosition;
-            const triangleColor = computeTriangleColor(constrainedPosition.x, constrainedPosition.y);
-            if (typeof wrapper.changeCallback === 'function') {
-                wrapper.changeCallback(triangleColor);
-            }
-            drawPicker();
+        if (dragging) {
+            previous_color.css({
+                'background-color': `rgb(${input_r.val()},${input_g.val()},${input_b2.val()})`
+            });
+            attachGlobalListeners();
         }
-    });
-    window.addEventListener('mouseup', () => { dragging = false; });
+    }
+    function handleMouseMove(e) {
+        if (dragging === 'inner_ring' || dragging === 'hue_stripe' || dragging === 'triangle') {
+            handleEvent(e);
+        }
+    }
+    function handleMouseUp(e) {
+        dragging = false;
+        removeGlobalListeners();
+    }
+    canvas.on('mousedown', handleMouseDown);
     function constrainToTriangle(x, y, v1, v2, v3) {
         if (isPointInTriangle(x, y, v1, v2, v3)) {
             return { x, y };
@@ -3629,7 +3706,7 @@ Form.prototype.ColorPicker = function (options = {}) {
     wrapper.change = function (callback) {
         const originalCallback = callback;
         wrapper.changeCallback = function (color) {
-            Q.Debounce('colorpicker_change', 15, function () {
+            Q.Debounce('colorpicker_change', 10, function () {
                 if (showDetails && input_h) {
                     updateInputsFromColor(color);
                 }
@@ -3672,6 +3749,12 @@ Form.prototype.ColorPicker = function (options = {}) {
                 wrapper.changeCallback(color);
             }
         }
+        return this;
+    };
+    wrapper.destroy = function () {
+        canvas.off('mousedown', handleMouseDown);
+        removeGlobalListeners();
+        dragging = false;
         return this;
     };
     drawPicker();
