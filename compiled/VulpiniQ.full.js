@@ -1,15 +1,16 @@
 const Q = (() => {
     'use strict';
-    const _ob = Object, _ar = Array, _ma = Math, _da = Date, _re = RegExp, 
-          _st = setTimeout, _un = undefined, _n = null, _nl = NodeList,
-          _el = Element, _si = setInterval, _c = console, _ct = clearTimeout,
-          _ci = clearInterval, _pr = Promise, _str = String, _nu = Number,
-          _bo = Boolean, _json = JSON, _map = Map, _set = Set, _sym = Symbol,
-          _win = window, _doc = document, _loc = location, _hist = history,
-          _ls = localStorage, _ss = sessionStorage, _f = fetch, _ev = Event,
-          _ac = AbortController, _as = AbortSignal, _err = Error;
+    const _ob = Object, _ar = Array, _ma = Math, _da = Date, _re = RegExp,
+        _st = setTimeout, _un = undefined, _n = null, _nl = NodeList,
+        _el = Element, _si = setInterval, _c = console, _ct = clearTimeout,
+        _ci = clearInterval, _pr = Promise, _str = String, _nu = Number,
+        _bo = Boolean, _json = JSON, _map = Map, _set = Set, _sym = Symbol,
+        _win = window, _doc = document, _loc = location, _hist = history,
+        _ls = localStorage, _ss = sessionStorage, _f = fetch, _ev = Event,
+        _ac = AbortController, _as = AbortSignal, _err = Error;
     let GLOBAL = {};
     let styleData = {
+        elements: [],
         root: '',
         generic: "",
         responsive: {},
@@ -42,7 +43,7 @@ const Q = (() => {
     window.addEventListener('load', applyStyles, { once: true });
     function Q(identifier, attributes, props) {
         if (!(this instanceof Q)) return new Q(identifier, attributes, props);
-        if (identifier && identifier.nodeType) { 
+        if (identifier && identifier.nodeType) {
             this.nodes = [identifier];
             return;
         }
@@ -54,7 +55,7 @@ const Q = (() => {
             this.nodes = _ar.from(identifier);
             return;
         }
-        if (typeof identifier === 'string') { 
+        if (typeof identifier === 'string') {
             const isCreating = attributes || identifier.indexOf('<') > -1;
             if (isCreating) {
                 const template = document.createElement('template');
@@ -108,8 +109,26 @@ const Q = (() => {
     Q.style = (root = _n, style = '', responsive = _n, mapping = _n, enable_mapping = true) => {
         if (mapping && enable_mapping) {
             const keys = _ob.keys(mapping);
+            const generateSecureCSSClassName = () => {
+                const letters = 'abcdefghijklmnopqrstuvwxyz';
+                const allChars = letters + '0123456789';
+                const length = _ma.floor(_ma.random() * 3) + 6;  
+                const firstChar = letters.charAt(_ma.floor(_ma.random() * letters.length));
+                const remainingChars = Array.from({ length: length - 1 }, () => 
+                    allChars.charAt(_ma.floor(_ma.random() * allChars.length))
+                ).join('');
+                return firstChar + remainingChars;
+            };
+            const getUniqueClassName = () => {
+                let newKey;
+                do {
+                    newKey = generateSecureCSSClassName();
+                } while (styleData.elements.includes(newKey));
+                styleData.elements.push(newKey);
+                return newKey;
+            };
             keys.forEach((key) => {
-                let newKey = Q.ID ? Q.ID(5, '_') : `_${_ma.random().toString(36).substring(2, 7)}`;
+                let newKey = getUniqueClassName();
                 if (style && typeof style === 'string') {
                     style = style.replace(new _re(`\\.${key}\\b`, 'gm'), `.${newKey}`);
                     style = style.replace(new _re(`^\\s*\\.${key}\\s*{`, 'gm'), `.${newKey} {`);
@@ -132,14 +151,14 @@ const Q = (() => {
                 if (css && typeof css === 'string') {
                     if (!styleData.responsive[size]) {
                         styleData.responsive[size] = '';
-                    }           
+                    }
                     styleData.responsive[size] += css + '\n';
                 }
             }
         }
         if (document.readyState === 'complete') {
             applyStyles();
-        }  
+        }
         return mapping;
     };
     Q._ = {
@@ -2671,7 +2690,6 @@ function Form(options = {}) {
                 scrollbar-color: #888 rgb(48, 48, 48);
             }
         `, null, {
-            'q_form': 'q_form',
             'form_icon': 'form_icon',
             'form_close_button': 'form_close_button',
             'scrollbar': 'scrollbar'
@@ -2745,19 +2763,19 @@ Form.prototype.Button = function(text = '') {
 Form.prototype.CheckBox = function(checked = false, text = '') {
     if (!Form.checkBoxClassesInitialized) {
         Form.checkBoxClasses = Q.style('', `
-            .q_form_checkbox {
+            .form_checkbox {
                 display: flex;
                 width: fit-content;
                 align-items: center;
             }
-            .q_form_checkbox .label:empty {
+            .form_checkbox .label:empty {
                 display: none;
             }
-            .q_form_checkbox .label {
+            .form_checkbox .label {
                 padding-left: 5px;
                 user-select: none;
             }
-            .q_form_cb {
+            .form_checkbox_element {
                 position: relative;
                 width: 20px;
                 height: 20px;
@@ -2765,7 +2783,7 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
                 border-radius: var(--form-default-checkbox-radius);
                 cursor: pointer;
             }
-            .q_form_cb.checked:before {
+            .form_checkbox_element.checked:before {
                 content: "";
                 position: absolute;
                 top: 0;
@@ -2775,34 +2793,36 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
                 background-color: var(--form-default-checkbox-active-background-color);
                 border-radius: var(--form-default-checkbox-radius);
             }
-            .q_form_label {
+            .form_label {
                 padding-left: 5px;
                 color: var(--form-default-checkbox-text-color);
                 font-family: var(--form-default-font-family);
                 font-size: var(--form-default-font-size);
             }
-            .q_form_cb.disabled {
+            .form_checkbox_element.disabled {
                 opacity: 0.5;
                 pointer-events: none;
             }
         `, null, {
-            'q_form_checkbox': 'q_form_checkbox',
-            'q_form_cb': 'q_form_cb',
-            'q_form_label': 'q_form_label'
+            'form_checkbox': 'form_checkbox',
+            'form_checkbox_element': 'form_checkbox_element',
+            'form_label': 'form_label',
+            'disabled': 'disabled',
+            'checked': 'checked'
         });
         Form.checkBoxClassesInitialized = true;
     }
     let ID = '_' + Q.ID();
-    const container = Q('<div class="' + Form.classes.q_form + ' ' + Form.checkBoxClasses.q_form_checkbox + '">');
-    const checkbox_container = Q('<div class="' + Form.checkBoxClasses.q_form_cb + '">');
-    const labeltext = Q('<div class="' + Form.checkBoxClasses.q_form_label + '">' + text + '</div>');
+    const container = Q('<div class="' + Form.checkBoxClasses.form_checkbox + '">');
+    const checkbox_container = Q('<div class="' + Form.checkBoxClasses.form_checkbox_element + '">');
+    const labeltext = Q('<div class="' + Form.checkBoxClasses.form_label + '">' + text + '</div>');
     if (checked) {
-        checkbox_container.addClass('checked');
+        checkbox_container.addClass(Form.checkBoxClasses['checked']);
     }
     checkbox_container.on('click', function(){
-        if (!checkbox_container.hasClass('disabled')) {
-            const newState = !checkbox_container.hasClass('checked');
-            checkbox_container.toggleClass('checked', newState);
+        if (!checkbox_container.hasClass(Form.checkBoxClasses['disabled'])) {
+            const newState = !checkbox_container.hasClass(Form.checkBoxClasses['checked']);
+            checkbox_container.toggleClass(Form.checkBoxClasses['checked'], newState);
             if (container._changeCallback) {
                 container._changeCallback(newState);
             }
@@ -2810,7 +2830,7 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
     });
     container.append(checkbox_container, labeltext);
     container.checked = function(state) {
-        checkbox_container.toggleClass('checked', state);
+        checkbox_container.toggleClass(Form.checkBoxClasses['checked'], state);
         if (state && container._changeCallback) {
             container._changeCallback(state);
         }
@@ -2820,11 +2840,11 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
     };
     container.disabled = function(state) {
         if (state) {
-            checkbox_container.addClass('disabled');
-            container.addClass(Form.classes.q_form_disabled);
+            checkbox_container.addClass(Form.checkBoxClasses['disabled']);
+            container.addClass(Form.classes.form_disabled);
         } else {
-            checkbox_container.removeClass('disabled');
-            container.removeClass(Form.classes.q_form_disabled);
+            checkbox_container.removeClass(Form.checkBoxClasses['disabled']);
+            container.removeClass(Form.classes.form_disabled);
         }
     };
     container.text = function(newText) {
@@ -2852,8 +2872,8 @@ Form.prototype.ColorPicker = function (options = {}) {
             .right_wrapper {
                 display: flex;
                 flex-direction: column;
-                background-color: rgba(0, 0, 0, 0.1);
                 flex: 1;
+                padding: 5px;
             }
             .section_snatches, .section_second, .section_third, .section_fourth {
                 flex: 1;
@@ -2867,10 +2887,7 @@ Form.prototype.ColorPicker = function (options = {}) {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
                 gap: 2px;
-                margin: 2px;
-                padding: 2px;
                 flex: 1;
-                border: 1px solid var(--form-default-input-border-color);
             }
             .color_picker_input {
                 background-color: var(--form-default-input-background-color);
@@ -2881,7 +2898,8 @@ Form.prototype.ColorPicker = function (options = {}) {
                 font-family: var(--form-default-font-family);
                 font-size: var(--form-default-font-size);
                 border: 1px solid var(--form-default-input-border-color);
-                width: 50px;
+                width: 45px;
+                text-align: center;
             }
             .input_rgb888, .input_rgb565, .input_hsl
             {
@@ -2950,7 +2968,6 @@ Form.prototype.ColorPicker = function (options = {}) {
                 font-family: var(--form-default-font-family);
                 font-size: var(--form-default-font-size);
                 text-align: center;
-                border-bottom: 1px solid var(--form-default-input-border-color);
                 grid-column: 1 / -1;
             }
             `, null, {
@@ -3765,7 +3782,7 @@ Form.prototype.ColorPicker = function (options = {}) {
 Form.prototype.Dropdown = function(options = {}) {
     if (!Form.dropdownStyles) {
         Form.dropdownStyles = Q.style('', `
-            .q_form_dropdown {
+            .form_dropdown {
                 position: relative;
                 width: 100%;
                 font-family: var(--form-default-font-family);
@@ -3777,12 +3794,12 @@ Form.prototype.Dropdown = function(options = {}) {
                 background-color: var(--form-default-input-background-color);
                 color: var(--form-default-input-text-color);
             }
-            .q_form_dropdown.disabled {
+            .form_dropdown.disabled {
                 opacity: 0.6;
                 cursor: not-allowed;
                 pointer-events: none;
             }
-            .q_form_dropdown_selected {
+            .form_dropdown_selected {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
@@ -3792,7 +3809,7 @@ Form.prototype.Dropdown = function(options = {}) {
                 user-select: none;
                 width: 100%;
             }
-            .q_form_dropdown_items {
+            .form_dropdown_items {
                 position: absolute;
                 top: 100%;
                 left: 0;
@@ -3801,36 +3818,36 @@ Form.prototype.Dropdown = function(options = {}) {
                 z-index: 1000;
                 max-height: 200px;
                 overflow-y: auto;
-                background-color: var(--form-default-input-background-color);
+                background-color: var(--form-default-dropdown-background-color);
                 border: 1px solid var(--form-default-input-border-color);
                 border-radius: var(--form-default-border-radius);
                 box-shadow: var(--form-default-dropdown-shadow);
                 display: none;
                 color: var(--form-default-input-text-color);
             }
-            .q_form_dropdown_item {
+            .form_dropdown_item {
                 padding: var(--form-default-padding);
                 cursor: pointer;
             }
-            .q_form_dropdown_item:hover {
+            .form_dropdown_item:hover {
                 background-color: var(--form-default-selected-background-color);
                 color: var(--form-default-selected-text-color);
             }
-            .q_form_dropdown_item.selected {
+            .form_dropdown_item.selected {
                 background-color: var(--form-default-selected-background-color);
                 color: var(--form-default-selected-text-color);
                 font-weight: 500;
             }
-            .q_form_dropdown_items {
+            .form_dropdown_items {
                 display: none;
             }
-            .q_form_dropdown_arrow {
+            .form_dropdown_arrow {
                 transition: transform 0.2s;
             }
-            .q_form_dropdown.open .q_form_dropdown_arrow {
+            .form_dropdown.open .form_dropdown_arrow {
                 transform: rotate(180deg);
             }
-            .q_form_dropdown.open .q_form_dropdown_items {
+            .form_dropdown.open .form_dropdown_items {
                 display: block;
                 position: absolute;
                 width: 100%;
@@ -3839,22 +3856,32 @@ Form.prototype.Dropdown = function(options = {}) {
                 top: 100%;
             }
         `, null, {
-            'q_form_dropdown': 'q_form_dropdown',
-            'q_form_dropdown_selected': 'q_form_dropdown_selected', 
-            'q_form_dropdown_items': 'q_form_dropdown_items',
-            'q_form_dropdown_item': 'q_form_dropdown_item',
-            'q_form_dropdown_arrow': 'q_form_dropdown_arrow'
-        });
+            'form_dropdown': 'form_dropdown',
+            'open': 'open',
+            'disabled': 'disabled',
+            'selected': 'selected',
+            'form_dropdown_selected': 'form_dropdown_selected', 
+            'form_dropdown_items': 'form_dropdown_items',
+            'form_dropdown_item': 'form_dropdown_item',
+            'form_dropdown_arrow': 'form_dropdown_arrow'
+        },true);
     }
-    const mapping = Form.dropdownStyles;
-    const container = Q('<div>').addClass(Form.classes['q_form']).addClass(mapping['q_form_dropdown']);
-    const header = Q('<div>').addClass(mapping['q_form_dropdown_selected']);
+    const container = Q('<div>').addClass(Form.dropdownStyles['form_dropdown']);
+    const header = Q('<div>').addClass(Form.dropdownStyles['form_dropdown_selected']);
     const label = Q('<div>').text('Select an option').addClass('selected-text');
-    const arrow = Q('<div>').addClass(mapping['q_form_dropdown_arrow']).html('&#9662;');
+    const arrow = Q('<div>').addClass(Form.dropdownStyles['form_dropdown_arrow']).html('&#9662;');
     header.append(label, arrow);
-    const listContainer = Q('<div>').addClass(mapping['q_form_dropdown_items']);
-        listContainer.addClass(Form.classes['scrollbar']);
-    container.append(header);
+    const listContainer = Q('<div>')
+        .addClass(Form.dropdownStyles['form_dropdown_items'])
+        .addClass(Form.classes['scrollbar']);
+    container.append(header, listContainer);
+    if (!Form.dropdownCloseListenerInitialized) {
+        Q(document).on('click', () => {
+            Q('.' + Form.dropdownStyles['form_dropdown'])
+              .removeClass(Form.dropdownStyles['open']);
+        });
+        Form.dropdownCloseListenerInitialized = true;
+    }
     if (options['max-height']) {
         listContainer.css('maxHeight', options['max-height'] + 'px');
     }
@@ -3863,45 +3890,24 @@ Form.prototype.Dropdown = function(options = {}) {
     let selectedIndex = -1;
     let isDisabled = options.disabled || false;
     let changeCallback = options.change || null;
-    let documentClickHandler = null;
-    if (isDisabled) { container.addClass('disabled'); }
+    if (isDisabled) { container.addClass(Form.dropdownStyles['disabled']); }
     header.on('click', function(e) {
         e.stopPropagation();
         if (isDisabled) return;
-        toggleDropdown();
+        container.toggleClass(Form.dropdownStyles['open']);
     });
-    function toggleDropdown(force) {
-        const isOpen = (typeof force !== 'undefined') ? force : !container.hasClass('open');
-        if (isOpen) {
-            container.addClass('open');
-            container.append(listContainer);
-            if (!documentClickHandler) {
-                documentClickHandler = function(e) {
-                    if (!container.nodes[0].contains(e.target)) {
-                        container.removeClass('open');
-                        listContainer.remove();
-                    }
-                };
-                Q(document).on('click', documentClickHandler);
-            }
-        } else {
-            container.removeClass('open');
-            listContainer.remove();
-        }
-    }
     function selectItem(index) {
-        const found = listContainer.find('.' + mapping['q_form_dropdown_item']);
-        const items = found ? found.nodes : [];
-        if (index < 0 || index >= items.length) return;
-        const item = Q(items[index]);
-        if (item.hasClass('disabled')) return;
-        if (found) found.removeClass('selected');
-        item.addClass('selected');
+        const items = listContainer.find('.' + Form.dropdownStyles['form_dropdown_item']);
+        if (!items) return;
+        items.removeClass(Form.dropdownStyles['selected']);
+        const item = items.eq(index);
+        if (item.hasClass(Form.dropdownStyles['disabled'])) return;
+        item.addClass(Form.dropdownStyles['selected']);
         selectedValue = item.attr('data-value');
-        selectedText = item.text();
+        selectedText  = item.text();
         selectedIndex = index;
         label.text(selectedText);
-        toggleDropdown(false);
+        container.removeClass(Form.dropdownStyles['open']);
         if (typeof changeCallback === 'function') {
             changeCallback(selectedValue, selectedText, selectedIndex);
         }
@@ -3916,14 +3922,14 @@ Form.prototype.Dropdown = function(options = {}) {
         values.forEach((item, index) => {
             if (!item || typeof item !== 'object' || item.value === undefined || item.text === undefined) { return; }
             const dropdownItem = Q('<div>')
-                .addClass(mapping['q_form_dropdown_item'])
+                .addClass(Form.dropdownStyles['form_dropdown_item'])
                 .attr('data-value', item.value)
                 .text(item.text);
-            if (item.disabled) { dropdownItem.addClass('disabled'); }
+            if (item.disabled) { dropdownItem.addClass(Form.dropdownStyles['disabled']); }
             if (item.default) { defaultIndex = index; }
             dropdownItem.on('click', function(e) {
                 e.stopPropagation();
-                if (!dropdownItem.hasClass('disabled')) {
+                if (!dropdownItem.hasClass(Form.dropdownStyles['disabled'])) {
                     selectItem(index);
                 }
             });
@@ -3952,8 +3958,8 @@ Form.prototype.Dropdown = function(options = {}) {
         },
         disabled: function(state) {
             isDisabled = !!state;
-            if (isDisabled) { container.addClass('disabled'); }
-            else { container.removeClass('disabled'); }
+            if (isDisabled) { container.addClass(Form.dropdownStyles['disabled']); }
+            else { container.removeClass(Form.dropdownStyles['disabled']); }
             return this;
         },
         select: function(index) {
@@ -3961,7 +3967,7 @@ Form.prototype.Dropdown = function(options = {}) {
             return this;
         },
         index: function(index) {
-            const found = listContainer.find('.' + mapping['q_form_dropdown_item']);
+            const found = listContainer.find('.' + Form.dropdownStyles['form_dropdown_item']);
             const items = found ? found.nodes : [];
             if (index >= 0 && index < items.length) {
                 const item = Q(items[index]);
@@ -3971,28 +3977,28 @@ Form.prototype.Dropdown = function(options = {}) {
         },
         disable: function(indexes) {
             if (!Array.isArray(indexes)) return this;
-            const found = listContainer.find('.' + mapping['q_form_dropdown_item']);
+            const found = listContainer.find('.' + Form.dropdownStyles['form_dropdown_item']);
             const items = found ? found.nodes : [];
             indexes.forEach(idx => {
                 if (idx >= 0 && idx < items.length) {
-                    Q(items[idx]).addClass('disabled');
+                    Q(items[idx]).addClass(Form.dropdownStyles['disabled']);
                 }
             });
             return this;
         },
         enable: function(indexes) {
             if (!Array.isArray(indexes)) return this;
-            const found = listContainer.find('.' + mapping['q_form_dropdown_item']);
+            const found = listContainer.find('.' + Form.dropdownStyles['form_dropdown_item']);
             const items = found ? found.nodes : [];
             indexes.forEach(idx => {
                 if (idx >= 0 && idx < items.length) {
-                    Q(items[idx]).removeClass('disabled');
+                    Q(items[idx]).removeClass(Form.dropdownStyles['disabled']);
                 }
             });
             return this;
         },
         text: function(index, newText) {
-            const found = listContainer.find('.' + mapping['q_form_dropdown_item']);
+            const found = listContainer.find('.' + Form.dropdownStyles['form_dropdown_item']);
             const items = found ? found.nodes : [];
             if (index >= 0 && index < items.length) {
                 const item = Q(items[index]);
@@ -4005,16 +4011,16 @@ Form.prototype.Dropdown = function(options = {}) {
             return this;
         },
         add: function(value, text) {
-            const found = listContainer.find('.' + mapping['q_form_dropdown_item']);
+            const found = listContainer.find('.' + Form.dropdownStyles['form_dropdown_item']);
             const items = found ? found.nodes : [];
             const newIndex = items.length;
             const dropdownItem = Q('<div>')
-                .addClass(mapping['q_form_dropdown_item'])
+                .addClass(Form.dropdownStyles['form_dropdown_item'])
                 .attr('data-value', value)
                 .text(text);
             dropdownItem.on('click', function(e) {
                 e.stopPropagation();
-                if (!dropdownItem.hasClass('disabled')) {
+                if (!dropdownItem.hasClass(Form.dropdownStyles['disabled'])) {
                     selectItem(newIndex);
                 }
             });
@@ -4023,7 +4029,7 @@ Form.prototype.Dropdown = function(options = {}) {
         },
         remove: function(index) {
             if (index !== undefined) {
-                const found = listContainer.find('.' + mapping['q_form_dropdown_item']);
+                const found = listContainer.find('.' + Form.dropdownStyles['form_dropdown_item']);
                 const items = found ? found.nodes : [];
                 if (index >= 0 && index < items.length) {
                     Q(items[index]).remove();
@@ -4036,16 +4042,12 @@ Form.prototype.Dropdown = function(options = {}) {
                 }
                 return this;
             } else {
-                if (documentClickHandler) {
-                    Q(document).off('click', documentClickHandler);
-                    documentClickHandler = null;
-                }
                 container.remove();
                 return null;
             }
         },
         getCount: function() {
-            const found = listContainer.find('.' + mapping['q_form_dropdown_item']);
+            const found = listContainer.find('.' + Form.dropdownStyles['form_dropdown_item']);
             const items = found ? found.nodes : [];
             return items.length;
         }
@@ -4057,6 +4059,62 @@ Form.prototype.Dropdown = function(options = {}) {
     }
     this.elements.push(container);
     return container;
+};
+Form.prototype.Slider = function(initial = 0, options = {}) {
+    if (!Form.sliderClassesInitialized) {
+        Form.sliderClasses = Q.style(null, `
+            .slider { position: relative; width: 100%; height: 8px; background: var(--form-default-input-border-color); cursor: pointer; }
+            .slider_track { position: absolute; height:100%; background: var(--form-default-selected-background-color); width:0; }
+            .slider_thumb { position: absolute; top:50%; transform:translate(-50%,-50%); width:5px; height:100%; background: var(--form-default-button-background-color); border-radius:50%; }
+        `, null, {
+            'slider': 'slider',
+            'slider_track': 'slider_track',
+            'slider_thumb': 'slider_thumb'
+        });
+        Form.sliderClassesInitialized = true;
+    }
+    const min = options.min ?? 0, max = options.max ?? 100;
+    let val = Math.min(max, Math.max(min, initial)), callbacks = [];
+    const slider = Q(`<div class="${Form.sliderClasses.slider}">
+        <div class="${Form.sliderClasses.slider_track}"></div>
+        <div class="${Form.sliderClasses.slider_thumb}"></div>
+    </div>`);
+    const containerEl = slider.nodes[0],
+          trackEl     = containerEl.children[0],
+          thumbEl     = containerEl.children[1];
+    function updateThumb() {
+        const pct = (val-min)/(max-min)*100;
+        trackEl.style.width = pct+'%';
+        thumbEl.style.left = pct+'%';
+    }
+    updateThumb();
+    slider.on('mousedown', e => {
+        const rect = containerEl.getBoundingClientRect();
+        const setFromX = x => {
+            let rel = (x - rect.left)/rect.width;
+            rel = Math.max(0,Math.min(1,rel));
+            val = min + rel*(max-min);
+            updateThumb();
+            callbacks.forEach(cb=>cb(val));
+        };
+        setFromX(e.clientX);
+        const move = me=> setFromX(me.clientX),
+              up   = ()=>{ document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', up);
+    });
+    slider.min = v => v===undefined ? min : (null, slider);
+    slider.max = v => v===undefined ? max : (null, slider);
+    slider.val = v => {
+        if (v===undefined) return val;
+        val = Math.min(max, Math.max(min, v));
+        updateThumb();
+        callbacks.forEach(cb=>cb(val));
+        return slider;
+    };
+    slider.change = cb => { callbacks.push(cb); return slider; };
+    this.elements.push(slider);
+    return slider;
 };
 Form.prototype.Tags = function(value = '', placeholder = '', options = {}) {
     const defaultOptions = {
@@ -4393,25 +4451,23 @@ Form.prototype.TextArea = function(value = '', placeholder = '') {
         });
         Form.textAreaClassesInitialized = true;
     }
-    const textarea = Q(`<textarea class="${Form.classes.q_form} ${Form.textAreaClasses.form_textarea}" placeholder="${placeholder}">${value}</textarea>`);
-    textarea.placeholder = function(text) {
-        textarea.attr('placeholder', text);
-    };
+    const textarea = Q('<textarea>')
+        .addClass(Form.textAreaClasses.form_textarea)
+        .attr('placeholder', placeholder)
+        .val(value);
     textarea.disabled = function(state) {
         textarea.prop('disabled', state);
-        if (state) {
-            textarea.addClass(Form.classes.q_form_disabled);
-        } else {
-            textarea.removeClass(Form.classes.q_form_disabled);
-        }
+        return textarea;
     };
     textarea.reset = function() {
         textarea.val('');
+        return textarea;
     };
     textarea.change = function(callback) {
-        textarea.on('change', function() {
+        textarea.on('input', function() {
             callback(this.value);
         });
+        return textarea;
     };
     this.elements.push(textarea);
     return textarea;

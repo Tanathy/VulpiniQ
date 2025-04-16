@@ -60,6 +60,7 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | Form\.CheckBox | Component | Component | CheckBox component for Form plugin |
 | Form\.ColorPicker | Component | Component | Photoshop\-like Color Picker component for Form plugin\. Renders a canvas with an outer detail \(24–color\) ring, a full–rainbow middle ring, and an inner triangle for selecting saturation and brightness by mixing the selected hue with white and black\. |
 | Form\.Dropdown | Form | UI Component | A customizable dropdown list component for selecting options from a list\. |
+| Form\.Slider | Component | Component | Slider input component implemented with divs \(no native <input>\) |
 | Form\.Tags | Component | Component | Tags component for Form plugin |
 | Form\.TextArea | Component | Component | TextArea component for Form plugin |
 | Form\.TextBox | Component | Component | TextBox component for Form plugin |

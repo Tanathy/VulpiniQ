@@ -22,25 +22,27 @@ Form.prototype.TextArea = function(value = '', placeholder = '') {
         });
         Form.textAreaClassesInitialized = true;
     }
-    const textarea = Q(`<textarea class="${Form.classes.q_form} ${Form.textAreaClasses.form_textarea}" placeholder="${placeholder}">${value}</textarea>`);
-    textarea.placeholder = function(text) {
-        textarea.attr('placeholder', text);
-    };
+    // create textarea without template parsing
+    const textarea = Q('<textarea>')
+        .addClass(Form.textAreaClasses.form_textarea)
+        .attr('placeholder', placeholder)
+        .val(value);
+
+    // no need for a separate placeholder() method
     textarea.disabled = function(state) {
         textarea.prop('disabled', state);
-        if (state) {
-            textarea.addClass(Form.classes.q_form_disabled);
-        } else {
-            textarea.removeClass(Form.classes.q_form_disabled);
-        }
+        return textarea;
     };
     textarea.reset = function() {
         textarea.val('');
+        return textarea;
     };
+    // use input for live updates
     textarea.change = function(callback) {
-        textarea.on('change', function() {
+        textarea.on('input', function() {
             callback(this.value);
         });
+        return textarea;
     };
     this.elements.push(textarea);
     return textarea;

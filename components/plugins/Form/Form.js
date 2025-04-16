@@ -72,7 +72,7 @@ function Form(options = {}) {
                 scrollbar-color: #888 rgb(48, 48, 48);
             }
         `, null, {
-            'q_form': 'q_form',
+            // 'q_form': 'q_form',
             'form_icon': 'form_icon',
             'form_close_button': 'form_close_button',
             'scrollbar': 'scrollbar'

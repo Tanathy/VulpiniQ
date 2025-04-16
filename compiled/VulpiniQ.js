@@ -1,15 +1,16 @@
 const Q = (() => {
     'use strict';
-    const _ob = Object, _ar = Array, _ma = Math, _da = Date, _re = RegExp, 
-          _st = setTimeout, _un = undefined, _n = null, _nl = NodeList,
-          _el = Element, _si = setInterval, _c = console, _ct = clearTimeout,
-          _ci = clearInterval, _pr = Promise, _str = String, _nu = Number,
-          _bo = Boolean, _json = JSON, _map = Map, _set = Set, _sym = Symbol,
-          _win = window, _doc = document, _loc = location, _hist = history,
-          _ls = localStorage, _ss = sessionStorage, _f = fetch, _ev = Event,
-          _ac = AbortController, _as = AbortSignal, _err = Error;
+    const _ob = Object, _ar = Array, _ma = Math, _da = Date, _re = RegExp,
+        _st = setTimeout, _un = undefined, _n = null, _nl = NodeList,
+        _el = Element, _si = setInterval, _c = console, _ct = clearTimeout,
+        _ci = clearInterval, _pr = Promise, _str = String, _nu = Number,
+        _bo = Boolean, _json = JSON, _map = Map, _set = Set, _sym = Symbol,
+        _win = window, _doc = document, _loc = location, _hist = history,
+        _ls = localStorage, _ss = sessionStorage, _f = fetch, _ev = Event,
+        _ac = AbortController, _as = AbortSignal, _err = Error;
     let GLOBAL = {};
     let styleData = {
+        elements: [],
         root: '',
         generic: "",
         responsive: {},
@@ -42,7 +43,7 @@ const Q = (() => {
     window.addEventListener('load', applyStyles, { once: true });
     function Q(identifier, attributes, props) {
         if (!(this instanceof Q)) return new Q(identifier, attributes, props);
-        if (identifier && identifier.nodeType) { 
+        if (identifier && identifier.nodeType) {
             this.nodes = [identifier];
             return;
         }
@@ -54,7 +55,7 @@ const Q = (() => {
             this.nodes = _ar.from(identifier);
             return;
         }
-        if (typeof identifier === 'string') { 
+        if (typeof identifier === 'string') {
             const isCreating = attributes || identifier.indexOf('<') > -1;
             if (isCreating) {
                 const template = document.createElement('template');
@@ -108,8 +109,26 @@ const Q = (() => {
     Q.style = (root = _n, style = '', responsive = _n, mapping = _n, enable_mapping = true) => {
         if (mapping && enable_mapping) {
             const keys = _ob.keys(mapping);
+            const generateSecureCSSClassName = () => {
+                const letters = 'abcdefghijklmnopqrstuvwxyz';
+                const allChars = letters + '0123456789';
+                const length = _ma.floor(_ma.random() * 3) + 6;  
+                const firstChar = letters.charAt(_ma.floor(_ma.random() * letters.length));
+                const remainingChars = Array.from({ length: length - 1 }, () => 
+                    allChars.charAt(_ma.floor(_ma.random() * allChars.length))
+                ).join('');
+                return firstChar + remainingChars;
+            };
+            const getUniqueClassName = () => {
+                let newKey;
+                do {
+                    newKey = generateSecureCSSClassName();
+                } while (styleData.elements.includes(newKey));
+                styleData.elements.push(newKey);
+                return newKey;
+            };
             keys.forEach((key) => {
-                let newKey = Q.ID ? Q.ID(5, '_') : `_${_ma.random().toString(36).substring(2, 7)}`;
+                let newKey = getUniqueClassName();
                 if (style && typeof style === 'string') {
                     style = style.replace(new _re(`\\.${key}\\b`, 'gm'), `.${newKey}`);
                     style = style.replace(new _re(`^\\s*\\.${key}\\s*{`, 'gm'), `.${newKey} {`);
@@ -132,14 +151,14 @@ const Q = (() => {
                 if (css && typeof css === 'string') {
                     if (!styleData.responsive[size]) {
                         styleData.responsive[size] = '';
-                    }           
+                    }
                     styleData.responsive[size] += css + '\n';
                 }
             }
         }
         if (document.readyState === 'complete') {
             applyStyles();
-        }  
+        }
         return mapping;
     };
     Q._ = {

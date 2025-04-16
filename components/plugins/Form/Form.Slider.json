@@ -1,0 +1,8 @@
+{
+  "Name": "Form.Slider",
+  "Method": "Component",
+  "Desc": "Slider input component implemented with divs (no native <input>)",
+  "Type": "Component",
+  "Example": "var slider = Q.Form.Slider(10, {min:0, max:100}); slider.change(v=>console.log(v));",
+  "Dependencies": ["Form", "style", "addClass", "on", "css"]
+}

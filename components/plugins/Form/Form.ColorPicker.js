@@ -34,8 +34,8 @@ Form.prototype.ColorPicker = function (options = {}) {
             .right_wrapper {
                 display: flex;
                 flex-direction: column;
-                background-color: rgba(0, 0, 0, 0.1);
                 flex: 1;
+                padding: 5px;
             }
 
             .section_snatches, .section_second, .section_third, .section_fourth {
@@ -52,10 +52,7 @@ Form.prototype.ColorPicker = function (options = {}) {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
                 gap: 2px;
-                margin: 2px;
-                padding: 2px;
                 flex: 1;
-                border: 1px solid var(--form-default-input-border-color);
             }
 
             .color_picker_input {
@@ -67,7 +64,8 @@ Form.prototype.ColorPicker = function (options = {}) {
                 font-family: var(--form-default-font-family);
                 font-size: var(--form-default-font-size);
                 border: 1px solid var(--form-default-input-border-color);
-                width: 50px;
+                width: 45px;
+                text-align: center;
             }
 
             .input_rgb888, .input_rgb565, .input_hsl
@@ -147,7 +145,6 @@ Form.prototype.ColorPicker = function (options = {}) {
                 font-family: var(--form-default-font-family);
                 font-size: var(--form-default-font-size);
                 text-align: center;
-                border-bottom: 1px solid var(--form-default-input-border-color);
                 grid-column: 1 / -1;
             }
 
