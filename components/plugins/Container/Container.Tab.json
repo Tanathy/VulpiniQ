@@ -3,6 +3,6 @@
   "Method": "Method",
   "Desc": "Tab component for Container plugin",
   "Type": "Method",
-  "Example": "var container = Q.Container(); var tabs = container.Tab([{title: 'Tab 1', value: 'tab1', content: 'Content 1'}, {title: 'Tab 2', value: 'tab2', content: 'Content 2'}]);",
+  "Example": ["var container = Q.Container(); var tabs = container.Tab([{title: 'Tab 1', value: 'tab1', content: 'Content 1'}, {title: 'Tab 2', value: 'tab2', content: 'Content 2'}]);"],
   "Dependencies": ["style", "addClass", "removeClass", "on", "append", "find", "scrollTop", "scrollLeft", "html", "text", "data", "click"]
 }

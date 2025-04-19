@@ -1461,6 +1461,229 @@ Container.prototype.Tab = function(data, horizontal = true) {
     this.elements.push(wrapper);
     return wrapper;
 };
+Container.prototype.Table = function (data = [], options = {}) {
+  if (!Container.tableClassesInitialized) {
+    Container.tableClasses = Q.style('', `
+      .tbl_wrapper { display: flex; flex-direction: column; }
+      .tbl_top { display: flex; justify-content: space-between; margin-bottom: 5px; }
+      .tbl_table { width:100%; border-collapse: collapse; 
+      border-radius: var(--form-default-border-radius);
+      overflow: hidden;
+      }
+      .tbl_table th, .tbl_table td {
+      border: var(--form-default-dataset-border);
+      padding:6px;
+      text-align:left;
+      cursor: default;
+      }
+      .tbl_row.selected { background: var(--form-default-accent-color); color: var(--form-default-accent-text-color); }
+            .tbl_table th
+      {
+        background: var(--form-default-background);
+        color: var(--form-default-dataset-header-text-color);
+        font-height: var(--form-default-dataset-header-font-height);
+        padding-right: 25px;
+        width: 50%;
+}
+      .tbl_bottom {
+      display: flex;
+      justify-content: space-between;
+      margin-top:5px; 
+      }
+      .tbl_pagination {
+      display:flex;
+      gap:2px;
+      }
+      .tbl_page_btn {
+      padding: 5px 15px;
+      cursor: default;
+      user-select: none;
+      }
+      .tbl_page_btn.active { 
+      background: var(--form-default-accent-color);
+        color: var(--form-default-text-color-active);
+    }
+      .tbl_table th { position: relative; }
+      .tbl_table th .sort-icons {
+        position: absolute; right: 8px; top: 50%;
+        transform: translateY(-50%);
+        display: flex; flex-direction: column;
+        font-size: 8px; line-height: 1.3;
+      }
+      .sort_active {
+      color: var(--form-default-accent-color);
+    }
+    `, null, {
+      'tbl_wrapper': 'tbl_wrapper',
+      'tbl_top': 'tbl_top',
+      'tbl_search': 'tbl_search',
+      'tbl_page_size': 'tbl_page_size',
+      'tbl_table': 'tbl_table',
+      'tbl_row': 'tbl_row',
+      'tbl_bottom': 'tbl_bottom',
+      'tbl_pagination': 'tbl_pagination',
+      'tbl_page_btn': 'tbl_page_btn',
+      'sort-icons': 'sort-icons',
+      'asc': 'asc', 'desc': 'desc',
+      'sort_active': 'sort_active'
+    }, false);
+    Container.tableClassesInitialized = true;
+  }
+  const wrapper = Q('<div>', { class: Container.tableClasses.tbl_wrapper });
+  const top = Q('<div>', { class: Container.tableClasses.tbl_top });
+  let allData = [...data],
+    currentPage = 1,
+    sortKey = null,
+    sortOrder = 'off',             // changed default to off
+    selectedIdx = null,
+    onChange = null;
+  const form = new Q.Form();
+  const searchInput = form.TextBox('text', '', 'Search…');
+  const search = Q('<div>', { class: Container.tableClasses.tbl_search })
+    .append(searchInput.nodes[0]);
+  const searchDebounceId = Q.ID('tbl_search_');
+  const table = Q('<table>', { class: Container.tableClasses.tbl_table });
+  const bottom = Q('<div>', { class: Container.tableClasses.tbl_bottom });
+  const status = Q('<div>');
+  const pagination = Q('<div>', { class: Container.tableClasses.tbl_pagination });
+  bottom.append(status, pagination);
+  top.append(search);
+  wrapper.append(top, table, bottom);
+  let pageSizeVal = options.pageSize || 10;
+  const pageSizeDropdown = form.Dropdown({
+    values: [10, 25, 50, 100].map(n => ({ value: n, text: '' + n, default: n === pageSizeVal }))
+  });
+  const pageSize = Q('<div>', { class: Container.tableClasses.tbl_page_size })
+    .append(pageSizeDropdown.nodes[0]);
+  top.append(pageSize);
+  pageSizeDropdown.change(v => {
+    pageSizeVal = +v;
+    currentPage = 1;
+    render();
+  });
+  pageSizeVal = +pageSizeDropdown.val().value;
+  function render() {
+    const rawVal = searchInput.val();
+    const term = (rawVal || '').toLowerCase();
+    const filteredIndices = allData
+      .map((row, i) => i)
+      .filter(i => JSON.stringify(allData[i]).toLowerCase().includes(term));
+    if (sortKey && sortOrder !== 'off') {
+      filteredIndices.sort((i, j) => {
+        let v1 = allData[i][sortKey], v2 = allData[j][sortKey];
+        if (Array.isArray(v1)) v1 = v1.join(',');
+        if (Array.isArray(v2)) v2 = v2.join(',');
+        return (v1 > v2 ? 1 : -1) * (sortOrder === 'asc' ? 1 : -1);
+      });
+    }
+    const total = filteredIndices.length;
+    const totalPages = Math.ceil(total / pageSizeVal) || 1;
+    currentPage = Math.min(currentPage, totalPages);
+    const start = (currentPage - 1) * pageSizeVal,
+          end = start + pageSizeVal;
+    const pageIndices = filteredIndices.slice(start, end);
+    table.html('');
+    const thead = `<thead><tr>${Object.keys(allData[0] || {}).map(k =>
+      `<th data-key="${k}">${k}
+           <span class="${Container.tableClasses['sort-icons']}">
+             <span class="${Container.tableClasses.asc}">▲</span>
+             <span class="${Container.tableClasses.desc}">▼</span>
+           </span>
+         </th>`
+    ).join('')
+      }</tr></thead>`;
+    const tbody = pageIndices.map(idx => {
+      const row = allData[idx];
+      return `<tr data-idx="${idx}" class="${Container.tableClasses.tbl_row}${idx === selectedIdx ? ' selected' : ''}">${
+        Object.values(row).map(v => {
+          if (Array.isArray(v)) return `<td>${v.join(', ')}</td>`;
+          if (typeof v === 'object') return `<td>${JSON.stringify(v)}</td>`;
+          return `<td>${v}</td>`;
+        }).join('')
+      }</tr>`;
+    }).join('');
+    table.html('');
+    table.append(thead + `<tbody>${tbody}</tbody>`);
+    status.text(`Showing ${start + 1} to ${Math.min(end, total)} of ${total} entries`);
+    pagination.html('');
+    ['First', 'Prev'].forEach(t => {
+      const btn = `<span class="${Container.tableClasses.tbl_page_btn}" data-action="${t.toLowerCase()}">${t}</span>`;
+      pagination.append(btn);
+    });
+    for (let p = 1; p <= totalPages; p++) {
+      const cls = p === currentPage ? ' active' : '';
+      pagination.append(`<span class="${Container.tableClasses.tbl_page_btn + cls}" data-page="${p}">${p}</span>`);
+    }
+    ['Next', 'Last'].forEach(t => {
+      pagination.append(`<span class="${Container.tableClasses.tbl_page_btn}" data-action="${t.toLowerCase()}">${t}</span>`);
+    });
+  }
+  searchInput.change(() => {
+    Q.Debounce(searchDebounceId, 250, () => {
+      currentPage = 1;
+      render();
+    });
+  });
+  table.on('click', evt => {
+    const th = evt.target.closest('th');
+    const tr = evt.target.closest('tr[data-idx]');
+    if (th) {
+      const key = th.dataset.key;
+      if (sortKey === key) {
+        if (sortOrder === 'off') sortOrder = 'asc';
+        else if (sortOrder === 'asc') sortOrder = 'desc';
+        else { sortOrder = 'off'; sortKey = null; }
+      } else {
+        sortKey = key;
+        sortOrder = 'asc';
+      }
+      render();
+      document
+        .querySelectorAll(`.${Container.tableClasses.sort_active}`)
+        .forEach(el => el.classList.remove(Container.tableClasses.sort_active));
+      if (sortOrder != 'off') {
+        const arrowKey = sortOrder === 'asc' ? Container.tableClasses.asc : Container.tableClasses.desc;
+        const head = Q(`[data-key="${key}"] .${Container.tableClasses[arrowKey]}`)
+        console.log('arrowKey', arrowKey);
+        head.addClass(Container.tableClasses.sort_active);
+      }
+    } else if (tr) {
+      const idx = +tr.dataset.idx;
+      wrapper.select(idx);
+    }
+  });
+  pagination.on('click', evt => {
+    const tgt = evt.target;
+    if (tgt.dataset.page) currentPage = +tgt.dataset.page;
+    else if (tgt.dataset.action === 'first') currentPage = 1;
+    else if (tgt.dataset.action === 'prev') currentPage = Math.max(1, currentPage - 1);
+    else if (tgt.dataset.action === 'next') currentPage = Math.min(Math.ceil(filtered.length / pageSizeVal), currentPage + 1);
+    else if (tgt.dataset.action === 'last') currentPage = Math.ceil(filtered.length / pageSizeVal);
+    render();
+  });
+  wrapper.load = function (newData, stayOn = false) {
+    allData = [...newData];
+    if (!stayOn) { sortKey = null; sortOrder = 'off'; currentPage = 1; }
+    wrapper; render(); return this;
+  };
+  wrapper.select = function (idx, key, val) {
+    if (key != null) {
+      const found = allData.findIndex(o => o[key] === val);
+      if (found >= 0) idx = found;
+    }
+    selectedIdx = idx;
+    table.find('tr').removeClass('selected');
+    table.find(`tr[data-idx="${idx}"]`).addClass('selected');
+    if (onChange) onChange(idx, allData[idx]);
+    return this;
+  };
+  wrapper.change = function (cb) { onChange = cb; return this; };
+  wrapper.index = function (idx) { return wrapper.select(idx); };
+  wrapper.clear = function () { allData = []; render(); return this; };
+  this.elements.push(wrapper);
+  render();
+  return wrapper;
+};
 Container.prototype.Window = function(options = {}) {
     if (!Container.windowClassesInitialized) {
         Container.windowClasses = Q.style(`
@@ -2625,29 +2848,49 @@ function Form(options = {}) {
     this.options = options;
     if (!Form.initialized) {
         Form.classes = Q.style(`
-            --form-default-border-radius: 5px;
-            --form-default-padding: 5px 10px;
+            --form-default-accent-color: rgb(100, 60, 240);
+            --form-default-accent-text-color: #fff;
             --form-default-font-size: 12px;
             --form-default-font-family: Arial, sans-serif;
-            --form-default-input-background-color: rgb(0,0,0,0.1);
-            --form-default-input-background-color_active: rgb(0,0,0,0.2);
-            --form-default-input-text-color: rgb(153, 153, 153);
-            --form-default-input-border-color: rgba(255, 255, 255, 0.03);
-            --form-default-checkbox-background-color: rgb(68, 68, 68);
-            --form-default-checkbox-active-background-color: rgb(100, 60, 240);
-            --form-default-checkbox-text-color: rgb(153, 153, 153);
-            --form-default-checkbox-radius: 5px;
-            --form-default-button-background-color: rgb(100, 60, 240);
-            --form-default-button-text-color: #fff;
-            --form-default-button-hover-background-color: rgb(129, 100, 231);
-            --form-default-button-hover-text-color: #fff;
-            --form-default-button-active-background-color: rgb(129, 100, 231);
-            --form-default-button-active-text-color: #fff;
-            --form-default-button-border-color: rgba(255, 255, 255, 0.1);
-            --form-default-selected-background-color: rgb(100, 60, 240);
-            --form-default-selected-text-color: #fff;
-            --form-default-dropdown-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            --form-default-dropdown-background-color: rgb(51, 51, 51);
+            --form-default-dataset-header-font-weight: 600;
+            --form-default-dataset-header-background: rgba(127, 127, 127, 0.24);
+            --form-default-dataset-header-background-active: rgba(127, 127, 127, 0.24);
+            --form-default-dataset-header-background-focus: rgba(127, 127, 127, 0.24);
+            --form-default-dataset-header-background-hover: rgba(127, 127, 127, 0.24);
+            --form-default-dataset-header-text-color: #fff;
+            --form-default-dataset-header-text-color-active: #fff;
+            --form-default-dataset-header-text-color-focus: #fff;
+            --form-default-dataset-header-text-color-hover: #fff;
+            --form-default-dataset-border: 1px solid rgba(127, 127, 127, 0.24);
+            --
+            --form-default-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
+            --form-default-shadow-active: 0px 0px 5px rgba(100, 60, 240, 0.5);
+            --form-default-shadow-focus: 0px 0px 5px rgba(100, 60, 240, 0.5);
+            --form-default-shadow-hover: 0px 0px 5px rgba(100, 60, 240, 0.5);
+            --form-default-background-active: rgb(46, 46, 46);
+            --form-default-background-focus: rgb(46, 46, 46);
+            --form-default-background-hover: rgb(46, 46, 46);
+            --form-default-background: rgb(46, 46, 46);
+            --form-default-border-active: 1px solid var(--form-default-accent-color);
+            --form-default-border-focus: 1px solid var(--form-default-accent-color);
+            --form-default-border-hover: 1px solid var(--form-default-accent-color);
+            --form-default-border: 1px solid rgba(255, 255, 255, 0.03);
+            --form-default-outline-active: var(--form-default-border-active);
+            --form-default-outline-focus: var(--form-default-border-focus);
+            --form-default-outline-hover: var(--form-default-border-hover);
+            --form-default-outline: var(--form-default-border);
+            --form-default-border-radius: 5px;
+            --form-default-margin: 0px 0px 0px 0px;
+            --form-default-padding: 5px 10px 5px 10px;
+            --form-default-text-color-active: #fff;
+            --form-default-text-color-focus: #fff;
+            --form-default-text-color-hover: #fff;
+            --form-default-text-color: #999;
+            --form-default-text-active: normal var(--form-default-font-size) var(--form-default-font-family);
+            --form-default-text-focus: normal var(--form-default-font-size) var(--form-default-font-family);
+            --form-default-text-hover: normal var(--form-default-font-size) var(--form-default-font-family);
+            --form-default-text: normal var(--form-default-font-size) var(--form-default-font-family);
+            --form-default-width: 100%;
         `, `
             .form_icon {
                 width: 100%;
@@ -2689,10 +2932,37 @@ function Form(options = {}) {
             .scrollbar {
                 scrollbar-color: #888 rgb(48, 48, 48);
             }
+            /* ripple effect container */
+            .form_ripple_container {
+                position: relative;
+                overflow: hidden;
+            }
+            .form_ripple_container::after {
+                content: '';
+                position: absolute;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.2);
+                width: var(--ripple-size);
+                height: var(--ripple-size);
+                top: var(--ripple-y);
+                left: var(--ripple-x);
+                transform: scale(0);
+            }
+            .form_ripple_container.rippleing::after {
+                animation: form_ripple 0.4s linear;
+            }
+            @keyframes form_ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
         `, null, {
             'form_icon': 'form_icon',
             'form_close_button': 'form_close_button',
-            'scrollbar': 'scrollbar'
+            'scrollbar': 'scrollbar',
+            'form_ripple_container': 'form_ripple_container',
+            'rippleing': 'rippleing'
         });
         Form.initialized = true;
         console.log('Form core initialized');
@@ -2703,6 +2973,33 @@ Form.prototype.Icon = function (icon) {
     iconElement.addClass('svg_' + icon + ' form_icon');
     return iconElement;
 };
+/* FX_Ripple: pseudo‑element approach */
+Form.prototype.FX_Ripple = function(el) {
+    const element = el instanceof Q ? el.nodes[0] : el;
+    if (!element) return this;
+    if (getComputedStyle(element).position === 'static') {
+        element.style.position = 'relative';
+    }
+    element.classList.add(Form.classes.form_ripple_container);
+    element.addEventListener('click', function(e) {
+        const rect = element.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        element.style.setProperty('--ripple-size', size + 'px');
+        element.style.setProperty(
+            '--ripple-x',
+            (e.clientX - rect.left - size/2) + 'px'
+        );
+        element.style.setProperty(
+            '--ripple-y',
+            (e.clientY - rect.top  - size/2) + 'px'
+        );
+        element.classList.add(Form.classes.rippleing);
+        setTimeout(() => {
+            element.classList.remove(Form.classes.rippleing);
+        }, 400);
+    });
+    return this;
+};
 Q.Form = Form;
 Form.prototype.Button = function(text = '') {
     if (!Form.buttonClassesInitialized) {
@@ -2710,21 +3007,19 @@ Form.prototype.Button = function(text = '') {
             .button {
                 user-select: none;
                 font-family: var(--form-default-font-family);
-                background-color: var(--form-default-button-background-color);
-                color: var(--form-default-button-text-color);
-                box-shadow: inset 0 0 0 1px var(--form-default-button-border-color);
+                font-size: var(--form-default-font-size);
+                background-color: var(--form-default-background);
+                color: var(--form-default-text-color);
                 border-radius: var(--form-default-border-radius);
                 padding: var(--form-default-padding);
-                font-size: var(--form-default-font-size);
-                cursor: pointer;
             }
             .button:hover {
-                background-color: var(--form-default-button-hover-background-color);
-                color: var(--form-default-button-hover-text-color);
+                background-color: var(--form-default-background-hover);
+                color: var(--form-default-text-color-hover);
             }
             .button:active {
-                background-color: var(--form-default-button-active-background-color);
-                color: var(--form-default-button-active-text-color);
+                background-color: var(--form-default-background-active);
+                color: var(--form-default-text-color-active);
             }
             .button_disabled {
                 opacity: 0.6;
@@ -2758,6 +3053,7 @@ Form.prototype.Button = function(text = '') {
         return button;
     };
     this.elements.push(button);
+    this.FX_Ripple(button);
     return button;
 };
 Form.prototype.CheckBox = function(checked = false, text = '') {
@@ -2768,10 +3064,10 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
                 width: fit-content;
                 align-items: center;
             }
-            .form_checkbox .label:empty {
+            .form_checkbox .form_label:empty {
                 display: none;
             }
-            .form_checkbox .label {
+            .form_checkbox .form_label {
                 padding-left: 5px;
                 user-select: none;
             }
@@ -2779,8 +3075,8 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
                 position: relative;
                 width: 20px;
                 height: 20px;
-                background-color: var(--form-default-checkbox-background-color);
-                border-radius: var(--form-default-checkbox-radius);
+                background-color: var(--form-default-background);
+                border-radius: var(--form-default-border-radius);
                 cursor: pointer;
             }
             .form_checkbox_element.checked:before {
@@ -2790,12 +3086,12 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background-color: var(--form-default-checkbox-active-background-color);
-                border-radius: var(--form-default-checkbox-radius);
+                background-color: var(--form-default-accent-color);
+                border-radius: var(--form-default-border-radius);
             }
             .form_label {
                 padding-left: 5px;
-                color: var(--form-default-checkbox-text-color);
+                color: var(--form-default-text-color);
                 font-family: var(--form-default-font-family);
                 font-size: var(--form-default-font-size);
             }
@@ -2880,9 +3176,6 @@ Form.prototype.ColorPicker = function (options = {}) {
                 display: flex;
                 flex-direction: column;
             }
-            .section_first {
-                display: flex;
-        }
             .sections {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
@@ -2890,14 +3183,15 @@ Form.prototype.ColorPicker = function (options = {}) {
                 flex: 1;
             }
             .color_picker_input {
-                background-color: var(--form-default-input-background-color);
+                background-color: var(--form-default-background);
                 border-radius: var(--form-default-border-radius);
                 padding: 2px;
                 margin: 2px;
-                color: var(--form-default-input-text-color);
+                color: var(--form-default-text-color);
                 font-family: var(--form-default-font-family);
                 font-size: var(--form-default-font-size);
-                border: 1px solid var(--form-default-input-border-color);
+                outline: var(--form-default-outline);
+                border: 0;
                 width: 45px;
                 text-align: center;
             }
@@ -2907,7 +3201,8 @@ Form.prototype.ColorPicker = function (options = {}) {
             }
             .color_picker_input:focus {
                 outline: none;
-                background-color: var(--form-default-input-background-color_active);
+                background-color: var(--form-default-background-focus);
+                outline: var(--form-default-outline-focus);
             }
             /* Hide spinner buttons for number inputs */
             .color_picker_input[type="number"]::-webkit-inner-spin-button,
@@ -2927,23 +3222,34 @@ Form.prototype.ColorPicker = function (options = {}) {
                 height: 50%;
                 width: 100%;
         }
+        .picker_blocks {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: var(--form-default-border-radius);
+        padding: 5px;
+        margin: 2px;
+        }
             .input_snatches {
-            width:50px;
-            height:50px;
+            width:40px;
+            height:40px;
             border-radius: 10px;
-            background-color: var(--form-default-input-background-color);
-            color: var(--form-default-input-text-color);
+            background-color: var(--form-default-background);
+            color: var(--form-default-text-color);
             font-family: var(--form-default-font-family);
             font-size: var(--form-default-font-size);
             display: flex;
             align-items: center;
             justify-content: center;
         }
+        .snatches_wrapper {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    justify-items: center;
+        }
         .input_snatch_wrapper {
             display: flex;
             flex-direction: column;
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             border-radius: 10px;
             overflow: hidden;
         }
@@ -2951,24 +3257,28 @@ Form.prototype.ColorPicker = function (options = {}) {
             user-select: none;
                 width: 20px;
                 font-size: var(--form-default-font-size);
-                color: var(--form-default-input-text-color);
+                color: var(--form-default-text-color);
                 display:block;
             }
             .input_suffix {
             user-select: none;
                 margin-left: 5px;
                 font-size: var(--form-default-font-size);
-                color: var(--form-default-input-text-color);
+                color: var(--form-default-text-color);
                 display:block;
             }
             .block_header {
             user-select: none;
                 font-weight: bold;
-                color: var(--form-default-input-text-color);
+                color: var(--form-default-text-color);
                 font-family: var(--form-default-font-family);
                 font-size: var(--form-default-font-size);
                 text-align: center;
                 grid-column: 1 / -1;
+            }
+            .snatches_add {
+            cursor: pointer;
+            user-select: none;
             }
             `, null, {
             'sections': 'sections',
@@ -3016,16 +3326,21 @@ Form.prototype.ColorPicker = function (options = {}) {
             'input_hsl': 'input_hsl',
             'input_lab': 'input_lab',
             'input_cmyk': 'input_cmyk',
-            'block_header': 'block_header'
+            'block_header': 'block_header',
+            'snatches_wrapper': 'snatches_wrapper',
+            'picker_blocks': 'picker_blocks',
+            'snatches_add': 'snatches_add'
         }, false);
         Form.ColorPickerClassesInitialized = true;
     }
     const width = options.width || 300;
     const height = options.height || 300;
-    const showDetails = options.showDetails || true;
+    const showDetails = options.showDetails !== undefined ? options.showDetails : true;
+    const initialColor = options.color || '#FF0000';
     const wrapper = Q('<div>');
     const canvas = Q(`<canvas width="${width}" height="${height}"></canvas>`);
     let current_color, previous_color, input_h, input_s, input_b, input_r, input_g, input_b2, input_l, input_a, input_b3, input_c, input_m, input_y, input_k, input_rgb888, input_rgb565, input_rgb, input_hex, input_hsl, input_lab, input_cmyk;
+    let snatches = [];
     if (showDetails) {
         canvas.css({
             'width': '100%',
@@ -3034,18 +3349,19 @@ Form.prototype.ColorPicker = function (options = {}) {
         wrapper.addClass(Form.colorPickerClasses.q_form_color_picker_wrapper);
         const left_wrapper = Q('<div>', { class: Form.colorPickerClasses.left_wrapper });
         const right_wrapper = Q('<div>', { class: Form.colorPickerClasses.right_wrapper });
+        const snatches_wrapper = Q('<div>', { class: Form.colorPickerClasses.snatches_wrapper + ' ' + Form.colorPickerClasses.picker_blocks });
         const section_snatches = Q('<div>', { class: Form.colorPickerClasses.section_snatches });
         const section_first = Q('<div>', { class: Form.colorPickerClasses.section_first });
         const section_second = Q('<div>', { class: Form.colorPickerClasses.section_second + ' ' + Form.colorPickerClasses.sections });
         const section_third = Q('<div>', { class: Form.colorPickerClasses.section_third + ' ' + Form.colorPickerClasses.sections });
         const section_fourth = Q('<div>', { class: Form.colorPickerClasses.section_fourth + ' ' + Form.colorPickerClasses.sections });
-        const block_hsb = Q('<div>', { class: Form.colorPickerClasses.block_hsb });
-        const block_rgb = Q('<div>', { class: Form.colorPickerClasses.block_rgb });
-        const block_lab = Q('<div>', { class: Form.colorPickerClasses.block_lab });
-        const block_cmyk = Q('<div>', { class: Form.colorPickerClasses.block_cmyk });
-        const block_rgb888 = Q('<div>', { class: Form.colorPickerClasses.block_rgb888 });
-        const block_rgb565 = Q('<div>', { class: Form.colorPickerClasses.block_rgb565 });
-        const block_hsl = Q('<div>', { class: Form.colorPickerClasses.block_hsl });
+        const block_hsb = Q('<div>', { class: Form.colorPickerClasses.block_hsb + ' ' + Form.colorPickerClasses.picker_blocks });
+        const block_rgb = Q('<div>', { class: Form.colorPickerClasses.block_rgb + ' ' + Form.colorPickerClasses.picker_blocks });
+        const block_lab = Q('<div>', { class: Form.colorPickerClasses.block_lab + ' ' + Form.colorPickerClasses.picker_blocks });
+        const block_cmyk = Q('<div>', { class: Form.colorPickerClasses.block_cmyk + ' ' + Form.colorPickerClasses.picker_blocks });
+        const block_rgb888 = Q('<div>', { class: Form.colorPickerClasses.block_rgb888 + ' ' + Form.colorPickerClasses.picker_blocks });
+        const block_rgb565 = Q('<div>', { class: Form.colorPickerClasses.block_rgb565 + ' ' + Form.colorPickerClasses.picker_blocks });
+        const block_hsl = Q('<div>', { class: Form.colorPickerClasses.block_hsl + ' ' + Form.colorPickerClasses.picker_blocks });
         const header_hsb = Q('<div>', {
             class: Form.colorPickerClasses.block_header,
             text: 'HSB Color'
@@ -3095,11 +3411,26 @@ Form.prototype.ColorPicker = function (options = {}) {
             }
             return { wrapper, input };
         };
-        const snatch_add = Q('<div>', { class: Form.colorPickerClasses.input_snatches, text: '+' });
+        const snatch_add = Q('<div>', { class: Form.colorPickerClasses.input_snatches + ' ' + Form.colorPickerClasses.snatches_add, text: '+' });
+        const snatch_1 = Q('<div>', { class: Form.colorPickerClasses.input_snatches});
+        const snatch_2 = Q('<div>', { class: Form.colorPickerClasses.input_snatches});
+        const snatch_3 = Q('<div>', { class: Form.colorPickerClasses.input_snatches});
+        const snatch_4 = Q('<div>', { class: Form.colorPickerClasses.input_snatches});
         const snatch_prev_current_wrapper = Q('<div>', { class: Form.colorPickerClasses.input_snatch_wrapper });
         current_color = Q('<div>', { class: Form.colorPickerClasses.half_snatch });
         previous_color = Q('<div>', { class: Form.colorPickerClasses.half_snatch });
         snatch_prev_current_wrapper.append(current_color,previous_color);
+        snatches = [snatch_1, snatch_2, snatch_3, snatch_4];
+        snatches.forEach(slot => slot.on('click', () => {
+            const col = slot.css('background-color');
+            if (col) wrapper.val(col);
+        }));
+        snatch_add.on('click', () => {
+            for (let i = snatches.length - 1; i > 0; i--) {
+                snatches[i].css('background-color', snatches[i - 1].css('background-color'));
+            }
+            snatches[0].css('background-color', current_color.css('background-color'));
+        });
         const input_h_obj = createInputWithLabel('number', Form.colorPickerClasses.input_h, 0, 0, 360, 'H:', '°');
         const input_s_obj = createInputWithLabel('number', Form.colorPickerClasses.input_s, 0, 0, 100, 'S:', '%');
         const input_b_obj = createInputWithLabel('number', Form.colorPickerClasses.input_b, 0, 0, 100, 'B:', '%');
@@ -3325,7 +3656,8 @@ Form.prototype.ColorPicker = function (options = {}) {
         block_rgb888.append(header_rgb888, input_rgb888_obj.wrapper);
         block_rgb565.append(header_rgb565, input_rgb565_obj.wrapper);
         block_hsl.append(header_hsl, input_hsl_obj.wrapper);
-        section_first.append(snatch_prev_current_wrapper, snatch_add);
+        snatches_wrapper.append(snatch_prev_current_wrapper, snatch_1, snatch_2, snatch_3, snatch_4, snatch_add);
+        section_first.append(snatches_wrapper);
         section_second.append(block_hsb, block_rgb, block_lab, block_cmyk);
         section_third.append(block_rgb888, block_rgb565, block_hsl);
         left_wrapper.append(canvas);
@@ -3762,6 +4094,8 @@ Form.prototype.ColorPicker = function (options = {}) {
             positionHueMarker(h);
             positionTriangleMarker(s, l);
             drawPicker();
+            current_color.css('background-color', color);
+            previous_color.css('background-color', color);
             if (typeof wrapper.changeCallback === 'function') {
                 wrapper.changeCallback(color);
             }
@@ -3774,8 +4108,18 @@ Form.prototype.ColorPicker = function (options = {}) {
         dragging = false;
         return this;
     };
+    wrapper.Snatch = function (index) {
+        return snatches[index]
+            ? snatches[index].css('background-color')
+            : null;
+    };
     drawPicker();
     console.log('ColorPicker drawn on canvas');
+    if (showDetails) {
+        updateInputsFromColor(initialColor);
+        current_color.css('background-color', initialColor);
+        previous_color.css('background-color', initialColor);
+    }
     this.elements.push(wrapper);
     return wrapper;
 };
@@ -3789,11 +4133,14 @@ Form.prototype.Dropdown = function(options = {}) {
                 font-size: var(--form-default-font-size);
                 cursor: pointer;
                 user-select: none;
-                border: 1px solid var(--form-default-input-border-color);
+                outline: var(--form-default-outline);
                 border-radius: var(--form-default-border-radius);
-                background-color: var(--form-default-input-background-color);
-                color: var(--form-default-input-text-color);
+                background-color: var(--form-default-background);
+                color: var(--form-default-text-color);
             }
+            .selected_text {
+            padding-right: 10px;
+        }
             .form_dropdown.disabled {
                 opacity: 0.6;
                 cursor: not-allowed;
@@ -3818,20 +4165,21 @@ Form.prototype.Dropdown = function(options = {}) {
                 z-index: 1000;
                 max-height: 200px;
                 overflow-y: auto;
-                background-color: var(--form-default-dropdown-background-color);
-                border: 1px solid var(--form-default-input-border-color);
+                background-color: var(--form-default-background);
+                outline: var(--form-default-outline);
                 border-radius: var(--form-default-border-radius);
-                box-shadow: var(--form-default-dropdown-shadow);
+                box-shadow: var(--form-default-shadow);
                 display: none;
-                color: var(--form-default-input-text-color);
+                color: var(--form-default-text-color);
+                font-family: var(--form-default-font-family);
             }
             .form_dropdown_item {
                 padding: var(--form-default-padding);
                 cursor: pointer;
             }
             .form_dropdown_item:hover {
-                background-color: var(--form-default-selected-background-color);
-                color: var(--form-default-selected-text-color);
+                background-color: var(--form-default-accent-color);
+                color: var(--form-default-accent-text-color);
             }
             .form_dropdown_item.selected {
                 background-color: var(--form-default-selected-background-color);
@@ -3842,10 +4190,11 @@ Form.prototype.Dropdown = function(options = {}) {
                 display: none;
             }
             .form_dropdown_arrow {
-                transition: transform 0.2s;
+                transition: transform 0.2s ease-in-out;
+                transform: scale(2.0);
             }
             .form_dropdown.open .form_dropdown_arrow {
-                transform: rotate(180deg);
+                transform: rotate(180deg) scale(2.0);
             }
             .form_dropdown.open .form_dropdown_items {
                 display: block;
@@ -3855,7 +4204,14 @@ Form.prototype.Dropdown = function(options = {}) {
                 overflow-y: auto;
                 top: 100%;
             }
+            .form_dropdown.up .form_dropdown_items {
+                top: auto;
+                bottom: 100%;
+                margin-top: 0;
+                margin-bottom: 3px;
+            }
         `, null, {
+            'selected_text': 'selected_text',
             'form_dropdown': 'form_dropdown',
             'open': 'open',
             'disabled': 'disabled',
@@ -3863,12 +4219,13 @@ Form.prototype.Dropdown = function(options = {}) {
             'form_dropdown_selected': 'form_dropdown_selected', 
             'form_dropdown_items': 'form_dropdown_items',
             'form_dropdown_item': 'form_dropdown_item',
-            'form_dropdown_arrow': 'form_dropdown_arrow'
+            'form_dropdown_arrow': 'form_dropdown_arrow',
+            'up': 'up'
         },true);
     }
     const container = Q('<div>').addClass(Form.dropdownStyles['form_dropdown']);
     const header = Q('<div>').addClass(Form.dropdownStyles['form_dropdown_selected']);
-    const label = Q('<div>').text('Select an option').addClass('selected-text');
+    const label = Q('<div>').text('Select an option').addClass(Form.dropdownStyles['selected_text']);
     const arrow = Q('<div>').addClass(Form.dropdownStyles['form_dropdown_arrow']).html('&#9662;');
     header.append(label, arrow);
     const listContainer = Q('<div>')
@@ -3894,7 +4251,20 @@ Form.prototype.Dropdown = function(options = {}) {
     header.on('click', function(e) {
         e.stopPropagation();
         if (isDisabled) return;
-        container.toggleClass(Form.dropdownStyles['open']);
+        const openCl = Form.dropdownStyles['open'];
+        const upCl = Form.dropdownStyles['up'];
+        if (container.hasClass(openCl)) {
+            container.removeClass(upCl);
+        } else {
+            const rect = container.nodes[0].getBoundingClientRect();
+            const itemsH = listContainer.nodes[0].scrollHeight;
+            if (rect.bottom + itemsH > window.innerHeight) {
+                container.addClass(upCl);
+            } else {
+                container.removeClass(upCl);
+            }
+        }
+        container.toggleClass(openCl);
     });
     function selectItem(index) {
         const items = listContainer.find('.' + Form.dropdownStyles['form_dropdown_item']);
@@ -3935,14 +4305,8 @@ Form.prototype.Dropdown = function(options = {}) {
             });
             listContainer.append(dropdownItem);
         });
-        if (defaultIndex >= 0) {
-            selectItem(defaultIndex);
-        } else {
-            selectedValue = null;
-            selectedText = '';
-            selectedIndex = -1;
-            label.text('Select an option');
-        }
+        if (defaultIndex < 0) defaultIndex = 0;
+        selectItem(defaultIndex);
     }
     const dropdownAPI = {
         val: function(values) {
@@ -4060,12 +4424,178 @@ Form.prototype.Dropdown = function(options = {}) {
     this.elements.push(container);
     return container;
 };
+Form.prototype.ProgressBar = function(min = 0, max = 100, value = 0) {
+    if (!Form.progressClassesInitialized) {
+        Form.progressClasses = Q.style(null, `
+            .progress_bar {
+                width: 100%;
+                background-color: var(--form-default-background);
+                border-radius: var(--form-default-border-radius);
+                overflow: hidden;
+            }
+            .progress_fill {
+            position: relative;
+                height: var(--form-default-font-size);
+                background-color: var(--form-default-accent-color);
+                width: 0%;
+                border-radius: var(--form-default-border-radius);
+            }
+            .progress_fill:before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg,rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.10) 95%, rgba(255, 255, 255, 0.20) 100%);
+                background-size: 200% 100%;
+                animation: gradient 2s linear infinite;
+            }
+            @keyframes gradient {
+                0% { background-position: 100% 100%; }
+                100% { background-position: -100% 100%; }
+            }
+        `, null, {
+            'progress_bar': 'progress_bar',
+            'progress_fill': 'progress_fill'
+        });
+        Form.progressClassesInitialized = true;
+    }
+    const bar = Q(
+        `<div class="${Form.progressClasses.progress_bar}">
+            <div class="${Form.progressClasses.progress_fill}"></div>
+        </div>`
+    );
+    let _min = min, _max = max, _val = value;
+    const fill = bar.find(`.${Form.progressClasses.progress_fill}`);
+    const update = () => {
+        const pct = _max > _min
+            ? ((_val - _min) / (_max - _min)) * 100
+            : 0;
+        fill.css('width', Math.min(Math.max(pct, 0), 100) + '%');
+    };
+    bar.min = function(v) { _min = v; update(); return bar; };
+    bar.max = function(v) { _max = v; update(); return bar; };
+    bar.val = function(v) {
+        if (v === undefined) return _val;
+        _val = v; update(); return bar;
+    };
+    update();
+    this.elements.push(bar);
+    return bar;
+};
+Form.prototype.Radio = function(options = []) {
+    if (!Form.radioClassesInitialized) {
+        Form.radioClasses = Q.style(null, `
+            .form_radio { display: flex; flex-direction: column; gap: 5px; }
+            .form_radio_item { display: flex; align-items: center; cursor: pointer;
+            color: var(--form-default-text-color);
+            font: var(--form-default-text); font-size: var(--form-default-font-size);
+            }
+            .form_radio_item::before {
+                content: "";
+                display: inline-block;
+                width: 16px;
+                height: 16px;
+                margin-right: 8px;
+                background-color: var(--form-default-background);
+                border-radius: 50%;
+            }
+            .form_radio_item:hover::before {
+                outline: 2px solid var(--form-default-accent-color);
+            }
+            .form_radio_item.selected::before {
+                background-color: var(--form-default-accent-color);
+            }
+            .form_radio_item.disabled {
+                opacity: 0.5;
+                pointer-events: none;
+            }
+        `, null, {
+            'form_radio': 'form_radio',
+            'form_radio_item': 'form_radio_item',
+            'selected': 'selected',
+            'disabled': 'disabled'
+        },false);
+        Form.radioClassesInitialized = true;
+    }
+    const container = Q(`<div class="${Form.radioClasses.form_radio}"></div>`);
+    let _options = options.map(o => ({
+        value: o.value,
+        text: o.text,
+        enabled: o.enabled !== false,
+        selected: !!o.selected,
+        disabled: !!o.disabled
+    }));
+    let _changeCallback;
+    function render() {
+        container.empty();
+        _options.forEach((opt, idx) => {
+            const item = Q(`<div class="${Form.radioClasses.form_radio_item}">${opt.text}</div>`);
+            if (opt.selected) item.addClass(Form.radioClasses.selected);
+            if (opt.disabled) item.addClass(Form.radioClasses.disabled);
+            item.on('click', () => {
+                if (opt.disabled) return;
+                select(idx);
+            });
+            opt._el = item;
+            container.append(item);
+        });
+    }
+    function select(idx) {
+        _options.forEach((o, i) => {
+            const sel = i === idx;
+            o.selected = sel;
+            if (sel) {
+                o._el.addClass(Form.radioClasses.selected);
+            } else {
+                o._el.removeClass(Form.radioClasses.selected);
+            }
+        });
+        if (_changeCallback) {
+            const o = _options[idx];
+            _changeCallback(idx, o.value, o.text);
+        }
+    }
+    container.val = function(vals) {
+        if (vals === undefined) {
+            return _options.map(({_el,...o}) => o);
+        }
+        _options = vals.map(o => ({
+            value: o.value,
+            text: o.text,
+            enabled: o.enabled !== false,
+            selected: !!o.selected,
+            disabled: !!o.disabled
+        }));
+        render();
+        return container;
+    };
+    container.selected = function() {
+        const idx = _options.findIndex(o => o.selected);
+        const o = _options[idx] || {};
+        return { index: idx, value: o.value, text: o.text };
+    };
+    container.disable = function(idx) {
+        const o = _options[idx];
+        if (o) { o.disabled = true; o._el.addClass(Form.radioClasses.disabled); }
+        return container;
+    };
+    container.select = function(idx) {
+        select(idx);
+        return container;
+    };
+    container.change = function(cb) { _changeCallback = cb; return container; };
+    render();
+    this.elements.push(container);
+    return container;
+};
 Form.prototype.Slider = function(initial = 0, options = {}) {
     if (!Form.sliderClassesInitialized) {
         Form.sliderClasses = Q.style(null, `
-            .slider { position: relative; width: 100%; height: 8px; background: var(--form-default-input-border-color); cursor: pointer; }
-            .slider_track { position: absolute; height:100%; background: var(--form-default-selected-background-color); width:0; }
-            .slider_thumb { position: absolute; top:50%; transform:translate(-50%,-50%); width:5px; height:100%; background: var(--form-default-button-background-color); border-radius:50%; }
+            .slider { position: relative; width: 100%; height: 8px; background: var(--form-default-background); border-radius: 4px; cursor: pointer; }
+            .slider_track { position: absolute; height:100%; background: var(--form-default-accent-color); border-radius: 4px; }
+            .slider_thumb { position: absolute; top:50%; transform:translate(-50%,-50%); width:5px; height:100%; background: var('--form-default-accent-color'); border-radius: 4px; cursor: pointer; }
         `, null, {
             'slider': 'slider',
             'slider_track': 'slider_track',
@@ -4132,40 +4662,41 @@ Form.prototype.Tags = function(value = '', placeholder = '', options = {}) {
                 width: 100%;
                 min-height: 36px;
                 padding: 3px;
-                border: 1px solid var(--form-default-input-border-color);
+                outline: var(--form-default-outline);
                 border-radius: var(--form-default-border-radius);
                 background-color: var(--form-default-input-background-color);
                 cursor: text;
             }
             .form_tags_container:focus-within {
-                border-color: var(--form-default-button-background-color);
+                border-color: var(--form-default-outline-focus);
                 outline: none;
             }
             .form_tag {
+            position:relative;
+            overflow: hidden;
                 display: inline-flex;
                 align-items: center;
-                padding: 3px 8px;
-                background-color: var(--form-default-button-background-color);
-                color: var(--form-default-button-text-color);
+                padding: 0 30px 0 5px;
+                background: var(--form-default-background);
+                color: var(--form-default-text-color);
                 border-radius: var(--form-default-border-radius);
                 font-size: var(--form-default-font-size);
                 font-family: var(--form-default-font-family);
                 user-select: none;
             }
             .form_tag_editable {
-                background-color: var(--form-default-button-hover-background-color);
+                background-color: var(--form-default-background-hover);
             }
             .form_tag_remove {
-                margin-left: 5px;
+                display: flex;
+                position: absolute;
+                right: 0;
                 cursor: pointer;
-                width: 14px;
-                height: 14px;
-                display: inline-flex;
+                width: 20px;
+                height: 100%;
                 align-items: center;
                 justify-content: center;
-                font-size: 10px;
-                border-radius: 50%;
-                background-color: rgba(255, 255, 255, 0.2);
+                font-size: 12px;
             }
             .form_tag_input {
                 flex-grow: 1;
@@ -4176,10 +4707,10 @@ Form.prototype.Tags = function(value = '', placeholder = '', options = {}) {
                 font-family: var(--form-default-font-family);
                 font-size: var(--form-default-font-size);
                 background: transparent;
-                color: var(--form-default-input-text-color);
+                color: var(--form-default-text-color);
             }
             .form_tag.dragging {
-                opacity: 0.5;
+                opacity: 0.2;
             }
             .form_tag[draggable=true] {
                 cursor: move;
@@ -4193,7 +4724,7 @@ Form.prototype.Tags = function(value = '', placeholder = '', options = {}) {
         });
         Form.tagsClassesInitialized = true;
     }
-    const container = Q(`<div class="${Form.classes.q_form} ${Form.tagsClasses.form_tags_container}"></div>`);
+    const container = Q(`<div class="${Form.tagsClasses.form_tags_container}"></div>`);
     const input = Q(`<input class="${Form.tagsClasses.form_tag_input}" placeholder="${placeholder}" type="text">`);
     const state = {
         tags: [],
@@ -4436,15 +4967,15 @@ Form.prototype.TextArea = function(value = '', placeholder = '') {
                 font-family: var(--form-default-font-family);
                 font-size: var(--form-default-font-size);
                 border-radius: var(--form-default-border-radius);
-                background-color: var(--form-default-input-background-color);
-                color: var(--form-default-input-text-color);
-                border: 1px solid var(--form-default-input-border-color);
+                background-color: var(--form-default-background);
+                color: var(--form-default-text-color);
+                outline: var(--form-default-outline);
+                border: 0;
                 resize: none;
                 min-height: 100px;
             }
             .form_textarea:focus {
-                border-color: var(--form-default-button-background-color);
-                outline: none;
+                outline: var(--form-default-outline-focus);
             }
         `, null, {
             'form_textarea': 'form_textarea'
@@ -4463,6 +4994,10 @@ Form.prototype.TextArea = function(value = '', placeholder = '') {
         textarea.val('');
         return textarea;
     };
+    textarea.resizeable = function(x = true, y = true) {
+        textarea.css('resize', (x ? 'horizontal' : 'none') + ' ' + (y ? 'vertical' : 'none'));
+        return textarea;
+    }
     textarea.change = function(callback) {
         textarea.on('input', function() {
             callback(this.value);
@@ -4481,21 +5016,53 @@ Form.prototype.TextBox = function(type = 'text', value = '', placeholder = '') {
                 padding: var(--form-default-padding);
                 font-size: var(--form-default-font-size);
                 border-radius: var(--form-default-border-radius);
-                background-color: var(--form-default-input-background-color);
-                color: var(--form-default-input-text-color);
-                border: 1px solid var(--form-default-input-border-color);
+                background-color: var(--form-default-background);
+                color: var(--form-default-text-color);
+                border: 0;
                 resize: none;
+                transition: background-color 0s ease, color 0s ease, outline 0s ease;
+            }
+            /* Fix for autofill background color */
+            .q_form_input:-webkit-autofill,
+            .q_form_input:-webkit-autofill:hover,
+            .q_form_input:-webkit-autofill:focus,
+            .q_form_input:-webkit-autofill:active {
+                -webkit-box-shadow: 0 0 0 30px var(--form-default-background) inset !important;
+                -webkit-text-fill-color: var(--form-default-text-color) !important;
+                transition: background-color 5000s ease-in-out 0s;
+                background-color: var(--form-default-background) !important;
+            }
+            .q_form_input:hover {
+                outline: var(--form-default-outline-hover);
+                background-color: var(--form-default-background-hover);
+            }
+            .q_form_input:hover:-webkit-autofill {
+                -webkit-box-shadow: 0 0 0 30px var(--form-default-background-hover) inset !important;
+                background-color: var(--form-default-background-hover) !important;
             }
             .q_form_input:focus {
-                border-color: var(--form-default-button-background-color);
-                outline: none;
+                outline: var(--form-default-outline-focus);
+                background-color: var(--form-default-background-focus);
+            }
+            .q_form_input:focus:-webkit-autofill {
+                -webkit-box-shadow: 0 0 0 30px var(--form-default-background-focus) inset !important;
+                background-color: var(--form-default-background-focus) !important;
+            }
+            .q_form_input:active {
+                outline: var(--form-default-outline-active);
+                background-color: var(--form-default-background-active);
+            }
+            .q_form_input:disabled {
+                background-color: var(--form-default-background-disabled);
+                color: var(--form-default-text-color-disabled);
+                cursor: not-allowed;
             }
         `, null, {
             'q_form_input': 'q_form_input'
         });
         Form.textBoxClassesInitialized = true;
     }
-    const input = Q(`<input class="${Form.classes.q_form} ${Form.textBoxClasses.q_form_input}" type="${type}" placeholder="${placeholder}" value="${value}">`);
+    const input = Q(`<input class="${Form.textBoxClasses.q_form_input}" type="${type}" placeholder="${placeholder}" value="${value}">`);
     input.placeholder = function(text) {
         input.attr('placeholder', text);
     };
@@ -4511,7 +5078,7 @@ Form.prototype.TextBox = function(type = 'text', value = '', placeholder = '') {
         input.val('');
     };
     input.change = function(callback) {
-        input.on('change', function() {
+        input.on('change input', function() {
             callback(this.value);
         });
     };
@@ -4536,14 +5103,15 @@ Form.prototype.Uploader = function (options = {}) {
                 display: flex;
                 flex-direction: column;
                 width: 100%;
-                border: 2px dashed var(--form-default-input-border-color);
+                outline: var(--form-default-outline);
                 border-radius: var(--form-default-border-radius);
-                background-color: var(--form-default-input-background-color);
+                background-color: var(--form-default-background);
                 padding: 10px;
+                color: var(--form-default-text-color);
             }
             .form_uploader_container.drag_over {
-                border-color: var(--form-default-button-background-color);
-                background-color: rgba(100, 60, 240, 0.05);
+                outline: var(--form-default-outline-active);
+                background-color: var(--form-default-background-hover);
             }
             .form_uploader_drop_area {
                 display: flex;
@@ -4553,7 +5121,7 @@ Form.prototype.Uploader = function (options = {}) {
                 padding: 20px;
                 text-align: center;
                 cursor: pointer;
-                color: var(--form-default-input-text-color);
+                color: var(--form-default-text-color);
                 min-height: 120px;
             }
             .form_uploader_icon {
@@ -4577,7 +5145,8 @@ Form.prototype.Uploader = function (options = {}) {
                 font-size: var(--form-default-font-size);
             }
             .form_uploader_button:hover {
-                background-color: var(--form-default-button-hover-background-color);
+                background-color: var(--form-default-background-hover);
+                color: var(--form-default-text-color-hover);
             }
             .form_uploader_input {
                 display: none;
@@ -4592,7 +5161,7 @@ Form.prototype.Uploader = function (options = {}) {
                 position: relative;
                 border-radius: var(--form-default-border-radius);
                 overflow: hidden;
-                border: 1px solid var(--form-default-input-border-color);
+                outline: var(--form-default-outline);
             }
             .form_uploader_preview_image {
                 object-fit: cover;

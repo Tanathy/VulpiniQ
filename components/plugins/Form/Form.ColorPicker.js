@@ -44,10 +44,6 @@ Form.prototype.ColorPicker = function (options = {}) {
                 flex-direction: column;
             }
 
-            .section_first {
-                display: flex;
-        }
-
             .sections {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
@@ -56,14 +52,15 @@ Form.prototype.ColorPicker = function (options = {}) {
             }
 
             .color_picker_input {
-                background-color: var(--form-default-input-background-color);
+                background-color: var(--form-default-background);
                 border-radius: var(--form-default-border-radius);
                 padding: 2px;
                 margin: 2px;
-                color: var(--form-default-input-text-color);
+                color: var(--form-default-text-color);
                 font-family: var(--form-default-font-family);
                 font-size: var(--form-default-font-size);
-                border: 1px solid var(--form-default-input-border-color);
+                outline: var(--form-default-outline);
+                border: 0;
                 width: 45px;
                 text-align: center;
             }
@@ -75,7 +72,8 @@ Form.prototype.ColorPicker = function (options = {}) {
 
             .color_picker_input:focus {
                 outline: none;
-                background-color: var(--form-default-input-background-color_active);
+                background-color: var(--form-default-background-focus);
+                outline: var(--form-default-outline-focus);
             }
 
             /* Hide spinner buttons for number inputs */
@@ -100,12 +98,19 @@ Form.prototype.ColorPicker = function (options = {}) {
                 width: 100%;
         }
 
+        .picker_blocks {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: var(--form-default-border-radius);
+        padding: 5px;
+        margin: 2px;
+        }
+
             .input_snatches {
-            width:50px;
-            height:50px;
+            width:40px;
+            height:40px;
             border-radius: 10px;
-            background-color: var(--form-default-input-background-color);
-            color: var(--form-default-input-text-color);
+            background-color: var(--form-default-background);
+            color: var(--form-default-text-color);
             font-family: var(--form-default-font-family);
             font-size: var(--form-default-font-size);
             display: flex;
@@ -113,11 +118,17 @@ Form.prototype.ColorPicker = function (options = {}) {
             justify-content: center;
         }
 
+        .snatches_wrapper {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    justify-items: center;
+        }
+
         .input_snatch_wrapper {
             display: flex;
             flex-direction: column;
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             border-radius: 10px;
             overflow: hidden;
         }
@@ -126,7 +137,7 @@ Form.prototype.ColorPicker = function (options = {}) {
             user-select: none;
                 width: 20px;
                 font-size: var(--form-default-font-size);
-                color: var(--form-default-input-text-color);
+                color: var(--form-default-text-color);
                 display:block;
             }
             
@@ -134,18 +145,23 @@ Form.prototype.ColorPicker = function (options = {}) {
             user-select: none;
                 margin-left: 5px;
                 font-size: var(--form-default-font-size);
-                color: var(--form-default-input-text-color);
+                color: var(--form-default-text-color);
                 display:block;
             }
 
             .block_header {
             user-select: none;
                 font-weight: bold;
-                color: var(--form-default-input-text-color);
+                color: var(--form-default-text-color);
                 font-family: var(--form-default-font-family);
                 font-size: var(--form-default-font-size);
                 text-align: center;
                 grid-column: 1 / -1;
+            }
+
+            .snatches_add {
+            cursor: pointer;
+            user-select: none;
             }
 
             `, null, {
@@ -195,7 +211,10 @@ Form.prototype.ColorPicker = function (options = {}) {
             'input_hsl': 'input_hsl',
             'input_lab': 'input_lab',
             'input_cmyk': 'input_cmyk',
-            'block_header': 'block_header'
+            'block_header': 'block_header',
+            'snatches_wrapper': 'snatches_wrapper',
+            'picker_blocks': 'picker_blocks',
+            'snatches_add': 'snatches_add'
         }, false);
         Form.ColorPickerClassesInitialized = true;
     }
@@ -204,7 +223,8 @@ Form.prototype.ColorPicker = function (options = {}) {
 
     const width = options.width || 300;
     const height = options.height || 300;
-    const showDetails = options.showDetails || true;
+    const showDetails = options.showDetails !== undefined ? options.showDetails : true;
+    const initialColor = options.color || '#FF0000';
 
     const wrapper = Q('<div>');
 
@@ -212,7 +232,7 @@ Form.prototype.ColorPicker = function (options = {}) {
 
 
     let current_color, previous_color, input_h, input_s, input_b, input_r, input_g, input_b2, input_l, input_a, input_b3, input_c, input_m, input_y, input_k, input_rgb888, input_rgb565, input_rgb, input_hex, input_hsl, input_lab, input_cmyk;
-
+    let snatches = [];
 
     if (showDetails) {
 
@@ -224,6 +244,7 @@ Form.prototype.ColorPicker = function (options = {}) {
         wrapper.addClass(Form.colorPickerClasses.q_form_color_picker_wrapper);
         const left_wrapper = Q('<div>', { class: Form.colorPickerClasses.left_wrapper });
         const right_wrapper = Q('<div>', { class: Form.colorPickerClasses.right_wrapper });
+        const snatches_wrapper = Q('<div>', { class: Form.colorPickerClasses.snatches_wrapper + ' ' + Form.colorPickerClasses.picker_blocks });
 
         const section_snatches = Q('<div>', { class: Form.colorPickerClasses.section_snatches });
         const section_first = Q('<div>', { class: Form.colorPickerClasses.section_first });
@@ -231,16 +252,13 @@ Form.prototype.ColorPicker = function (options = {}) {
         const section_third = Q('<div>', { class: Form.colorPickerClasses.section_third + ' ' + Form.colorPickerClasses.sections });
         const section_fourth = Q('<div>', { class: Form.colorPickerClasses.section_fourth + ' ' + Form.colorPickerClasses.sections });
 
-        const block_hsb = Q('<div>', { class: Form.colorPickerClasses.block_hsb });
-        const block_rgb = Q('<div>', { class: Form.colorPickerClasses.block_rgb });
-        const block_lab = Q('<div>', { class: Form.colorPickerClasses.block_lab });
-        const block_cmyk = Q('<div>', { class: Form.colorPickerClasses.block_cmyk });
-
-        const block_rgb888 = Q('<div>', { class: Form.colorPickerClasses.block_rgb888 });
-        const block_rgb565 = Q('<div>', { class: Form.colorPickerClasses.block_rgb565 });
-
-        // Create the missing HSL block
-        const block_hsl = Q('<div>', { class: Form.colorPickerClasses.block_hsl });
+        const block_hsb = Q('<div>', { class: Form.colorPickerClasses.block_hsb + ' ' + Form.colorPickerClasses.picker_blocks });
+        const block_rgb = Q('<div>', { class: Form.colorPickerClasses.block_rgb + ' ' + Form.colorPickerClasses.picker_blocks });
+        const block_lab = Q('<div>', { class: Form.colorPickerClasses.block_lab + ' ' + Form.colorPickerClasses.picker_blocks });
+        const block_cmyk = Q('<div>', { class: Form.colorPickerClasses.block_cmyk + ' ' + Form.colorPickerClasses.picker_blocks });
+        const block_rgb888 = Q('<div>', { class: Form.colorPickerClasses.block_rgb888 + ' ' + Form.colorPickerClasses.picker_blocks });
+        const block_rgb565 = Q('<div>', { class: Form.colorPickerClasses.block_rgb565 + ' ' + Form.colorPickerClasses.picker_blocks });
+        const block_hsl = Q('<div>', { class: Form.colorPickerClasses.block_hsl + ' ' + Form.colorPickerClasses.picker_blocks });
 
         // Create block headers
         const header_hsb = Q('<div>', {
@@ -306,7 +324,11 @@ Form.prototype.ColorPicker = function (options = {}) {
             return { wrapper, input };
         };
 
-        const snatch_add = Q('<div>', { class: Form.colorPickerClasses.input_snatches, text: '+' });
+        const snatch_add = Q('<div>', { class: Form.colorPickerClasses.input_snatches + ' ' + Form.colorPickerClasses.snatches_add, text: '+' });
+        const snatch_1 = Q('<div>', { class: Form.colorPickerClasses.input_snatches});
+        const snatch_2 = Q('<div>', { class: Form.colorPickerClasses.input_snatches});
+        const snatch_3 = Q('<div>', { class: Form.colorPickerClasses.input_snatches});
+        const snatch_4 = Q('<div>', { class: Form.colorPickerClasses.input_snatches});
         const snatch_prev_current_wrapper = Q('<div>', { class: Form.colorPickerClasses.input_snatch_wrapper });
 
         current_color = Q('<div>', { class: Form.colorPickerClasses.half_snatch });
@@ -314,6 +336,22 @@ Form.prototype.ColorPicker = function (options = {}) {
 
         snatch_prev_current_wrapper.append(current_color,previous_color);
 
+        // collect history slots
+        snatches = [snatch_1, snatch_2, snatch_3, snatch_4];
+
+        // click on a snatch to load it into picker
+        snatches.forEach(slot => slot.on('click', () => {
+            const col = slot.css('background-color');
+            if (col) wrapper.val(col);
+        }));
+
+        // "+" adds current color to front, shifts others down
+        snatch_add.on('click', () => {
+            for (let i = snatches.length - 1; i > 0; i--) {
+                snatches[i].css('background-color', snatches[i - 1].css('background-color'));
+            }
+            snatches[0].css('background-color', current_color.css('background-color'));
+        });
 
         // HSB inputs
         const input_h_obj = createInputWithLabel('number', Form.colorPickerClasses.input_h, 0, 0, 360, 'H:', '°');
@@ -631,7 +669,9 @@ Form.prototype.ColorPicker = function (options = {}) {
         // Append to HSL block
         block_hsl.append(header_hsl, input_hsl_obj.wrapper);
 
-        section_first.append(snatch_prev_current_wrapper, snatch_add);
+        snatches_wrapper.append(snatch_prev_current_wrapper, snatch_1, snatch_2, snatch_3, snatch_4, snatch_add);
+
+        section_first.append(snatches_wrapper);
         section_second.append(block_hsb, block_rgb, block_lab, block_cmyk);
         section_third.append(block_rgb888, block_rgb565, block_hsl);
 
@@ -1239,6 +1279,8 @@ Form.prototype.ColorPicker = function (options = {}) {
             positionTriangleMarker(s, l);
 
             drawPicker();
+            current_color.css('background-color', color);
+            previous_color.css('background-color', color);
 
             if (typeof wrapper.changeCallback === 'function') {
                 wrapper.changeCallback(color);
@@ -1262,8 +1304,23 @@ Form.prototype.ColorPicker = function (options = {}) {
         return this;
     };
 
+    // expose history color getter
+    wrapper.Snatch = function (index) {
+        return snatches[index]
+            ? snatches[index].css('background-color')
+            : null;
+    };
+
     drawPicker();
     console.log('ColorPicker drawn on canvas');
+
+    // set all input fields to the initial color on load
+    if (showDetails) {
+        updateInputsFromColor(initialColor);
+        // initialize half_snatch swatches
+        current_color.css('background-color', initialColor);
+        previous_color.css('background-color', initialColor);
+    }
 
     this.elements.push(wrapper);
     return wrapper;

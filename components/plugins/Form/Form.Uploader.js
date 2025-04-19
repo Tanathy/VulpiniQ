@@ -17,14 +17,15 @@ Form.prototype.Uploader = function (options = {}) {
                 display: flex;
                 flex-direction: column;
                 width: 100%;
-                border: 2px dashed var(--form-default-input-border-color);
+                outline: var(--form-default-outline);
                 border-radius: var(--form-default-border-radius);
-                background-color: var(--form-default-input-background-color);
+                background-color: var(--form-default-background);
                 padding: 10px;
+                color: var(--form-default-text-color);
             }
             .form_uploader_container.drag_over {
-                border-color: var(--form-default-button-background-color);
-                background-color: rgba(100, 60, 240, 0.05);
+                outline: var(--form-default-outline-active);
+                background-color: var(--form-default-background-hover);
             }
             .form_uploader_drop_area {
                 display: flex;
@@ -34,7 +35,7 @@ Form.prototype.Uploader = function (options = {}) {
                 padding: 20px;
                 text-align: center;
                 cursor: pointer;
-                color: var(--form-default-input-text-color);
+                color: var(--form-default-text-color);
                 min-height: 120px;
             }
             .form_uploader_icon {
@@ -58,7 +59,8 @@ Form.prototype.Uploader = function (options = {}) {
                 font-size: var(--form-default-font-size);
             }
             .form_uploader_button:hover {
-                background-color: var(--form-default-button-hover-background-color);
+                background-color: var(--form-default-background-hover);
+                color: var(--form-default-text-color-hover);
             }
             .form_uploader_input {
                 display: none;
@@ -73,7 +75,7 @@ Form.prototype.Uploader = function (options = {}) {
                 position: relative;
                 border-radius: var(--form-default-border-radius);
                 overflow: hidden;
-                border: 1px solid var(--form-default-input-border-color);
+                outline: var(--form-default-outline);
             }
             .form_uploader_preview_image {
                 object-fit: cover;

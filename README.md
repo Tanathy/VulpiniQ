@@ -50,6 +50,7 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | Color Brightness | Static | Color Manipulation | Adjusts the brightness of a color by a specified percentage\. |
 | Container | Plugin | Constructor | Useful to create containers for your elements, like tabs, accordions, etc\. |
 | Container\.Tab | Method | Method | Tab component for Container plugin |
+| Container\.Table | Method | Method | Datatable component for Container plugin |
 | Container\.Window | Plugin | Method | Creates a draggable, resizable window container with title bar and control buttons |
 | Cookie | Static | Utility | A utility function to set, get, and delete cookies\. |
 | Debounce | Static | Performance Optimization | Delays the execution of a function until after a specified wait period has elapsed since the last invocation\. |
@@ -60,6 +61,8 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | Form\.CheckBox | Component | Component | CheckBox component for Form plugin |
 | Form\.ColorPicker | Component | Component | Photoshop\-like Color Picker component for Form plugin\. Renders a canvas with an outer detail \(24–color\) ring, a full–rainbow middle ring, and an inner triangle for selecting saturation and brightness by mixing the selected hue with white and black\. |
 | Form\.Dropdown | Form | UI Component | A customizable dropdown list component for selecting options from a list\. |
+| Form\.ProgressBar | Component | Component | Progress bar component with min, max, val methods |
+| Form\.Radio | Component | Component | Radio component using only HTML elements with val, selected, disable, select methods |
 | Form\.Slider | Component | Component | Slider input component implemented with divs \(no native <input>\) |
 | Form\.Tags | Component | Component | Tags component for Form plugin |
 | Form\.TextArea | Component | Component | TextArea component for Form plugin |

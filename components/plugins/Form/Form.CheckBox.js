@@ -6,10 +6,10 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
                 width: fit-content;
                 align-items: center;
             }
-            .form_checkbox .label:empty {
+            .form_checkbox .form_label:empty {
                 display: none;
             }
-            .form_checkbox .label {
+            .form_checkbox .form_label {
                 padding-left: 5px;
                 user-select: none;
             }
@@ -17,8 +17,8 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
                 position: relative;
                 width: 20px;
                 height: 20px;
-                background-color: var(--form-default-checkbox-background-color);
-                border-radius: var(--form-default-checkbox-radius);
+                background-color: var(--form-default-background);
+                border-radius: var(--form-default-border-radius);
                 cursor: pointer;
             }
             .form_checkbox_element.checked:before {
@@ -28,12 +28,12 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background-color: var(--form-default-checkbox-active-background-color);
-                border-radius: var(--form-default-checkbox-radius);
+                background-color: var(--form-default-accent-color);
+                border-radius: var(--form-default-border-radius);
             }
             .form_label {
                 padding-left: 5px;
-                color: var(--form-default-checkbox-text-color);
+                color: var(--form-default-text-color);
                 font-family: var(--form-default-font-family);
                 font-size: var(--form-default-font-size);
             }

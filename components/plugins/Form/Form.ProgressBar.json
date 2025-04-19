@@ -1,0 +1,8 @@
+{
+  "Name": "Form.ProgressBar",
+  "Method": "Component",
+  "Desc": "Progress bar component with min, max, val methods",
+  "Type": "Component",
+  "Example": "var pb = Q.Form.ProgressBar(0,100,30); pb.max(200).min(10).val(50);",
+  "Dependencies": ["Form", "style", "find", "css"]
+}

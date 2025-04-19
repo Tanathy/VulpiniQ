@@ -1,0 +1,8 @@
+{
+  "Name": "Container.Table",
+  "Method": "Method",
+  "Desc": "Datatable component for Container plugin",
+  "Type": "Method",
+  "Example": ["var tbl = Q.Container().Table(dataArray, { pageSize: 25 });"],
+  "Dependencies": ["style", "append", "on", "find", "html", "text", "val", "click"]
+}

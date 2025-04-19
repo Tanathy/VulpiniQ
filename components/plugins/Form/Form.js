@@ -6,29 +6,60 @@ function Form(options = {}) {
     this.options = options;
     if (!Form.initialized) {
         Form.classes = Q.style(`
-            --form-default-border-radius: 5px;
-            --form-default-padding: 5px 10px;
+
+            --form-default-accent-color: rgb(100, 60, 240);
+            --form-default-accent-text-color: #fff;
             --form-default-font-size: 12px;
             --form-default-font-family: Arial, sans-serif;
-            --form-default-input-background-color: rgb(0,0,0,0.1);
-            --form-default-input-background-color_active: rgb(0,0,0,0.2);
-            --form-default-input-text-color: rgb(153, 153, 153);
-            --form-default-input-border-color: rgba(255, 255, 255, 0.03);
-            --form-default-checkbox-background-color: rgb(68, 68, 68);
-            --form-default-checkbox-active-background-color: rgb(100, 60, 240);
-            --form-default-checkbox-text-color: rgb(153, 153, 153);
-            --form-default-checkbox-radius: 5px;
-            --form-default-button-background-color: rgb(100, 60, 240);
-            --form-default-button-text-color: #fff;
-            --form-default-button-hover-background-color: rgb(129, 100, 231);
-            --form-default-button-hover-text-color: #fff;
-            --form-default-button-active-background-color: rgb(129, 100, 231);
-            --form-default-button-active-text-color: #fff;
-            --form-default-button-border-color: rgba(255, 255, 255, 0.1);
-            --form-default-selected-background-color: rgb(100, 60, 240);
-            --form-default-selected-text-color: #fff;
-            --form-default-dropdown-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            --form-default-dropdown-background-color: rgb(51, 51, 51);
+
+            --form-default-dataset-header-font-weight: 600;
+            --form-default-dataset-header-background: rgba(127, 127, 127, 0.24);
+            --form-default-dataset-header-background-active: rgba(127, 127, 127, 0.24);
+            --form-default-dataset-header-background-focus: rgba(127, 127, 127, 0.24);
+            --form-default-dataset-header-background-hover: rgba(127, 127, 127, 0.24);
+            --form-default-dataset-header-text-color: #fff;
+            --form-default-dataset-header-text-color-active: #fff;
+            --form-default-dataset-header-text-color-focus: #fff;
+            --form-default-dataset-header-text-color-hover: #fff;
+            --form-default-dataset-border: 1px solid rgba(127, 127, 127, 0.24);
+            --
+
+            --form-default-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
+            --form-default-shadow-active: 0px 0px 5px rgba(100, 60, 240, 0.5);
+            --form-default-shadow-focus: 0px 0px 5px rgba(100, 60, 240, 0.5);
+            --form-default-shadow-hover: 0px 0px 5px rgba(100, 60, 240, 0.5);
+
+            --form-default-background-active: rgb(46, 46, 46);
+            --form-default-background-focus: rgb(46, 46, 46);
+            --form-default-background-hover: rgb(46, 46, 46);
+            --form-default-background: rgb(46, 46, 46);
+
+            --form-default-border-active: 1px solid var(--form-default-accent-color);
+            --form-default-border-focus: 1px solid var(--form-default-accent-color);
+            --form-default-border-hover: 1px solid var(--form-default-accent-color);
+            --form-default-border: 1px solid rgba(255, 255, 255, 0.03);
+
+            --form-default-outline-active: var(--form-default-border-active);
+            --form-default-outline-focus: var(--form-default-border-focus);
+            --form-default-outline-hover: var(--form-default-border-hover);
+            --form-default-outline: var(--form-default-border);
+            
+            --form-default-border-radius: 5px;
+            --form-default-margin: 0px 0px 0px 0px;
+            --form-default-padding: 5px 10px 5px 10px;
+            
+            
+            --form-default-text-color-active: #fff;
+            --form-default-text-color-focus: #fff;
+            --form-default-text-color-hover: #fff;
+            --form-default-text-color: #999;
+            
+            --form-default-text-active: normal var(--form-default-font-size) var(--form-default-font-family);
+            --form-default-text-focus: normal var(--form-default-font-size) var(--form-default-font-family);
+            --form-default-text-hover: normal var(--form-default-font-size) var(--form-default-font-family);
+            --form-default-text: normal var(--form-default-font-size) var(--form-default-font-family);
+            
+            --form-default-width: 100%;
 
         `, `
             .form_icon {
@@ -71,11 +102,38 @@ function Form(options = {}) {
             .scrollbar {
                 scrollbar-color: #888 rgb(48, 48, 48);
             }
+            /* ripple effect container */
+            .form_ripple_container {
+                position: relative;
+                overflow: hidden;
+            }
+            .form_ripple_container::after {
+                content: '';
+                position: absolute;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.2);
+                width: var(--ripple-size);
+                height: var(--ripple-size);
+                top: var(--ripple-y);
+                left: var(--ripple-x);
+                transform: scale(0);
+            }
+            .form_ripple_container.rippleing::after {
+                animation: form_ripple 0.4s linear;
+            }
+            @keyframes form_ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
         `, null, {
             // 'q_form': 'q_form',
             'form_icon': 'form_icon',
             'form_close_button': 'form_close_button',
-            'scrollbar': 'scrollbar'
+            'scrollbar': 'scrollbar',
+            'form_ripple_container': 'form_ripple_container',
+            'rippleing': 'rippleing'
         });
         Form.initialized = true;
         console.log('Form core initialized');
@@ -86,4 +144,32 @@ Form.prototype.Icon = function (icon) {
     iconElement.addClass('svg_' + icon + ' form_icon');
     return iconElement;
 };
+/* FX_Ripple: pseudo‑element approach */
+Form.prototype.FX_Ripple = function(el) {
+    const element = el instanceof Q ? el.nodes[0] : el;
+    if (!element) return this;
+    if (getComputedStyle(element).position === 'static') {
+        element.style.position = 'relative';
+    }
+    element.classList.add(Form.classes.form_ripple_container);
+    element.addEventListener('click', function(e) {
+        const rect = element.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        element.style.setProperty('--ripple-size', size + 'px');
+        element.style.setProperty(
+            '--ripple-x',
+            (e.clientX - rect.left - size/2) + 'px'
+        );
+        element.style.setProperty(
+            '--ripple-y',
+            (e.clientY - rect.top  - size/2) + 'px'
+        );
+        element.classList.add(Form.classes.rippleing);
+        setTimeout(() => {
+            element.classList.remove(Form.classes.rippleing);
+        }, 400);
+    });
+    return this;
+};
+
 Q.Form = Form;

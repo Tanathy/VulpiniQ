@@ -1,9 +1,9 @@
 Form.prototype.Slider = function(initial = 0, options = {}) {
     if (!Form.sliderClassesInitialized) {
         Form.sliderClasses = Q.style(null, `
-            .slider { position: relative; width: 100%; height: 8px; background: var(--form-default-input-border-color); cursor: pointer; }
-            .slider_track { position: absolute; height:100%; background: var(--form-default-selected-background-color); width:0; }
-            .slider_thumb { position: absolute; top:50%; transform:translate(-50%,-50%); width:5px; height:100%; background: var(--form-default-button-background-color); border-radius:50%; }
+            .slider { position: relative; width: 100%; height: 8px; background: var(--form-default-background); border-radius: 4px; cursor: pointer; }
+            .slider_track { position: absolute; height:100%; background: var(--form-default-accent-color); border-radius: 4px; }
+            .slider_thumb { position: absolute; top:50%; transform:translate(-50%,-50%); width:5px; height:100%; background: var('--form-default-accent-color'); border-radius: 4px; cursor: pointer; }
         `, null, {
             'slider': 'slider',
             'slider_track': 'slider_track',

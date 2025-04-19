@@ -8,11 +8,16 @@ Form.prototype.Dropdown = function(options = {}) {
                 font-size: var(--form-default-font-size);
                 cursor: pointer;
                 user-select: none;
-                border: 1px solid var(--form-default-input-border-color);
+                outline: var(--form-default-outline);
                 border-radius: var(--form-default-border-radius);
-                background-color: var(--form-default-input-background-color);
-                color: var(--form-default-input-text-color);
+                background-color: var(--form-default-background);
+                color: var(--form-default-text-color);
             }
+
+            .selected_text {
+            padding-right: 10px;
+        }
+
             .form_dropdown.disabled {
                 opacity: 0.6;
                 cursor: not-allowed;
@@ -37,20 +42,23 @@ Form.prototype.Dropdown = function(options = {}) {
                 z-index: 1000;
                 max-height: 200px;
                 overflow-y: auto;
-                background-color: var(--form-default-dropdown-background-color);
-                border: 1px solid var(--form-default-input-border-color);
+                background-color: var(--form-default-background);
+                outline: var(--form-default-outline);
                 border-radius: var(--form-default-border-radius);
-                box-shadow: var(--form-default-dropdown-shadow);
+                box-shadow: var(--form-default-shadow);
                 display: none;
-                color: var(--form-default-input-text-color);
+                color: var(--form-default-text-color);
+                font-family: var(--form-default-font-family);
+                
+                
             }
             .form_dropdown_item {
                 padding: var(--form-default-padding);
                 cursor: pointer;
             }
             .form_dropdown_item:hover {
-                background-color: var(--form-default-selected-background-color);
-                color: var(--form-default-selected-text-color);
+                background-color: var(--form-default-accent-color);
+                color: var(--form-default-accent-text-color);
             }
             .form_dropdown_item.selected {
                 background-color: var(--form-default-selected-background-color);
@@ -61,10 +69,11 @@ Form.prototype.Dropdown = function(options = {}) {
                 display: none;
             }
             .form_dropdown_arrow {
-                transition: transform 0.2s;
+                transition: transform 0.2s ease-in-out;
+                transform: scale(2.0);
             }
             .form_dropdown.open .form_dropdown_arrow {
-                transform: rotate(180deg);
+                transform: rotate(180deg) scale(2.0);
             }
             .form_dropdown.open .form_dropdown_items {
                 display: block;
@@ -74,7 +83,14 @@ Form.prototype.Dropdown = function(options = {}) {
                 overflow-y: auto;
                 top: 100%;
             }
+            .form_dropdown.up .form_dropdown_items {
+                top: auto;
+                bottom: 100%;
+                margin-top: 0;
+                margin-bottom: 3px;
+            }
         `, null, {
+            'selected_text': 'selected_text',
             'form_dropdown': 'form_dropdown',
             'open': 'open',
             'disabled': 'disabled',
@@ -82,13 +98,14 @@ Form.prototype.Dropdown = function(options = {}) {
             'form_dropdown_selected': 'form_dropdown_selected', 
             'form_dropdown_items': 'form_dropdown_items',
             'form_dropdown_item': 'form_dropdown_item',
-            'form_dropdown_arrow': 'form_dropdown_arrow'
+            'form_dropdown_arrow': 'form_dropdown_arrow',
+            'up': 'up'
         },true);
     }
 
     const container = Q('<div>').addClass(Form.dropdownStyles['form_dropdown']);
     const header = Q('<div>').addClass(Form.dropdownStyles['form_dropdown_selected']);
-    const label = Q('<div>').text('Select an option').addClass('selected-text');
+    const label = Q('<div>').text('Select an option').addClass(Form.dropdownStyles['selected_text']);
     const arrow = Q('<div>').addClass(Form.dropdownStyles['form_dropdown_arrow']).html('&#9662;');
     header.append(label, arrow);
     const listContainer = Q('<div>')
@@ -119,11 +136,26 @@ Form.prototype.Dropdown = function(options = {}) {
 
     if (isDisabled) { container.addClass(Form.dropdownStyles['disabled']); }
 
-    // toggle via CSS class instead of remove/append
+    // swap below/above on open if needed
     header.on('click', function(e) {
         e.stopPropagation();
         if (isDisabled) return;
-        container.toggleClass(Form.dropdownStyles['open']);
+        const openCl = Form.dropdownStyles['open'];
+        const upCl = Form.dropdownStyles['up'];
+        if (container.hasClass(openCl)) {
+            // about to close: clear any upward flip
+            container.removeClass(upCl);
+        } else {
+            // about to open: measure and flip if overflowing
+            const rect = container.nodes[0].getBoundingClientRect();
+            const itemsH = listContainer.nodes[0].scrollHeight;
+            if (rect.bottom + itemsH > window.innerHeight) {
+                container.addClass(upCl);
+            } else {
+                container.removeClass(upCl);
+            }
+        }
+        container.toggleClass(openCl);
     });
 
     // selectItem now just closes via class toggle
@@ -168,14 +200,9 @@ Form.prototype.Dropdown = function(options = {}) {
             });
             listContainer.append(dropdownItem);
         });
-        if (defaultIndex >= 0) {
-            selectItem(defaultIndex);
-        } else {
-            selectedValue = null;
-            selectedText = '';
-            selectedIndex = -1;
-            label.text('Select an option');
-        }
+        // default to first if none marked
+        if (defaultIndex < 0) defaultIndex = 0;
+        selectItem(defaultIndex);
     }
 
     const dropdownAPI = {

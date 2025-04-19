@@ -14,40 +14,41 @@ Form.prototype.Tags = function(value = '', placeholder = '', options = {}) {
                 width: 100%;
                 min-height: 36px;
                 padding: 3px;
-                border: 1px solid var(--form-default-input-border-color);
+                outline: var(--form-default-outline);
                 border-radius: var(--form-default-border-radius);
                 background-color: var(--form-default-input-background-color);
                 cursor: text;
             }
             .form_tags_container:focus-within {
-                border-color: var(--form-default-button-background-color);
+                border-color: var(--form-default-outline-focus);
                 outline: none;
             }
             .form_tag {
+            position:relative;
+            overflow: hidden;
                 display: inline-flex;
                 align-items: center;
-                padding: 3px 8px;
-                background-color: var(--form-default-button-background-color);
-                color: var(--form-default-button-text-color);
+                padding: 0 30px 0 5px;
+                background: var(--form-default-background);
+                color: var(--form-default-text-color);
                 border-radius: var(--form-default-border-radius);
                 font-size: var(--form-default-font-size);
                 font-family: var(--form-default-font-family);
                 user-select: none;
             }
             .form_tag_editable {
-                background-color: var(--form-default-button-hover-background-color);
+                background-color: var(--form-default-background-hover);
             }
             .form_tag_remove {
-                margin-left: 5px;
+                display: flex;
+                position: absolute;
+                right: 0;
                 cursor: pointer;
-                width: 14px;
-                height: 14px;
-                display: inline-flex;
+                width: 20px;
+                height: 100%;
                 align-items: center;
                 justify-content: center;
-                font-size: 10px;
-                border-radius: 50%;
-                background-color: rgba(255, 255, 255, 0.2);
+                font-size: 12px;
             }
             .form_tag_input {
                 flex-grow: 1;
@@ -58,10 +59,10 @@ Form.prototype.Tags = function(value = '', placeholder = '', options = {}) {
                 font-family: var(--form-default-font-family);
                 font-size: var(--form-default-font-size);
                 background: transparent;
-                color: var(--form-default-input-text-color);
+                color: var(--form-default-text-color);
             }
             .form_tag.dragging {
-                opacity: 0.5;
+                opacity: 0.2;
             }
             .form_tag[draggable=true] {
                 cursor: move;
@@ -75,7 +76,7 @@ Form.prototype.Tags = function(value = '', placeholder = '', options = {}) {
         });
         Form.tagsClassesInitialized = true;
     }
-    const container = Q(`<div class="${Form.classes.q_form} ${Form.tagsClasses.form_tags_container}"></div>`);
+    const container = Q(`<div class="${Form.tagsClasses.form_tags_container}"></div>`);
     const input = Q(`<input class="${Form.tagsClasses.form_tag_input}" placeholder="${placeholder}" type="text">`);
     const state = {
         tags: [],

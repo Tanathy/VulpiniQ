@@ -4,21 +4,19 @@ Form.prototype.Button = function(text = '') {
             .button {
                 user-select: none;
                 font-family: var(--form-default-font-family);
-                background-color: var(--form-default-button-background-color);
-                color: var(--form-default-button-text-color);
-                box-shadow: inset 0 0 0 1px var(--form-default-button-border-color);
+                font-size: var(--form-default-font-size);
+                background-color: var(--form-default-background);
+                color: var(--form-default-text-color);
                 border-radius: var(--form-default-border-radius);
                 padding: var(--form-default-padding);
-                font-size: var(--form-default-font-size);
-                cursor: pointer;
             }
             .button:hover {
-                background-color: var(--form-default-button-hover-background-color);
-                color: var(--form-default-button-hover-text-color);
+                background-color: var(--form-default-background-hover);
+                color: var(--form-default-text-color-hover);
             }
             .button:active {
-                background-color: var(--form-default-button-active-background-color);
-                color: var(--form-default-button-active-text-color);
+                background-color: var(--form-default-background-active);
+                color: var(--form-default-text-color-active);
             }
             .button_disabled {
                 opacity: 0.6;
@@ -52,5 +50,9 @@ Form.prototype.Button = function(text = '') {
         return button;
     };
     this.elements.push(button);
+
+    // enable ripple effect on this button
+    this.FX_Ripple(button);
+
     return button;
 };

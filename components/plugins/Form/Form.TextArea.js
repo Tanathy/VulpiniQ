@@ -7,15 +7,15 @@ Form.prototype.TextArea = function(value = '', placeholder = '') {
                 font-family: var(--form-default-font-family);
                 font-size: var(--form-default-font-size);
                 border-radius: var(--form-default-border-radius);
-                background-color: var(--form-default-input-background-color);
-                color: var(--form-default-input-text-color);
-                border: 1px solid var(--form-default-input-border-color);
+                background-color: var(--form-default-background);
+                color: var(--form-default-text-color);
+                outline: var(--form-default-outline);
+                border: 0;
                 resize: none;
                 min-height: 100px;
             }
             .form_textarea:focus {
-                border-color: var(--form-default-button-background-color);
-                outline: none;
+                outline: var(--form-default-outline-focus);
             }
         `, null, {
             'form_textarea': 'form_textarea'
@@ -37,6 +37,12 @@ Form.prototype.TextArea = function(value = '', placeholder = '') {
         textarea.val('');
         return textarea;
     };
+
+    textarea.resizeable = function(x = true, y = true) {
+        textarea.css('resize', (x ? 'horizontal' : 'none') + ' ' + (y ? 'vertical' : 'none'));
+        return textarea;
+    }
+
     // use input for live updates
     textarea.change = function(callback) {
         textarea.on('input', function() {

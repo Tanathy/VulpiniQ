@@ -1,0 +1,8 @@
+{
+  "Name": "Form.Radio",
+  "Method": "Component",
+  "Desc": "Radio component using only HTML elements with val, selected, disable, select methods",
+  "Type": "Component",
+  "Example": "var rg = Q.Form.Radio([{value:'a',text:'A'}]); rg.change((i,v,t)=>{}); rg.disable(0); rg.select(0);",
+  "Dependencies": ["Form","style","empty","append","on","addClass","removeClass"]
+}
