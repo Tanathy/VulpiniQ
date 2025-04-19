@@ -13,16 +13,13 @@ function Form(options = {}) {
             --form-default-font-family: Arial, sans-serif;
 
             --form-default-dataset-header-font-weight: 600;
-            --form-default-dataset-header-background: rgba(127, 127, 127, 0.24);
-            --form-default-dataset-header-background-active: rgba(127, 127, 127, 0.24);
-            --form-default-dataset-header-background-focus: rgba(127, 127, 127, 0.24);
-            --form-default-dataset-header-background-hover: rgba(127, 127, 127, 0.24);
+            --form-default-dataset-header-font-size: 12px;
+            --form-default-dataset-header-data-font-size: 12px;
+            
+            --form-default-dataset-header-background: rgba(127, 127, 127, 0.10);
             --form-default-dataset-header-text-color: #fff;
-            --form-default-dataset-header-text-color-active: #fff;
-            --form-default-dataset-header-text-color-focus: #fff;
-            --form-default-dataset-header-text-color-hover: #fff;
+
             --form-default-dataset-border: 1px solid rgba(127, 127, 127, 0.24);
-            --
 
             --form-default-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
             --form-default-shadow-active: 0px 0px 5px rgba(100, 60, 240, 0.5);

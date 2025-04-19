@@ -1,4 +1,12 @@
 Container.prototype.Table = function (data = [], options = {}) {
+  // defaults for plugin options, demonstrating available keys
+  const defaults = {
+    pageSize: 10,
+    sizes: ['30px', '100%', '100px', '150px', '200px'],
+    pageButtonLimit: 5       // max number of numeric page buttons shown
+  };
+  options = Object.assign({}, defaults, options);
+
   if (!Container.tableClassesInitialized) {
     Container.tableClasses = Q.style('', `
       .tbl_wrapper { display: flex; flex-direction: column; }
@@ -16,21 +24,30 @@ Container.prototype.Table = function (data = [], options = {}) {
       text-align:left;
       cursor: default;
       }
+
       .tbl_row.selected { background: var(--form-default-accent-color); color: var(--form-default-accent-text-color); }
       
             .tbl_table th
       {
-        background: var(--form-default-background);
+        background: var(--form-default-dataset-header-background);
         color: var(--form-default-dataset-header-text-color);
-        font-height: var(--form-default-dataset-header-font-height);
+        font-weight: var(--form-default-dataset-header-font-weight);
+        font-size: var(--form-default-dataset-header-font-size);
         padding-right: 25px;
         width: 50%;
 }
+        .tbl_table td
+      {
+        font-size: var(--form-default-dataset-header-data-font-size);
+        color: var(--form-default-dataset-data-text-color);
+    }
 
       .tbl_bottom {
       display: flex;
       justify-content: space-between;
       margin-top:5px; 
+      font-size: var(--form-default-dataset-header-data-font-size);
+      color: var(--form-default-dataset-data-text-color);
       }
       
       .tbl_pagination {
@@ -80,13 +97,17 @@ Container.prototype.Table = function (data = [], options = {}) {
   const wrapper = Q('<div>', { class: Container.tableClasses.tbl_wrapper });
   const top = Q('<div>', { class: Container.tableClasses.tbl_top });
 
-  // State must come first so callbacks can see `currentPage`
   let allData = [...data],
     currentPage = 1,
     sortKey = null,
-    sortOrder = 'off',             // changed default to off
+    sortOrder = 'off',
     selectedIdx = null,
-    onChange = null;
+    onChange = null,
+    filteredIndices = [];
+
+  // replace old per‑column sizes fallback
+  // const columnSizes = options.sizes || [];
+  const columnSizes = options.sizes;
 
   // create one Form controller
   const form = new Q.Form();
@@ -108,7 +129,9 @@ Container.prototype.Table = function (data = [], options = {}) {
   wrapper.append(top, table, bottom);
 
   // entries‑per‑page dropdown (after table exists)
-  let pageSizeVal = options.pageSize || 10;
+  // replace old pageSize fallback
+  // let pageSizeVal = options.pageSize || 10;
+  let pageSizeVal = options.pageSize;
   const pageSizeDropdown = form.Dropdown({
     values: [10, 25, 50, 100].map(n => ({ value: n, text: '' + n, default: n === pageSizeVal }))
   });
@@ -129,33 +152,44 @@ Container.prototype.Table = function (data = [], options = {}) {
   // Utils
   function render() {
     // filter and keep original indices
-    const rawVal = searchInput.val();
-    const term = (rawVal || '').toLowerCase();
-    const filteredIndices = allData
-      .map((row, i) => i)
-      .filter(i => JSON.stringify(allData[i]).toLowerCase().includes(term));
-
-    // sort by original index array if active
-    if (sortKey && sortOrder !== 'off') {
-      filteredIndices.sort((i, j) => {
-        let v1 = allData[i][sortKey], v2 = allData[j][sortKey];
-        if (Array.isArray(v1)) v1 = v1.join(',');
-        if (Array.isArray(v2)) v2 = v2.join(',');
-        return (v1 > v2 ? 1 : -1) * (sortOrder === 'asc' ? 1 : -1);
+    const rawVal = searchInput.val() || '';
+    const term = rawVal.trim();
+    filteredIndices = allData.map((row, i) => i);
+    if (term.includes(':')) {
+      // conditional field:value search, multiple clauses separated by comma
+      const clauses = term.split(',').map(c => {
+        const [field, ...rest] = c.split(':');
+        return [field.trim(), rest.join(':').trim()];
       });
+      filteredIndices = filteredIndices.filter(i => {
+        const row = allData[i];
+        return clauses.every(([field, val]) => {
+          const fv = row[field];
+          if (fv == null) return false;
+          const str = typeof fv === 'object' ? JSON.stringify(fv) : String(fv);
+          return str.toLowerCase().includes(val.toLowerCase());
+        });
+      });
+    } else {
+      // simple text search across all fields
+      const lower = term.toLowerCase();
+      filteredIndices = filteredIndices.filter(i =>
+        JSON.stringify(allData[i]).toLowerCase().includes(lower)
+      );
     }
 
     const total = filteredIndices.length;
     const totalPages = Math.ceil(total / pageSizeVal) || 1;
     currentPage = Math.min(currentPage, totalPages);
     const start = (currentPage - 1) * pageSizeVal,
-          end = start + pageSizeVal;
+      end = start + pageSizeVal;
     const pageIndices = filteredIndices.slice(start, end);
 
-    // build table headers
-    table.html('');
-    const thead = `<thead><tr>${Object.keys(allData[0] || {}).map(k =>
-      `<th data-key="${k}">${k}
+    // build table headers with optional width styles
+    const keys = Object.keys(allData[0] || {});
+    const thead = `<thead><tr>${keys.map((k, i) =>
+      `<th data-key="${k}"${columnSizes[i] ? ` style="width:${columnSizes[i]}"` : ''
+      }>${k}
            <span class="${Container.tableClasses['sort-icons']}">
              <span class="${Container.tableClasses.asc}">▲</span>
              <span class="${Container.tableClasses.desc}">▼</span>
@@ -167,13 +201,12 @@ Container.prototype.Table = function (data = [], options = {}) {
     // build body using original indices
     const tbody = pageIndices.map(idx => {
       const row = allData[idx];
-      return `<tr data-idx="${idx}" class="${Container.tableClasses.tbl_row}${idx === selectedIdx ? ' selected' : ''}">${
-        Object.values(row).map(v => {
-          if (Array.isArray(v)) return `<td>${v.join(', ')}</td>`;
-          if (typeof v === 'object') return `<td>${JSON.stringify(v)}</td>`;
-          return `<td>${v}</td>`;
-        }).join('')
-      }</tr>`;
+      return `<tr data-idx="${idx}" class="${Container.tableClasses.tbl_row}${idx === selectedIdx ? ' selected' : ''}">${Object.values(row).map(v => {
+        if (Array.isArray(v)) return `<td>${v.join(', ')}</td>`;
+        if (typeof v === 'object') return `<td>${JSON.stringify(v)}</td>`;
+        return `<td>${v}</td>`;
+      }).join('')
+        }</tr>`;
     }).join('');
 
     table.html('');
@@ -188,12 +221,23 @@ Container.prototype.Table = function (data = [], options = {}) {
       const btn = `<span class="${Container.tableClasses.tbl_page_btn}" data-action="${t.toLowerCase()}">${t}</span>`;
       pagination.append(btn);
     });
-    for (let p = 1; p <= totalPages; p++) {
+
+    // window numeric page buttons based on pageButtonLimit
+    const limit = options.pageButtonLimit;
+    const half = Math.floor(limit / 2);
+    let startPage = Math.max(1, currentPage - half);
+    let endPage = Math.min(totalPages, startPage + limit - 1);
+    if (endPage - startPage + 1 < limit) {
+      startPage = Math.max(1, endPage - limit + 1);
+    }
+    for (let p = startPage; p <= endPage; p++) {
       const cls = p === currentPage ? ' active' : '';
       pagination.append(`<span class="${Container.tableClasses.tbl_page_btn + cls}" data-page="${p}">${p}</span>`);
     }
+
     ['Next', 'Last'].forEach(t => {
-      pagination.append(`<span class="${Container.tableClasses.tbl_page_btn}" data-action="${t.toLowerCase()}">${t}</span>`);
+      const btn = `<span class="${Container.tableClasses.tbl_page_btn}" data-action="${t.toLowerCase()}">${t}</span>`;
+      pagination.append(btn);
     });
   }
 
@@ -240,8 +284,8 @@ Container.prototype.Table = function (data = [], options = {}) {
     if (tgt.dataset.page) currentPage = +tgt.dataset.page;
     else if (tgt.dataset.action === 'first') currentPage = 1;
     else if (tgt.dataset.action === 'prev') currentPage = Math.max(1, currentPage - 1);
-    else if (tgt.dataset.action === 'next') currentPage = Math.min(Math.ceil(filtered.length / pageSizeVal), currentPage + 1);
-    else if (tgt.dataset.action === 'last') currentPage = Math.ceil(filtered.length / pageSizeVal);
+    else if (tgt.dataset.action === 'next') currentPage = Math.min(Math.ceil(filteredIndices.length / pageSizeVal), currentPage + 1);
+    else if (tgt.dataset.action === 'last') currentPage = Math.ceil(filteredIndices.length / pageSizeVal);
     render();
   });
 
