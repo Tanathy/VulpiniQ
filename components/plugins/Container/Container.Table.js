@@ -1,11 +1,27 @@
 Container.prototype.Table = function (data = [], options = {}) {
-  // defaults for plugin options, demonstrating available keys
+  if (!Array.isArray(data)) throw new Error('Container.Table: data must be an array of objects');
   const defaults = {
     pageSize: 10,
-    sizes: ['30px', '100%', '100px', '150px', '200px'],
-    pageButtonLimit: 5       // max number of numeric page buttons shown
+    sizes: [],
+    pageButtonLimit: 5,
+    debounce: 250,
+    search: true,
+    sort: true,
+    filter: true,
+    page: true,
+    info: true,
+    language: ['Search...', 'No results found.', 'Showing [PAGE] to [ALL_PAGES] of [TOTAL] entries','First', 'Prev', 'Next', 'Last'],
   };
   options = Object.assign({}, defaults, options);
+
+  const {
+    debounce: debounceTime,
+    search: enableSearch,
+    sort: enableSort,
+    filter: enableFilter,
+    page: enablePage,
+    info: enableInfo
+  } = options;
 
   if (!Container.tableClassesInitialized) {
     Container.tableClasses = Q.style('', `
@@ -34,7 +50,6 @@ Container.prototype.Table = function (data = [], options = {}) {
         font-weight: var(--form-default-dataset-header-font-weight);
         font-size: var(--form-default-dataset-header-font-size);
         padding-right: 25px;
-        width: 50%;
 }
         .tbl_table td
       {
@@ -90,8 +105,10 @@ Container.prototype.Table = function (data = [], options = {}) {
       'tbl_page_btn': 'tbl_page_btn',
       'sort-icons': 'sort-icons',
       'asc': 'asc', 'desc': 'desc',
-      'sort_active': 'sort_active'
-    }, false);
+      'sort_active': 'sort_active',
+      'active': 'active',
+      'selected': 'selected',
+    }, true);
     Container.tableClassesInitialized = true;
   }
   const wrapper = Q('<div>', { class: Container.tableClasses.tbl_wrapper });
@@ -105,19 +122,16 @@ Container.prototype.Table = function (data = [], options = {}) {
     onChange = null,
     filteredIndices = [];
 
-  // replace old per‑column sizes fallback
-  // const columnSizes = options.sizes || [];
   const columnSizes = options.sizes;
 
-  // create one Form controller
   const form = new Q.Form();
 
-  // use Form.TextBox for search
-  const searchInput = form.TextBox('text', '', 'Search…');
+  const searchInput = form.TextBox('text', '', options.language[0]);
   const search = Q('<div>', { class: Container.tableClasses.tbl_search })
     .append(searchInput.nodes[0]);
 
-  // generate a unique debounce key for this instance
+  if (enableSearch) top.append(search);
+
   const searchDebounceId = Q.ID('tbl_search_');
 
   const table = Q('<table>', { class: Container.tableClasses.tbl_table });
@@ -125,57 +139,62 @@ Container.prototype.Table = function (data = [], options = {}) {
   const status = Q('<div>');
   const pagination = Q('<div>', { class: Container.tableClasses.tbl_pagination });
   bottom.append(status, pagination);
-  top.append(search);
   wrapper.append(top, table, bottom);
 
-  // entries‑per‑page dropdown (after table exists)
-  // replace old pageSize fallback
-  // let pageSizeVal = options.pageSize || 10;
   let pageSizeVal = options.pageSize;
   const pageSizeDropdown = form.Dropdown({
     values: [10, 25, 50, 100].map(n => ({ value: n, text: '' + n, default: n === pageSizeVal }))
   });
   const pageSize = Q('<div>', { class: Container.tableClasses.tbl_page_size })
     .append(pageSizeDropdown.nodes[0]);
-  top.append(pageSize);
 
-  // bind dropdown change (now that render() and table are initialized)
+  if (enablePage) top.append(pageSize);
+
   pageSizeDropdown.change(v => {
     pageSizeVal = +v;
     currentPage = 1;
     render();
   });
 
-  // sync initial pageSizeVal to dropdown’s selection
   pageSizeVal = +pageSizeDropdown.val().value;
 
-  // Utils
   function render() {
-    // filter and keep original indices
     const rawVal = searchInput.val() || '';
     const term = rawVal.trim();
-    filteredIndices = allData.map((row, i) => i);
-    if (term.includes(':')) {
-      // conditional field:value search, multiple clauses separated by comma
-      const clauses = term.split(',').map(c => {
-        const [field, ...rest] = c.split(':');
-        return [field.trim(), rest.join(':').trim()];
-      });
-      filteredIndices = filteredIndices.filter(i => {
-        const row = allData[i];
-        return clauses.every(([field, val]) => {
-          const fv = row[field];
-          if (fv == null) return false;
-          const str = typeof fv === 'object' ? JSON.stringify(fv) : String(fv);
-          return str.toLowerCase().includes(val.toLowerCase());
+    if (enableFilter) {
+      filteredIndices = allData.map((row, i) => i);
+      if (term.includes(':')) {
+        const clauses = term.split(',').map(c => {
+          const [field, ...rest] = c.split(':');
+          return [field.trim(), rest.join(':').trim()];
         });
-      });
+        filteredIndices = filteredIndices.filter(i => {
+          const row = allData[i];
+          return clauses.every(([field, val]) => {
+            const fv = row[field];
+            if (fv == null) return false;
+            const str = typeof fv === 'object' ? JSON.stringify(fv) : String(fv);
+            return str.toLowerCase().includes(val.toLowerCase());
+          });
+        });
+      } else {
+        const lower = term.toLowerCase();
+        filteredIndices = filteredIndices.filter(i =>
+          JSON.stringify(allData[i]).toLowerCase().includes(lower)
+        );
+      }
     } else {
-      // simple text search across all fields
-      const lower = term.toLowerCase();
-      filteredIndices = filteredIndices.filter(i =>
-        JSON.stringify(allData[i]).toLowerCase().includes(lower)
-      );
+      filteredIndices = allData.map((_, i) => i);
+    }
+
+    if (enableSort && sortKey && sortOrder !== 'off') {
+      filteredIndices.sort((a, b) => {
+        const aVal = allData[a][sortKey];
+        const bVal = allData[b][sortKey];
+        if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      });
     }
 
     const total = filteredIndices.length;
@@ -183,25 +202,26 @@ Container.prototype.Table = function (data = [], options = {}) {
     currentPage = Math.min(currentPage, totalPages);
     const start = (currentPage - 1) * pageSizeVal,
       end = start + pageSizeVal;
-    const pageIndices = filteredIndices.slice(start, end);
+    const pageIndices = enablePage
+      ? filteredIndices.slice(start, end)
+      : filteredIndices;
 
-    // build table headers with optional width styles
     const keys = Object.keys(allData[0] || {});
-    const thead = `<thead><tr>${keys.map((k, i) =>
-      `<th data-key="${k}"${columnSizes[i] ? ` style="width:${columnSizes[i]}"` : ''
-      }>${k}
-           <span class="${Container.tableClasses['sort-icons']}">
-             <span class="${Container.tableClasses.asc}">▲</span>
-             <span class="${Container.tableClasses.desc}">▼</span>
-           </span>
-         </th>`
-    ).join('')
+    // build table headers, only inject sort icons if sorting enabled
+    const thead = `<thead><tr>${keys.map((k, i) => {
+      const icons = enableSort
+        ? `<span class="${Container.tableClasses['sort-icons']}">
+               <span class="${Container.tableClasses.asc}">▲</span>
+               <span class="${Container.tableClasses.desc}">▼</span>
+             </span>`
+        : '';
+      return `<th data-key="${k}"${columnSizes[i] ? ` style="width:${columnSizes[i]}"` : ''}>${k}${icons}</th>`;
+    }).join('')
       }</tr></thead>`;
 
-    // build body using original indices
     const tbody = pageIndices.map(idx => {
       const row = allData[idx];
-      return `<tr data-idx="${idx}" class="${Container.tableClasses.tbl_row}${idx === selectedIdx ? ' selected' : ''}">${Object.values(row).map(v => {
+      return `<tr data-idx="${idx}" class="${Container.tableClasses.tbl_row}${idx === selectedIdx ? ' '+ Container.tableClasses.selected : ''}">${Object.values(row).map(v => {
         if (Array.isArray(v)) return `<td>${v.join(', ')}</td>`;
         if (typeof v === 'object') return `<td>${JSON.stringify(v)}</td>`;
         return `<td>${v}</td>`;
@@ -212,49 +232,59 @@ Container.prototype.Table = function (data = [], options = {}) {
     table.html('');
     table.append(thead + `<tbody>${tbody}</tbody>`);
 
-    // status text
-    status.text(`Showing ${start + 1} to ${Math.min(end, total)} of ${total} entries`);
-
-    // pagination buttons
-    pagination.html('');
-    ['First', 'Prev'].forEach(t => {
-      const btn = `<span class="${Container.tableClasses.tbl_page_btn}" data-action="${t.toLowerCase()}">${t}</span>`;
-      pagination.append(btn);
-    });
-
-    // window numeric page buttons based on pageButtonLimit
-    const limit = options.pageButtonLimit;
-    const half = Math.floor(limit / 2);
-    let startPage = Math.max(1, currentPage - half);
-    let endPage = Math.min(totalPages, startPage + limit - 1);
-    if (endPage - startPage + 1 < limit) {
-      startPage = Math.max(1, endPage - limit + 1);
-    }
-    for (let p = startPage; p <= endPage; p++) {
-      const cls = p === currentPage ? ' active' : '';
-      pagination.append(`<span class="${Container.tableClasses.tbl_page_btn + cls}" data-page="${p}">${p}</span>`);
+    if (enableInfo) {
+      if (total === 0) {
+        status.html(options.language[1]);
+      } else{
+      const pageInfo = options.language[2]
+        .replace('[PAGE]', currentPage)
+        .replace('[ALL_PAGES]', totalPages)
+        .replace('[TOTAL]', total);
+      status.html(pageInfo);
+      }
     }
 
-    ['Next', 'Last'].forEach(t => {
-      const btn = `<span class="${Container.tableClasses.tbl_page_btn}" data-action="${t.toLowerCase()}">${t}</span>`;
-      pagination.append(btn);
+    if (enablePage) {
+      pagination.html('');
+      [options.language[3], options.language[4]].forEach(t => {
+        const btn = `<span class="${Container.tableClasses.tbl_page_btn}" data-action="${t.toLowerCase()}">${t}</span>`;
+        pagination.append(btn);
+      });
+
+      const limit = options.pageButtonLimit;
+      const half = Math.floor(limit / 2);
+      let startPage = Math.max(1, currentPage - half);
+      let endPage = Math.min(totalPages, startPage + limit - 1);
+      if (endPage - startPage + 1 < limit) {
+        startPage = Math.max(1, endPage - limit + 1);
+      }
+      for (let p = startPage; p <= endPage; p++) {
+        const cls = p === currentPage ? ' '+ Container.tableClasses.active : '';
+        pagination.append(`<span class="${Container.tableClasses.tbl_page_btn + cls}" data-page="${p}">${p}</span>`);
+      }
+
+      [options.language[5], options.language[6]].forEach(t => {
+        const btn = `<span class="${Container.tableClasses.tbl_page_btn}" data-action="${t.toLowerCase()}">${t}</span>`;
+        pagination.append(btn);
+      });
+    }
+  }
+
+  if (enableSearch) {
+    searchInput.change(() => {
+      Q.Debounce(searchDebounceId, debounceTime, () => {
+        currentPage = 1;
+        render();
+      });
     });
   }
 
-  // Event bindings
-  searchInput.change(() => {
-    Q.Debounce(searchDebounceId, 250, () => {
-      currentPage = 1;
-      render();
-    });
-  });
   table.on('click', evt => {
     const th = evt.target.closest('th');
     const tr = evt.target.closest('tr[data-idx]');
-    if (th) {
+    if (enableSort && th) {
       const key = th.dataset.key;
       if (sortKey === key) {
-        // cycle: off → asc → desc → off
         if (sortOrder === 'off') sortOrder = 'asc';
         else if (sortOrder === 'asc') sortOrder = 'desc';
         else { sortOrder = 'off'; sortKey = null; }
@@ -279,17 +309,19 @@ Container.prototype.Table = function (data = [], options = {}) {
       wrapper.select(idx);
     }
   });
-  pagination.on('click', evt => {
-    const tgt = evt.target;
-    if (tgt.dataset.page) currentPage = +tgt.dataset.page;
-    else if (tgt.dataset.action === 'first') currentPage = 1;
-    else if (tgt.dataset.action === 'prev') currentPage = Math.max(1, currentPage - 1);
-    else if (tgt.dataset.action === 'next') currentPage = Math.min(Math.ceil(filteredIndices.length / pageSizeVal), currentPage + 1);
-    else if (tgt.dataset.action === 'last') currentPage = Math.ceil(filteredIndices.length / pageSizeVal);
-    render();
-  });
 
-  // API
+  if (enablePage) {
+    pagination.on('click', evt => {
+      const tgt = evt.target;
+      if (tgt.dataset.page) currentPage = +tgt.dataset.page;
+      else if (tgt.dataset.action === 'first') currentPage = 1;
+      else if (tgt.dataset.action === 'prev') currentPage = Math.max(1, currentPage - 1);
+      else if (tgt.dataset.action === 'next') currentPage = Math.min(Math.ceil(filteredIndices.length / pageSizeVal), currentPage + 1);
+      else if (tgt.dataset.action === 'last') currentPage = Math.ceil(filteredIndices.length / pageSizeVal);
+      render();
+    });
+  }
+
   wrapper.load = function (newData, stayOn = false) {
     allData = [...newData];
     if (!stayOn) { sortKey = null; sortOrder = 'off'; currentPage = 1; }
@@ -301,8 +333,8 @@ Container.prototype.Table = function (data = [], options = {}) {
       if (found >= 0) idx = found;
     }
     selectedIdx = idx;
-    table.find('tr').removeClass('selected');
-    table.find(`tr[data-idx="${idx}"]`).addClass('selected');
+    table.find('tr').removeClass(Container.tableClasses.selected);
+    table.find(`tr[data-idx="${idx}"]`).addClass(Container.tableClasses.selected);
     if (onChange) onChange(idx, allData[idx]);
     return this;
   };

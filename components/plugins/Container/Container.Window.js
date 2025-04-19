@@ -1,8 +1,39 @@
 Container.prototype.Window = function(options = {}) {
+    // --- Alapértelmezett beállítások (minden opció látható) ---
+    const defaults = {
+        title: 'Window',
+        content: '',
+        resizable: true,
+        minimizable: true,
+        maximizable: true,
+        closable: true,
+        draggable: true,
+        x: 50,           // Kezdeti X pozíció (százalékban a képernyőhöz képest)
+        y: 50,           // Kezdeti Y pozíció (százalékban a képernyőhöz képest)
+        width: 400,      // Ablak szélessége (px)
+        height: 300,     // Ablak magassága (px)
+        minWidth: 200,   // Minimális szélesség (px)
+        minHeight: 150,  // Minimális magasság (px)
+        zIndex: 1000,    // Alapértelmezett z-index
+        minimizePosition: 'bottom-left', // Minimalizálás pozíciója (ha nem tálcára megy)
+        minimizeContainer: null,         // Egyedi konténer minimalizáláshoz (ha kell)
+        minimizeOffset: 10,              // Minimalizált ablak eltolása (px)
+        animate: 150,     // Animáció időtartama (ms)
+        shadow: true, // Drop shadow effect
+        shadowColor: 'rgba(0, 0, 0, 0.5)', // Shadow color
+        shadowBlur: 10, // Shadow blur radius
+        shadowOffsetX: 0, // Shadow offset X
+        shadowOffsetY: 5, // Shadow offset Y
+        shadowSpread: 0, // Shadow spread radius
+        blur: true, // Blur effect on titlebar to blur the background which is behind the window
+        blurInactive: true, // Blur effect when the window is inactive
+        blurRadius: 10, // Blur radius
+        blurGradientOpacity: 0.3, // 0.0 (transparent) ... 1.0 (fully opaque) for left side of gradient
+    };
+
     if (!Container.windowClassesInitialized) {
         Container.windowClasses = Q.style(`
             --window-bg-color:rgb(37, 37, 37);
-            --window-border-color: rgba(255, 255, 255, 0.2);
             --window-shadow-color: rgba(0, 0, 0, 0.1);
             --window-titlebar-bg:rgb(17, 17, 17);
             --window-titlebar-text: #ffffff;
@@ -15,10 +46,7 @@ Container.prototype.Window = function(options = {}) {
             .window_container {
                 position: fixed; /* Change from absolute to fixed */
                 min-width: 200px;
-                background-color: var(--window-bg-color);
-                border: 1px solid var(--window-border-color);
                 border-radius: 4px;
-                box-shadow: 0 4px 8px var(--window-shadow-color);
                 display: flex;
                 flex-direction: column;
                 overflow: hidden;
@@ -27,8 +55,8 @@ Container.prototype.Window = function(options = {}) {
                 transition-timing-function: ease-out;
             }
             .window_titlebar {
-                background-color: var(--window-titlebar-bg);
                 color: var(--window-titlebar-text);
+                background-color: var(--window-titlebar-bg);
                 font-size: 12px;
                 cursor: default;
                 user-select: none;
@@ -44,6 +72,7 @@ Container.prototype.Window = function(options = {}) {
                 text-overflow: ellipsis;
                 flex: 1;
                 margin: 0 10px;
+                text-shadow: 0px 1px 5px rgba(0, 0, 0, 1.0);
             }
             .window_controls {
                 display: flex;
@@ -169,6 +198,24 @@ Container.prototype.Window = function(options = {}) {
                 color: var(--window-button-text);
                 pointer-events: none;
             }
+            .window_taskbar_btn {
+                min-width: 100px;
+                max-width: 220px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                background: #222;
+                color: #fff;
+                border: 1px solid #444;
+                border-radius: 4px;
+                padding: 0 12px;
+                height: 28px;
+                display: flex;
+                align-items: center;
+                cursor: pointer;
+                font-size: 13px;
+                box-sizing: border-box;
+            }
         `, null, {
             'window_container': 'window_container',
             'window_titlebar': 'window_titlebar',
@@ -191,33 +238,132 @@ Container.prototype.Window = function(options = {}) {
             'window_resize_sw': 'window_resize_sw',
             'window_minimized': 'window_minimized',
             'window_maximized': 'window_maximized',
-            'window_button_icon': 'window_button_icon'
-        });
+            'window_button_icon': 'window_button_icon',
+            'window_taskbar_btn': 'window_taskbar_btn'
+        },false);
         Container.windowClassesInitialized = true;
     }
-    const defaults = {
-        title: 'Window',
-        content: '',
-        resizable: true,
-        minimizable: true,
-        maximizable: true,
-        closable: true,
-        draggable: true,
-        x: 50,     
-        y: 50,     
-        width: 400, 
-        height: 300, 
-        minWidth: 200,
-        minHeight: 150,
-        zIndex: 1000,
-        minimizePosition: 'bottom-left', 
-        minimizeContainer: null, 
-        minimizeOffset: 10, 
-        animate: 150
-    };
+
+    // --- Tálca konténer létrehozása, ha még nincs ---
+    if (!Container.taskbar) {
+        // --- Tálca pozíció és offset a minimizePosition/minimizeOffset alapján ---
+        let taskbarStyle = {
+            position: 'fixed',
+            height: '32px',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            maxWidth: '100vw',
+            minHeight: '0',
+            minWidth: '0'
+        };
+        // Pozíció
+        switch (defaults.minimizePosition || 'bottom-left') {
+            case 'bottom-right':
+                taskbarStyle.right = defaults.minimizeOffset + 'px';
+                taskbarStyle.bottom = defaults.minimizeOffset + 'px';
+                break;
+            case 'top-left':
+                taskbarStyle.left = defaults.minimizeOffset + 'px';
+                taskbarStyle.top = defaults.minimizeOffset + 'px';
+                break;
+            case 'top-right':
+                taskbarStyle.right = defaults.minimizeOffset + 'px';
+                taskbarStyle.top = defaults.minimizeOffset + 'px';
+                break;
+            case 'bottom-left':
+            default:
+                taskbarStyle.left = defaults.minimizeOffset + 'px';
+                taskbarStyle.bottom = defaults.minimizeOffset + 'px';
+                break;
+        }
+        Container.taskbar = Q('<div>', { class: Container.windowClasses.window_taskbar || 'window_taskbar' }).css(taskbarStyle);
+        Q('body').append(Container.taskbar);
+    }
+
     const settings = Object.assign({}, defaults, options);
     const windowElement = Q('<div>', { class: Container.windowClasses.window_container });
+    // --- Apply shadow settings if enabled ---
+    if (settings.shadow) {
+        windowElement.css({
+            boxShadow: `${settings.shadowOffsetX}px ${settings.shadowOffsetY}px ${settings.shadowBlur}px ${settings.shadowSpread}px ${settings.shadowColor}`
+        });
+    } else {
+        windowElement.css({ boxShadow: 'none' });
+    }
+
+    // --- Apply blur effect to titlebar and buttons if enabled ---
     const titlebar = Q('<div>', { class: Container.windowClasses.window_titlebar });
+
+    // Helper to apply or remove blur/glass effect on a titlebar, with animation support
+    function setTitlebarBlurElement(titlebarElem, active, blurRadius, gradientOpacity, animateMs) {
+        if (!titlebarElem) return;
+        // Animate blur transition
+        if (typeof animateMs === 'number' && animateMs > 0) {
+            titlebarElem.style.transition = `backdrop-filter ${animateMs}ms, -webkit-backdrop-filter ${animateMs}ms, background-image ${animateMs}ms`;
+        } else {
+            titlebarElem.style.transition = '';
+        }
+        if (active) {
+            titlebarElem.style.backdropFilter = `blur(${blurRadius}px)`;
+            titlebarElem.style.WebkitBackdropFilter = `blur(${blurRadius}px)`;
+            titlebarElem.style.backgroundColor = 'transparent';
+            const buttonBg = getComputedStyle(document.documentElement)
+                .getPropertyValue('--window-button-bg') || '#111';
+            const leftAlpha = Math.max(0, Math.min(1, gradientOpacity));
+            titlebarElem.style.backgroundImage =
+                `linear-gradient(to right, rgba(17,17,17,${leftAlpha}), ${buttonBg.trim()} 80%)`;
+        } else {
+            titlebarElem.style.backdropFilter = 'blur(0px)';
+            titlebarElem.style.WebkitBackdropFilter = 'blur(0px)';
+            titlebarElem.style.backgroundColor = '';
+            titlebarElem.style.backgroundImage = '';
+        }
+    }
+
+    // Main function to update all window titlebars' blur state, with animation
+    function updateAllTitlebarBlur() {
+        const allWindows = document.querySelectorAll('.' + Container.windowClasses.window_container);
+        let maxZ = -Infinity, activeWindow = null;
+        allWindows.forEach(win => {
+            const z = parseInt(win.style.zIndex || window.getComputedStyle(win).zIndex, 10) || 0;
+            if (z > maxZ) {
+                maxZ = z;
+                activeWindow = win;
+            }
+        });
+        allWindows.forEach(win => {
+            const tb = win.querySelector('.' + Container.windowClasses.window_titlebar);
+            if (!tb) return;
+            if (settings.blurInactive) {
+                // Animate transition between blur and no blur
+                setTitlebarBlurElement(
+                    tb,
+                    win !== activeWindow,
+                    settings.blurRadius,
+                    settings.blurGradientOpacity,
+                    settings.animate
+                );
+            } else if (settings.blur) {
+                setTitlebarBlurElement(tb, true, settings.blurRadius, settings.blurGradientOpacity, 0);
+            } else {
+                setTitlebarBlurElement(tb, false, settings.blurRadius, settings.blurGradientOpacity, 0);
+            }
+        });
+    }
+
+    // Initial blur setup
+    if (settings.blurInactive) {
+        setTimeout(updateAllTitlebarBlur, 0);
+        windowElement.on('mousedown', function () {
+            setTimeout(updateAllTitlebarBlur, 0);
+        });
+    } else if (settings.blur) {
+        setTitlebarBlurElement(titlebar.nodes[0], true, settings.blurRadius, settings.blurGradientOpacity, 0);
+    } else {
+        setTitlebarBlurElement(titlebar.nodes[0], false, settings.blurRadius, settings.blurGradientOpacity, 0);
+    }
+
     const titleElement = Q('<div>', { class: Container.windowClasses.window_title }).text(settings.title);
     const controls = Q('<div>', { class: Container.windowClasses.window_controls });
     const contentContainer = Q('<div>', { class: Container.windowClasses.window_content });
@@ -276,6 +422,10 @@ Container.prototype.Window = function(options = {}) {
     };
     let isOpen = false;
     let isAnimating = false;
+
+    // --- Minimalizált ablak gomb a tálcán ---
+    let taskbarButton = null;
+
     function setTransitionDuration(duration) {
         if (!settings.animate) return;
         windowElement.css('transition-duration', duration + 'ms');
@@ -317,6 +467,7 @@ Container.prototype.Window = function(options = {}) {
         }
         Container.openWindows.push(windowElement.nodes[0]);
         updateZIndices();
+        if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
     }
     function updateZIndices() {
         const baseZIndex = settings.zIndex;
@@ -330,57 +481,21 @@ Container.prototype.Window = function(options = {}) {
         if (!settings.draggable) return;
         let isDragging = false;
         let startX, startY, startLeft, startTop;
-        titlebar.on('mousedown', function(e) {
-            if (isMaximized) return;
-            // Special handling for minimized state
-            if (isMinimized) {
-                isDragging = true;
-                startX = e.clientX;
-                startY = e.clientY;
-                // Get current position
-                if (windowElement.css('left') !== 'auto') {
-                    startLeft = parseInt(windowElement.css('left'), 10);
-                } else {
-                    // If using right positioning
-                    const viewportWidth = window.innerWidth;
-                    startLeft = viewportWidth - parseInt(windowElement.css('right'), 10) - windowElement.width();
-                }
-                if (windowElement.css('top') !== 'auto') {
-                    startTop = parseInt(windowElement.css('top'), 10);
-                } else {
-                    // If using bottom positioning
-                    const viewportHeight = window.innerHeight;
-                    startTop = viewportHeight - parseInt(windowElement.css('bottom'), 10) - windowElement.height();
-                }
-                bringToFront();
-                e.preventDefault();
-                return;
-            }
-            isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            startLeft = parseInt(windowElement.css('left'), 10);
-            startTop = parseInt(windowElement.css('top'), 10);
-            bringToFront();
-            e.preventDefault();
-        });
-        document.addEventListener('mousemove', function(e) {
+
+        // --- Eseménykezelők referenciái a későbbi eltávolításhoz ---
+        function onMouseMove(e) {
             if (!isDragging) return;
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
             const newLeft = startLeft + dx;
             const newTop = startTop + dy;
-            // Different handling for minimized windows
             if (isMinimized) {
-                // Get viewport dimensions
                 const viewportWidth = window.innerWidth;
                 const viewportHeight = window.innerHeight;
                 const minWidth = windowElement.width();
                 const minHeight = windowElement.height();
-                // Constrain position to prevent dragging outside viewport
                 const constrainedLeft = Math.max(0, Math.min(newLeft, viewportWidth - minWidth));
                 const constrainedTop = Math.max(0, Math.min(newTop, viewportHeight - minHeight));
-                // Apply constrained position
                 windowElement.css({
                     left: constrainedLeft + 'px',
                     top: constrainedTop + 'px',
@@ -389,12 +504,10 @@ Container.prototype.Window = function(options = {}) {
                 });
                 return;
             }
-            // For normal windows, ensure they stay within viewport
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
             const windowWidth = windowElement.width();
             const windowHeight = windowElement.height();
-            // Calculate constrained position to keep window within viewport
             const constrainedLeft = Math.max(0, Math.min(newLeft, viewportWidth - windowWidth));
             const constrainedTop = Math.max(0, Math.min(newTop, viewportHeight - windowHeight));
             windowElement.css({
@@ -405,27 +518,29 @@ Container.prototype.Window = function(options = {}) {
             });
             previousState.x = constrainedLeft;
             previousState.y = constrainedTop;
-        });
-        document.addEventListener('mouseup', function() {
+        }
+        function onMouseUp() {
             isDragging = false;
-            // If minimized, update minimizePosition based on current position
-            if (isMinimized) {
-                const viewportWidth = window.innerWidth;
-                const viewportHeight = window.innerHeight;
-                const currentLeft = parseInt(windowElement.css('left'), 10);
-                const currentTop = parseInt(windowElement.css('top'), 10);
-                // Determine position relative to viewport quadrants
-                const isRight = currentLeft > viewportWidth / 2;
-                const isBottom = currentTop > viewportHeight / 2;
-                if (isRight && isBottom) {
-                    settings.minimizePosition = 'bottom-right';
-                } else if (isRight && !isBottom) {
-                    settings.minimizePosition = 'top-right';
-                } else if (!isRight && isBottom) {
-                    settings.minimizePosition = 'bottom-left';
-                } else {
-                    settings.minimizePosition = 'top-left';
-                }
+            Q(document).off('mousemove', onMouseMove);
+            Q(document).off('mouseup', onMouseUp);
+        }
+
+        Q(titlebar).on('mousedown', function(e) {
+            if (isMaximized || isMinimized) return;
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startLeft = parseInt(windowElement.css('left'), 10);
+            startTop = parseInt(windowElement.css('top'), 10);
+            bringToFront();
+            Q(document).on('mousemove', onMouseMove);
+            Q(document).on('mouseup', onMouseUp);
+            e.preventDefault();
+        });
+        // --- Dupla kattintás maximalizálás/restore ---
+        Q(titlebar).on('dblclick', function(e) {
+            if (settings.maximizable) {
+                toggleMaximize();
             }
         });
     }
@@ -435,24 +550,8 @@ Container.prototype.Window = function(options = {}) {
         let resizeDirection = '';
         let startX, startY, startWidth, startHeight, startLeft, startTop;
         const resizeHandles = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_resize_handle);
-        for (let i = 0; i < resizeHandles.length; i++) {
-            const handle = resizeHandles[i];
-            handle.addEventListener('mousedown', function(e) {
-                if (isMaximized) return;
-                isResizing = true;
-                resizeDirection = this.getAttribute('data-resize');
-                startX = e.clientX;
-                startY = e.clientY;
-                startWidth = windowElement.width();
-                startHeight = windowElement.height();
-                startLeft = parseInt(windowElement.css('left'), 10);
-                startTop = parseInt(windowElement.css('top'), 10);
-                windowElement.css('zIndex', settings.zIndex + 10);
-                e.preventDefault();
-                e.stopPropagation();
-            });
-        }
-        document.addEventListener('mousemove', function(e) {
+
+        function onMouseMove(e) {
             if (!isResizing) return;
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
@@ -522,16 +621,38 @@ Container.prototype.Window = function(options = {}) {
             previousState.height = newHeight;
             previousState.x = newLeft;
             previousState.y = newTop;
-        });
-        document.addEventListener('mouseup', function() {
+        }
+        function onMouseUp() {
             isResizing = false;
-        });
+            Q(document).off('mousemove', onMouseMove);
+            Q(document).off('mouseup', onMouseUp);
+        }
+
+        for (let i = 0; i < resizeHandles.length; i++) {
+            const handle = resizeHandles[i];
+            Q(handle).on('mousedown', function(e) {
+                if (isMaximized || isMinimized) return;
+                isResizing = true;
+                resizeDirection = this.getAttribute('data-resize');
+                startX = e.clientX;
+                startY = e.clientY;
+                startWidth = windowElement.width();
+                startHeight = windowElement.height();
+                startLeft = parseInt(windowElement.css('left'), 10);
+                startTop = parseInt(windowElement.css('top'), 10);
+                windowElement.css('zIndex', settings.zIndex + 10);
+                Q(document).on('mousemove', onMouseMove);
+                Q(document).on('mouseup', onMouseUp);
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        }
     }
     function setupControls() {
         const minimizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_minimize);
         if (minimizeButtons.length) {
             for (let i = 0; i < minimizeButtons.length; i++) {
-                minimizeButtons[i].addEventListener('click', function() {
+                Q(minimizeButtons[i]).on('click', function() {
                     bringToFront(); 
                     toggleMinimize();
                 });
@@ -540,7 +661,7 @@ Container.prototype.Window = function(options = {}) {
         const maximizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_maximize);
         if (maximizeButtons.length) {
             for (let i = 0; i < maximizeButtons.length; i++) {
-                maximizeButtons[i].addEventListener('click', function() {
+                Q(maximizeButtons[i]).on('click', function() {
                     bringToFront(); 
                     toggleMaximize();
                 });
@@ -549,12 +670,12 @@ Container.prototype.Window = function(options = {}) {
         const closeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_close);
         if (closeButtons.length) {
             for (let i = 0; i < closeButtons.length; i++) {
-                closeButtons[i].addEventListener('click', function() {
+                Q(closeButtons[i]).on('click', function() {
                     closeWindow();
                 });
             }
         }
-        contentContainer.on('mousedown', function() {
+        Q(contentContainer).on('mousedown', function() {
             bringToFront();
         });
     }
@@ -565,266 +686,208 @@ Container.prototype.Window = function(options = {}) {
     function toggleMinimize() {
         if (isAnimating) return;
         isAnimating = true;
-        if (isMaximized) {
-            isMaximized = false;
-            windowElement.removeClass(Container.windowClasses.window_maximized);
-        }
-        isMinimized = !isMinimized;
-        let detachedContent = null;
-        if (isMinimized) {
-            // Calculate position for minimized state
-            let minimizedPosition = {};
-            // Check if we should minimize to a specific container
-            if (settings.minimizeContainer) {
-                let container;
-                if (typeof settings.minimizeContainer === 'string') {
-                    container = document.querySelector(settings.minimizeContainer);
-                } else if (settings.minimizeContainer instanceof Element) {
-                    container = settings.minimizeContainer;
-                } else if (settings.minimizeContainer instanceof Q) {
-                    container = settings.minimizeContainer.nodes[0];
-                }
-                if (container) {
-                    container.appendChild(windowElement.nodes[0]);
-                    minimizedPosition = {
-                        position: 'relative',
-                        left: 'auto',
-                        right: 'auto',
-                        top: 'auto',
-                        bottom: 'auto',
-                        margin: settings.minimizeOffset + 'px'
-                    };
-                }
-            } else {
-                // Position at the specified screen edge
-                switch (settings.minimizePosition) {
-                    case 'bottom-right':
-                        minimizedPosition = {
-                            position: 'fixed',
-                            left: 'auto',
-                            right: settings.minimizeOffset + 'px',
-                            top: 'auto',
-                            bottom: settings.minimizeOffset + 'px'
-                        };
-                        break;
-                    case 'top-left':
-                        minimizedPosition = {
-                            position: 'fixed',
-                            left: settings.minimizeOffset + 'px',
-                            right: 'auto',
-                            top: settings.minimizeOffset + 'px',
-                            bottom: 'auto'
-                        };
-                        break;
-                    case 'top-right':
-                        minimizedPosition = {
-                            position: 'fixed',
-                            left: 'auto',
-                            right: settings.minimizeOffset + 'px',
-                            top: settings.minimizeOffset + 'px',
-                            bottom: 'auto'
-                        };
-                        break;
-                    case 'bottom-left':
-                    default:
-                        minimizedPosition = {
-                            position: 'fixed',
-                            left: settings.minimizeOffset + 'px',
-                            right: 'auto',
-                            top: 'auto',
-                            bottom: settings.minimizeOffset + 'px'
-                        };
-                        break;
-                }
+        if (!isMinimized) {
+            // Minimalizálás animációval (Windows 11 stílus)
+            const rect = windowElement.nodes[0].getBoundingClientRect();
+            const start = {
+                width: rect.width,
+                height: rect.height,
+                left: rect.left,
+                top: rect.top,
+                opacity: 1
+            };
+            // Célméret: tálca gomb mérete és pozíciója
+            let taskbarRect = { left: 0, top: window.innerHeight, width: 160, height: 28 };
+            if (Container.taskbar && taskbarButton) {
+                const btnRect = taskbarButton.nodes[0].getBoundingClientRect();
+                taskbarRect = {
+                    left: btnRect.left,
+                    top: btnRect.top,
+                    width: btnRect.width,
+                    height: btnRect.height
+                };
+            } else if (Container.taskbar) {
+                const barRect = Container.taskbar.nodes[0].getBoundingClientRect();
+                taskbarRect.left = barRect.left;
+                taskbarRect.top = barRect.top;
             }
-            if (settings.animate) {
-                setTransitionDuration(settings.animate);
-                // Detach content to avoid rendering it when minimized
-                detachedContent = contentContainer.children();
-                if (detachedContent.nodes && detachedContent.nodes.length > 0) {
-                    windowElement.data('detached-content', detachedContent.detach());
-                }
-                // First animate the height to collapse
-                const currentHeight = windowElement.height();
-                const titlebarHeight = parseInt(getComputedStyle(titlebar.nodes[0]).height, 10);
+            // Előkészítés
+            windowElement.css({
+                willChange: 'width,height,left,top,opacity',
+                transition: `all ${settings.animate}ms cubic-bezier(.4,0,.2,1)`
+            });
+            windowElement.css({
+                width: start.width + 'px',
+                height: start.height + 'px',
+                left: start.left + 'px',
+                top: start.top + 'px',
+                opacity: 1
+            });
+            // Késleltetés, hogy transition érvényesüljön
+            setTimeout(() => {
                 windowElement.css({
-                    height: titlebarHeight + 'px'
+                    width: taskbarRect.width + 'px',
+                    height: taskbarRect.height + 'px',
+                    left: taskbarRect.left + 'px',
+                    top: taskbarRect.top + 'px',
+                    opacity: 0.2
                 });
-                // Then apply minimized class and position
-                setTimeout(() => {
-                    windowElement.addClass(Container.windowClasses.window_minimized);
-                    windowElement.css(minimizedPosition);
-                    resetTransition();
-                }, settings.animate / 2);
-            } else {
-                // Non-animated version
-                detachedContent = contentContainer.children();
-                if (detachedContent.nodes && detachedContent.nodes.length > 0) {
-                    windowElement.data('detached-content', detachedContent.detach());
-                }
-                windowElement.addClass(Container.windowClasses.window_minimized);
-                windowElement.css(minimizedPosition);
-                isAnimating = false;
-            }
-            // Update maximize button icon
-            const maximizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_maximize);
-            if (maximizeButtons.length) {
-                for (let i = 0; i < maximizeButtons.length; i++) {
-                    maximizeButtons[i].innerHTML = '';
-                    const iconElement = Container.prototype.Icon('window-full');
-                    iconElement.addClass(Container.windowClasses.window_button_icon);
-                    maximizeButtons[i].appendChild(iconElement.nodes[0]);
-                }
-            }
-        } else {
-            // Restoring from minimized state
-            if (settings.animate) {
-                setTransitionDuration(settings.animate);
-                // Reset position but stay as fixed
-                windowElement.css({
-                    position: 'fixed',
-                    left: previousState.x + 'px',
-                    top: previousState.y + 'px',
-                    right: 'auto',
-                    bottom: 'auto',
-                    margin: '0'
-                });
-                // Remove minimized class
-                windowElement.removeClass(Container.windowClasses.window_minimized);
-                // Animate to full height
-                windowElement.css({
-                    height: previousState.height + 'px'
-                });
-                // Re-append to body if it was minimized to a container
-                if (settings.minimizeContainer) {
-                    document.body.appendChild(windowElement.nodes[0]);
-                }
-                // Re-attach content after height animation
-                setTimeout(() => {
-                    const savedContent = windowElement.data('detached-content');
-                    if (savedContent) {
-                        contentContainer.append(savedContent);
-                        windowElement.removeData('detached-content');
+            }, 10);
+            setTimeout(() => {
+                windowElement.css({ transition: '', willChange: '' });
+                // Ablak eltávolítása a DOM-ból, tartalom elvesztése nélkül
+                if (!taskbarButton) {
+                    let shortTitle = settings.title;
+                    if (shortTitle.length > 18) {
+                        shortTitle = shortTitle.slice(0, 15) + '...';
                     }
-                    resetTransition();
-                }, settings.animate / 2);
-            } else {
-                // Non-animated version
-                windowElement.removeClass(Container.windowClasses.window_minimized);
-                windowElement.css({
-                    position: 'fixed',
-                    left: previousState.x + 'px',
-                    top: previousState.y + 'px',
-                    right: 'auto',
-                    bottom: 'auto',
-                    margin: '0',
-                    height: previousState.height + 'px',
-                    width: previousState.width + 'px'
-                });
-                if (settings.minimizeContainer) {
-                    document.body.appendChild(windowElement.nodes[0]);
+                    taskbarButton = Q('<div>', { class: Container.windowClasses.window_taskbar_btn, text: shortTitle });
+                    taskbarButton.on('click', function() {
+                        toggleMinimize();
+                    });
+                    if (settings.minimizePosition === 'bottom-left' || settings.minimizePosition === 'top-left') {
+                        Q(Container.taskbar).prepend(taskbarButton);
+                    } else {
+                        Q(Container.taskbar).append(taskbarButton);
+                    }
                 }
-                const savedContent = windowElement.data('detached-content');
-                if (savedContent) {
-                    contentContainer.append(savedContent);
-                    windowElement.removeData('detached-content');
-                }
+                windowElement.detach();
+                isMinimized = true;
                 isAnimating = false;
+            }, settings.animate + 10);
+        } else {
+            // Visszaállítás minimalizáltból animációval (Windows 11 stílus)
+            // Először visszahelyezzük a DOM-ba, majd animálunk
+            Q('body').append(windowElement);
+            // Tálca gomb pozíciója
+            let btnRect = { left: 0, top: window.innerHeight, width: 160, height: 28 };
+            if (taskbarButton) {
+                const rect = taskbarButton.nodes[0].getBoundingClientRect();
+                btnRect = {
+                    left: rect.left,
+                    top: rect.top,
+                    width: rect.width,
+                    height: rect.height
+                };
             }
+            // Célméret: előző ablakméret és pozíció
+            const end = {
+                width: previousState.width,
+                height: previousState.height,
+                left: previousState.x,
+                top: previousState.y,
+                opacity: 1
+            };
+            windowElement.css({
+                willChange: 'width,height,left,top,opacity',
+                transition: `all ${settings.animate}ms cubic-bezier(.4,0,.2,1)`,
+                width: btnRect.width + 'px',
+                height: btnRect.height + 'px',
+                left: btnRect.left + 'px',
+                top: btnRect.top + 'px',
+                opacity: 0.2,
+                display: ''
+            });
+            setTimeout(() => {
+                windowElement.css({
+                    width: end.width + 'px',
+                    height: end.height + 'px',
+                    left: end.left + 'px',
+                    top: end.top + 'px',
+                    opacity: 1
+                });
+            }, 10);
+            setTimeout(() => {
+                windowElement.css({ transition: '', willChange: '' });
+                if (taskbarButton) {
+                    taskbarButton.remove();
+                    taskbarButton = null;
+                }
+                isMinimized = false;
+                bringToFront();
+                isAnimating = false;
+            }, settings.animate + 10);
         }
     }
     function toggleMaximize() {
         if (isAnimating) return;
         isAnimating = true;
-        isMaximized = !isMaximized;
-        if (isMaximized) {
-            if (!isMinimized) {
-                previousState.width = windowElement.width();
-                previousState.height = windowElement.height();
-                previousState.x = parseInt(windowElement.css('left'), 10);
-                previousState.y = parseInt(windowElement.css('top'), 10);
-            } else {
-                windowElement.removeClass(Container.windowClasses.window_minimized);
-                if (previousState.width < settings.minWidth) {
-                    previousState.width = settings.width;
-                    previousState.height = settings.height;
-                    const position = calculateInitialPosition();
-                    previousState.x = position.left;
-                    previousState.y = position.top;
-                }
-            }
-            if (settings.animate) {
-                setTransitionDuration(settings.animate);
-                windowElement.css({
-                    position: 'fixed',
-                    top: previousState.y + 'px',
-                    left: previousState.x + 'px',
-                    width: previousState.width + 'px',
-                    height: previousState.height + 'px'
-                });
-                void windowElement.nodes[0].offsetWidth;
-                windowElement.css({
-                    top: '0',
-                    left: '0',
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: '0'
-                });
-                setTimeout(() => {
-                    windowElement.addClass(Container.windowClasses.window_maximized);
-                    resetTransition();
-                }, settings.animate);
-            } else {
+        if (!isMaximized) {
+            // Maximalizálás animációval (Windows 11 stílus)
+            const rect = windowElement.nodes[0].getBoundingClientRect();
+            const start = {
+                width: rect.width,
+                height: rect.height,
+                left: rect.left,
+                top: rect.top
+            };
+            windowElement.css({
+                willChange: 'width,height,left,top',
+                transition: `all ${settings.animate}ms cubic-bezier(.4,0,.2,1)`,
+                width: start.width + 'px',
+                height: start.height + 'px',
+                left: start.left + 'px',
+                top: start.top + 'px'
+            });
+            setTimeout(() => {
                 windowElement.addClass(Container.windowClasses.window_maximized);
-                isAnimating = false;
-            }
-            const maximizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_maximize);
-            if (maximizeButtons.length) {
-                for (let i = 0; i < maximizeButtons.length; i++) {
-                    maximizeButtons[i].innerHTML = '';
-                    const iconElement = Container.prototype.Icon('window-windowed');
-                    iconElement.addClass(Container.windowClasses.window_button_icon);
-                    maximizeButtons[i].appendChild(iconElement.nodes[0]);
-                }
-            }
-        } else {
-            if (settings.animate) {
-                windowElement.removeClass(Container.windowClasses.window_maximized);
-                setTransitionDuration(settings.animate);
                 windowElement.css({
-                    position: 'fixed',
-                    top: previousState.y + 'px',
-                    left: previousState.x + 'px',
-                    width: previousState.width + 'px',
-                    height: previousState.height + 'px',
-                    borderRadius: '4px' 
+                    left: 0,
+                    top: 0,
+                    width: '100vw',
+                    height: '100vh',
+                    borderRadius: 0
                 });
-                resetTransition();
-            } else {
-                windowElement.removeClass(Container.windowClasses.window_maximized);
+            }, 10);
+            setTimeout(() => {
+                windowElement.css({ transition: '', willChange: '' });
+                isMaximized = true;
+                previousState.width = start.width;
+                previousState.height = start.height;
+                previousState.x = start.left;
+                previousState.y = start.top;
+                isAnimating = false;
+            }, settings.animate + 10);
+        } else {
+            // Visszaállítás normál méretre animációval (Windows 11 stílus)
+            const end = {
+                width: previousState.width,
+                height: previousState.height,
+                left: previousState.x,
+                top: previousState.y
+            };
+            windowElement.removeClass(Container.windowClasses.window_maximized);
+            windowElement.css({
+                willChange: 'width,height,left,top',
+                transition: `all ${settings.animate}ms cubic-bezier(.4,0,.2,1)`,
+                width: '100vw',
+                height: '100vh',
+                left: 0,
+                top: 0,
+                borderRadius: '0'
+            });
+            setTimeout(() => {
                 windowElement.css({
-                    position: 'fixed',
-                    width: previousState.width + 'px',
-                    height: previousState.height + 'px',
-                    left: previousState.x + 'px',
-                    top: previousState.y + 'px',
+                    width: end.width + 'px',
+                    height: end.height + 'px',
+                    left: end.left + 'px',
+                    top: end.top + 'px',
                     borderRadius: '4px'
                 });
+            }, 10);
+            setTimeout(() => {
+                windowElement.css({ transition: '', willChange: '' });
+                isMaximized = false;
                 isAnimating = false;
-            }
-            const maximizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_maximize);
-            if (maximizeButtons.length) {
-                for (let i = 0; i < maximizeButtons.length; i++) {
-                    maximizeButtons[i].innerHTML = '';
-                    const iconElement = Container.prototype.Icon('window-full');
-                    iconElement.addClass(Container.windowClasses.window_button_icon);
-                    maximizeButtons[i].appendChild(iconElement.nodes[0]);
-                }
-            }
+            }, settings.animate + 10);
         }
     }
     function closeWindow() {
         if (isAnimating) return;
+        if (taskbarButton) {
+            taskbarButton.remove();
+            taskbarButton = null;
+        }
         const savedContent = windowElement.data('detached-content');
         if (savedContent) {
             windowElement.removeData('detached-content');
@@ -862,6 +925,18 @@ Container.prototype.Window = function(options = {}) {
             windowElement.remove();
             isOpen = false;
         }
+        // --- Tálca eltávolítása, ha nincs több ablak ---
+        setTimeout(function() {
+            // Ellenőrizzük, hogy van-e még legalább egy ablak a DOM-ban (window_container)
+            const selector = '.' + (Container.windowClasses.window_container || 'window_container');
+            if (!Q(selector).nodes.length) {
+                if (Container.taskbar) {
+                    Q(Container.taskbar).remove();
+                    Container.taskbar = null;
+                }
+            }
+        }, 0);
+        if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
     }
     function handleWindowResize() {
         if (isMaximized) {
@@ -911,7 +986,7 @@ Container.prototype.Window = function(options = {}) {
     const windowAPI = {
         Open: function() {
             if (!isOpen) {
-                document.body.appendChild(windowElement.nodes[0]);
+                Q('body').append(windowElement);
                 setInitialPositionAndSize(); // This now uses fixed positioning
                 if (settings.animate) {
                     windowElement.css({
@@ -933,6 +1008,7 @@ Container.prototype.Window = function(options = {}) {
                 setupWindowResizeHandler();
                 isOpen = true;
                 bringToFront();
+                if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
             } else {
                 windowElement.show();
                 bringToFront();
@@ -941,6 +1017,7 @@ Container.prototype.Window = function(options = {}) {
         },
         Close: function() {
             closeWindow();
+            if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
             return this;
         },
         Content: function(content) {

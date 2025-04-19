@@ -19,7 +19,7 @@ const Q = (() => {
     };
     function applyStyles() {
         if (!styleData.init) {
-            styleData.element = document.getElementById('qlib-root-styles') || createStyleElement();
+            styleData.element = document.getElementById('qlib_set') || createStyleElement();
             styleData.init = true;
         }
         let finalStyles = styleData.root ? `:root {${styleData.root}}\n` : '';
@@ -36,7 +36,7 @@ const Q = (() => {
     }
     function createStyleElement() {
         const styleElement = document.createElement('style');
-        styleElement.id = 'qlib-root-styles';
+        styleElement.id = 'qlib_set';
         document.head.insertBefore(styleElement, document.head.firstChild);
         return styleElement;
     }
@@ -107,6 +107,12 @@ const Q = (() => {
     Q.getGLOBAL = key => GLOBAL[key];
     Q.setGLOBAL = value => (GLOBAL = { ...GLOBAL, ...value });
     Q.style = (root = _n, style = '', responsive = _n, mapping = _n, enable_mapping = true) => {
+        const cleanUp = (str) => {
+            str= str.replace(/^\s*[\r\n]/gm, '');
+            str = str.replace(/\s+/g, ' ');
+            str = str.replace(/;;/g, ';');
+            return str.trim();
+        }
         if (mapping && enable_mapping) {
             const keys = _ob.keys(mapping);
             const generateSecureCSSClassName = () => {
@@ -140,9 +146,11 @@ const Q = (() => {
         }
         if (root && typeof root === 'string') {
             styleData.root += root.trim() + ';';
+            styleData.root = cleanUp(styleData.root);
         }
         if (style && typeof style === 'string') {
             styleData.generic += style;
+            styleData.generic = cleanUp(styleData.generic);
         }
         if (responsive && typeof responsive === 'object') {
             const breakpoints = _ob.entries(responsive);
@@ -1232,28 +1240,28 @@ Container.prototype.Tab = function(data, horizontal = true) {
         Container.tabClasses = Q.style('', `
             .tab_navigation_buttons {
                 box-sizing: border-box;
-                width: 20px;
-                background-color: #333;
+                width: 30px;
                 display: flex;
                 justify-content: center;
-                padding: 4px;
+                align-items: center;
+                user-select: none;
             }
             .tab_navigation_buttons_vertical {
                 width: auto;
                 height: 20px;
             }
             .tab_navigation_buttons:hover {
-                background-color: #555;
+                background-color: var(--form-default-background-hover);
             }
             .tab_container {
                 width: 100%;
-                height: 300px;
+                min-height: 300px;
             }
             .tab_container_vertical {
                 display: flex;
             }
             .tab_navigation_header {
-                background-color: #333;
+                background-color: var(--form-default-background);
                 display: flex;
             }
             .tab_navigation_header_vertical {
@@ -1271,7 +1279,8 @@ Container.prototype.Tab = function(data, horizontal = true) {
                 flex-direction: column;
             }
             .tab_active {
-                background-color: #555;
+                background-color: var(--form-default-accent-color);
+                color: var(--form-default-accent-text-color);
                 color: #fff;
             }
             .tab {
@@ -1279,11 +1288,13 @@ Container.prototype.Tab = function(data, horizontal = true) {
                 justify-content: center;
                 align-items: center;
                 cursor: default;
-                padding: 5px 25px;
+                padding: var(--form-default-padding);
+                font-size: var(--form-default-font-size);
+                white-space: nowrap;     /* prevent text wrap */
             }
             .tab_disabled {
-                background-color: #333;
-                color: #555;
+                background-color: var(--form-default-background-disabled);
+                color: var(--form-default-text-color-disabled);
             }
             .tab_content {
                 display: none;
@@ -1328,24 +1339,53 @@ Container.prototype.Tab = function(data, horizontal = true) {
         tabs.addClass(Container.tabClasses.tab_navigation_tabs_vertical);
         prevBtn.addClass(Container.tabClasses.tab_navigation_buttons_vertical);
         nextBtn.addClass(Container.tabClasses.tab_navigation_buttons_vertical);
-        prevBtn.append(Q('<div>', { class: 'svg_arrow-up container_icon' }));
-        nextBtn.append(Q('<div>', { class: 'svg_arrow-down container_icon' }));
+        prevBtn.html('▲');
+        nextBtn.html('▼');
     } else {
-        prevBtn.append(Q('<div>', { class: 'svg_arrow-left container_icon' }));
-        nextBtn.append(Q('<div>', { class: 'svg_arrow-right container_icon' }));
+        prevBtn.html('◀');
+        nextBtn.html('▶');
     }
     header.append(prevBtn, tabs, nextBtn);
     wrapper.append(header, contentContainer);
+    function updateNavButtons() {
+        const el = tabs.nodes[0];
+        const hasOverflow = horizontal
+            ? el.scrollWidth > el.clientWidth
+            : el.scrollHeight > el.clientHeight;
+        const disp = hasOverflow ? 'flex' : 'none';
+        prevBtn.css('display', disp);
+        nextBtn.css('display', disp);
+    }
     const data_tabs = {};
     const data_contents = {};
     let activeTab = null;
-    prevBtn.on('click', () => {
+    prevBtn.off('click').on('click', () => {
         const scrollAmount = horizontal ? tabs.width() : tabs.height();
-        horizontal ? tabs.scrollLeft(-scrollAmount, true) : tabs.scrollTop(-scrollAmount, true);
+        const el = tabs.nodes[0];
+        if (el && el.scrollBy) {
+            el.scrollBy({
+                left: horizontal ? -scrollAmount : 0,
+                top:  horizontal ? 0 : -scrollAmount,
+                behavior: 'smooth'
+            });
+        } else {
+            horizontal ? tabs.scrollLeft(-scrollAmount, true)
+                       : tabs.scrollTop(-scrollAmount, true);
+        }
     });
-    nextBtn.on('click', () => {
+    nextBtn.off('click').on('click', () => {
         const scrollAmount = horizontal ? tabs.width() : tabs.height();
-        horizontal ? tabs.scrollLeft(scrollAmount, true) : tabs.scrollTop(scrollAmount, true);
+        const el = tabs.nodes[0];
+        if (el && el.scrollBy) {
+            el.scrollBy({
+                left: horizontal ?  scrollAmount : 0,
+                top:  horizontal ?  0 :  scrollAmount,
+                behavior: 'smooth'
+            });
+        } else {
+            horizontal ? tabs.scrollLeft( scrollAmount, true)
+                       : tabs.scrollTop( scrollAmount, true);
+        }
     });
     data.forEach(item => {
         const tab = Q('<div>', { class: Container.tabClasses.tab })
@@ -1367,7 +1407,7 @@ Container.prototype.Tab = function(data, horizontal = true) {
         data_tabs[item.value] = tab;
         data_contents[item.value] = content;
         tab.on('click', function() {
-            if (item.disabled) return;
+            if (tab.hasClass(Container.tabClasses.tab_disabled)) return;
             const activeTabs = tabs.find('.' + Container.tabClasses.tab_active);
             if (activeTabs) activeTabs.removeClass(Container.tabClasses.tab_active);
             tab.addClass(Container.tabClasses.tab_active);
@@ -1375,6 +1415,7 @@ Container.prototype.Tab = function(data, horizontal = true) {
         });
         tabs.append(tab);
     });
+    updateNavButtons();
     function showContent(value) {
         if (!data_contents[value]) return;
         if (activeTab && data_contents[activeTab]) {
@@ -1417,13 +1458,14 @@ Container.prototype.Tab = function(data, horizontal = true) {
         data_tabs[tabData.value] = tab;
         data_contents[tabData.value] = content;
         tab.on('click', function() {
-            if (tabData.disabled) return;
+            if (tab.hasClass(Container.tabClasses.tab_disabled)) return;
             const activeTabs = tabs.find('.' + Container.tabClasses.tab_active);
             if (activeTabs) activeTabs.removeClass(Container.tabClasses.tab_active);
             tab.addClass(Container.tabClasses.tab_active);
             showContent(tabData.value);
         });
         tabs.append(tab);
+        updateNavButtons();
         return tab;
     };
     wrapper.removeTab = function(value) {
@@ -1444,6 +1486,7 @@ Container.prototype.Tab = function(data, horizontal = true) {
             delete data_tabs[value];
             delete data_contents[value];
         }
+        updateNavButtons();
         return this;
     };
     wrapper.getContent = function(value) {
@@ -1462,6 +1505,28 @@ Container.prototype.Tab = function(data, horizontal = true) {
     return wrapper;
 };
 Container.prototype.Table = function (data = [], options = {}) {
+  if (!Array.isArray(data)) throw new Error('Container.Table: data must be an array of objects');
+  const defaults = {
+    pageSize: 10,
+    sizes: [],
+    pageButtonLimit: 5,
+    debounce: 250,
+    search: true,
+    sort: true,
+    filter: true,
+    page: true,
+    info: true,
+    language: ['Search...', 'No results found.', 'Showing [PAGE] to [ALL_PAGES] of [TOTAL] entries','First', 'Prev', 'Next', 'Last'],
+  };
+  options = Object.assign({}, defaults, options);
+  const {
+    debounce: debounceTime,
+    search: enableSearch,
+    sort: enableSort,
+    filter: enableFilter,
+    page: enablePage,
+    info: enableInfo
+  } = options;
   if (!Container.tableClassesInitialized) {
     Container.tableClasses = Q.style('', `
       .tbl_wrapper { display: flex; flex-direction: column; }
@@ -1479,16 +1544,23 @@ Container.prototype.Table = function (data = [], options = {}) {
       .tbl_row.selected { background: var(--form-default-accent-color); color: var(--form-default-accent-text-color); }
             .tbl_table th
       {
-        background: var(--form-default-background);
+        background: var(--form-default-dataset-header-background);
         color: var(--form-default-dataset-header-text-color);
-        font-height: var(--form-default-dataset-header-font-height);
+        font-weight: var(--form-default-dataset-header-font-weight);
+        font-size: var(--form-default-dataset-header-font-size);
         padding-right: 25px;
-        width: 50%;
 }
+        .tbl_table td
+      {
+        font-size: var(--form-default-dataset-header-data-font-size);
+        color: var(--form-default-dataset-data-text-color);
+    }
       .tbl_bottom {
       display: flex;
       justify-content: space-between;
       margin-top:5px; 
+      font-size: var(--form-default-dataset-header-data-font-size);
+      color: var(--form-default-dataset-data-text-color);
       }
       .tbl_pagination {
       display:flex;
@@ -1525,8 +1597,10 @@ Container.prototype.Table = function (data = [], options = {}) {
       'tbl_page_btn': 'tbl_page_btn',
       'sort-icons': 'sort-icons',
       'asc': 'asc', 'desc': 'desc',
-      'sort_active': 'sort_active'
-    }, false);
+      'sort_active': 'sort_active',
+      'active': 'active',
+      'selected': 'selected',
+    }, true);
     Container.tableClassesInitialized = true;
   }
   const wrapper = Q('<div>', { class: Container.tableClasses.tbl_wrapper });
@@ -1534,28 +1608,30 @@ Container.prototype.Table = function (data = [], options = {}) {
   let allData = [...data],
     currentPage = 1,
     sortKey = null,
-    sortOrder = 'off',             // changed default to off
+    sortOrder = 'off',
     selectedIdx = null,
-    onChange = null;
+    onChange = null,
+    filteredIndices = [];
+  const columnSizes = options.sizes;
   const form = new Q.Form();
-  const searchInput = form.TextBox('text', '', 'Search…');
+  const searchInput = form.TextBox('text', '', options.language[0]);
   const search = Q('<div>', { class: Container.tableClasses.tbl_search })
     .append(searchInput.nodes[0]);
+  if (enableSearch) top.append(search);
   const searchDebounceId = Q.ID('tbl_search_');
   const table = Q('<table>', { class: Container.tableClasses.tbl_table });
   const bottom = Q('<div>', { class: Container.tableClasses.tbl_bottom });
   const status = Q('<div>');
   const pagination = Q('<div>', { class: Container.tableClasses.tbl_pagination });
   bottom.append(status, pagination);
-  top.append(search);
   wrapper.append(top, table, bottom);
-  let pageSizeVal = options.pageSize || 10;
+  let pageSizeVal = options.pageSize;
   const pageSizeDropdown = form.Dropdown({
     values: [10, 25, 50, 100].map(n => ({ value: n, text: '' + n, default: n === pageSizeVal }))
   });
   const pageSize = Q('<div>', { class: Container.tableClasses.tbl_page_size })
     .append(pageSizeDropdown.nodes[0]);
-  top.append(pageSize);
+  if (enablePage) top.append(pageSize);
   pageSizeDropdown.change(v => {
     pageSizeVal = +v;
     currentPage = 1;
@@ -1563,71 +1639,118 @@ Container.prototype.Table = function (data = [], options = {}) {
   });
   pageSizeVal = +pageSizeDropdown.val().value;
   function render() {
-    const rawVal = searchInput.val();
-    const term = (rawVal || '').toLowerCase();
-    const filteredIndices = allData
-      .map((row, i) => i)
-      .filter(i => JSON.stringify(allData[i]).toLowerCase().includes(term));
-    if (sortKey && sortOrder !== 'off') {
-      filteredIndices.sort((i, j) => {
-        let v1 = allData[i][sortKey], v2 = allData[j][sortKey];
-        if (Array.isArray(v1)) v1 = v1.join(',');
-        if (Array.isArray(v2)) v2 = v2.join(',');
-        return (v1 > v2 ? 1 : -1) * (sortOrder === 'asc' ? 1 : -1);
+    const rawVal = searchInput.val() || '';
+    const term = rawVal.trim();
+    if (enableFilter) {
+      filteredIndices = allData.map((row, i) => i);
+      if (term.includes(':')) {
+        const clauses = term.split(',').map(c => {
+          const [field, ...rest] = c.split(':');
+          return [field.trim(), rest.join(':').trim()];
+        });
+        filteredIndices = filteredIndices.filter(i => {
+          const row = allData[i];
+          return clauses.every(([field, val]) => {
+            const fv = row[field];
+            if (fv == null) return false;
+            const str = typeof fv === 'object' ? JSON.stringify(fv) : String(fv);
+            return str.toLowerCase().includes(val.toLowerCase());
+          });
+        });
+      } else {
+        const lower = term.toLowerCase();
+        filteredIndices = filteredIndices.filter(i =>
+          JSON.stringify(allData[i]).toLowerCase().includes(lower)
+        );
+      }
+    } else {
+      filteredIndices = allData.map((_, i) => i);
+    }
+    if (enableSort && sortKey && sortOrder !== 'off') {
+      filteredIndices.sort((a, b) => {
+        const aVal = allData[a][sortKey];
+        const bVal = allData[b][sortKey];
+        if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
       });
     }
     const total = filteredIndices.length;
     const totalPages = Math.ceil(total / pageSizeVal) || 1;
     currentPage = Math.min(currentPage, totalPages);
     const start = (currentPage - 1) * pageSizeVal,
-          end = start + pageSizeVal;
-    const pageIndices = filteredIndices.slice(start, end);
-    table.html('');
-    const thead = `<thead><tr>${Object.keys(allData[0] || {}).map(k =>
-      `<th data-key="${k}">${k}
-           <span class="${Container.tableClasses['sort-icons']}">
-             <span class="${Container.tableClasses.asc}">▲</span>
-             <span class="${Container.tableClasses.desc}">▼</span>
-           </span>
-         </th>`
-    ).join('')
+      end = start + pageSizeVal;
+    const pageIndices = enablePage
+      ? filteredIndices.slice(start, end)
+      : filteredIndices;
+    const keys = Object.keys(allData[0] || {});
+    const thead = `<thead><tr>${keys.map((k, i) => {
+      const icons = enableSort
+        ? `<span class="${Container.tableClasses['sort-icons']}">
+               <span class="${Container.tableClasses.asc}">▲</span>
+               <span class="${Container.tableClasses.desc}">▼</span>
+             </span>`
+        : '';
+      return `<th data-key="${k}"${columnSizes[i] ? ` style="width:${columnSizes[i]}"` : ''}>${k}${icons}</th>`;
+    }).join('')
       }</tr></thead>`;
     const tbody = pageIndices.map(idx => {
       const row = allData[idx];
-      return `<tr data-idx="${idx}" class="${Container.tableClasses.tbl_row}${idx === selectedIdx ? ' selected' : ''}">${
-        Object.values(row).map(v => {
-          if (Array.isArray(v)) return `<td>${v.join(', ')}</td>`;
-          if (typeof v === 'object') return `<td>${JSON.stringify(v)}</td>`;
-          return `<td>${v}</td>`;
-        }).join('')
-      }</tr>`;
+      return `<tr data-idx="${idx}" class="${Container.tableClasses.tbl_row}${idx === selectedIdx ? ' '+ Container.tableClasses.selected : ''}">${Object.values(row).map(v => {
+        if (Array.isArray(v)) return `<td>${v.join(', ')}</td>`;
+        if (typeof v === 'object') return `<td>${JSON.stringify(v)}</td>`;
+        return `<td>${v}</td>`;
+      }).join('')
+        }</tr>`;
     }).join('');
     table.html('');
     table.append(thead + `<tbody>${tbody}</tbody>`);
-    status.text(`Showing ${start + 1} to ${Math.min(end, total)} of ${total} entries`);
-    pagination.html('');
-    ['First', 'Prev'].forEach(t => {
-      const btn = `<span class="${Container.tableClasses.tbl_page_btn}" data-action="${t.toLowerCase()}">${t}</span>`;
-      pagination.append(btn);
-    });
-    for (let p = 1; p <= totalPages; p++) {
-      const cls = p === currentPage ? ' active' : '';
-      pagination.append(`<span class="${Container.tableClasses.tbl_page_btn + cls}" data-page="${p}">${p}</span>`);
+    if (enableInfo) {
+      if (total === 0) {
+        status.html(options.language[1]);
+      } else{
+      const pageInfo = options.language[2]
+        .replace('[PAGE]', currentPage)
+        .replace('[ALL_PAGES]', totalPages)
+        .replace('[TOTAL]', total);
+      status.html(pageInfo);
+      }
     }
-    ['Next', 'Last'].forEach(t => {
-      pagination.append(`<span class="${Container.tableClasses.tbl_page_btn}" data-action="${t.toLowerCase()}">${t}</span>`);
+    if (enablePage) {
+      pagination.html('');
+      [options.language[3], options.language[4]].forEach(t => {
+        const btn = `<span class="${Container.tableClasses.tbl_page_btn}" data-action="${t.toLowerCase()}">${t}</span>`;
+        pagination.append(btn);
+      });
+      const limit = options.pageButtonLimit;
+      const half = Math.floor(limit / 2);
+      let startPage = Math.max(1, currentPage - half);
+      let endPage = Math.min(totalPages, startPage + limit - 1);
+      if (endPage - startPage + 1 < limit) {
+        startPage = Math.max(1, endPage - limit + 1);
+      }
+      for (let p = startPage; p <= endPage; p++) {
+        const cls = p === currentPage ? ' '+ Container.tableClasses.active : '';
+        pagination.append(`<span class="${Container.tableClasses.tbl_page_btn + cls}" data-page="${p}">${p}</span>`);
+      }
+      [options.language[5], options.language[6]].forEach(t => {
+        const btn = `<span class="${Container.tableClasses.tbl_page_btn}" data-action="${t.toLowerCase()}">${t}</span>`;
+        pagination.append(btn);
+      });
+    }
+  }
+  if (enableSearch) {
+    searchInput.change(() => {
+      Q.Debounce(searchDebounceId, debounceTime, () => {
+        currentPage = 1;
+        render();
+      });
     });
   }
-  searchInput.change(() => {
-    Q.Debounce(searchDebounceId, 250, () => {
-      currentPage = 1;
-      render();
-    });
-  });
   table.on('click', evt => {
     const th = evt.target.closest('th');
     const tr = evt.target.closest('tr[data-idx]');
-    if (th) {
+    if (enableSort && th) {
       const key = th.dataset.key;
       if (sortKey === key) {
         if (sortOrder === 'off') sortOrder = 'asc';
@@ -1652,15 +1775,17 @@ Container.prototype.Table = function (data = [], options = {}) {
       wrapper.select(idx);
     }
   });
-  pagination.on('click', evt => {
-    const tgt = evt.target;
-    if (tgt.dataset.page) currentPage = +tgt.dataset.page;
-    else if (tgt.dataset.action === 'first') currentPage = 1;
-    else if (tgt.dataset.action === 'prev') currentPage = Math.max(1, currentPage - 1);
-    else if (tgt.dataset.action === 'next') currentPage = Math.min(Math.ceil(filtered.length / pageSizeVal), currentPage + 1);
-    else if (tgt.dataset.action === 'last') currentPage = Math.ceil(filtered.length / pageSizeVal);
-    render();
-  });
+  if (enablePage) {
+    pagination.on('click', evt => {
+      const tgt = evt.target;
+      if (tgt.dataset.page) currentPage = +tgt.dataset.page;
+      else if (tgt.dataset.action === 'first') currentPage = 1;
+      else if (tgt.dataset.action === 'prev') currentPage = Math.max(1, currentPage - 1);
+      else if (tgt.dataset.action === 'next') currentPage = Math.min(Math.ceil(filteredIndices.length / pageSizeVal), currentPage + 1);
+      else if (tgt.dataset.action === 'last') currentPage = Math.ceil(filteredIndices.length / pageSizeVal);
+      render();
+    });
+  }
   wrapper.load = function (newData, stayOn = false) {
     allData = [...newData];
     if (!stayOn) { sortKey = null; sortOrder = 'off'; currentPage = 1; }
@@ -1672,8 +1797,8 @@ Container.prototype.Table = function (data = [], options = {}) {
       if (found >= 0) idx = found;
     }
     selectedIdx = idx;
-    table.find('tr').removeClass('selected');
-    table.find(`tr[data-idx="${idx}"]`).addClass('selected');
+    table.find('tr').removeClass(Container.tableClasses.selected);
+    table.find(`tr[data-idx="${idx}"]`).addClass(Container.tableClasses.selected);
     if (onChange) onChange(idx, allData[idx]);
     return this;
   };
@@ -1685,10 +1810,39 @@ Container.prototype.Table = function (data = [], options = {}) {
   return wrapper;
 };
 Container.prototype.Window = function(options = {}) {
+    const defaults = {
+        title: 'Window',
+        content: '',
+        resizable: true,
+        minimizable: true,
+        maximizable: true,
+        closable: true,
+        draggable: true,
+        x: 50,           // Kezdeti X pozíció (százalékban a képernyőhöz képest)
+        y: 50,           // Kezdeti Y pozíció (százalékban a képernyőhöz képest)
+        width: 400,      // Ablak szélessége (px)
+        height: 300,     // Ablak magassága (px)
+        minWidth: 200,   // Minimális szélesség (px)
+        minHeight: 150,  // Minimális magasság (px)
+        zIndex: 1000,    // Alapértelmezett z-index
+        minimizePosition: 'bottom-left', // Minimalizálás pozíciója (ha nem tálcára megy)
+        minimizeContainer: null,         // Egyedi konténer minimalizáláshoz (ha kell)
+        minimizeOffset: 10,              // Minimalizált ablak eltolása (px)
+        animate: 150,     // Animáció időtartama (ms)
+        shadow: true, // Drop shadow effect
+        shadowColor: 'rgba(0, 0, 0, 0.5)', // Shadow color
+        shadowBlur: 10, // Shadow blur radius
+        shadowOffsetX: 0, // Shadow offset X
+        shadowOffsetY: 5, // Shadow offset Y
+        shadowSpread: 0, // Shadow spread radius
+        blur: true, // Blur effect on titlebar to blur the background which is behind the window
+        blurInactive: true, // Blur effect when the window is inactive
+        blurRadius: 10, // Blur radius
+        blurGradientOpacity: 0.3, // 0.0 (transparent) ... 1.0 (fully opaque) for left side of gradient
+    };
     if (!Container.windowClassesInitialized) {
         Container.windowClasses = Q.style(`
             --window-bg-color:rgb(37, 37, 37);
-            --window-border-color: rgba(255, 255, 255, 0.2);
             --window-shadow-color: rgba(0, 0, 0, 0.1);
             --window-titlebar-bg:rgb(17, 17, 17);
             --window-titlebar-text: #ffffff;
@@ -1701,10 +1855,7 @@ Container.prototype.Window = function(options = {}) {
             .window_container {
                 position: fixed; /* Change from absolute to fixed */
                 min-width: 200px;
-                background-color: var(--window-bg-color);
-                border: 1px solid var(--window-border-color);
                 border-radius: 4px;
-                box-shadow: 0 4px 8px var(--window-shadow-color);
                 display: flex;
                 flex-direction: column;
                 overflow: hidden;
@@ -1713,8 +1864,8 @@ Container.prototype.Window = function(options = {}) {
                 transition-timing-function: ease-out;
             }
             .window_titlebar {
-                background-color: var(--window-titlebar-bg);
                 color: var(--window-titlebar-text);
+                background-color: var(--window-titlebar-bg);
                 font-size: 12px;
                 cursor: default;
                 user-select: none;
@@ -1730,6 +1881,7 @@ Container.prototype.Window = function(options = {}) {
                 text-overflow: ellipsis;
                 flex: 1;
                 margin: 0 10px;
+                text-shadow: 0px 1px 5px rgba(0, 0, 0, 1.0);
             }
             .window_controls {
                 display: flex;
@@ -1855,6 +2007,24 @@ Container.prototype.Window = function(options = {}) {
                 color: var(--window-button-text);
                 pointer-events: none;
             }
+            .window_taskbar_btn {
+                min-width: 100px;
+                max-width: 220px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                background: #222;
+                color: #fff;
+                border: 1px solid #444;
+                border-radius: 4px;
+                padding: 0 12px;
+                height: 28px;
+                display: flex;
+                align-items: center;
+                cursor: pointer;
+                font-size: 13px;
+                box-sizing: border-box;
+            }
         `, null, {
             'window_container': 'window_container',
             'window_titlebar': 'window_titlebar',
@@ -1877,33 +2047,115 @@ Container.prototype.Window = function(options = {}) {
             'window_resize_sw': 'window_resize_sw',
             'window_minimized': 'window_minimized',
             'window_maximized': 'window_maximized',
-            'window_button_icon': 'window_button_icon'
-        });
+            'window_button_icon': 'window_button_icon',
+            'window_taskbar_btn': 'window_taskbar_btn'
+        },false);
         Container.windowClassesInitialized = true;
     }
-    const defaults = {
-        title: 'Window',
-        content: '',
-        resizable: true,
-        minimizable: true,
-        maximizable: true,
-        closable: true,
-        draggable: true,
-        x: 50,     
-        y: 50,     
-        width: 400, 
-        height: 300, 
-        minWidth: 200,
-        minHeight: 150,
-        zIndex: 1000,
-        minimizePosition: 'bottom-left', 
-        minimizeContainer: null, 
-        minimizeOffset: 10, 
-        animate: 150
-    };
+    if (!Container.taskbar) {
+        let taskbarStyle = {
+            position: 'fixed',
+            height: '32px',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            maxWidth: '100vw',
+            minHeight: '0',
+            minWidth: '0'
+        };
+        switch (defaults.minimizePosition || 'bottom-left') {
+            case 'bottom-right':
+                taskbarStyle.right = defaults.minimizeOffset + 'px';
+                taskbarStyle.bottom = defaults.minimizeOffset + 'px';
+                break;
+            case 'top-left':
+                taskbarStyle.left = defaults.minimizeOffset + 'px';
+                taskbarStyle.top = defaults.minimizeOffset + 'px';
+                break;
+            case 'top-right':
+                taskbarStyle.right = defaults.minimizeOffset + 'px';
+                taskbarStyle.top = defaults.minimizeOffset + 'px';
+                break;
+            case 'bottom-left':
+            default:
+                taskbarStyle.left = defaults.minimizeOffset + 'px';
+                taskbarStyle.bottom = defaults.minimizeOffset + 'px';
+                break;
+        }
+        Container.taskbar = Q('<div>', { class: Container.windowClasses.window_taskbar || 'window_taskbar' }).css(taskbarStyle);
+        Q('body').append(Container.taskbar);
+    }
     const settings = Object.assign({}, defaults, options);
     const windowElement = Q('<div>', { class: Container.windowClasses.window_container });
+    if (settings.shadow) {
+        windowElement.css({
+            boxShadow: `${settings.shadowOffsetX}px ${settings.shadowOffsetY}px ${settings.shadowBlur}px ${settings.shadowSpread}px ${settings.shadowColor}`
+        });
+    } else {
+        windowElement.css({ boxShadow: 'none' });
+    }
     const titlebar = Q('<div>', { class: Container.windowClasses.window_titlebar });
+    function setTitlebarBlurElement(titlebarElem, active, blurRadius, gradientOpacity, animateMs) {
+        if (!titlebarElem) return;
+        if (typeof animateMs === 'number' && animateMs > 0) {
+            titlebarElem.style.transition = `backdrop-filter ${animateMs}ms, -webkit-backdrop-filter ${animateMs}ms, background-image ${animateMs}ms`;
+        } else {
+            titlebarElem.style.transition = '';
+        }
+        if (active) {
+            titlebarElem.style.backdropFilter = `blur(${blurRadius}px)`;
+            titlebarElem.style.WebkitBackdropFilter = `blur(${blurRadius}px)`;
+            titlebarElem.style.backgroundColor = 'transparent';
+            const buttonBg = getComputedStyle(document.documentElement)
+                .getPropertyValue('--window-button-bg') || '#111';
+            const leftAlpha = Math.max(0, Math.min(1, gradientOpacity));
+            titlebarElem.style.backgroundImage =
+                `linear-gradient(to right, rgba(17,17,17,${leftAlpha}), ${buttonBg.trim()} 80%)`;
+        } else {
+            titlebarElem.style.backdropFilter = 'blur(0px)';
+            titlebarElem.style.WebkitBackdropFilter = 'blur(0px)';
+            titlebarElem.style.backgroundColor = '';
+            titlebarElem.style.backgroundImage = '';
+        }
+    }
+    function updateAllTitlebarBlur() {
+        const allWindows = document.querySelectorAll('.' + Container.windowClasses.window_container);
+        let maxZ = -Infinity, activeWindow = null;
+        allWindows.forEach(win => {
+            const z = parseInt(win.style.zIndex || window.getComputedStyle(win).zIndex, 10) || 0;
+            if (z > maxZ) {
+                maxZ = z;
+                activeWindow = win;
+            }
+        });
+        allWindows.forEach(win => {
+            const tb = win.querySelector('.' + Container.windowClasses.window_titlebar);
+            if (!tb) return;
+            if (settings.blurInactive) {
+                setTitlebarBlurElement(
+                    tb,
+                    win !== activeWindow,
+                    settings.blurRadius,
+                    settings.blurGradientOpacity,
+                    settings.animate
+                );
+            } else if (settings.blur) {
+                setTitlebarBlurElement(tb, true, settings.blurRadius, settings.blurGradientOpacity, 0);
+            } else {
+                setTitlebarBlurElement(tb, false, settings.blurRadius, settings.blurGradientOpacity, 0);
+            }
+        });
+    }
+    if (settings.blurInactive) {
+        setTimeout(updateAllTitlebarBlur, 0);
+        windowElement.on('mousedown', function () {
+            setTimeout(updateAllTitlebarBlur, 0);
+        });
+    } else if (settings.blur) {
+        setTitlebarBlurElement(titlebar.nodes[0], true, settings.blurRadius, settings.blurGradientOpacity, 0);
+    } else {
+        setTitlebarBlurElement(titlebar.nodes[0], false, settings.blurRadius, settings.blurGradientOpacity, 0);
+    }
     const titleElement = Q('<div>', { class: Container.windowClasses.window_title }).text(settings.title);
     const controls = Q('<div>', { class: Container.windowClasses.window_controls });
     const contentContainer = Q('<div>', { class: Container.windowClasses.window_content });
@@ -1962,6 +2214,7 @@ Container.prototype.Window = function(options = {}) {
     };
     let isOpen = false;
     let isAnimating = false;
+    let taskbarButton = null;
     function setTransitionDuration(duration) {
         if (!settings.animate) return;
         windowElement.css('transition-duration', duration + 'ms');
@@ -2003,6 +2256,7 @@ Container.prototype.Window = function(options = {}) {
         }
         Container.openWindows.push(windowElement.nodes[0]);
         updateZIndices();
+        if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
     }
     function updateZIndices() {
         const baseZIndex = settings.zIndex;
@@ -2016,37 +2270,7 @@ Container.prototype.Window = function(options = {}) {
         if (!settings.draggable) return;
         let isDragging = false;
         let startX, startY, startLeft, startTop;
-        titlebar.on('mousedown', function(e) {
-            if (isMaximized) return;
-            if (isMinimized) {
-                isDragging = true;
-                startX = e.clientX;
-                startY = e.clientY;
-                if (windowElement.css('left') !== 'auto') {
-                    startLeft = parseInt(windowElement.css('left'), 10);
-                } else {
-                    const viewportWidth = window.innerWidth;
-                    startLeft = viewportWidth - parseInt(windowElement.css('right'), 10) - windowElement.width();
-                }
-                if (windowElement.css('top') !== 'auto') {
-                    startTop = parseInt(windowElement.css('top'), 10);
-                } else {
-                    const viewportHeight = window.innerHeight;
-                    startTop = viewportHeight - parseInt(windowElement.css('bottom'), 10) - windowElement.height();
-                }
-                bringToFront();
-                e.preventDefault();
-                return;
-            }
-            isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            startLeft = parseInt(windowElement.css('left'), 10);
-            startTop = parseInt(windowElement.css('top'), 10);
-            bringToFront();
-            e.preventDefault();
-        });
-        document.addEventListener('mousemove', function(e) {
+        function onMouseMove(e) {
             if (!isDragging) return;
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
@@ -2081,25 +2305,27 @@ Container.prototype.Window = function(options = {}) {
             });
             previousState.x = constrainedLeft;
             previousState.y = constrainedTop;
-        });
-        document.addEventListener('mouseup', function() {
+        }
+        function onMouseUp() {
             isDragging = false;
-            if (isMinimized) {
-                const viewportWidth = window.innerWidth;
-                const viewportHeight = window.innerHeight;
-                const currentLeft = parseInt(windowElement.css('left'), 10);
-                const currentTop = parseInt(windowElement.css('top'), 10);
-                const isRight = currentLeft > viewportWidth / 2;
-                const isBottom = currentTop > viewportHeight / 2;
-                if (isRight && isBottom) {
-                    settings.minimizePosition = 'bottom-right';
-                } else if (isRight && !isBottom) {
-                    settings.minimizePosition = 'top-right';
-                } else if (!isRight && isBottom) {
-                    settings.minimizePosition = 'bottom-left';
-                } else {
-                    settings.minimizePosition = 'top-left';
-                }
+            Q(document).off('mousemove', onMouseMove);
+            Q(document).off('mouseup', onMouseUp);
+        }
+        Q(titlebar).on('mousedown', function(e) {
+            if (isMaximized || isMinimized) return;
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startLeft = parseInt(windowElement.css('left'), 10);
+            startTop = parseInt(windowElement.css('top'), 10);
+            bringToFront();
+            Q(document).on('mousemove', onMouseMove);
+            Q(document).on('mouseup', onMouseUp);
+            e.preventDefault();
+        });
+        Q(titlebar).on('dblclick', function(e) {
+            if (settings.maximizable) {
+                toggleMaximize();
             }
         });
     }
@@ -2109,24 +2335,7 @@ Container.prototype.Window = function(options = {}) {
         let resizeDirection = '';
         let startX, startY, startWidth, startHeight, startLeft, startTop;
         const resizeHandles = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_resize_handle);
-        for (let i = 0; i < resizeHandles.length; i++) {
-            const handle = resizeHandles[i];
-            handle.addEventListener('mousedown', function(e) {
-                if (isMaximized) return;
-                isResizing = true;
-                resizeDirection = this.getAttribute('data-resize');
-                startX = e.clientX;
-                startY = e.clientY;
-                startWidth = windowElement.width();
-                startHeight = windowElement.height();
-                startLeft = parseInt(windowElement.css('left'), 10);
-                startTop = parseInt(windowElement.css('top'), 10);
-                windowElement.css('zIndex', settings.zIndex + 10);
-                e.preventDefault();
-                e.stopPropagation();
-            });
-        }
-        document.addEventListener('mousemove', function(e) {
+        function onMouseMove(e) {
             if (!isResizing) return;
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
@@ -2196,16 +2405,37 @@ Container.prototype.Window = function(options = {}) {
             previousState.height = newHeight;
             previousState.x = newLeft;
             previousState.y = newTop;
-        });
-        document.addEventListener('mouseup', function() {
+        }
+        function onMouseUp() {
             isResizing = false;
-        });
+            Q(document).off('mousemove', onMouseMove);
+            Q(document).off('mouseup', onMouseUp);
+        }
+        for (let i = 0; i < resizeHandles.length; i++) {
+            const handle = resizeHandles[i];
+            Q(handle).on('mousedown', function(e) {
+                if (isMaximized || isMinimized) return;
+                isResizing = true;
+                resizeDirection = this.getAttribute('data-resize');
+                startX = e.clientX;
+                startY = e.clientY;
+                startWidth = windowElement.width();
+                startHeight = windowElement.height();
+                startLeft = parseInt(windowElement.css('left'), 10);
+                startTop = parseInt(windowElement.css('top'), 10);
+                windowElement.css('zIndex', settings.zIndex + 10);
+                Q(document).on('mousemove', onMouseMove);
+                Q(document).on('mouseup', onMouseUp);
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        }
     }
     function setupControls() {
         const minimizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_minimize);
         if (minimizeButtons.length) {
             for (let i = 0; i < minimizeButtons.length; i++) {
-                minimizeButtons[i].addEventListener('click', function() {
+                Q(minimizeButtons[i]).on('click', function() {
                     bringToFront(); 
                     toggleMinimize();
                 });
@@ -2214,7 +2444,7 @@ Container.prototype.Window = function(options = {}) {
         const maximizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_maximize);
         if (maximizeButtons.length) {
             for (let i = 0; i < maximizeButtons.length; i++) {
-                maximizeButtons[i].addEventListener('click', function() {
+                Q(maximizeButtons[i]).on('click', function() {
                     bringToFront(); 
                     toggleMaximize();
                 });
@@ -2223,12 +2453,12 @@ Container.prototype.Window = function(options = {}) {
         const closeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_close);
         if (closeButtons.length) {
             for (let i = 0; i < closeButtons.length; i++) {
-                closeButtons[i].addEventListener('click', function() {
+                Q(closeButtons[i]).on('click', function() {
                     closeWindow();
                 });
             }
         }
-        contentContainer.on('mousedown', function() {
+        Q(contentContainer).on('mousedown', function() {
             bringToFront();
         });
     }
@@ -2239,251 +2469,197 @@ Container.prototype.Window = function(options = {}) {
     function toggleMinimize() {
         if (isAnimating) return;
         isAnimating = true;
-        if (isMaximized) {
-            isMaximized = false;
-            windowElement.removeClass(Container.windowClasses.window_maximized);
-        }
-        isMinimized = !isMinimized;
-        let detachedContent = null;
-        if (isMinimized) {
-            let minimizedPosition = {};
-            if (settings.minimizeContainer) {
-                let container;
-                if (typeof settings.minimizeContainer === 'string') {
-                    container = document.querySelector(settings.minimizeContainer);
-                } else if (settings.minimizeContainer instanceof Element) {
-                    container = settings.minimizeContainer;
-                } else if (settings.minimizeContainer instanceof Q) {
-                    container = settings.minimizeContainer.nodes[0];
-                }
-                if (container) {
-                    container.appendChild(windowElement.nodes[0]);
-                    minimizedPosition = {
-                        position: 'relative',
-                        left: 'auto',
-                        right: 'auto',
-                        top: 'auto',
-                        bottom: 'auto',
-                        margin: settings.minimizeOffset + 'px'
-                    };
-                }
-            } else {
-                switch (settings.minimizePosition) {
-                    case 'bottom-right':
-                        minimizedPosition = {
-                            position: 'fixed',
-                            left: 'auto',
-                            right: settings.minimizeOffset + 'px',
-                            top: 'auto',
-                            bottom: settings.minimizeOffset + 'px'
-                        };
-                        break;
-                    case 'top-left':
-                        minimizedPosition = {
-                            position: 'fixed',
-                            left: settings.minimizeOffset + 'px',
-                            right: 'auto',
-                            top: settings.minimizeOffset + 'px',
-                            bottom: 'auto'
-                        };
-                        break;
-                    case 'top-right':
-                        minimizedPosition = {
-                            position: 'fixed',
-                            left: 'auto',
-                            right: settings.minimizeOffset + 'px',
-                            top: settings.minimizeOffset + 'px',
-                            bottom: 'auto'
-                        };
-                        break;
-                    case 'bottom-left':
-                    default:
-                        minimizedPosition = {
-                            position: 'fixed',
-                            left: settings.minimizeOffset + 'px',
-                            right: 'auto',
-                            top: 'auto',
-                            bottom: settings.minimizeOffset + 'px'
-                        };
-                        break;
-                }
+        if (!isMinimized) {
+            const rect = windowElement.nodes[0].getBoundingClientRect();
+            const start = {
+                width: rect.width,
+                height: rect.height,
+                left: rect.left,
+                top: rect.top,
+                opacity: 1
+            };
+            let taskbarRect = { left: 0, top: window.innerHeight, width: 160, height: 28 };
+            if (Container.taskbar && taskbarButton) {
+                const btnRect = taskbarButton.nodes[0].getBoundingClientRect();
+                taskbarRect = {
+                    left: btnRect.left,
+                    top: btnRect.top,
+                    width: btnRect.width,
+                    height: btnRect.height
+                };
+            } else if (Container.taskbar) {
+                const barRect = Container.taskbar.nodes[0].getBoundingClientRect();
+                taskbarRect.left = barRect.left;
+                taskbarRect.top = barRect.top;
             }
-            if (settings.animate) {
-                setTransitionDuration(settings.animate);
-                detachedContent = contentContainer.children();
-                if (detachedContent.nodes && detachedContent.nodes.length > 0) {
-                    windowElement.data('detached-content', detachedContent.detach());
-                }
-                const currentHeight = windowElement.height();
-                const titlebarHeight = parseInt(getComputedStyle(titlebar.nodes[0]).height, 10);
+            windowElement.css({
+                willChange: 'width,height,left,top,opacity',
+                transition: `all ${settings.animate}ms cubic-bezier(.4,0,.2,1)`
+            });
+            windowElement.css({
+                width: start.width + 'px',
+                height: start.height + 'px',
+                left: start.left + 'px',
+                top: start.top + 'px',
+                opacity: 1
+            });
+            setTimeout(() => {
                 windowElement.css({
-                    height: titlebarHeight + 'px'
+                    width: taskbarRect.width + 'px',
+                    height: taskbarRect.height + 'px',
+                    left: taskbarRect.left + 'px',
+                    top: taskbarRect.top + 'px',
+                    opacity: 0.2
                 });
-                setTimeout(() => {
-                    windowElement.addClass(Container.windowClasses.window_minimized);
-                    windowElement.css(minimizedPosition);
-                    resetTransition();
-                }, settings.animate / 2);
-            } else {
-                detachedContent = contentContainer.children();
-                if (detachedContent.nodes && detachedContent.nodes.length > 0) {
-                    windowElement.data('detached-content', detachedContent.detach());
-                }
-                windowElement.addClass(Container.windowClasses.window_minimized);
-                windowElement.css(minimizedPosition);
-                isAnimating = false;
-            }
-            const maximizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_maximize);
-            if (maximizeButtons.length) {
-                for (let i = 0; i < maximizeButtons.length; i++) {
-                    maximizeButtons[i].innerHTML = '';
-                    const iconElement = Container.prototype.Icon('window-full');
-                    iconElement.addClass(Container.windowClasses.window_button_icon);
-                    maximizeButtons[i].appendChild(iconElement.nodes[0]);
-                }
-            }
-        } else {
-            if (settings.animate) {
-                setTransitionDuration(settings.animate);
-                windowElement.css({
-                    position: 'fixed',
-                    left: previousState.x + 'px',
-                    top: previousState.y + 'px',
-                    right: 'auto',
-                    bottom: 'auto',
-                    margin: '0'
-                });
-                windowElement.removeClass(Container.windowClasses.window_minimized);
-                windowElement.css({
-                    height: previousState.height + 'px'
-                });
-                if (settings.minimizeContainer) {
-                    document.body.appendChild(windowElement.nodes[0]);
-                }
-                setTimeout(() => {
-                    const savedContent = windowElement.data('detached-content');
-                    if (savedContent) {
-                        contentContainer.append(savedContent);
-                        windowElement.removeData('detached-content');
+            }, 10);
+            setTimeout(() => {
+                windowElement.css({ transition: '', willChange: '' });
+                if (!taskbarButton) {
+                    let shortTitle = settings.title;
+                    if (shortTitle.length > 18) {
+                        shortTitle = shortTitle.slice(0, 15) + '...';
                     }
-                    resetTransition();
-                }, settings.animate / 2);
-            } else {
-                windowElement.removeClass(Container.windowClasses.window_minimized);
-                windowElement.css({
-                    position: 'fixed',
-                    left: previousState.x + 'px',
-                    top: previousState.y + 'px',
-                    right: 'auto',
-                    bottom: 'auto',
-                    margin: '0',
-                    height: previousState.height + 'px',
-                    width: previousState.width + 'px'
-                });
-                if (settings.minimizeContainer) {
-                    document.body.appendChild(windowElement.nodes[0]);
+                    taskbarButton = Q('<div>', { class: Container.windowClasses.window_taskbar_btn, text: shortTitle });
+                    taskbarButton.on('click', function() {
+                        toggleMinimize();
+                    });
+                    if (settings.minimizePosition === 'bottom-left' || settings.minimizePosition === 'top-left') {
+                        Q(Container.taskbar).prepend(taskbarButton);
+                    } else {
+                        Q(Container.taskbar).append(taskbarButton);
+                    }
                 }
-                const savedContent = windowElement.data('detached-content');
-                if (savedContent) {
-                    contentContainer.append(savedContent);
-                    windowElement.removeData('detached-content');
-                }
+                windowElement.detach();
+                isMinimized = true;
                 isAnimating = false;
+            }, settings.animate + 10);
+        } else {
+            Q('body').append(windowElement);
+            let btnRect = { left: 0, top: window.innerHeight, width: 160, height: 28 };
+            if (taskbarButton) {
+                const rect = taskbarButton.nodes[0].getBoundingClientRect();
+                btnRect = {
+                    left: rect.left,
+                    top: rect.top,
+                    width: rect.width,
+                    height: rect.height
+                };
             }
+            const end = {
+                width: previousState.width,
+                height: previousState.height,
+                left: previousState.x,
+                top: previousState.y,
+                opacity: 1
+            };
+            windowElement.css({
+                willChange: 'width,height,left,top,opacity',
+                transition: `all ${settings.animate}ms cubic-bezier(.4,0,.2,1)`,
+                width: btnRect.width + 'px',
+                height: btnRect.height + 'px',
+                left: btnRect.left + 'px',
+                top: btnRect.top + 'px',
+                opacity: 0.2,
+                display: ''
+            });
+            setTimeout(() => {
+                windowElement.css({
+                    width: end.width + 'px',
+                    height: end.height + 'px',
+                    left: end.left + 'px',
+                    top: end.top + 'px',
+                    opacity: 1
+                });
+            }, 10);
+            setTimeout(() => {
+                windowElement.css({ transition: '', willChange: '' });
+                if (taskbarButton) {
+                    taskbarButton.remove();
+                    taskbarButton = null;
+                }
+                isMinimized = false;
+                bringToFront();
+                isAnimating = false;
+            }, settings.animate + 10);
         }
     }
     function toggleMaximize() {
         if (isAnimating) return;
         isAnimating = true;
-        isMaximized = !isMaximized;
-        if (isMaximized) {
-            if (!isMinimized) {
-                previousState.width = windowElement.width();
-                previousState.height = windowElement.height();
-                previousState.x = parseInt(windowElement.css('left'), 10);
-                previousState.y = parseInt(windowElement.css('top'), 10);
-            } else {
-                windowElement.removeClass(Container.windowClasses.window_minimized);
-                if (previousState.width < settings.minWidth) {
-                    previousState.width = settings.width;
-                    previousState.height = settings.height;
-                    const position = calculateInitialPosition();
-                    previousState.x = position.left;
-                    previousState.y = position.top;
-                }
-            }
-            if (settings.animate) {
-                setTransitionDuration(settings.animate);
-                windowElement.css({
-                    position: 'fixed',
-                    top: previousState.y + 'px',
-                    left: previousState.x + 'px',
-                    width: previousState.width + 'px',
-                    height: previousState.height + 'px'
-                });
-                void windowElement.nodes[0].offsetWidth;
-                windowElement.css({
-                    top: '0',
-                    left: '0',
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: '0'
-                });
-                setTimeout(() => {
-                    windowElement.addClass(Container.windowClasses.window_maximized);
-                    resetTransition();
-                }, settings.animate);
-            } else {
+        if (!isMaximized) {
+            const rect = windowElement.nodes[0].getBoundingClientRect();
+            const start = {
+                width: rect.width,
+                height: rect.height,
+                left: rect.left,
+                top: rect.top
+            };
+            windowElement.css({
+                willChange: 'width,height,left,top',
+                transition: `all ${settings.animate}ms cubic-bezier(.4,0,.2,1)`,
+                width: start.width + 'px',
+                height: start.height + 'px',
+                left: start.left + 'px',
+                top: start.top + 'px'
+            });
+            setTimeout(() => {
                 windowElement.addClass(Container.windowClasses.window_maximized);
-                isAnimating = false;
-            }
-            const maximizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_maximize);
-            if (maximizeButtons.length) {
-                for (let i = 0; i < maximizeButtons.length; i++) {
-                    maximizeButtons[i].innerHTML = '';
-                    const iconElement = Container.prototype.Icon('window-windowed');
-                    iconElement.addClass(Container.windowClasses.window_button_icon);
-                    maximizeButtons[i].appendChild(iconElement.nodes[0]);
-                }
-            }
-        } else {
-            if (settings.animate) {
-                windowElement.removeClass(Container.windowClasses.window_maximized);
-                setTransitionDuration(settings.animate);
                 windowElement.css({
-                    position: 'fixed',
-                    top: previousState.y + 'px',
-                    left: previousState.x + 'px',
-                    width: previousState.width + 'px',
-                    height: previousState.height + 'px',
-                    borderRadius: '4px' 
+                    left: 0,
+                    top: 0,
+                    width: '100vw',
+                    height: '100vh',
+                    borderRadius: 0
                 });
-                resetTransition();
-            } else {
-                windowElement.removeClass(Container.windowClasses.window_maximized);
+            }, 10);
+            setTimeout(() => {
+                windowElement.css({ transition: '', willChange: '' });
+                isMaximized = true;
+                previousState.width = start.width;
+                previousState.height = start.height;
+                previousState.x = start.left;
+                previousState.y = start.top;
+                isAnimating = false;
+            }, settings.animate + 10);
+        } else {
+            const end = {
+                width: previousState.width,
+                height: previousState.height,
+                left: previousState.x,
+                top: previousState.y
+            };
+            windowElement.removeClass(Container.windowClasses.window_maximized);
+            windowElement.css({
+                willChange: 'width,height,left,top',
+                transition: `all ${settings.animate}ms cubic-bezier(.4,0,.2,1)`,
+                width: '100vw',
+                height: '100vh',
+                left: 0,
+                top: 0,
+                borderRadius: '0'
+            });
+            setTimeout(() => {
                 windowElement.css({
-                    position: 'fixed',
-                    width: previousState.width + 'px',
-                    height: previousState.height + 'px',
-                    left: previousState.x + 'px',
-                    top: previousState.y + 'px',
+                    width: end.width + 'px',
+                    height: end.height + 'px',
+                    left: end.left + 'px',
+                    top: end.top + 'px',
                     borderRadius: '4px'
                 });
+            }, 10);
+            setTimeout(() => {
+                windowElement.css({ transition: '', willChange: '' });
+                isMaximized = false;
                 isAnimating = false;
-            }
-            const maximizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_maximize);
-            if (maximizeButtons.length) {
-                for (let i = 0; i < maximizeButtons.length; i++) {
-                    maximizeButtons[i].innerHTML = '';
-                    const iconElement = Container.prototype.Icon('window-full');
-                    iconElement.addClass(Container.windowClasses.window_button_icon);
-                    maximizeButtons[i].appendChild(iconElement.nodes[0]);
-                }
-            }
+            }, settings.animate + 10);
         }
     }
     function closeWindow() {
         if (isAnimating) return;
+        if (taskbarButton) {
+            taskbarButton.remove();
+            taskbarButton = null;
+        }
         const savedContent = windowElement.data('detached-content');
         if (savedContent) {
             windowElement.removeData('detached-content');
@@ -2521,6 +2697,16 @@ Container.prototype.Window = function(options = {}) {
             windowElement.remove();
             isOpen = false;
         }
+        setTimeout(function() {
+            const selector = '.' + (Container.windowClasses.window_container || 'window_container');
+            if (!Q(selector).nodes.length) {
+                if (Container.taskbar) {
+                    Q(Container.taskbar).remove();
+                    Container.taskbar = null;
+                }
+            }
+        }, 0);
+        if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
     }
     function handleWindowResize() {
         if (isMaximized) {
@@ -2570,7 +2756,7 @@ Container.prototype.Window = function(options = {}) {
     const windowAPI = {
         Open: function() {
             if (!isOpen) {
-                document.body.appendChild(windowElement.nodes[0]);
+                Q('body').append(windowElement);
                 setInitialPositionAndSize(); // This now uses fixed positioning
                 if (settings.animate) {
                     windowElement.css({
@@ -2592,6 +2778,7 @@ Container.prototype.Window = function(options = {}) {
                 setupWindowResizeHandler();
                 isOpen = true;
                 bringToFront();
+                if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
             } else {
                 windowElement.show();
                 bringToFront();
@@ -2600,6 +2787,7 @@ Container.prototype.Window = function(options = {}) {
         },
         Close: function() {
             closeWindow();
+            if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
             return this;
         },
         Content: function(content) {
@@ -2853,16 +3041,11 @@ function Form(options = {}) {
             --form-default-font-size: 12px;
             --form-default-font-family: Arial, sans-serif;
             --form-default-dataset-header-font-weight: 600;
-            --form-default-dataset-header-background: rgba(127, 127, 127, 0.24);
-            --form-default-dataset-header-background-active: rgba(127, 127, 127, 0.24);
-            --form-default-dataset-header-background-focus: rgba(127, 127, 127, 0.24);
-            --form-default-dataset-header-background-hover: rgba(127, 127, 127, 0.24);
+            --form-default-dataset-header-font-size: 12px;
+            --form-default-dataset-header-data-font-size: 12px;
+            --form-default-dataset-header-background: rgba(127, 127, 127, 0.10);
             --form-default-dataset-header-text-color: #fff;
-            --form-default-dataset-header-text-color-active: #fff;
-            --form-default-dataset-header-text-color-focus: #fff;
-            --form-default-dataset-header-text-color-hover: #fff;
             --form-default-dataset-border: 1px solid rgba(127, 127, 127, 0.24);
-            --
             --form-default-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
             --form-default-shadow-active: 0px 0px 5px rgba(100, 60, 240, 0.5);
             --form-default-shadow-focus: 0px 0px 5px rgba(100, 60, 240, 0.5);
@@ -2870,6 +3053,7 @@ function Form(options = {}) {
             --form-default-background-active: rgb(46, 46, 46);
             --form-default-background-focus: rgb(46, 46, 46);
             --form-default-background-hover: rgb(46, 46, 46);
+            --form-default-background-disabled: rgb(46, 46, 46);
             --form-default-background: rgb(46, 46, 46);
             --form-default-border-active: 1px solid var(--form-default-accent-color);
             --form-default-border-focus: 1px solid var(--form-default-accent-color);
@@ -2885,6 +3069,7 @@ function Form(options = {}) {
             --form-default-text-color-active: #fff;
             --form-default-text-color-focus: #fff;
             --form-default-text-color-hover: #fff;
+            --form-default-text-color-disabled: #999;
             --form-default-text-color: #999;
             --form-default-text-active: normal var(--form-default-font-size) var(--form-default-font-family);
             --form-default-text-focus: normal var(--form-default-font-size) var(--form-default-font-family);

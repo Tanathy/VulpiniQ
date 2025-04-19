@@ -29,6 +29,7 @@ function Form(options = {}) {
             --form-default-background-active: rgb(46, 46, 46);
             --form-default-background-focus: rgb(46, 46, 46);
             --form-default-background-hover: rgb(46, 46, 46);
+            --form-default-background-disabled: rgb(46, 46, 46);
             --form-default-background: rgb(46, 46, 46);
 
             --form-default-border-active: 1px solid var(--form-default-accent-color);
@@ -49,6 +50,7 @@ function Form(options = {}) {
             --form-default-text-color-active: #fff;
             --form-default-text-color-focus: #fff;
             --form-default-text-color-hover: #fff;
+            --form-default-text-color-disabled: #999;
             --form-default-text-color: #999;
             
             --form-default-text-active: normal var(--form-default-font-size) var(--form-default-font-family);

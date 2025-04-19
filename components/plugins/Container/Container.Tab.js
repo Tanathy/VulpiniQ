@@ -3,28 +3,28 @@ Container.prototype.Tab = function(data, horizontal = true) {
         Container.tabClasses = Q.style('', `
             .tab_navigation_buttons {
                 box-sizing: border-box;
-                width: 20px;
-                background-color: #333;
+                width: 30px;
                 display: flex;
                 justify-content: center;
-                padding: 4px;
+                align-items: center;
+                user-select: none;
             }
             .tab_navigation_buttons_vertical {
                 width: auto;
                 height: 20px;
             }
             .tab_navigation_buttons:hover {
-                background-color: #555;
+                background-color: var(--form-default-background-hover);
             }
             .tab_container {
                 width: 100%;
-                height: 300px;
+                min-height: 300px;
             }
             .tab_container_vertical {
                 display: flex;
             }
             .tab_navigation_header {
-                background-color: #333;
+                background-color: var(--form-default-background);
                 display: flex;
             }
             .tab_navigation_header_vertical {
@@ -42,7 +42,8 @@ Container.prototype.Tab = function(data, horizontal = true) {
                 flex-direction: column;
             }
             .tab_active {
-                background-color: #555;
+                background-color: var(--form-default-accent-color);
+                color: var(--form-default-accent-text-color);
                 color: #fff;
             }
             .tab {
@@ -50,11 +51,13 @@ Container.prototype.Tab = function(data, horizontal = true) {
                 justify-content: center;
                 align-items: center;
                 cursor: default;
-                padding: 5px 25px;
+                padding: var(--form-default-padding);
+                font-size: var(--form-default-font-size);
+                white-space: nowrap;     /* prevent text wrap */
             }
             .tab_disabled {
-                background-color: #333;
-                color: #555;
+                background-color: var(--form-default-background-disabled);
+                color: var(--form-default-text-color-disabled);
             }
             .tab_content {
                 display: none;
@@ -87,53 +90,86 @@ Container.prototype.Tab = function(data, horizontal = true) {
         });
         Container.tabClassesInitialized = true;
     }
-    // Simplified DOM structure with fewer elements
+    
     const wrapper = Q('<div>', { class: Container.tabClasses.tab_container });
     const header = Q('<div>', { class: Container.tabClasses.tab_navigation_header });
     const prevBtn = Q('<div>', { class: Container.tabClasses.tab_navigation_buttons });
     const nextBtn = Q('<div>', { class: Container.tabClasses.tab_navigation_buttons });
     const tabs = Q('<div>', { class: Container.tabClasses.tab_navigation_tabs });
     const contentContainer = Q('<div>', { class: Container.tabClasses.tab_content_container });
-    // Set vertical or horizontal layout
+    
     if (!horizontal) {
         wrapper.addClass(Container.tabClasses.tab_container_vertical);
         header.addClass(Container.tabClasses.tab_navigation_header_vertical);
         tabs.addClass(Container.tabClasses.tab_navigation_tabs_vertical);
         prevBtn.addClass(Container.tabClasses.tab_navigation_buttons_vertical);
         nextBtn.addClass(Container.tabClasses.tab_navigation_buttons_vertical);
-        // Add arrows
-        prevBtn.append(Q('<div>', { class: 'svg_arrow-up container_icon' }));
-        nextBtn.append(Q('<div>', { class: 'svg_arrow-down container_icon' }));
+        
+        prevBtn.html('▲');
+        nextBtn.html('▼');
     } else {
-        prevBtn.append(Q('<div>', { class: 'svg_arrow-left container_icon' }));
-        nextBtn.append(Q('<div>', { class: 'svg_arrow-right container_icon' }));
+        
+        prevBtn.html('◀');
+        nextBtn.html('▶');
     }
-    // Assemble the DOM structure
+    
     header.append(prevBtn, tabs, nextBtn);
     wrapper.append(header, contentContainer);
-    // State management
+
+    
+    function updateNavButtons() {
+        const el = tabs.nodes[0];
+        const hasOverflow = horizontal
+            ? el.scrollWidth > el.clientWidth
+            : el.scrollHeight > el.clientHeight;
+        const disp = hasOverflow ? 'flex' : 'none';
+        prevBtn.css('display', disp);
+        nextBtn.css('display', disp);
+    }
+
+    
     const data_tabs = {};
     const data_contents = {};
     let activeTab = null;
-    // Add navigation functionality
-    prevBtn.on('click', () => {
+    
+    prevBtn.off('click').on('click', () => {
         const scrollAmount = horizontal ? tabs.width() : tabs.height();
-        horizontal ? tabs.scrollLeft(-scrollAmount, true) : tabs.scrollTop(-scrollAmount, true);
+        const el = tabs.nodes[0];
+        if (el && el.scrollBy) {
+            el.scrollBy({
+                left: horizontal ? -scrollAmount : 0,
+                top:  horizontal ? 0 : -scrollAmount,
+                behavior: 'smooth'
+            });
+        } else {
+            horizontal ? tabs.scrollLeft(-scrollAmount, true)
+                       : tabs.scrollTop(-scrollAmount, true);
+        }
     });
-    nextBtn.on('click', () => {
+    nextBtn.off('click').on('click', () => {
         const scrollAmount = horizontal ? tabs.width() : tabs.height();
-        horizontal ? tabs.scrollLeft(scrollAmount, true) : tabs.scrollTop(scrollAmount, true);
+        const el = tabs.nodes[0];
+        if (el && el.scrollBy) {
+            el.scrollBy({
+                left: horizontal ?  scrollAmount : 0,
+                top:  horizontal ?  0 :  scrollAmount,
+                behavior: 'smooth'
+            });
+        } else {
+            horizontal ? tabs.scrollLeft( scrollAmount, true)
+                       : tabs.scrollTop( scrollAmount, true);
+        }
     });
-    // Process tab data
+    
     data.forEach(item => {
-        // Create and configure tab
+        
         const tab = Q('<div>', { class: Container.tabClasses.tab })
             .attr('data-value', item.value)
             .text(item.title);
         if (item.disabled) {
             tab.addClass(Container.tabClasses.tab_disabled);
         }
-        // Create or prepare content (but don't add to DOM yet)
+        
         let content;
         if (typeof item.content === 'string') {
             content = Q('<div>').html(item.content);
@@ -144,33 +180,36 @@ Container.prototype.Tab = function(data, horizontal = true) {
         } else {
             content = Q('<div>');
         }
-        // Store references
+        
         data_tabs[item.value] = tab;
         data_contents[item.value] = content;
-        // Tab click handler - activate tab and show content
+        
         tab.on('click', function() {
-            if (item.disabled) return;
-            // Update active tab
+            // Prevent loading content if the tab has been disabled
+            if (tab.hasClass(Container.tabClasses.tab_disabled)) return;
+
             const activeTabs = tabs.find('.' + Container.tabClasses.tab_active);
             if (activeTabs) activeTabs.removeClass(Container.tabClasses.tab_active);
             tab.addClass(Container.tabClasses.tab_active);
-            // Switch content
+            
             showContent(item.value);
         });
         tabs.append(tab);
     });
-    // Function to show content for a specific tab
+    updateNavButtons();
+
+    
     function showContent(value) {
         if (!data_contents[value]) return;
-        // If there's already active content, detach it (not remove)
+        
         if (activeTab && data_contents[activeTab]) {
             data_contents[activeTab].detach();
         }
-        // Set the new active tab and append its content
+        
         activeTab = value;
         contentContainer.append(data_contents[value]);
     }
-    // API methods
+    
     wrapper.select = function(value) {
         const tab = data_tabs[value];
         if (tab) tab.click();
@@ -186,14 +225,14 @@ Container.prototype.Tab = function(data, horizontal = true) {
     };
     wrapper.addTab = function(tabData) {
         if (!tabData) return null;
-        // Create and configure new tab
+        
         const tab = Q('<div>', { class: Container.tabClasses.tab })
             .attr('data-value', tabData.value)
             .text(tabData.title);
         if (tabData.disabled) {
             tab.addClass(Container.tabClasses.tab_disabled);
         }
-        // Create or prepare content (but don't add to DOM yet)
+        
         let content;
         if (typeof tabData.content === 'string') {
             content = Q('<div>').html(tabData.content);
@@ -204,50 +243,54 @@ Container.prototype.Tab = function(data, horizontal = true) {
         } else {
             content = Q('<div>');
         }
-        // Store references
+        
         data_tabs[tabData.value] = tab;
         data_contents[tabData.value] = content;
-        // Tab click handler
+        
         tab.on('click', function() {
-            if (tabData.disabled) return;
+            // Prevent loading content if the tab has been disabled
+            if (tab.hasClass(Container.tabClasses.tab_disabled)) return;
+
             const activeTabs = tabs.find('.' + Container.tabClasses.tab_active);
             if (activeTabs) activeTabs.removeClass(Container.tabClasses.tab_active);
             tab.addClass(Container.tabClasses.tab_active);
             showContent(tabData.value);
         });
         tabs.append(tab);
+        updateNavButtons();
         return tab;
     };
     wrapper.removeTab = function(value) {
         if (data_tabs[value]) {
-            // Remove tab element
+            
             data_tabs[value].remove();
-            // If this is the active tab, find another tab to activate
+            
             if (activeTab === value) {
-                // Find first available tab
+                
                 const availableTab = Object.keys(data_tabs).find(key => key !== value);
                 if (availableTab) {
                     this.select(availableTab);
                 } else {
-                    // No tabs left, clear content
+                    
                     contentContainer.empty();
                     activeTab = null;
                 }
             }
-            // Remove content and references
+            
             if (data_contents[value]) {
                 data_contents[value].remove();
             }
             delete data_tabs[value];
             delete data_contents[value];
         }
+        updateNavButtons();
         return this;
     };
-    // Add direct access to content elements
+    
     wrapper.getContent = function(value) {
         return data_contents[value] || null;
     };
-    // Method to update content without replacing it
+    
     wrapper.updateContent = function(value, newContent) {
         if (!data_contents[value]) return this;
         if (typeof newContent === 'string') {

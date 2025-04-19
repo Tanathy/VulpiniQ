@@ -19,7 +19,7 @@ const Q = (() => {
     };
     function applyStyles() {
         if (!styleData.init) {
-            styleData.element = document.getElementById('qlib-root-styles') || createStyleElement();
+            styleData.element = document.getElementById('qlib_set') || createStyleElement();
             styleData.init = true;
         }
         let finalStyles = styleData.root ? `:root {${styleData.root}}\n` : '';
@@ -36,7 +36,7 @@ const Q = (() => {
     }
     function createStyleElement() {
         const styleElement = document.createElement('style');
-        styleElement.id = 'qlib-root-styles';
+        styleElement.id = 'qlib_set';
         document.head.insertBefore(styleElement, document.head.firstChild);
         return styleElement;
     }
@@ -107,6 +107,12 @@ const Q = (() => {
     Q.getGLOBAL = key => GLOBAL[key];
     Q.setGLOBAL = value => (GLOBAL = { ...GLOBAL, ...value });
     Q.style = (root = _n, style = '', responsive = _n, mapping = _n, enable_mapping = true) => {
+        const cleanUp = (str) => {
+            str= str.replace(/^\s*[\r\n]/gm, '');
+            str = str.replace(/\s+/g, ' ');
+            str = str.replace(/;;/g, ';');
+            return str.trim();
+        }
         if (mapping && enable_mapping) {
             const keys = _ob.keys(mapping);
             const generateSecureCSSClassName = () => {
@@ -140,9 +146,11 @@ const Q = (() => {
         }
         if (root && typeof root === 'string') {
             styleData.root += root.trim() + ';';
+            styleData.root = cleanUp(styleData.root);
         }
         if (style && typeof style === 'string') {
             styleData.generic += style;
+            styleData.generic = cleanUp(styleData.generic);
         }
         if (responsive && typeof responsive === 'object') {
             const breakpoints = _ob.entries(responsive);
