@@ -294,14 +294,11 @@ Container.prototype.Table = function (data = [], options = {}) {
       }
       render();
 
-      document
-        .querySelectorAll(`.${Container.tableClasses.sort_active}`)
-        .forEach(el => el.classList.remove(Container.tableClasses.sort_active));
+      Q('.' + Container.tableClasses.sort_active).removeClass(Container.tableClasses.sort_active);
 
       if (sortOrder != 'off') {
         const arrowKey = sortOrder === 'asc' ? Container.tableClasses.asc : Container.tableClasses.desc;
         const head = Q(`[data-key="${key}"] .${Container.tableClasses[arrowKey]}`)
-        console.log('arrowKey', arrowKey);
         head.addClass(Container.tableClasses.sort_active);
       }
     } else if (tr) {

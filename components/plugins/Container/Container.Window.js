@@ -1,5 +1,5 @@
-Container.prototype.Window = function(options = {}) {
-    // --- Alapértelmezett beállítások (minden opció látható) ---
+Container.prototype.Window = function (options = {}) {
+
     const defaults = {
         title: 'Window',
         content: '',
@@ -8,27 +8,27 @@ Container.prototype.Window = function(options = {}) {
         maximizable: true,
         closable: true,
         draggable: true,
-        x: 50,           // Kezdeti X pozíció (százalékban a képernyőhöz képest)
-        y: 50,           // Kezdeti Y pozíció (százalékban a képernyőhöz képest)
-        width: 400,      // Ablak szélessége (px)
-        height: 300,     // Ablak magassága (px)
-        minWidth: 200,   // Minimális szélesség (px)
-        minHeight: 150,  // Minimális magasság (px)
-        zIndex: 1000,    // Alapértelmezett z-index
-        minimizePosition: 'bottom-left', // Minimalizálás pozíciója (ha nem tálcára megy)
-        minimizeContainer: null,         // Egyedi konténer minimalizáláshoz (ha kell)
-        minimizeOffset: 10,              // Minimalizált ablak eltolása (px)
-        animate: 150,     // Animáció időtartama (ms)
-        shadow: true, // Drop shadow effect
-        shadowColor: 'rgba(0, 0, 0, 0.5)', // Shadow color
-        shadowBlur: 10, // Shadow blur radius
-        shadowOffsetX: 0, // Shadow offset X
-        shadowOffsetY: 5, // Shadow offset Y
-        shadowSpread: 0, // Shadow spread radius
-        blur: true, // Blur effect on titlebar to blur the background which is behind the window
-        blurInactive: true, // Blur effect when the window is inactive
-        blurRadius: 10, // Blur radius
-        blurGradientOpacity: 0.3, // 0.0 (transparent) ... 1.0 (fully opaque) for left side of gradient
+        x: 50,
+        y: 50,
+        width: 400,
+        height: 300,
+        minWidth: 200,
+        minHeight: 150,
+        zIndex: 1000,
+        minimizePosition: 'bottom-left',
+        minimizeContainer: null,
+        minimizeOffset: 10,
+        animate: 150,
+        shadow: true,
+        shadowColor: 'rgba(0, 0, 0, 0.5)',
+        shadowBlur: 10,
+        shadowOffsetX: 0,
+        shadowOffsetY: 5,
+        shadowSpread: 0,
+        blur: false,
+        blurInactive: false,
+        blurRadius: 10,
+        blurGradientOpacity: 0.3,
     };
 
     if (!Container.windowClassesInitialized) {
@@ -240,13 +240,13 @@ Container.prototype.Window = function(options = {}) {
             'window_maximized': 'window_maximized',
             'window_button_icon': 'window_button_icon',
             'window_taskbar_btn': 'window_taskbar_btn'
-        },false);
+        }, false);
         Container.windowClassesInitialized = true;
     }
 
-    // --- Tálca konténer létrehozása, ha még nincs ---
+
     if (!Container.taskbar) {
-        // --- Tálca pozíció és offset a minimizePosition/minimizeOffset alapján ---
+
         let taskbarStyle = {
             position: 'fixed',
             height: '32px',
@@ -257,7 +257,7 @@ Container.prototype.Window = function(options = {}) {
             minHeight: '0',
             minWidth: '0'
         };
-        // Pozíció
+
         switch (defaults.minimizePosition || 'bottom-left') {
             case 'bottom-right':
                 taskbarStyle.right = defaults.minimizeOffset + 'px';
@@ -283,7 +283,7 @@ Container.prototype.Window = function(options = {}) {
 
     const settings = Object.assign({}, defaults, options);
     const windowElement = Q('<div>', { class: Container.windowClasses.window_container });
-    // --- Apply shadow settings if enabled ---
+
     if (settings.shadow) {
         windowElement.css({
             boxShadow: `${settings.shadowOffsetX}px ${settings.shadowOffsetY}px ${settings.shadowBlur}px ${settings.shadowSpread}px ${settings.shadowColor}`
@@ -292,13 +292,13 @@ Container.prototype.Window = function(options = {}) {
         windowElement.css({ boxShadow: 'none' });
     }
 
-    // --- Apply blur effect to titlebar and buttons if enabled ---
+
     const titlebar = Q('<div>', { class: Container.windowClasses.window_titlebar });
 
-    // Helper to apply or remove blur/glass effect on a titlebar, with animation support
+
     function setTitlebarBlurElement(titlebarElem, active, blurRadius, gradientOpacity, animateMs) {
         if (!titlebarElem) return;
-        // Animate blur transition
+
         if (typeof animateMs === 'number' && animateMs > 0) {
             titlebarElem.style.transition = `backdrop-filter ${animateMs}ms, -webkit-backdrop-filter ${animateMs}ms, background-image ${animateMs}ms`;
         } else {
@@ -321,7 +321,7 @@ Container.prototype.Window = function(options = {}) {
         }
     }
 
-    // Main function to update all window titlebars' blur state, with animation
+
     function updateAllTitlebarBlur() {
         const allWindows = document.querySelectorAll('.' + Container.windowClasses.window_container);
         let maxZ = -Infinity, activeWindow = null;
@@ -336,7 +336,7 @@ Container.prototype.Window = function(options = {}) {
             const tb = win.querySelector('.' + Container.windowClasses.window_titlebar);
             if (!tb) return;
             if (settings.blurInactive) {
-                // Animate transition between blur and no blur
+
                 setTitlebarBlurElement(
                     tb,
                     win !== activeWindow,
@@ -352,7 +352,7 @@ Container.prototype.Window = function(options = {}) {
         });
     }
 
-    // Initial blur setup
+
     if (settings.blurInactive) {
         setTimeout(updateAllTitlebarBlur, 0);
         windowElement.on('mousedown', function () {
@@ -368,21 +368,21 @@ Container.prototype.Window = function(options = {}) {
     const controls = Q('<div>', { class: Container.windowClasses.window_controls });
     const contentContainer = Q('<div>', { class: Container.windowClasses.window_content });
     if (settings.minimizable) {
-        const minimizeButton = Q('<div>', { 
+        const minimizeButton = Q('<div>', {
             class: Container.windowClasses.window_button + ' ' + Container.windowClasses.window_minimize
         });
         minimizeButton.append(this.Icon('window-minimize').addClass(Container.windowClasses.window_button_icon));
         controls.append(minimizeButton);
     }
     if (settings.maximizable) {
-        const maximizeButton = Q('<div>', { 
+        const maximizeButton = Q('<div>', {
             class: Container.windowClasses.window_button + ' ' + Container.windowClasses.window_maximize
         });
         maximizeButton.append(this.Icon('window-full').addClass(Container.windowClasses.window_button_icon));
         controls.append(maximizeButton);
     }
     if (settings.closable) {
-        const closeButton = Q('<div>', { 
+        const closeButton = Q('<div>', {
             class: Container.windowClasses.window_button + ' ' + Container.windowClasses.window_close
         });
         closeButton.append(this.Icon('window-close').addClass(Container.windowClasses.window_button_icon));
@@ -423,7 +423,7 @@ Container.prototype.Window = function(options = {}) {
     let isOpen = false;
     let isAnimating = false;
 
-    // --- Minimalizált ablak gomb a tálcán ---
+
     let taskbarButton = null;
 
     function setTransitionDuration(duration) {
@@ -450,7 +450,7 @@ Container.prototype.Window = function(options = {}) {
     function setInitialPositionAndSize() {
         const position = calculateInitialPosition();
         windowElement.css({
-            position: 'fixed', // Use fixed instead of absolute
+            position: 'fixed',
             width: settings.width + 'px',
             height: settings.height + 'px',
             left: position.left + 'px',
@@ -482,7 +482,7 @@ Container.prototype.Window = function(options = {}) {
         let isDragging = false;
         let startX, startY, startLeft, startTop;
 
-        // --- Eseménykezelők referenciái a későbbi eltávolításhoz ---
+
         function onMouseMove(e) {
             if (!isDragging) return;
             const dx = e.clientX - startX;
@@ -525,7 +525,7 @@ Container.prototype.Window = function(options = {}) {
             Q(document).off('mouseup', onMouseUp);
         }
 
-        Q(titlebar).on('mousedown', function(e) {
+        Q(titlebar).on('mousedown', function (e) {
             if (isMaximized || isMinimized) return;
             isDragging = true;
             startX = e.clientX;
@@ -537,8 +537,8 @@ Container.prototype.Window = function(options = {}) {
             Q(document).on('mouseup', onMouseUp);
             e.preventDefault();
         });
-        // --- Dupla kattintás maximalizálás/restore ---
-        Q(titlebar).on('dblclick', function(e) {
+
+        Q(titlebar).on('dblclick', function (e) {
             if (settings.maximizable) {
                 toggleMaximize();
             }
@@ -630,7 +630,7 @@ Container.prototype.Window = function(options = {}) {
 
         for (let i = 0; i < resizeHandles.length; i++) {
             const handle = resizeHandles[i];
-            Q(handle).on('mousedown', function(e) {
+            Q(handle).on('mousedown', function (e) {
                 if (isMaximized || isMinimized) return;
                 isResizing = true;
                 resizeDirection = this.getAttribute('data-resize');
@@ -652,8 +652,8 @@ Container.prototype.Window = function(options = {}) {
         const minimizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_minimize);
         if (minimizeButtons.length) {
             for (let i = 0; i < minimizeButtons.length; i++) {
-                Q(minimizeButtons[i]).on('click', function() {
-                    bringToFront(); 
+                Q(minimizeButtons[i]).on('click', function () {
+                    bringToFront();
                     toggleMinimize();
                 });
             }
@@ -661,8 +661,8 @@ Container.prototype.Window = function(options = {}) {
         const maximizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_maximize);
         if (maximizeButtons.length) {
             for (let i = 0; i < maximizeButtons.length; i++) {
-                Q(maximizeButtons[i]).on('click', function() {
-                    bringToFront(); 
+                Q(maximizeButtons[i]).on('click', function () {
+                    bringToFront();
                     toggleMaximize();
                 });
             }
@@ -670,12 +670,12 @@ Container.prototype.Window = function(options = {}) {
         const closeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_close);
         if (closeButtons.length) {
             for (let i = 0; i < closeButtons.length; i++) {
-                Q(closeButtons[i]).on('click', function() {
+                Q(closeButtons[i]).on('click', function () {
                     closeWindow();
                 });
             }
         }
-        Q(contentContainer).on('mousedown', function() {
+        Q(contentContainer).on('mousedown', function () {
             bringToFront();
         });
     }
@@ -687,7 +687,7 @@ Container.prototype.Window = function(options = {}) {
         if (isAnimating) return;
         isAnimating = true;
         if (!isMinimized) {
-            // Minimalizálás animációval (Windows 11 stílus)
+
             const rect = windowElement.nodes[0].getBoundingClientRect();
             const start = {
                 width: rect.width,
@@ -696,7 +696,7 @@ Container.prototype.Window = function(options = {}) {
                 top: rect.top,
                 opacity: 1
             };
-            // Célméret: tálca gomb mérete és pozíciója
+
             let taskbarRect = { left: 0, top: window.innerHeight, width: 160, height: 28 };
             if (Container.taskbar && taskbarButton) {
                 const btnRect = taskbarButton.nodes[0].getBoundingClientRect();
@@ -711,7 +711,7 @@ Container.prototype.Window = function(options = {}) {
                 taskbarRect.left = barRect.left;
                 taskbarRect.top = barRect.top;
             }
-            // Előkészítés
+
             windowElement.css({
                 willChange: 'width,height,left,top,opacity',
                 transition: `all ${settings.animate}ms cubic-bezier(.4,0,.2,1)`
@@ -723,7 +723,7 @@ Container.prototype.Window = function(options = {}) {
                 top: start.top + 'px',
                 opacity: 1
             });
-            // Késleltetés, hogy transition érvényesüljön
+
             setTimeout(() => {
                 windowElement.css({
                     width: taskbarRect.width + 'px',
@@ -735,14 +735,14 @@ Container.prototype.Window = function(options = {}) {
             }, 10);
             setTimeout(() => {
                 windowElement.css({ transition: '', willChange: '' });
-                // Ablak eltávolítása a DOM-ból, tartalom elvesztése nélkül
+
                 if (!taskbarButton) {
                     let shortTitle = settings.title;
                     if (shortTitle.length > 18) {
                         shortTitle = shortTitle.slice(0, 15) + '...';
                     }
                     taskbarButton = Q('<div>', { class: Container.windowClasses.window_taskbar_btn, text: shortTitle });
-                    taskbarButton.on('click', function() {
+                    taskbarButton.on('click', function () {
                         toggleMinimize();
                     });
                     if (settings.minimizePosition === 'bottom-left' || settings.minimizePosition === 'top-left') {
@@ -756,10 +756,10 @@ Container.prototype.Window = function(options = {}) {
                 isAnimating = false;
             }, settings.animate + 10);
         } else {
-            // Visszaállítás minimalizáltból animációval (Windows 11 stílus)
-            // Először visszahelyezzük a DOM-ba, majd animálunk
+
+
             Q('body').append(windowElement);
-            // Tálca gomb pozíciója
+
             let btnRect = { left: 0, top: window.innerHeight, width: 160, height: 28 };
             if (taskbarButton) {
                 const rect = taskbarButton.nodes[0].getBoundingClientRect();
@@ -770,7 +770,7 @@ Container.prototype.Window = function(options = {}) {
                     height: rect.height
                 };
             }
-            // Célméret: előző ablakméret és pozíció
+
             const end = {
                 width: previousState.width,
                 height: previousState.height,
@@ -813,7 +813,7 @@ Container.prototype.Window = function(options = {}) {
         if (isAnimating) return;
         isAnimating = true;
         if (!isMaximized) {
-            // Maximalizálás animációval (Windows 11 stílus)
+
             const rect = windowElement.nodes[0].getBoundingClientRect();
             const start = {
                 width: rect.width,
@@ -849,7 +849,7 @@ Container.prototype.Window = function(options = {}) {
                 isAnimating = false;
             }, settings.animate + 10);
         } else {
-            // Visszaállítás normál méretre animációval (Windows 11 stílus)
+
             const end = {
                 width: previousState.width,
                 height: previousState.height,
@@ -925,9 +925,9 @@ Container.prototype.Window = function(options = {}) {
             windowElement.remove();
             isOpen = false;
         }
-        // --- Tálca eltávolítása, ha nincs több ablak ---
-        setTimeout(function() {
-            // Ellenőrizzük, hogy van-e még legalább egy ablak a DOM-ban (window_container)
+
+        setTimeout(function () {
+
             const selector = '.' + (Container.windowClasses.window_container || 'window_container');
             if (!Q(selector).nodes.length) {
                 if (Container.taskbar) {
@@ -936,7 +936,9 @@ Container.prototype.Window = function(options = {}) {
                 }
             }
         }, 0);
-        if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
+        if (settings.blurInactive) {
+            setTimeout(updateAllTitlebarBlur, 0);
+        }
     }
     function handleWindowResize() {
         if (isMaximized) {
@@ -984,10 +986,10 @@ Container.prototype.Window = function(options = {}) {
         window.addEventListener('resize', resizeHandler);
     }
     const windowAPI = {
-        Open: function() {
+        Open: function () {
             if (!isOpen) {
                 Q('body').append(windowElement);
-                setInitialPositionAndSize(); // This now uses fixed positioning
+                setInitialPositionAndSize();
                 if (settings.animate) {
                     windowElement.css({
                         opacity: '0',
@@ -1015,12 +1017,12 @@ Container.prototype.Window = function(options = {}) {
             }
             return this;
         },
-        Close: function() {
+        Close: function () {
             closeWindow();
             if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
             return this;
         },
-        Content: function(content) {
+        Content: function (content) {
             if (content === undefined) {
                 return contentContainer.html();
             }
@@ -1032,14 +1034,14 @@ Container.prototype.Window = function(options = {}) {
             }
             return this;
         },
-        Title: function(title) {
+        Title: function (title) {
             if (title === undefined) {
                 return titleElement.text();
             }
             titleElement.text(title);
             return this;
         },
-        Position: function(x, y) {
+        Position: function (x, y) {
             if (x === undefined || y === undefined) {
                 return {
                     x: parseInt(windowElement.css('left'), 10),
@@ -1050,7 +1052,7 @@ Container.prototype.Window = function(options = {}) {
             const viewportHeight = window.innerHeight;
             const windowWidth = windowElement.width();
             const windowHeight = windowElement.height();
-            let left = typeof x === 'string' && x.endsWith('%') 
+            let left = typeof x === 'string' && x.endsWith('%')
                 ? (viewportWidth * parseInt(x, 10) / 100) - (windowWidth / 2)
                 : x;
             let top = typeof y === 'string' && y.endsWith('%')
@@ -1066,7 +1068,7 @@ Container.prototype.Window = function(options = {}) {
             previousState.y = top;
             return this;
         },
-        Size: function(width, height) {
+        Size: function (width, height) {
             if (width === undefined || height === undefined) {
                 return {
                     width: windowElement.width(),
@@ -1097,19 +1099,19 @@ Container.prototype.Window = function(options = {}) {
             previousState.height = height;
             return this;
         },
-        Minimize: function() {
+        Minimize: function () {
             if (!isMinimized) {
                 toggleMinimize();
             }
             return this;
         },
-        Maximize: function() {
+        Maximize: function () {
             if (!isMaximized) {
                 toggleMaximize();
             }
             return this;
         },
-        Restore: function() {
+        Restore: function () {
             if (isMinimized) {
                 toggleMinimize();
             } else if (isMaximized) {
@@ -1117,23 +1119,23 @@ Container.prototype.Window = function(options = {}) {
             }
             return this;
         },
-        IsMinimized: function() {
+        IsMinimized: function () {
             return isMinimized;
         },
-        IsMaximized: function() {
+        IsMaximized: function () {
             return isMaximized;
         },
-        IsOpen: function() {
+        IsOpen: function () {
             return isOpen;
         },
-        Element: function() {
+        Element: function () {
             return windowElement;
         },
-        BringToFront: function() {
+        BringToFront: function () {
             bringToFront();
             return this;
         },
-        MinimizePosition: function(position, container, offset) {
+        MinimizePosition: function (position, container, offset) {
             if (position === undefined) {
                 return {
                     position: settings.minimizePosition,
@@ -1156,7 +1158,7 @@ Container.prototype.Window = function(options = {}) {
             }
             return this;
         },
-        Animation: function(duration) {
+        Animation: function (duration) {
             if (duration === undefined) {
                 return settings.animate;
             }
