@@ -1764,7 +1764,7 @@ Container.prototype.Table = function (data = [], options = {}) {
       Q('.' + Container.tableClasses.sort_active).removeClass(Container.tableClasses.sort_active);
       if (sortOrder != 'off') {
         const arrowKey = sortOrder === 'asc' ? Container.tableClasses.asc : Container.tableClasses.desc;
-        const head = Q(`[data-key="${key}"] .${Container.tableClasses[arrowKey]}`)
+        const head = Q(`[data-key="${key}"] .${arrowKey}`);
         head.addClass(Container.tableClasses.sort_active);
       }
     } else if (tr) {
