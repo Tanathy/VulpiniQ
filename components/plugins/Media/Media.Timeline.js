@@ -84,7 +84,7 @@ Media.prototype.Timeline = function(container, options = {}) {
     timeline._selected = null;
     timeline._changeCb = null;
     timeline._idCounter = 1;
-    timeline._maxTracks = null; // unlimited by default
+    timeline._maxTracks = null; 
 
     timeline.length = function(ms) {
         if (typeof ms === 'undefined') return this._length;
@@ -107,7 +107,7 @@ Media.prototype.Timeline = function(container, options = {}) {
         return id;
     };
 
-    // Módosított modify: direction paraméter
+    
     timeline.modify = function(id, from, to, direction) {
         const seg = this._segments.find(s => s.id === id);
         if (!seg) return false;
@@ -151,14 +151,14 @@ Media.prototype.Timeline = function(container, options = {}) {
     timeline.select = function(id) {
         this._selected = id;
         this._render();
-        this._triggerChange(); // <-- change callback hívás
+        this._triggerChange(); 
         return this;
     };
 
     timeline.deselect = function() {
         this._selected = null;
         this._render();
-        this._triggerChange(); // <-- change callback hívás
+        this._triggerChange(); 
         return this;
     };
 
@@ -170,7 +170,7 @@ Media.prototype.Timeline = function(container, options = {}) {
         return seg;
     };
 
-    // Új: track setter/getter
+    
     timeline.track = function(number) {
         if (typeof number === 'undefined') return this._maxTracks;
         this._maxTracks = Math.max(1, parseInt(number, 10));
@@ -178,20 +178,20 @@ Media.prototype.Timeline = function(container, options = {}) {
         return this;
     };
 
-    // Módosított _triggerChange: direction paraméter
+    
     timeline._triggerChange = function(direction) {
         if (typeof this._changeCb === 'function') {
             this._changeCb(this._segments.slice(), direction);
         }
     };
 
-    // Segmensek sávba rendezése (track assignment)
+    
     function assignTracks(segments, maxTracks, movingId = null, movingFrom = null, movingTo = null) {
         let tracks = [];
-        // Először minden szegmensnek töröljük a _track-et
+        
         segments.forEach(seg => { seg._track = undefined; });
 
-        // Mozgatott szegmens adatai, ha van
+        
         let movingSeg = null;
         if (movingId && movingFrom !== null && movingTo !== null) {
             movingSeg = segments.find(s => s.id === movingId);
@@ -201,9 +201,9 @@ Media.prototype.Timeline = function(container, options = {}) {
             }
         }
 
-        // Először a NEM mozgatott szegmenseket helyezzük el
+        
         segments.forEach(seg => {
-            if (movingSeg && seg.id === movingSeg.id) return; // kihagyjuk a mozgatottat
+            if (movingSeg && seg.id === movingSeg.id) return; 
             let placed = false;
             if (typeof seg._forceTrack === 'number' && seg._forceTrack >= 0 && maxTracks) {
                 let t = seg._forceTrack;
@@ -239,7 +239,7 @@ Media.prototype.Timeline = function(container, options = {}) {
             }
         });
 
-        // Most a mozgatott szegmenst próbáljuk elhelyezni, csak oda, ahol nem lenne teljes overlap
+        
         if (movingSeg) {
             let placed = false;
             let limit = maxTracks || (tracks.length + 1);
@@ -261,7 +261,7 @@ Media.prototype.Timeline = function(container, options = {}) {
             if (!placed) {
                 movingSeg._track = -1;
             }
-            // Takarítsuk el a _pendingFrom/_pendingTo-t
+            
             delete movingSeg._pendingFrom;
             delete movingSeg._pendingTo;
         }
@@ -269,7 +269,7 @@ Media.prototype.Timeline = function(container, options = {}) {
         return tracks.length;
     }
 
-    // --- Global drag/resize event cleanup ---
+    
     let globalMouseMove = null, globalMouseUp = null;
 
     function cleanupListeners() {
@@ -289,7 +289,7 @@ Media.prototype.Timeline = function(container, options = {}) {
         tracksBar.html('');
         this._segments.sort((a, b) => a.from - b.from);
 
-        // --- CSS-ből olvassuk ki a szegmens magasságot és margót ---
+        
         const tempDiv = document.createElement('div');
         tempDiv.className = classes['media-timeline-segment'];
         document.body.appendChild(tempDiv);
@@ -297,7 +297,7 @@ Media.prototype.Timeline = function(container, options = {}) {
         const segMargin = parseFloat(getComputedStyle(tempDiv).marginTop) || 2;
         document.body.removeChild(tempDiv);
 
-        // Ha épp mozgatunk vagy resize-olunk, adjuk át a mozgatott szegmens adatait
+        
         let movingId = null, movingFrom = null, movingTo = null;
         if (timeline._movingSeg) {
             movingId = timeline._movingSeg.id;
@@ -305,7 +305,7 @@ Media.prototype.Timeline = function(container, options = {}) {
             movingTo = timeline._movingSeg.to;
         }
 
-        // Track assignment minden render előtt
+        
         const trackCount = assignTracks(
             this._segments,
             this._maxTracks,
@@ -314,15 +314,15 @@ Media.prototype.Timeline = function(container, options = {}) {
             movingTo
         );
 
-        // Sáv magasságok
+        
         const maxTracks = this._maxTracks || trackCount || 1;
         const trackHeight = segHeight + 2 * segMargin + (parseFloat(getComputedStyle(document.body).getPropertyValue('--media-timeline-track-gap')) || 0);
 
-        // Wrapper magasság automatikusan:
+        
         const wrapperHeight = maxTracks * trackHeight;
         timeline.css('height', wrapperHeight + 'px');
 
-        // Track vizuális sávok
+        
         for (let t = 0; t < maxTracks; t++) {
             const top = (t * trackHeight) + 'px';
             const height = trackHeight + 'px';
@@ -332,10 +332,10 @@ Media.prototype.Timeline = function(container, options = {}) {
             tracksBar.append(label);
         }
 
-        // Deselect if clicking on empty track area
+        
         bar.off('mousedown', bar._timelineDeselectHandler);
         bar._timelineDeselectHandler = function(e) {
-            // Only deselect if not on a segment or handle
+            
             if (
                 !e.target.classList.contains(classes['media-timeline-segment']) &&
                 !e.target.classList.contains(classes['media-timeline-handle'])
@@ -345,7 +345,7 @@ Media.prototype.Timeline = function(container, options = {}) {
         };
         bar.on('mousedown', bar._timelineDeselectHandler);
 
-        // Build a map of current segment nodes
+        
         const barChildren = bar.children();
         const segNodeMap = {};
         if (barChildren && barChildren.nodes) {
@@ -363,7 +363,7 @@ Media.prototype.Timeline = function(container, options = {}) {
             const top = (seg._track * trackHeight) + 'px';
             const height = segHeight + 'px';
 
-            // --- Apply all mapped classes for type and selection ---
+            
             const typeClass = classes[seg.type] || '';
             const selectedClass = this._selected === seg.id ? classes['selected'] : '';
             const segClass = [
@@ -383,11 +383,11 @@ Media.prototype.Timeline = function(container, options = {}) {
                 const handleR = Q(`<div class="${classes['media-timeline-handle']} ${classes['right']}"></div>`);
                 segDiv.append(handleL, handleR);
 
-                // --- Left handle resize ---
+                
                 handleL.on('mousedown', e => {
                     e.preventDefault(); e.stopPropagation();
                     cleanupListeners();
-                    timeline.select(seg.id); // always select on handle
+                    timeline.select(seg.id); 
                     let startX = e.clientX, startFrom = seg.from;
                     document.body.style.userSelect = 'none';
                     globalMouseMove = ev => {
@@ -405,11 +405,11 @@ Media.prototype.Timeline = function(container, options = {}) {
                     document.addEventListener('mouseup', globalMouseUp, true);
                 });
 
-                // --- Right handle resize ---
+                
                 handleR.on('mousedown', e => {
                     e.preventDefault(); e.stopPropagation();
                     cleanupListeners();
-                    timeline.select(seg.id); // always select on handle
+                    timeline.select(seg.id); 
                     let startX = e.clientX, startTo = seg.to;
                     document.body.style.userSelect = 'none';
                     globalMouseMove = ev => {
@@ -427,7 +427,7 @@ Media.prototype.Timeline = function(container, options = {}) {
                     document.addEventListener('mouseup', globalMouseUp, true);
                 });
 
-                // --- Drag & drop szegmens ---
+                
                 segDiv.on('mousedown', e => {
                     if (e.target.classList.contains(classes['media-timeline-handle'])) return;
                     cleanupListeners();
@@ -435,7 +435,7 @@ Media.prototype.Timeline = function(container, options = {}) {
                     let dragStartX = e.clientX;
                     let origFrom = seg.from, origTo = seg.to;
                     document.body.style.userSelect = 'none';
-                    timeline._movingSeg = seg; // Mozgatott szegmens referenciája
+                    timeline._movingSeg = seg; 
                     globalMouseMove = ev => {
                         let dx = ev.clientX - dragStartX;
                         let percent = dx / bar.nodes[0].offsetWidth;
@@ -457,7 +457,7 @@ Media.prototype.Timeline = function(container, options = {}) {
                     };
                     globalMouseUp = () => {
                         cleanupListeners();
-                        // Véglegesítsük a mozgatást
+                        
                         delete timeline._movingSeg;
                         timeline.modify(seg.id, seg.from, seg.to, "move");
                     };
@@ -470,7 +470,7 @@ Media.prototype.Timeline = function(container, options = {}) {
             }
         }
 
-        // Remove unused segment nodes
+        
         for (const segId in segNodeMap) {
             if (!used[segId]) {
                 Q(segNodeMap[segId]).remove();
@@ -481,8 +481,7 @@ Media.prototype.Timeline = function(container, options = {}) {
     return timeline;
 };
 
-// if (typeof Q.Media === "function") {
-//     Q.Media.prototype.Timeline = function(container, options) {
-//         return Q.Media.Timeline(container, options);
-//     };
-// }
+
+
+
+
