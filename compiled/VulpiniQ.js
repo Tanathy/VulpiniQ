@@ -40,7 +40,11 @@ const Q = (() => {
         document.head.insertBefore(styleElement, document.head.firstChild);
         return styleElement;
     }
-    window.addEventListener('load', applyStyles, { once: true });
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        applyStyles();
+    } else {
+        window.addEventListener('load', applyStyles, { once: true });
+    }
     function Q(identifier, attributes, props) {
         if (!(this instanceof Q)) return new Q(identifier, attributes, props);
         if (identifier && identifier.nodeType) {
@@ -145,7 +149,7 @@ const Q = (() => {
             });
         }
         if (root && typeof root === 'string') {
-            styleData.root += root.trim() + ';';
+            styleData.root += root.trim();
             styleData.root = cleanUp(styleData.root);
         }
         if (style && typeof style === 'string') {
