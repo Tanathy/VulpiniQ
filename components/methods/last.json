@@ -5,10 +5,10 @@
   "LongDesc": "The last method creates a new Q object containing only the final element from the current selection. This is particularly useful when you need to access or manipulate just the last item in a collection of elements. The method works by retrieving the element at the last index position of the internal nodes array and returning it wrapped in a new Q object for further method chaining.",
   "Type": "Traversal",
   "Example": [
-    { "Script": "Q(selector).last();" },
-    { "Script": "Q('li').last().addClass('last-item');" },
-    { "Script": "const lastParagraph = Q('p').last();" },
-    { "Script": "Q('.section').last().css('margin-bottom', '0');" }
+    "Q(selector).last();",
+    "Q('li').last().addClass('last-item');",
+    "const lastParagraph = Q('p').last();",
+    "Q('.section').last().css('margin-bottom', '0');"
   ],
   "Dependencies": [],
   "Variables": []

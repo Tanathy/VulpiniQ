@@ -5,10 +5,10 @@
     "LongDesc": "Returns the immediate next sibling element for each element in the set, with an optional filter to match specific elements. This traversal method provides a way to navigate to adjacent elements in the DOM that share the same parent. It's particularly useful for navigating through lists, menus, or tabular data where you need to access the next element in sequence, or for implementing keyboard navigation, carousels, or other directional UI components.",
     "Type": "Traversal",
     "Example": [
-        { "Script": "const nextElement = Q('#current').next();" },
-        { "Script": "Q('li.active').next().addClass('upcoming');" },
-        { "Script": "Q('.panel').next('div.panel').toggle();" },
-        { "Script": "const nextSlide = Q('.current-slide').next('.slide');" }
+        "const nextElement = Q('#current').next();",
+        "Q('li.active').next().addClass('upcoming');",
+        "Q('.panel').next('div.panel').toggle();",
+        "const nextSlide = Q('.current-slide').next('.slide');"
     ],
     "Dependencies": [],
     "Variables": ["selector", "node", "next", "i", "n", "result", "instance"]

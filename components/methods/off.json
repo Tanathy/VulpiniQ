@@ -5,11 +5,22 @@
   "LongDesc": "The off method removes previously attached event listeners from all elements in the current selection. To successfully remove a listener, you must provide the same event type, handler function, and options that were used when attaching the listener with the 'on' method. This method is essential for preventing memory leaks in dynamic applications where elements and their associated event handlers are frequently added and removed.",
   "Type": "Event Handling",
   "Example": [
-    { "Script": "Q(selector).off(\"click\", handler);" },
-    { "Script": "Q('button').off('click touchstart', handleInteraction);" },
-    { "Script": "Q('#form').off('submit', validateForm);" },
-    { "Script": "Q('.dropdown').off('mouseenter mouseleave', toggleMenu, { capture: true });" }
+    "Q(selector).off(\"click\", handler);",
+    "Q('button').off('click touchstart', handleInteraction);",
+    "Q('#form').off('submit', validateForm);",
+    "Q('.dropdown').off('mouseenter mouseleave', toggleMenu, { capture: true });"
   ],
   "Dependencies": [],
-  "Variables": ["events", "handler", "options", "defaultOptions", "opts", "eventList", "i", "len", "j", "elen"]
+  "Variables": [
+    "events",
+    "handler",
+    "options",
+    "defaultOptions",
+    "opts",
+    "eventList",
+    "i",
+    "len",
+    "j",
+    "elen"
+  ]
 }

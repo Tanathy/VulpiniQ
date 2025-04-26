@@ -5,9 +5,10 @@
   "LongDesc": "The Button component provides a clickable button for forms, implemented using only div elements. It supports click events, disabling, and dynamic text.",
   "Type": "Component",
   "Example": [
-    "var button = Q.Form.Button('Click me');",
-    "button.click(function() { alert('Clicked!'); });",
-    "button.disabled(true);"
+    "var btn = Q.Form.Button('Click me');",
+    "var btn = Q.Form.Button('Save').click(function(){ alert('Saved!'); });",
+    "var btn = Q.Form.Button('Disabled'); btn.disabled(true);",
+    "var btn = Q.Form.Button('Text'); btn.setText('New text');"
   ],
   "Dependencies": [
     "Form",

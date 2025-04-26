@@ -5,10 +5,10 @@
   "LongDesc": "The map method provides a way to transform each element in the current selection into a new value, returning an array of those transformed values. It iterates over each node in the collection, wraps it in a Q object, and passes it to the provided callback function. The return values from each callback invocation are collected into a new array. This method is useful for extracting specific data from a collection of elements or transforming elements in a functional programming style.",
   "Type": "Array",
   "Example": [
-    { "Script": "Q(selector).map(el => el.innerHTML);" },
-    { "Script": "const heights = Q('.box').map(el => el.prop('offsetHeight'));" },
-    { "Script": "const texts = Q('p').map(el => el.text());" },
-    { "Script": "const data = Q('[data-value]').map(el => el.attr('data-value'));" }
+    "Q(selector).map(el => el.innerHTML);",
+    "const heights = Q('.box').map(el => el.prop('offsetHeight'));",
+    "const texts = Q('p').map(el => el.text());",
+    "const data = Q('[data-value]').map(el => el.attr('data-value'));"
   ],
   "Dependencies": [],
   "Variables": ["callback", "result", "i", "len"]
