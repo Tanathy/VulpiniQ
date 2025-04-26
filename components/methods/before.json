@@ -2,13 +2,14 @@
   "Name": "before",
   "Method": "Prototype",
   "Desc": "Inserts content before each element in the current set of matched elements.",
-  "Long Desc": "The 'before' method allows developers to insert content immediately before each element in the set of matched elements. The content can be a string of HTML, an HTMLElement, a Q object, an array of elements, or a NodeList. This method is useful for dynamically adding elements to the DOM in a specific order, ensuring that the new content appears before the target elements.",
+  "LongDesc": "The 'before' method allows developers to insert content immediately before each element in the set of matched elements. The content can be a string of HTML, an HTMLElement, a Q object, an array of elements, or a NodeList. This method is useful for dynamically adding elements to the DOM in a specific order, ensuring that the new content appears before the target elements.",
   "Type": "DOM Manipulation",
   "Example": [
-    "Q(selector).before(\"<p>New paragraph</p>\"); // Adds a paragraph as HTML",
-    "Q(selector).before(document.createElement(\"div\")); // Adds a div element",
-    "Q(selector).before(Q(otherSelector)); // Inserts a Q object",
-    "Q(selector).before([document.createElement(\"span\"), document.createElement(\"img\")]); // Inserts multiple elements"
+    "Q(selector).before(\"<p>New paragraph</p>\");",
+    "Q(selector).before(document.createElement(\"div\"));",
+    "Q(selector).before(Q(otherSelector));",
+    "Q(selector).before([document.createElement(\"span\"), document.createElement(\"img\")]);"
   ],
+  "Dependencies": [],
   "Variables": ["target", "parent", "content"]
 }

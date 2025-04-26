@@ -2,7 +2,7 @@
     "Name": "width",
     "Method": "Prototype",
     "Desc": "Gets or sets the width of the first node.",
-    "Long Desc": "Controls the width dimension of elements. When called without parameters, returns the current width of the first element in the set including padding and border (offsetWidth). When provided with a value, sets the CSS width property for all elements in the set, accepting values in pixels, percentages, or other CSS units. This method provides a convenient way to manage element dimensions programmatically.",
+    "LongDesc": "Controls the width dimension of elements. When called without parameters, returns the current width of the first element in the set including padding and border (offsetWidth). When provided with a value, sets the CSS width property for all elements in the set, accepting values in pixels, percentages, or other CSS units. This method provides a convenient way to manage element dimensions programmatically.",
     "Type": "Dimensions",
     "Example": [
         "Q(selector).width();", 
@@ -10,6 +10,5 @@
         "const elemWidth = Q('.box').width();",
         "Q('.column').width('50%');"
     ],
-    "Dependencies": [],
-    "Variables": ["value"]
+    "Dependencies": []
 }

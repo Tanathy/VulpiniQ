@@ -2,13 +2,13 @@
   "Name": "on",
   "Method": "Prototype",
   "Desc": "Adds an event listener to each node.",
-  "Long Desc": "The on method attaches event listeners to all elements in the current selection. It supports multiple space-separated event types and allows for configuration of event handling behavior through options. This method provides a unified interface for binding various DOM events like click, keydown, submit, etc. The handler function receives the event object as its argument, and the method returns the original Q object for chainable operations.",
+  "LongDesc": "The on method attaches event listeners to all elements in the current selection. It supports multiple space-separated event types and allows for configuration of event handling behavior through options. This method provides a unified interface for binding various DOM events like click, keydown, submit, etc. The handler function receives the event object as its argument, and the method returns the original Q object for chainable operations.",
   "Type": "Event Handling",
   "Example": [
-    "Q(selector).on(\"click\", () => console.log(\"Clicked\"));",
-    "Q('button').on('click keypress', handleInteraction);",
-    "Q('#form').on('submit', function(e) { e.preventDefault(); });",
-    "Q('.draggable').on('mousedown', startDrag, { passive: true });"
+    { "Script": "Q(selector).on(\"click\", () => console.log(\"Clicked\"));" },
+    { "Script": "Q('button').on('click keypress', handleInteraction);" },
+    { "Script": "Q('#form').on('submit', function(e) { e.preventDefault(); });" },
+    { "Script": "Q('.draggable').on('mousedown', startDrag, { passive: true });" }
   ],
   "Dependencies": [],
   "Variables": ["events", "handler", "options", "defaultOptions", "opts", "eventList", "i", "len", "j", "elen"]

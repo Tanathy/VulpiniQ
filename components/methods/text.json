@@ -2,7 +2,7 @@
     "Name": "text",
     "Method": "Prototype",
     "Desc": "Gets or sets the text content of the nodes.",
-    "Long Desc": "Provides a simple way to get or set the text content of elements, ignoring any HTML tags. When called without parameters, returns the combined text content of all matched elements. When provided with a value, sets the text content for all elements in the set, replacing any existing content. This method is particularly useful for safely displaying user-generated content without risk of HTML injection.",
+    "LongDesc": "Provides a simple way to get or set the text content of elements, ignoring any HTML tags. When called without parameters, returns the combined text content of all matched elements. When provided with a value, sets the text content for all elements in the set, replacing any existing content. This method is particularly useful for safely displaying user-generated content without risk of HTML injection.",
     "Type": "Content Manipulation",
     "Example": [
         "Q(selector).text(string);",
@@ -10,6 +10,5 @@
         "Q('.error').text('An error occurred');",
         "Q('li').text(function(i) { return `Item ${i+1}`; });"
     ],
-    "Dependencies": "",
-    "Variables": ["content", "el", "i", "n"]
+    "Dependencies": []
 }

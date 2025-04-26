@@ -2,7 +2,7 @@
     "Name": "walk",
     "Method": "Prototype",
     "Desc": "Walks through all nodes in the Q object and executes a callback on each node, passing the current node as a Q object or raw element based on the boolean parameter.",
-    "Long Desc": "Provides an efficient way to iterate over all matched elements and perform operations on each one. The callback receives either the raw DOM element or a Q-wrapped element depending on the second parameter, along with the current index. This method is useful for inspecting or manipulating DOM elements one by one while maintaining chainability. Unlike native array iteration methods, it preserves the Q context and returns the original Q object.",
+    "LongDesc": "Provides an efficient way to iterate over all matched elements and perform operations on each one. The callback receives either the raw DOM element or a Q-wrapped element depending on the second parameter, along with the current index. This method is useful for inspecting or manipulating DOM elements one by one while maintaining chainability. Unlike native array iteration methods, it preserves the Q context and returns the original Q object.",
     "Type": "Iteration",
     "Example": [
         "Q(selector).walk((node) => console.log(node));",
@@ -10,6 +10,5 @@
         "Q('.items').walk((node) => node.classList.add('processed'), true);",
         "let total = 0; Q('input').walk((node) => total += parseInt(node.value) || 0);"
     ],
-    "Dependencies": [],
-    "Variables": ["callback", "useQObject", "node", "index", "i", "n"]
+    "Dependencies": []
 }

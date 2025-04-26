@@ -41,6 +41,7 @@ Form.prototype.Button = function(text = '') {
         }
         return button;
     };
+    
     button.setText = function(newText) {
         button.text(newText);
         return button;

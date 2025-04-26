@@ -2,7 +2,7 @@
     "Name": "toggle",
     "Method": "Prototype",
     "Desc": "Toggles the display of each node.",
-    "Long Desc": "Switches the visibility state of each element in the set. Elements that are visible become hidden, and hidden elements become visible. This method provides a simple way to implement show/hide functionality without manually checking the current display state. It's commonly used for implementing collapsible sections, dropdown menus, or any UI component that needs to alternate between visible and hidden states.",
+    "LongDesc": "Switches the visibility state of each element in the set. Elements that are visible become hidden, and hidden elements become visible. This method provides a simple way to implement show/hide functionality without manually checking the current display state. It's commonly used for implementing collapsible sections, dropdown menus, or any UI component that needs to alternate between visible and hidden states.",
     "Type": "Display",
     "Example": [
         "Q(selector).toggle();",
@@ -10,6 +10,5 @@
         "Q('.expandable').click(function() { Q(this).next().toggle(); });",
         "const panels = Q('.panel'); panels.toggle();"
     ],
-    "Dependencies": [],
-    "Variables": ["i", "len"]
+    "Dependencies": []
 }

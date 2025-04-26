@@ -1,14 +1,14 @@
 {
-    "Name": "data",
-    "Method": "Prototype",
-    "Desc": "Retrieves or sets data-* attributes on the selected nodes. Provides an easy way to store and access custom data associated with the elements.",
-    "Long Desc": "The 'data' method is a versatile utility for working with custom data attributes (data-*) on elements. It allows you to retrieve the value of a specific data attribute or set a new value for it. This is particularly useful for storing metadata or custom information directly on DOM elements, enabling dynamic and interactive web applications.",
-    "Type": "Data Manipulation",
-    "Example": [
-        "Q(selector).data('userId', 123);",
-        "const userId = Q('#user').data('userId'); // Retrieves the userId data attribute",
-        "Q('#user').data('role', 'admin'); // Sets the role data attribute to 'admin'"
-    ],
-    "Dependencies": [],
-    "Variables": ["key", "value", "el", "userId", "role"]
+  "Name": "data",
+  "Method": "Prototype",
+  "Desc": "Retrieves or sets data-* attributes on the selected nodes. Provides an easy way to store and access custom data associated with the elements.",
+  "LongDesc": "The 'data' method is a versatile utility for working with custom data attributes (data-*) on elements. It allows you to retrieve the value of a specific data attribute or set a new value for it. This is particularly useful for storing metadata or custom information directly on DOM elements, enabling dynamic and interactive web applications.",
+  "Type": "Data Manipulation",
+  "Example": [
+    "Q(selector).data('userId', 123);",
+    "const userId = Q('#user').data('userId');",
+    "Q('#user').data('role', 'admin');"
+  ],
+  "Dependencies": [],
+  "Variables": ["key", "value", "el", "userId", "role"]
 }

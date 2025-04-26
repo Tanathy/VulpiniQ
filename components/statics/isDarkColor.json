@@ -2,12 +2,13 @@
   "Name": "Is Dark Color",
   "Method": "Static",
   "Desc": "Determines if a color is considered dark based on its luminance value.",
-  "Long Desc": "The isDarkColor utility analyzes a color and returns a boolean indicating whether it should be considered 'dark' for contrast purposes. It calculates the perceived brightness using the luminance formula that accounts for human perception of different color components (red, green, and blue have different perceived brightness levels). This function is essential for creating accessible interfaces by automatically determining whether to use light or dark text on a given background color. The customizable margin and threshold parameters allow fine-tuning the classification to suit different design requirements and accessibility standards. The function supports both hexadecimal and RGB color formats, making it versatile for various color representation scenarios in web applications.",
+  "LongDesc": "The isDarkColor utility analyzes a color and returns a boolean indicating whether it should be considered 'dark' for contrast purposes. It calculates the perceived brightness using the luminance formula that accounts for human perception of different color components (red, green, and blue have different perceived brightness levels). This function is essential for creating accessible interfaces by automatically determining whether to use light or dark text on a given background color. The customizable margin and threshold parameters allow fine-tuning the classification to suit different design requirements and accessibility standards. The function supports both hexadecimal and RGB color formats, making it versatile for various color representation scenarios in web applications.",
   "Type": "Color Analysis",
   "Example": [
-    "// Basic usage with a hex color\nconst backgroundColor = '#3498db';\nconst textColor = Q.isDarkColor(backgroundColor) ? '#ffffff' : '#000000';\ndocument.querySelector('.card').style.color = textColor;",
-    "// Using RGB format with custom margin\nlet buttonColor = 'rgb(52, 152, 219)';\nlet textShade = Q.isDarkColor(buttonColor, 15) ? 'white' : 'black';\ndocument.getElementById('action-button').classList.add(`text-${textShade}`);",
-    "// Custom threshold for special design cases\nvar headerBg = '#6a1b9a';\nvar customThreshold = 120;\nvar headerTextClass = Q.isDarkColor(headerBg, 10, customThreshold) ? 'light-text' : 'dark-text';\ndocument.querySelector('header').classList.add(headerTextClass);"
+    "const backgroundColor = '#3498db'; const textColor = Q.isDarkColor(backgroundColor) ? '#ffffff' : '#000000'; document.querySelector('.card').style.color = textColor;",
+    "let buttonColor = 'rgb(52, 152, 219)'; let textShade = Q.isDarkColor(buttonColor, 15) ? 'white' : 'black'; document.getElementById('action-button').classList.add(`text-${textShade}`);",
+    "var headerBg = '#6a1b9a'; var customThreshold = 120; var headerTextClass = Q.isDarkColor(headerBg, 10, customThreshold) ? 'light-text' : 'dark-text'; document.querySelector('header').classList.add(headerTextClass);"
   ],
+  "Dependencies": [],
   "Variables": ["hex","parts","red","green","blue","color","margin","threshold","arr"]
 }

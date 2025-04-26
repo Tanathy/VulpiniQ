@@ -2,13 +2,12 @@
     "Name": "removeProp",
     "Method": "Prototype",
     "Desc": "Removes a property from each node.",
-    "Long Desc": "Removes a JavaScript property from each element in the collection. This is useful for cleaning up custom properties added to DOM elements during runtime, helping to prevent memory leaks and ensure elements return to their original state.",
+    "LongDesc": "Removes a JavaScript property from each element in the collection. This is useful for cleaning up custom properties added to DOM elements during runtime, helping to prevent memory leaks and ensure elements return to their original state.",
     "Type": "Property Manipulation",
     "Example": [
         "Q(selector).removeProp(property);",
         "Q('.elements').removeProp('customProperty');",
         "Q('#form-elements').removeProp('validated');"
     ],
-    "Dependencies": "",
-    "Variables": ["property", "i", "n"]
+    "Dependencies": []
 }

@@ -2,7 +2,19 @@
   "Name": "Form.TextBox",
   "Method": "Component",
   "Desc": "TextBox component for Form plugin",
+  "LongDesc": "The TextBox component provides a single-line text input field for forms. It supports placeholder, value, change events, and disabled state.",
   "Type": "Component",
-  "Example": "var textbox = Q.Form.TextBox('text', 'Initial value', 'Enter text...'); textbox.change(function(value) { console.log(value); });",
-  "Dependencies": ["Form", "style", "addClass", "removeClass", "on", "attr", "val", "prop"]
+  "Example": [
+    "var textbox = Q.Form.TextBox('text', 'Initial value', 'Enter text...'); textbox.change(function(value) { console.log(value); });"
+  ],
+  "Dependencies": [
+    "Form",
+    "style",
+    "addClass",
+    "removeClass",
+    "on",
+    "attr",
+    "val",
+    "prop"
+  ]
 }

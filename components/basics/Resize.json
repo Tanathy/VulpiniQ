@@ -2,7 +2,7 @@
   "Name": "Resize",
   "Method": "Static",
   "Desc": "Attaches a function to the window's resize event, executing it with the new innerWidth and innerHeight.",
-  "Long Desc": "The Resize utility provides a simple way to register callback functions that respond to window resize events. When the browser window is resized, all registered functions are automatically executed and receive the current window dimensions (width and height) as parameters. This is particularly useful for implementing responsive behaviors, adjusting layouts, recalculating positions, or updating visualizations based on the available screen space. Unlike direct event listeners, this utility manages all callbacks efficiently and ensures they receive the proper dimensions.",
+  "LongDesc": "The Resize utility provides a simple way to register callback functions that respond to window resize events. When the browser window is resized, all registered functions are automatically executed and receive the current window dimensions (width and height) as parameters. This is particularly useful for implementing responsive behaviors, adjusting layouts, recalculating positions, or updating visualizations based on the available screen space. Unlike direct event listeners, this utility manages all callbacks efficiently and ensures they receive the proper dimensions.",
   "Type": "Event Handling",
   "Example": [
     "Q.Resize((width, height) => console.log(`Window resized to ${width}x${height}`));",

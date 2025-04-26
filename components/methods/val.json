@@ -2,7 +2,7 @@
     "Name": "val",
     "Method": "Prototype",
     "Desc": "Gets or sets the value of form elements in the nodes.",
-    "Long Desc": "Provides a convenient way to access or modify form element values. When called without parameters, returns the current value of the first element in the set. When provided with a value, sets this value for all matched form elements. This method works with input, select, and textarea elements, making it versatile for form handling operations like validation, auto-filling, or data extraction.",
+    "LongDesc": "Provides a convenient way to access or modify form element values. When called without parameters, returns the current value of the first element in the set. When provided with a value, sets this value for all matched form elements. This method works with input, select, and textarea elements, making it versatile for form handling operations like validation, auto-filling, or data extraction.",
     "Type": "Form Manipulation",
     "Example": [
         "Q('input').val('New text');",
@@ -10,6 +10,5 @@
         "Q('select').val('option2');",
         "Q('textarea').val('').val(Q('#template').text());"
     ],
-    "Dependencies": [],
-    "Variables": ["input", "i", "n"]
+    "Dependencies": []
 }

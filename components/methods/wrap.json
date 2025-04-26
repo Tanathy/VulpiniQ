@@ -2,7 +2,7 @@
     "Name": "wrap",
     "Method": "Prototype",
     "Desc": "Wraps each node with the specified wrapper element.",
-    "Long Desc": "Wraps an HTML structure around each element in the set of matched elements. This method is useful for adding additional structural elements or applying styling to individual items. Unlike 'wrapAll' which places all elements in a single wrapper, 'wrap' creates a separate wrapper for each matched element, preserving their individual positions in the document flow while adding the new parent structure.",
+    "LongDesc": "Wraps an HTML structure around each element in the set of matched elements. This method is useful for adding additional structural elements or applying styling to individual items. Unlike 'wrapAll' which places all elements in a single wrapper, 'wrap' creates a separate wrapper for each matched element, preserving their individual positions in the document flow while adding the new parent structure.",
     "Type": "DOM Manipulation",
     "Example": [
         "Q(selector).wrap(\"<div class='wrapper'></div>\");",
@@ -10,6 +10,5 @@
         "const wrapperDiv = document.createElement('div');",
         "Q('.list-item').wrap(wrapperDiv);"
     ],
-    "Dependencies": [],
-    "Variables": ["wrapper", "node", "parent_Node", "newParentElement", "tempDiv"]
+    "Dependencies": []
 }

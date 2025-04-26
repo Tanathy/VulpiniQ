@@ -2,11 +2,11 @@
   "Name": "detach",
   "Method": "Method",
   "Desc": "Removes the elements from the DOM but keeps them in memory for later reattachment.",
-  "Long Desc": "The 'detach' method is used to remove elements from the DOM while preserving their data and event listeners. This is particularly useful when you need to temporarily remove elements and reattach them later without losing their state. It ensures that the elements are stored in memory, allowing for efficient reattachment.",
+  "LongDesc": "The 'detach' method is used to remove elements from the DOM while preserving their data and event listeners. This is particularly useful when you need to temporarily remove elements and reattach them later without losing their state. It ensures that the elements are stored in memory, allowing for efficient reattachment.",
   "Type": "Method",
   "Example": [
-    "const element = Q('#myElement').detach(); // Element is removed from DOM but preserved",
-    "Q('#container').append(element); // Reattach the element later"
+    "const element = Q('#myElement').detach();",
+    "Q('#container').append(element);"
   ],
   "Dependencies": [],
   "Variables": ["element"]

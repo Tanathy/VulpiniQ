@@ -2,7 +2,7 @@
     "Name": "scrollLeft",
     "Method": "Prototype",
     "Desc": "Gets or sets the horizontal scroll position of the first node, with an option to increment.",
-    "Long Desc": "Controls the horizontal scrolling position of elements. When called without parameters, returns the current horizontal scroll position of the first element. When provided with a value, sets the horizontal scroll position for all elements, respecting maximum scroll boundaries. The increment parameter allows for relative scrolling (adding to current position) rather than absolute positioning. This method is particularly useful for horizontally scrolling containers like carousels or horizontal galleries.",
+    "LongDesc": "Controls the horizontal scrolling position of elements. When called without parameters, returns the current horizontal scroll position of the first element. When provided with a value, sets the horizontal scroll position for all elements, respecting maximum scroll boundaries. The increment parameter allows for relative scrolling (adding to current position) rather than absolute positioning. This method is particularly useful for horizontally scrolling containers like carousels or horizontal galleries.",
     "Type": "Scroll Manipulation",
     "Example": [
         "const position = Q('.scrollable').scrollLeft();",
@@ -10,6 +10,5 @@
         "Q('.slider').scrollLeft(50, true); // Increment by 50px",
         "const scrollAmount = 100; Q('.carousel').scrollLeft(scrollAmount, true);"
     ],
-    "Dependencies": "",
-    "Variables": ["value", "increment", "maxScrollLeft", "current", "node", "i", "n"]
+    "Dependencies": []
 }

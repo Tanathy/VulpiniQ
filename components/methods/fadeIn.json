@@ -1,15 +1,15 @@
 {
-    "Name": "fadeIn",
-    "Method": "Prototype",
-    "Desc": "Fades in all nodes over a specified duration.",
-    "Long Desc": "Gradually increases the opacity of all matched elements over a specified duration, starting from zero opacity and ending at full visibility. Before animation begins, it ensures elements are displayed by removing any 'display: none' style. This method provides a smooth visual transition when revealing elements, rather than having them abruptly appear. An optional callback function can be specified to execute once the animation completes, allowing for sequenced animations or subsequent operations.",
-    "Type": "Animation",
-    "Example": [
-        "Q('#notification').fadeIn(500);",
-        "Q('.hidden-content').fadeIn();", 
-        "Q('.modal').fadeIn(300, () => Q('.modal-content').slideDown());",
-        "const duration = 1000; Q('#welcome-message').fadeIn(duration, () => console.log('Animation complete'));"
-    ],
-    "Dependencies": [],
-    "Variables": ["duration", "callback", "element", "handler", "el", "i", "n"]
+  "Name": "fadeIn",
+  "Method": "Prototype",
+  "Desc": "Fades in all nodes over a specified duration.",
+  "LongDesc": "Gradually increases the opacity of all matched elements over a specified duration, starting from zero opacity and ending at full visibility. Before animation begins, it ensures elements are displayed by removing any 'display: none' style. This method provides a smooth visual transition when revealing elements, rather than having them abruptly appear. An optional callback function can be specified to execute once the animation completes, allowing for sequenced animations or subsequent operations.",
+  "Type": "Animation",
+  "Example": [
+    "Q('#notification').fadeIn(500);",
+    "Q('.hidden-content').fadeIn();",
+    "Q('.modal').fadeIn(300, () => Q('.modal-content').slideDown());",
+    "const duration = 1000; Q('#welcome-message').fadeIn(duration, () => console.log('Animation complete'));"
+  ],
+  "Dependencies": [],
+  "Variables": ["duration", "callback", "element", "handler", "el", "i", "n"]
 }

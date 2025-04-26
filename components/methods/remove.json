@@ -2,7 +2,7 @@
     "Name": "remove",
     "Method": "Prototype",
     "Desc": "Removes all nodes from the DOM.",
-    "Long Desc": "Permanently removes all matched elements from the DOM, including all text and child nodes. This method removes both the elements and everything inside them, as well as any bound events and jQuery data associated with the removed elements. Unlike hide() which only changes visibility, remove() completely eliminates elements from the document. This is useful for permanently deleting elements that are no longer needed, cleaning up the DOM, or implementing deletion functionality.",
+    "LongDesc": "Permanently removes all matched elements from the DOM, including all text and child nodes. This method removes both the elements and everything inside them, as well as any bound events and jQuery data associated with the removed elements. Unlike hide() which only changes visibility, remove() completely eliminates elements from the document. This is useful for permanently deleting elements that are no longer needed, cleaning up the DOM, or implementing deletion functionality.",
     "Type": "DOM Manipulation",
     "Example": [
         "Q(selector).remove();",
@@ -10,6 +10,5 @@
         "Q('#confirm-dialog').fadeOut().remove();",
         "if (shouldDelete) { Q('.deleted-items').remove(); }"
     ],
-    "Dependencies": [],
-    "Variables": ["node", "i", "n"]
+    "Dependencies": []
 }

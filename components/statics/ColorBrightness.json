@@ -2,12 +2,26 @@
   "Name": "Color Brightness",
   "Method": "Static",
   "Desc": "Adjusts the brightness of a color by a specified percentage.",
-  "Long Desc": "The ColorBrightness utility allows dynamic manipulation of color brightness, supporting both hex and RGB/RGBA color formats. It calculates a new color value by applying a brightness factor to each RGB component, while preserving the color's overall hue. This function is particularly valuable for creating UI elements with varying brightness levels, generating color palettes with consistent tonal relationships, implementing hover effects, or ensuring accessibility by adjusting contrast ratios. The percentage parameter provides intuitive control over brightness changes, with positive values increasing brightness and negative values decreasing it. The function maintains color format consistency by returning the result in the same format as the input.",
+  "LongDesc": "The ColorBrightness utility allows dynamic manipulation of color brightness, supporting both hex and RGB/RGBA color formats. It calculates a new color value by applying a brightness factor to each RGB component, while preserving the color's overall hue. This function is particularly valuable for creating UI elements with varying brightness levels, generating color palettes with consistent tonal relationships, implementing hover effects, or ensuring accessibility by adjusting contrast ratios. The percentage parameter provides intuitive control over brightness changes, with positive values increasing brightness and negative values decreasing it. The function maintains color format consistency by returning the result in the same format as the input.",
   "Type": "Color Manipulation",
   "Example": [
-    "const baseColor = '#3498db';\nconst highlightColor = Q.ColorBrightness(baseColor, 20);  // Lighten by 20%\nconst shadowColor = Q.ColorBrightness(baseColor, -30);  // Darken by 30%",
-    "let primaryColor = 'rgb(52, 152, 219)';\nlet hoverState = Q.ColorBrightness(primaryColor, 15);\nlet activeState = Q.ColorBrightness(primaryColor, -10);",
-    "var buttonColors = [];\nvar baseShade = 'rgba(52, 152, 219, 0.8)';\nfor (let i = -50; i <= 50; i += 25) {\n  buttonColors.push(Q.ColorBrightness(baseShade, i));\n}"
+    "const highlightColor = Q.ColorBrightness('#3498db', 20);",
+    "const shadowColor = Q.ColorBrightness('#3498db', -30);",
+    "let hoverState = Q.ColorBrightness('rgb(52, 152, 219)', 15);",
+    "let activeState = Q.ColorBrightness('rgb(52, 152, 219)', -10);",
+    "Q.ColorBrightness('rgba(52, 152, 219, 0.8)', 25);"
   ],
-  "Variables": ["inputColor", "percent", "red", "green", "blue", "alpha", "isHex", "factor", "hexString", "match", "clamp"]
+  "Variables": [
+    "inputColor",
+    "percent",
+    "red",
+    "green",
+    "blue",
+    "alpha",
+    "isHex",
+    "factor",
+    "hexString",
+    "match",
+    "clamp"
+  ]
 }

@@ -2,13 +2,13 @@
   "Name": "index",
   "Method": "Prototype",
   "Desc": "Returns the index of the first node, or moves the node to a specific index within its parent.",
-  "Long Desc": "The index method serves dual purposes based on how it's called. When used without arguments, it retrieves the position of the first node relative to its siblings within its parent element. When passed a numeric index, it repositions all selected nodes to that specific position within their respective parent elements. This provides a powerful way to both query element positions and rearrange DOM elements with minimal code. The method handles edge cases by appending elements when the target index exceeds the number of siblings.",
+  "LongDesc": "The index method serves dual purposes based on how it's called. When used without arguments, it retrieves the position of the first node relative to its siblings within its parent element. When passed a numeric index, it repositions all selected nodes to that specific position within their respective parent elements. This provides a powerful way to both query element positions and rearrange DOM elements with minimal code. The method handles edge cases by appending elements when the target index exceeds the number of siblings.",
   "Type": "Traversal",
   "Example": [
-    "const position = Q('.item').index(); // Get position of element",
-    "Q('.moveMe').index(2); // Move element to third position",
-    "Q('.item').index(0); // Move to first position",
-    "Q('.item').index(999); // Move to last position (appends)"
+    { "Script": "const position = Q('.item').index(); // Get position of element" },
+    { "Script": "Q('.moveMe').index(2); // Move element to third position" },
+    { "Script": "Q('.item').index(0); // Move to first position" },
+    { "Script": "Q('.item').index(999); // Move to last position (appends)" }
   ],
   "Dependencies": [],
   "Variables": ["index", "first", "i", "len", "node", "parent", "children"]

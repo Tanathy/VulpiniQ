@@ -2,14 +2,13 @@
     "Name": "zIndex",
     "Method": "Prototype",
     "Desc": "Gets or sets the z-index of the first node.",
-    "Long Desc": "Controls the stacking order of HTML elements that overlap. Higher z-index values appear in front of elements with lower values. When called without parameters, returns the current z-index value of the first element in the set. When provided with a value, sets the z-index for all elements in the set, allowing for layering control in complex layouts.",
+    "LongDesc": "Controls the stacking order of HTML elements that overlap. Higher z-index values appear in front of elements with lower values. When called without parameters, returns the current z-index value of the first element in the set. When provided with a value, sets the z-index for all elements in the set, allowing for layering control in complex layouts.",
     "Type": "Display",
     "Example": [
-        "Q(selector).zIndex();", 
+        "Q(selector).zIndex();",
         "Q('.overlay').zIndex(10);",
         "const currentIndex = Q('#popup').zIndex();",
         "Q('.modal').zIndex(Q('.header').zIndex() + 5);"
     ],
-    "Dependencies": [],
-    "Variables": ["node", "value", "Index"]
+    "Dependencies": []
 }

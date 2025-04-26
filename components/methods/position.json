@@ -2,7 +2,7 @@
     "Name": "position",
     "Method": "Prototype",
     "Desc": "Gets the position of the first node relative to its offset parent.",
-    "Long Desc": "Returns an object containing the top and left position of an element relative to its offset parent. The offset parent is the closest positioned ancestor. Unlike offset(), which gives coordinates relative to the document, position() provides coordinates relative to the parent element, making it ideal for positioning elements within containers. This method is particularly useful for implementing drag and drop interfaces, tooltips that follow elements, or any UI feature that requires knowing an element's position within its containing context.",
+    "LongDesc": "Returns an object containing the top and left position of an element relative to its offset parent. The offset parent is the closest positioned ancestor. Unlike offset(), which gives coordinates relative to the document, position() provides coordinates relative to the parent element, making it ideal for positioning elements within containers. This method is particularly useful for implementing drag and drop interfaces, tooltips that follow elements, or any UI feature that requires knowing an element's position within its containing context.",
     "Type": "Position",
     "Example": [
         "const pos = Q('#element').position();",

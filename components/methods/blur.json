@@ -2,12 +2,13 @@
   "Name": "blur",
   "Method": "Prototype",
   "Desc": "Removes focus from the first node in the selection, effectively blurring it.",
-  "Long Desc": "The 'blur' method removes focus from the first element in the set of matched elements. This is particularly useful for managing user interactions, such as dismissing input fields or triggering blur-related events. It ensures that the element loses focus, which can be essential for form validation or UI behavior.",
+  "LongDesc": "The 'blur' method removes focus from the first element in the set of matched elements. This is particularly useful for managing user interactions, such as dismissing input fields or triggering blur-related events. It ensures that the element loses focus, which can be essential for form validation or UI behavior.",
   "Type": "Form Manipulation",
   "Example": [
-    "Q(selector).blur(); // Removes focus from the first matched input field",
-    "Q('.active').blur(); // Blurs the first active element",
-    "Q('textarea').blur(); // Blurs the first textarea in the selection"
+    "Q(selector).blur();",
+    "Q('.active').blur();",
+    "Q('textarea').blur();"
   ],
+  "Dependencies": [],
   "Variables": []
 }

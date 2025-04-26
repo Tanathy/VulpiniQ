@@ -2,7 +2,7 @@
   "Name": "Leaving",
   "Method": "Static",
   "Desc": "Attaches a function to the window's beforeunload event, allowing actions before the page is closed or refreshed.",
-  "Long Desc": "The Leaving utility provides a convenient way to execute code just before a user navigates away from the current page. This is crucial for implementing features like unsaved changes warnings, session cleanup, analytics tracking of exit events, or saving application state. The utility handles the complexities of the beforeunload event across browsers and ensures your callback functions receive the event object, allowing you to potentially prevent navigation by using preventDefault() and setting a return value. Unlike direct event binding, this utility manages multiple callbacks efficiently and handles edge cases like repeated triggers.",
+  "LongDesc": "The Leaving utility provides a convenient way to execute code just before a user navigates away from the current page. This is crucial for implementing features like unsaved changes warnings, session cleanup, analytics tracking of exit events, or saving application state. The utility handles the complexities of the beforeunload event across browsers and ensures your callback functions receive the event object, allowing you to potentially prevent navigation by using preventDefault() and setting a return value. Unlike direct event binding, this utility manages multiple callbacks efficiently and handles edge cases like repeated triggers.",
   "Type": "Event Handling",
   "Example": [
     "Q.Leaving(e => e.preventDefault());",

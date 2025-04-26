@@ -1,13 +1,13 @@
 {
-    "Name": "eq",
-    "Method": "Prototype",
-    "Desc": "Returns a specific node by index.",
-    "Long Desc": "The 'eq' method allows you to retrieve a specific node from the set of matched elements by its index. This is particularly useful when you need to work with a single element from a collection of elements selected by a query. The method ensures that the returned node is wrapped in the Q object, maintaining chainability.",
-    "Type": "Traversal",
-    "Example": [
-        "Q(selector).eq(1);",
-        "const secondItem = Q('.list-item').eq(1); // Retrieves the second list item"
-    ],
-    "Dependencies": [],
-    "Variables": ["secondItem", "index"]
+  "Name": "eq",
+  "Method": "Prototype",
+  "Desc": "Returns a specific node by index.",
+  "LongDesc": "The 'eq' method allows you to retrieve a specific node from the set of matched elements by its index. This is particularly useful when you need to work with a single element from a collection of elements selected by a query. The method ensures that the returned node is wrapped in the Q object, maintaining chainability.",
+  "Type": "Traversal",
+  "Example": [
+    "Q(selector).eq(1);",
+    "const secondItem = Q('.list-item').eq(1);"
+  ],
+  "Dependencies": [],
+  "Variables": ["secondItem", "index"]
 }

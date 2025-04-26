@@ -2,7 +2,7 @@
     "Name": "unwrap",
     "Method": "Prototype",
     "Desc": "Removes the parent wrapper of each node.",
-    "Long Desc": "Removes the parent element of each matched element in the set, replacing it with the matched element and its siblings in the DOM. This is essentially the inverse of the wrap method and is useful for removing unnecessary container elements while preserving the content. This can be particularly helpful when simplifying DOM structure or removing temporary wrappers added for styling or animation purposes.",
+    "LongDesc": "Removes the parent element of each matched element in the set, replacing it with the matched element and its siblings in the DOM. This is essentially the inverse of the wrap method and is useful for removing unnecessary container elements while preserving the content. This can be particularly helpful when simplifying DOM structure or removing temporary wrappers added for styling or animation purposes.",
     "Type": "DOM Manipulation",
     "Example": [
         "Q(selector).unwrap();",
@@ -10,6 +10,5 @@
         "Q('.inner-content').unwrap().addClass('standalone');",
         "if (shouldRemoveWrapper) { Q('.wrapped-items').unwrap(); }"
     ],
-    "Dependencies": [],
-    "Variables": ["parent", "el", "i", "n"]
+    "Dependencies": []
 }

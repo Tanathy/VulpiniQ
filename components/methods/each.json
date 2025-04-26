@@ -1,13 +1,13 @@
 {
-    "Name": "each",
-    "Method": "Prototype",
-    "Desc": "Iterates over all nodes in the Q object and executes a callback on each node, providing access to the index and element.",
-    "Long Desc": "The 'each' method is a utility for iterating over all elements in the Q object. It allows you to execute a callback function for each element, providing access to both the index and the element itself. This is particularly useful for performing operations on each element in a collection, such as applying styles, adding event listeners, or extracting data.",
-    "Type": "Iteration",
-    "Example": [
-        "Q(selector).each((index, element) => console.log(index, element));",
-        "Q('.items').each((i, el) => el.style.color = 'red'); // Changes text color of all items to red"
-    ],
-    "Dependencies": [],
-    "Variables": ["callback", "el", "index", "i"]
+  "Name": "each",
+  "Method": "Prototype",
+  "Desc": "Iterates over all nodes in the Q object and executes a callback on each node, providing access to the index and element.",
+  "LongDesc": "The 'each' method is a utility for iterating over all elements in the Q object. It allows you to execute a callback function for each element, providing access to both the index and the element itself. This is particularly useful for performing operations on each element in a collection, such as applying styles, adding event listeners, or extracting data.",
+  "Type": "Iteration",
+  "Example": [
+    "Q(selector).each((index, element) => console.log(index, element));",
+    "Q('.items').each((i, el) => el.style.color = 'red');"
+  ],
+  "Dependencies": [],
+  "Variables": ["callback", "el", "index", "i"]
 }

@@ -2,7 +2,7 @@
     "Name": "removeAttr",
     "Method": "Prototype",
     "Desc": "Removes an attribute from each node.",
-    "Long Desc": "The removeAttr method allows you to remove specific HTML attributes from all elements in the current selection. This is useful when you need to dynamically modify element properties like disabled, checked, data-attributes, or any other HTML attribute. The method executes removeAttribute() on each node in the collection and returns the original Q object, enabling method chaining for more complex DOM manipulations.",
+    "LongDesc": "The removeAttr method allows you to remove specific HTML attributes from all elements in the current selection. This is useful when you need to dynamically modify element properties like disabled, checked, data-attributes, or any other HTML attribute. The method executes removeAttribute() on each node in the collection and returns the original Q object, enabling method chaining for more complex DOM manipulations.",
     "Type": "Attribute Manipulation",
     "Example": [
         "Q(selector).removeAttr(attribute);",
@@ -10,6 +10,5 @@
         "Q('.product').removeAttr('data-id');",
         "Q('img').removeAttr('src');"
     ],
-    "Dependencies": "",
-    "Variables": ["attribute", "i", "len"]
+    "Dependencies": []
 }

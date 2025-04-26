@@ -2,7 +2,7 @@
   "Name": "Ready",
   "Method": "Static",
   "Desc": "Executes a function when the document is fully loaded, ensuring all elements are accessible.",
-  "Long Desc": "The Ready utility ensures that your code executes at the appropriate time during page loading. It handles the complexity of checking the document's readiness state and manages the timing of your callbacks. If the DOM is already loaded when your code runs, your function executes immediately. Otherwise, it queues the function to run once the DOMContentLoaded event fires. This approach prevents errors that occur when scripts try to access DOM elements before they exist, while also avoiding the unnecessary delay of waiting for all assets (like images) to load completely, which would occur when using the window's load event.",
+  "LongDesc": "The Ready utility ensures that your code executes at the appropriate time during page loading. It handles the complexity of checking the document's readiness state and manages the timing of your callbacks. If the DOM is already loaded when your code runs, your function executes immediately. Otherwise, it queues the function to run once the DOMContentLoaded event fires. This approach prevents errors that occur when scripts try to access DOM elements before they exist, while also avoiding the unnecessary delay of waiting for all assets (like images) to load completely, which would occur when using the window's load event.",
   "Type": "Event Handling",
   "Example": [
     "Q.Ready(() => console.log('Document is ready!'));",

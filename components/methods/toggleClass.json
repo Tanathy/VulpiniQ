@@ -2,7 +2,7 @@
     "Name": "toggleClass",
     "Method": "Prototype",
     "Desc": "Toggles a class on each node.",
-    "Long Desc": "Adds or removes a class from each element in the set depending on its current state. If the class exists on an element, it is removed; if it doesn't exist, it is added. This method provides a convenient way to switch between visual states without needing to check the current class state manually, making it ideal for implementing UI toggles, accordions, or any interface element that alternates between two states.",
+    "LongDesc": "Adds or removes a class from each element in the set depending on its current state. If the class exists on an element, it is removed; if it doesn't exist, it is added. This method provides a convenient way to switch between visual states without needing to check the current class state manually, making it ideal for implementing UI toggles, accordions, or any interface element that alternates between two states.",
     "Type": "Class Manipulation",
     "Example": [
         "Q(selector).toggleClass('active');",
@@ -10,6 +10,5 @@
         "const highlightClass = 'highlight'; Q('.selectable').toggleClass(highlightClass);",
         "Q(event.target).toggleClass('selected').siblings().toggleClass('dimmed');"
     ],
-    "Dependencies": [],
-    "Variables": ["className", "i", "n"]
+    "Dependencies": []
 }

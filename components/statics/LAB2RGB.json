@@ -2,11 +2,12 @@
   "Name": "LAB to RGB Converter",
   "Method": "Static",
   "Desc": "Converts LAB (Lightness, a*, b*) color values to RGB (Red, Green, Blue) format.",
-  "Long Desc": "The LAB2RGB utility transforms color representations from the LAB color space back to the RGB color space. The LAB color space is perceptually uniform and device-independent, with L representing lightness (0-100), a* representing the green-red axis (-128 to +127), and b* representing the blue-yellow axis (-128 to +127). This conversion allows for manipulating colors in the more intuitive and device-independent LAB space before converting them back to the device-dependent RGB space for display. The function implements a standard conversion algorithm that first converts LAB to XYZ and then XYZ to RGB, applying gamma correction to produce accurate sRGB values. This utility is essential for color management systems, image processing applications, and any situation where precise color manipulation across different devices is required.",
+  "LongDesc": "The LAB2RGB utility transforms color representations from the LAB color space back to the RGB color space. The LAB color space is perceptually uniform and device-independent, with L representing lightness (0-100), a* representing the green-red axis (-128 to +127), and b* representing the blue-yellow axis (-128 to +127). This conversion allows for manipulating colors in the more intuitive and device-independent LAB space before converting them back to the device-dependent RGB space for display. The function implements a standard conversion algorithm that first converts LAB to XYZ and then XYZ to RGB, applying gamma correction to produce accurate sRGB values. This utility is essential for color management systems, image processing applications, and any situation where precise color manipulation across different devices is required.",
   "Type": "Color Conversion",
   "Example": [
-    "// Convert a LAB color to RGB\nconst l = 54.29;\nconst a = 80.81;\nconst b = 69.89;\nconst rgbColor = Q.LAB2RGB(l, a, b);\nconsole.log(`R: ${rgbColor[0]}, G: ${rgbColor[1]}, B: ${rgbColor[2]}`);",
-    "// Create a color manipulation function using LAB space\nfunction adjustSaturation(r, g, b, factor) {\n  // Convert to LAB\n  const lab = Q.RGB2LAB(r, g, b);\n  // Adjust a* and b* (color components) while preserving L (lightness)\n  lab[1] = lab[1] * factor;\n  lab[2] = lab[2] * factor;\n  // Convert back to RGB\n  return Q.LAB2RGB(lab[0], lab[1], lab[2]);\n}"
+    "const l = 54.29; const a = 80.81; const b = 69.89; const rgbColor = Q.LAB2RGB(l, a, b); console.log(`R: ${rgbColor[0]}, G: ${rgbColor[1]}, B: ${rgbColor[2]}`);",
+    "function adjustSaturation(r, g, b, factor) { const lab = Q.RGB2LAB(r, g, b); lab[1] = lab[1] * factor; lab[2] = lab[2] * factor; return Q.LAB2RGB(lab[0], lab[1], lab[2]); }"
   ],
+  "Dependencies": [],
   "Variables": []
 }

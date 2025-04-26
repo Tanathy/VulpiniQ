@@ -2,7 +2,7 @@
     "Name": "show",
     "Method": "Prototype",
     "Desc": "Shows each node, optionally with a fade-in effect over a specified duration.",
-    "Long Desc": "Displays hidden elements by removing their 'display: none' style, with optional animation capabilities. When used with a duration parameter, creates a smooth fade-in effect by transitioning the opacity property. The method accepts an optional callback function that executes once the animation completes. This method is particularly useful for revealing content with visual feedback, enhancing the user experience for revealing dialogs, tooltips, or dynamic content areas.",
+    "LongDesc": "Displays hidden elements by removing their 'display: none' style, with optional animation capabilities. When used with a duration parameter, creates a smooth fade-in effect by transitioning the opacity property. The method accepts an optional callback function that executes once the animation completes. This method is particularly useful for revealing content with visual feedback, enhancing the user experience for revealing dialogs, tooltips, or dynamic content areas.",
     "Type": "Display",
     "Example": [
         "Q(selector).show();",
@@ -10,6 +10,5 @@
         "Q('.notification').show(300, () => console.log('Animation completed'));",
         "const fadeTime = 800; Q('.hidden-content').show(fadeTime);"
     ],
-    "Dependencies": "",
-    "Variables": ["duration", "callback", "element", "handler", "el", "i", "n"]
+    "Dependencies": []
 }

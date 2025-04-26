@@ -2,7 +2,12 @@
   "Name": "addClass",
   "Method": "Prototype",
   "Desc": "Adds one or more classes to each node, ignoring duplicates.",
+  "LongDesc": "",
   "Type": "Class Manipulation",
-  "Example": "Q(selector).addClass(\"class1\"); // Adds a single class\nQ(selector).addClass(\"class1 class2\"); // Adds multiple classes",
-  "Variables": ["classes","list"]
+  "Example": [
+    "Q(selector).addClass(\"class1\");",
+    "Q(selector).addClass(\"class1 class2\");"
+  ],
+  "Dependencies": [],
+  "Variables": ["classes", "list"]
 }

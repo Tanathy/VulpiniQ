@@ -2,7 +2,22 @@
   "Name": "Form.CheckBox",
   "Method": "Component",
   "Desc": "CheckBox component for Form plugin",
+  "LongDesc": "The CheckBox component provides a custom checkbox for forms, implemented using only div elements. It supports checked state, change events, disabling, and dynamic label text.",
   "Type": "Component",
-  "Example": "var checkbox = Q.Form.CheckBox(true, 'Check me'); checkbox.change(function(checked) { console.log(checked); });",
-  "Dependencies": ["Form", "style", "addClass", "removeClass", "on", "append", "prop", "trigger", "text"]
+  "Example": [
+    "var checkbox = Q.Form.CheckBox(true, 'Check me');",
+    "checkbox.change(function(checked) { console.log(checked); });",
+    "checkbox.disabled(true);"
+  ],
+  "Dependencies": [
+    "Form",
+    "style",
+    "addClass",
+    "removeClass",
+    "on",
+    "append",
+    "prop",
+    "trigger",
+    "text"
+  ]
 }

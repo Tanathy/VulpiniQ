@@ -2,7 +2,28 @@
   "Name": "Container.Window",
   "Method": "Plugin",
   "Desc": "Creates a draggable, resizable window container with title bar and control buttons",
-  "Type": "Method",
+  "LongDesc": "The Container.Window plugin provides a draggable and resizable window container with a title bar and control buttons (minimize, maximize, close). It supports custom content, taskbar integration, and animated transitions. The window can be programmatically opened, closed, minimized, maximized, and restored.",
+  "Type": "Component",
   "Example": "var win = Q.Container().Window({ title: 'My Window', content: 'Hello World' }); win.Open();",
-  "Dependencies": ["style", "on", "off", "addClass", "removeClass", "append", "css", "attr", "html", "text", "width", "height", "data", "detach", "show", "hide", "css", "bind", "Icons"]
+  "Dependencies": [
+    "style",
+    "on",
+    "off",
+    "addClass",
+    "removeClass",
+    "append",
+    "css",
+    "attr",
+    "html",
+    "text",
+    "width",
+    "height",
+    "data",
+    "detach",
+    "show",
+    "hide",
+    "css",
+    "bind",
+    "Icons"
+  ]
 }

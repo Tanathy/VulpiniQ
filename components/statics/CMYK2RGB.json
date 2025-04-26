@@ -2,11 +2,13 @@
   "Name": "CMYK to RGB Converter",
   "Method": "Static",
   "Desc": "Converts CMYK (Cyan, Magenta, Yellow, Key/Black) color values to RGB (Red, Green, Blue) format.",
-  "Long Desc": "The CMYK2RGB utility transforms color representations from the CMYK color space (used for print media) to the RGB color space (used for digital displays). This conversion is critical when importing or previewing print-intended content in digital environments. The CMYK color model is subtractive, where colors are created by absorbing (subtracting) certain wavelengths of light using ink, while RGB is additive, combining light to create colors. Each CMYK component ranges from 0 to 1 (or 0% to 100%) representing the amount of the respective ink: Cyan, Magenta, Yellow, and Key (black). The function implements the standard algorithm for this conversion, accounting for how the inks combine to form colors. This utility is particularly useful for design applications, digital proofing tools, and any software that needs to accurately represent print colors on screen.",
+  "LongDesc": "The CMYK2RGB utility transforms color representations from the CMYK color space (used for print media) to the RGB color space (used for digital displays). This conversion is critical when importing or previewing print-intended content in digital environments. The CMYK color model is subtractive, where colors are created by absorbing (subtracting) certain wavelengths of light using ink, while RGB is additive, combining light to create colors. Each CMYK component ranges from 0 to 1 (or 0% to 100%) representing the amount of the respective ink: Cyan, Magenta, Yellow, and Key (black). The function implements the standard algorithm for this conversion, accounting for how the inks combine to form colors. This utility is particularly useful for design applications, digital proofing tools, and any software that needs to accurately represent print colors on screen.",
   "Type": "Color Conversion",
   "Example": [
-    "// Convert a print-specific color from CMYK to RGB\nconst cyan = 0.75; // 75%\nconst magenta = 0.0; // 0%\nconst yellow = 0.75; // 75%\nconst black = 0.0; // 0%\nconst rgbColor = Q.CMYK2RGB(cyan, magenta, yellow, black);\nconsole.log(`R: ${rgbColor[0]}, G: ${rgbColor[1]}, B: ${rgbColor[2]}`);",
-    "// Preview a CMYK color palette in RGB\nconst cmykPalette = [\n  [0.0, 0.8, 0.8, 0.0], // Red-like\n  [0.8, 0.0, 0.8, 0.0], // Green-like\n  [0.8, 0.8, 0.0, 0.0], // Blue-like\n];\nconst rgbPalette = cmykPalette.map(color => \n  Q.CMYK2RGB(color[0], color[1], color[2], color[3])\n);\nconsole.log('RGB Palette for display:', rgbPalette);"
+    "const rgbColor = Q.CMYK2RGB(0.75, 0.0, 0.75, 0.0);",
+    "Q.CMYK2RGB(0.0, 0.8, 0.8, 0.0);",
+    "Q.CMYK2RGB(0.8, 0.0, 0.8, 0.0);",
+    "Q.CMYK2RGB(0.8, 0.8, 0.0, 0.0);"
   ],
   "Variables": []
 }

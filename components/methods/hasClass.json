@@ -1,14 +1,13 @@
 {
-    "Name": "hasClass",
-    "Method": "Prototype",
-    "Desc": "Checks if the first node has a specific class.",
-    "Long Desc": "The hasClass method provides a simple way to determine if the first element in a collection has a particular CSS class. It returns a boolean value - true if the class is present, false otherwise. This method is particularly useful in conditional logic where you need to take different actions based on an element's current class state, such as toggling functionality or changing appearance based on existing classes.",
-    "Type": "Class Manipulation",
-    "Example": [
-        "var hasActiveClass = Q(selector).hasClass('active');",
-        "if (Q(selector).hasClass('disabled')) { /* disable functionality */ }",
-        "Q(selector).hasClass('highlight') ? doSomething() : doSomethingElse();"
-    ],
-    "Dependencies": [],
-    "Variables": ["className", "node"]
+  "Name": "hasClass",
+  "Method": "Prototype",
+  "Desc": "Checks if the first node has a specific class.",
+  "LongDesc": "The hasClass method provides a simple way to determine if the first element in a collection has a particular CSS class. It returns a boolean value - true if the class is present, false otherwise. This method is particularly useful in conditional logic where you need to take different actions based on an element's current class state, such as toggling functionality or changing appearance based on existing classes.",
+  "Type": "Class Manipulation",
+  "Example": [
+    "var hasActiveClass = Q(selector).hasClass('active');",
+    "if (Q(selector).hasClass('disabled')) { /* disable functionality */ }",
+    "Q(selector).hasClass('highlight') ? doSomething() : doSomethingElse();"
+  ],
+  "Dependencies": []
 }

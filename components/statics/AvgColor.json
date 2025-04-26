@@ -2,12 +2,28 @@
   "Name": "Average Color",
   "Method": "Static",
   "Desc": "Calculates the average color of an image from a given source.",
-  "Long Desc": "The AvgColor utility analyzes image data to determine the average RGB color values across all pixels or a sampled subset. It supports various image sources including URLs, base64 strings, and canvas elements. The function utilizes sampling techniques to optimize performance on larger images, making it efficient for real-time applications. This is particularly useful for generating color schemes dynamically based on images, creating UI elements that complement image content, or analyzing visual data for color trends. The callback pattern allows for asynchronous processing, ensuring the main thread isn't blocked while large images are being processed.",
+  "LongDesc": "The AvgColor utility analyzes image data to determine the average RGB color values across all pixels or a sampled subset. It supports various image sources including URLs, base64 strings, and canvas elements. The function utilizes sampling techniques to optimize performance on larger images, making it efficient for real-time applications. This is particularly useful for generating color schemes dynamically based on images, creating UI elements that complement image content, or analyzing visual data for color trends. The callback pattern allows for asynchronous processing, ensuring the main thread isn't blocked while large images are being processed.",
   "Type": "Image Processing",
   "Example": [
-    "const avatarUrl = 'https://example.com/profile.jpg';\nQ.AvgColor(avatarUrl, 'auto', (color) => {\n  document.body.style.backgroundColor = `rgb(${color.r}, ${color.g}, ${color.b})`;\n});",
-    "const canvas = document.getElementById('myCanvas');\nlet dominantColor;\nQ.AvgColor(canvas, 2, (result) => {\n  dominantColor = result;\n  console.log(`Average color: RGB(${result.r}, ${result.g}, ${result.b})`);\n});",
-    "var headerImage = document.querySelector('.hero-image');\nvar sampleSize = 5;\nQ.AvgColor(headerImage.src, sampleSize, function(avgColor) {\n  const textColor = avgColor.r + avgColor.g + avgColor.b > 382 ? '#000' : '#fff';\n  headerImage.nextElementSibling.style.color = textColor;\n});"
+    "Q.AvgColor('https://example.com/profile.jpg', 'auto', function(color) { document.body.style.backgroundColor = `rgb(${color.r}, ${color.g}, ${color.b})`; });",
+    "Q.AvgColor(document.getElementById('myCanvas'), 2, function(result) { console.log(result); });",
+    "Q.AvgColor(headerImage.src, 5, function(avgColor) { /* ... */ });"
   ],
-  "Variables": ["source", "sampleSize", "callback", "image", "canvas", "context", "data", "samplingRate", "totalRed", "totalGreen", "totalBlue", "count", "index", "len", "avgColor"]
+  "Variables": [
+    "source",
+    "sampleSize",
+    "callback",
+    "image",
+    "canvas",
+    "context",
+    "data",
+    "samplingRate",
+    "totalRed",
+    "totalGreen",
+    "totalBlue",
+    "count",
+    "index",
+    "len",
+    "avgColor"
+  ]
 }

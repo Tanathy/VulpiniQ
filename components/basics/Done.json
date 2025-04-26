@@ -2,7 +2,7 @@
   "Name": "Done",
   "Method": "Static",
   "Desc": "Executes a function once the window's load event is fired, indicating all resources are loaded.",
-  "Long Desc": "The Done utility allows you to register functions that will execute after all page resources (including images, stylesheets, scripts, iframes, etc.) have completely loaded. Unlike the Ready utility which fires when just the DOM is ready, Done waits for everything to finish loading. This is particularly useful for operations that depend on knowing final element dimensions (which may change once images load), performing calculations based on rendered content, initializing components that need the complete page, or starting animations that should only begin when the page is fully rendered. The utility efficiently manages multiple callbacks and ensures they only execute once the page loading is truly complete.",
+  "LongDesc": "The Done utility allows you to register functions that will execute after all page resources (including images, stylesheets, scripts, iframes, etc.) have completely loaded. Unlike the Ready utility which fires when just the DOM is ready, Done waits for everything to finish loading. This is particularly useful for operations that depend on knowing final element dimensions (which may change once images load), performing calculations based on rendered content, initializing components that need the complete page, or starting animations that should only begin when the page is fully rendered. The utility efficiently manages multiple callbacks and ensures they only execute once the page loading is truly complete.",
   "Type": "Event Handling",
   "Example": [
     "Q.Done(() => console.log('All resources loaded!'));",

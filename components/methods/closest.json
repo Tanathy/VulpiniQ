@@ -1,14 +1,14 @@
 {
-    "Name": "closest",
-    "Method": "Prototype",
-    "Desc": "Finds the nearest ancestor node of the first node that matches a given selector.",
-    "Long Desc": "The 'closest' method is used to traverse up the DOM tree to find the nearest ancestor of the first selected node that matches a specified selector. This is particularly useful for locating parent elements that meet certain criteria, such as a specific class or attribute. If no matching ancestor is found, the method returns null.",
-    "Type": "Traversal",
-    "Example": [
-        "Q(selector).closest('.parent');",
-        "Q(selector).closest('#container');",
-        "Q(selector).closest('[data-role=wrapper]');"
-    ],
-    "Dependencies": [],
-    "Variables": ["selector", "node"]
+  "Name": "closest",
+  "Method": "Prototype",
+  "Desc": "Finds the nearest ancestor node of the first node that matches a given selector.",
+  "LongDesc": "The 'closest' method is used to traverse up the DOM tree to find the nearest ancestor of the first selected node that matches a specified selector. This is particularly useful for locating parent elements that meet certain criteria, such as a specific class or attribute. If no matching ancestor is found, the method returns null.",
+  "Type": "Traversal",
+  "Example": [
+    "Q(selector).closest('.parent');",
+    "Q(selector).closest('#container');",
+    "Q(selector).closest('[data-role=wrapper]');"
+  ],
+  "Dependencies": [],
+  "Variables": ["selector", "node"]
 }

@@ -2,7 +2,7 @@
   "Name": "id",
   "Method": "Prototype",
   "Desc": "Gets or sets the id attribute of the first node.",
-  "Long Desc": "The id method provides a convenient way to interact with the HTML id attribute of an element. When called without arguments, it returns the current id value of the first element in the collection. When provided with a string argument, it sets the id attribute to that value for the first element. This dual functionality simplifies both reading and writing id attributes for DOM manipulation, and is particularly useful for dynamically generating unique identifiers or accessing specific elements by id.",
+  "LongDesc": "The id method provides a convenient way to interact with the HTML id attribute of an element. When called without arguments, it returns the current id value of the first element in the collection. When provided with a string argument, it sets the id attribute to that value for the first element. This dual functionality simplifies both reading and writing id attributes for DOM manipulation, and is particularly useful for dynamically generating unique identifiers or accessing specific elements by id.",
   "Type": "Attributes",
   "Example": [
     "const elementId = Q(selector).id(); // Retrieves the id",
@@ -10,6 +10,5 @@
     "const oldId = Q('#element').id(); // Get current id",
     "Q('.element').id('dynamic-id-' + index); // Set dynamic id"
   ],
-  "Dependencies": [],
-  "Variables": ["ident", "node"]
+  "Dependencies": []
 }

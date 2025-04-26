@@ -2,7 +2,7 @@
     "Name": "removeClass",
     "Method": "Prototype",
     "Desc": "Removes the specified class from each node.",
-    "Long Desc": "Removes one or more class names from each element in the matched set. When multiple classes are provided (space-separated), all specified classes are removed. If no class name is provided, all classes are removed from the elements. This method is essential for dynamic UI updates where visual states need to be changed based on user interactions or application logic, such as removing active states, hiding elements through CSS classes, or updating form validation indicators.",
+    "LongDesc": "Removes one or more class names from each element in the matched set. When multiple classes are provided (space-separated), all specified classes are removed. If no class name is provided, all classes are removed from the elements. This method is essential for dynamic UI updates where visual states need to be changed based on user interactions or application logic, such as removing active states, hiding elements through CSS classes, or updating form validation indicators.",
     "Type": "Class Manipulation",
     "Example": [
         "Q(selector).removeClass('highlight');",
@@ -10,6 +10,5 @@
         "const errorClass = 'invalid'; Q('.form-input').removeClass(errorClass);",
         "Q('.temp-element').removeClass(); // Removes all classes"
     ],
-    "Dependencies": [],
-    "Variables": ["className", "node", "i", "n"]
+    "Dependencies": []
 }
