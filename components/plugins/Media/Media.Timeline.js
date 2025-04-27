@@ -1,4 +1,4 @@
-Media.prototype.Timeline = function(container, options = {}) {
+Media.prototype.Timeline = function (container, options = {}) {
 
     if (!Media.timelineClassesInitialized) {
         Media.timelineClasses = Q.style(`
@@ -53,6 +53,17 @@ Media.prototype.Timeline = function(container, options = {}) {
             .media-timeline-handle {
                 width: 5px; height: 100%; background: var(--media-timeline-handle-bg, #fff4); cursor: ew-resize; z-index: 3;
             }
+            /* Seek line style */
+            .media-timeline-seek-line {
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                width: 2px;
+                background: #fff;
+                opacity: 0.3;
+                z-index: 10;
+                pointer-events: none;
+            }
         `, null, {
             'media-timeline-wrapper': 'media-timeline-wrapper',
             'media-timeline-bar': 'media-timeline-bar',
@@ -66,7 +77,8 @@ Media.prototype.Timeline = function(container, options = {}) {
             'alert': 'alert',
             'warning': 'warning',
             'left': 'left',
-            'right': 'right'
+            'right': 'right',
+            'media-timeline-seek-line': 'media-timeline-seek-line'
         });
         Media.timelineClassesInitialized = true;
     }
@@ -76,24 +88,40 @@ Media.prototype.Timeline = function(container, options = {}) {
     const timeline = Q(`<div class="${classes['media-timeline-wrapper']}"></div>`);
     const bar = Q(`<div class="${classes['media-timeline-bar']}"></div>`);
     const tracksBar = Q(`<div class="${classes['media-timeline-tracks']}"></div>`);
+    // --- Seek line: only one instance, always inside the wrapper ---
+    const seekLine = Q(`<div class="${classes['media-timeline-seek-line']}" style="display:none;height:100%;"></div>`);
+    bar.append(seekLine);
     timeline.append(bar, tracksBar);
-    Q(container).append(timeline);
 
     timeline._length = 10000;
     timeline._segments = [];
     timeline._selected = null;
     timeline._changeCb = null;
     timeline._idCounter = 1;
-    timeline._maxTracks = null; 
+    timeline._maxTracks = null;
 
-    timeline.length = function(ms) {
+    // --- Seek line state ---
+    timeline._seekPos = null; // ms value or null
+
+    // --- Seek API ---
+    timeline.seek = function (ms) {
+        if (typeof ms !== "number" || isNaN(ms)) {
+            this._seekPos = null;
+        } else {
+            this._seekPos = Math.max(0, Math.min(ms, this._length));
+        }
+        this._render();
+        return this;
+    };
+
+    timeline.length = function (ms) {
         if (typeof ms === 'undefined') return this._length;
         this._length = Math.max(1, ms);
         this._render();
         return this;
     };
 
-    timeline.add = function(from, to, type = 'normal', trackIndex) {
+    timeline.add = function (from, to, type = 'normal', trackIndex) {
         from = Math.max(0, Math.min(from, this._length));
         to = Math.max(from, Math.min(to, this._length));
         const id = 'seg_' + (this._idCounter++);
@@ -107,8 +135,8 @@ Media.prototype.Timeline = function(container, options = {}) {
         return id;
     };
 
-    
-    timeline.modify = function(id, from, to, direction) {
+
+    timeline.modify = function (id, from, to, direction) {
         const seg = this._segments.find(s => s.id === id);
         if (!seg) return false;
         seg.from = Math.max(0, Math.min(from, this._length));
@@ -118,7 +146,7 @@ Media.prototype.Timeline = function(container, options = {}) {
         return true;
     };
 
-    timeline.remove = function(id) {
+    timeline.remove = function (id) {
         this._segments = this._segments.filter(s => s.id !== id);
         if (this._selected === id) this._selected = null;
         this._render();
@@ -126,7 +154,7 @@ Media.prototype.Timeline = function(container, options = {}) {
         return this;
     };
 
-    timeline.clear = function() {
+    timeline.clear = function () {
         this._segments = [];
         this._selected = null;
         this._render();
@@ -134,7 +162,7 @@ Media.prototype.Timeline = function(container, options = {}) {
         return this;
     };
 
-    timeline.clone = function(id, from) {
+    timeline.clone = function (id, from) {
         const seg = this._segments.find(s => s.id === id);
         if (!seg) return null;
         const len = seg.to - seg.from;
@@ -143,26 +171,51 @@ Media.prototype.Timeline = function(container, options = {}) {
         return this.add(newFrom, newTo, seg.type);
     };
 
-    timeline.change = function(cb) {
+    timeline.change = function (cb) {
         this._changeCb = cb;
         return this;
     };
 
-    timeline.select = function(id) {
-        this._selected = id;
+    timeline._selectCb = null;
+    timeline._deselectCb = null;
+
+    timeline.select = function (arg) {
+        if (typeof arg === "function") {
+            this._selectCb = arg;
+            // If there is a selected segment, call immediately
+            const seg = this._segments.find(s => s.id === this._selected);
+            if (seg) arg(seg.id, seg.from, seg.to, seg.type);
+            return this;
+        }
+        // Select by id
+        this._selected = arg;
         this._render();
-        this._triggerChange(); 
+        this._triggerChange("select");
+        // If there is a select callback, call it
+        if (typeof this._selectCb === "function") {
+            const seg = this._segments.find(s => s.id === this._selected);
+            if (seg) this._selectCb(seg.id, seg.from, seg.to, seg.type);
+        }
         return this;
     };
 
-    timeline.deselect = function() {
+    timeline.deselect = function (arg) {
+        if (typeof arg === "function") {
+            this._deselectCb = arg;
+            return this;
+        }
+        const wasSelected = this._selected;
         this._selected = null;
         this._render();
-        this._triggerChange(); 
+        this._triggerChange("deselect");
+        // If there was a selection and a callback, call it
+        if (wasSelected && typeof this._deselectCb === "function") {
+            this._deselectCb();
+        }
         return this;
     };
 
-    timeline.selected = function(cb) {
+    timeline.selected = function (cb) {
         const seg = this._segments.find(s => s.id === this._selected);
         if (seg && typeof cb === 'function') {
             cb(seg.id, seg.from, seg.to, seg.type);
@@ -170,28 +223,32 @@ Media.prototype.Timeline = function(container, options = {}) {
         return seg;
     };
 
-    
-    timeline.track = function(number) {
+
+    timeline.track = function (number) {
         if (typeof number === 'undefined') return this._maxTracks;
         this._maxTracks = Math.max(1, parseInt(number, 10));
         this._render();
         return this;
     };
 
-    
-    timeline._triggerChange = function(direction) {
+
+    timeline._triggerChange = function (event) {
         if (typeof this._changeCb === 'function') {
-            this._changeCb(this._segments.slice(), direction);
+            const seg = this._segments.find(s => s.id === this._selected);
+            this._changeCb({
+                event: event,
+                segment: seg ? { id: seg.id, from: seg.from, to: seg.to, type: seg.type } : null
+            });
         }
     };
 
-    
+
     function assignTracks(segments, maxTracks, movingId = null, movingFrom = null, movingTo = null) {
         let tracks = [];
-        
+
         segments.forEach(seg => { seg._track = undefined; });
 
-        
+
         let movingSeg = null;
         if (movingId && movingFrom !== null && movingTo !== null) {
             movingSeg = segments.find(s => s.id === movingId);
@@ -201,9 +258,9 @@ Media.prototype.Timeline = function(container, options = {}) {
             }
         }
 
-        
+
         segments.forEach(seg => {
-            if (movingSeg && seg.id === movingSeg.id) return; 
+            if (movingSeg && seg.id === movingSeg.id) return;
             let placed = false;
             if (typeof seg._forceTrack === 'number' && seg._forceTrack >= 0 && maxTracks) {
                 let t = seg._forceTrack;
@@ -239,7 +296,7 @@ Media.prototype.Timeline = function(container, options = {}) {
             }
         });
 
-        
+
         if (movingSeg) {
             let placed = false;
             let limit = maxTracks || (tracks.length + 1);
@@ -261,7 +318,7 @@ Media.prototype.Timeline = function(container, options = {}) {
             if (!placed) {
                 movingSeg._track = -1;
             }
-            
+
             delete movingSeg._pendingFrom;
             delete movingSeg._pendingTo;
         }
@@ -269,7 +326,7 @@ Media.prototype.Timeline = function(container, options = {}) {
         return tracks.length;
     }
 
-    
+
     let globalMouseMove = null, globalMouseUp = null;
 
     function cleanupListeners() {
@@ -284,12 +341,19 @@ Media.prototype.Timeline = function(container, options = {}) {
         document.body.style.userSelect = '';
     }
 
-    timeline._render = function() {
+    timeline._render = function () {
+        bar.children().each(function (i, el) {
+            // Remove all seek lines except the first one (which we keep)
+            if (el !== seekLine.nodes[0] && el.classList && el.classList.contains(classes['media-timeline-seek-line'])) {
+                el.parentNode && el.parentNode.removeChild(el);
+            }
+        });
         bar.html('');
+        bar.append(seekLine); // always keep only one seekLine
         tracksBar.html('');
         this._segments.sort((a, b) => a.from - b.from);
 
-        
+
         const tempDiv = document.createElement('div');
         tempDiv.className = classes['media-timeline-segment'];
         document.body.appendChild(tempDiv);
@@ -297,7 +361,7 @@ Media.prototype.Timeline = function(container, options = {}) {
         const segMargin = parseFloat(getComputedStyle(tempDiv).marginTop) || 2;
         document.body.removeChild(tempDiv);
 
-        
+
         let movingId = null, movingFrom = null, movingTo = null;
         if (timeline._movingSeg) {
             movingId = timeline._movingSeg.id;
@@ -305,7 +369,7 @@ Media.prototype.Timeline = function(container, options = {}) {
             movingTo = timeline._movingSeg.to;
         }
 
-        
+
         const trackCount = assignTracks(
             this._segments,
             this._maxTracks,
@@ -314,15 +378,15 @@ Media.prototype.Timeline = function(container, options = {}) {
             movingTo
         );
 
-        
+
         const maxTracks = this._maxTracks || trackCount || 1;
         const trackHeight = segHeight + 2 * segMargin + (parseFloat(getComputedStyle(document.body).getPropertyValue('--media-timeline-track-gap')) || 0);
 
-        
+
         const wrapperHeight = maxTracks * trackHeight;
         timeline.css('height', wrapperHeight + 'px');
 
-        
+
         for (let t = 0; t < maxTracks; t++) {
             const top = (t * trackHeight) + 'px';
             const height = trackHeight + 'px';
@@ -332,10 +396,10 @@ Media.prototype.Timeline = function(container, options = {}) {
             tracksBar.append(label);
         }
 
-        
+
         bar.off('mousedown', bar._timelineDeselectHandler);
-        bar._timelineDeselectHandler = function(e) {
-            
+        bar._timelineDeselectHandler = function (e) {
+
             if (
                 !e.target.classList.contains(classes['media-timeline-segment']) &&
                 !e.target.classList.contains(classes['media-timeline-handle'])
@@ -345,7 +409,7 @@ Media.prototype.Timeline = function(container, options = {}) {
         };
         bar.on('mousedown', bar._timelineDeselectHandler);
 
-        
+
         const barChildren = bar.children();
         const segNodeMap = {};
         if (barChildren && barChildren.nodes) {
@@ -363,7 +427,6 @@ Media.prototype.Timeline = function(container, options = {}) {
             const top = (seg._track * trackHeight) + 'px';
             const height = segHeight + 'px';
 
-            
             const typeClass = classes[seg.type] || '';
             const selectedClass = this._selected === seg.id ? classes['selected'] : '';
             const segClass = [
@@ -376,18 +439,20 @@ Media.prototype.Timeline = function(container, options = {}) {
             if (segDiv) {
                 Q(segDiv).css({ left, width, top, height });
                 segDiv.className = segClass;
+                // DO NOT set data-seg-id attribute on DOM!
                 used[seg.id] = true;
             } else {
                 segDiv = Q(`<div class="${segClass}" style="left:${left};width:${width};top:${top};height:${height};"></div>`);
+                // DO NOT set data-seg-id attribute on DOM!
                 const handleL = Q(`<div class="${classes['media-timeline-handle']} ${classes['left']}"></div>`);
                 const handleR = Q(`<div class="${classes['media-timeline-handle']} ${classes['right']}"></div>`);
                 segDiv.append(handleL, handleR);
 
-                
+
                 handleL.on('mousedown', e => {
                     e.preventDefault(); e.stopPropagation();
                     cleanupListeners();
-                    timeline.select(seg.id); 
+                    timeline.select(seg.id);
                     let startX = e.clientX, startFrom = seg.from;
                     document.body.style.userSelect = 'none';
                     globalMouseMove = ev => {
@@ -405,11 +470,11 @@ Media.prototype.Timeline = function(container, options = {}) {
                     document.addEventListener('mouseup', globalMouseUp, true);
                 });
 
-                
+
                 handleR.on('mousedown', e => {
                     e.preventDefault(); e.stopPropagation();
                     cleanupListeners();
-                    timeline.select(seg.id); 
+                    timeline.select(seg.id);
                     let startX = e.clientX, startTo = seg.to;
                     document.body.style.userSelect = 'none';
                     globalMouseMove = ev => {
@@ -425,23 +490,26 @@ Media.prototype.Timeline = function(container, options = {}) {
                     };
                     document.addEventListener('mousemove', globalMouseMove, true);
                     document.addEventListener('mouseup', globalMouseUp, true);
+
                 });
 
-                
+
                 segDiv.on('mousedown', e => {
                     if (e.target.classList.contains(classes['media-timeline-handle'])) return;
                     cleanupListeners();
                     timeline.select(seg.id);
                     let dragStartX = e.clientX;
                     let origFrom = seg.from, origTo = seg.to;
+                    let newFrom = origFrom, newTo = origTo;
                     document.body.style.userSelect = 'none';
-                    timeline._movingSeg = seg; 
+                    timeline._movingSeg = seg;
+
                     globalMouseMove = ev => {
                         let dx = ev.clientX - dragStartX;
                         let percent = dx / bar.nodes[0].offsetWidth;
                         let deltaMs = Math.round(percent * this._length);
-                        let newFrom = origFrom + deltaMs;
-                        let newTo = origTo + deltaMs;
+                        newFrom = origFrom + deltaMs;
+                        newTo = origTo + deltaMs;
                         if (newFrom < 0) {
                             newTo += -newFrom;
                             newFrom = 0;
@@ -451,15 +519,20 @@ Media.prototype.Timeline = function(container, options = {}) {
                             newTo = this._length;
                         }
                         if (newTo - newFrom < 1) return;
-                        seg.from = newFrom;
-                        seg.to = newTo;
-                        timeline._render();
+                        // Only trigger move event if actually changed
+                        if (seg.from !== newFrom || seg.to !== newTo) {
+                            seg.from = newFrom;
+                            seg.to = newTo;
+                            timeline._render();
+                            timeline._triggerChange("move");
+                        }
                     };
                     globalMouseUp = () => {
                         cleanupListeners();
-                        
                         delete timeline._movingSeg;
-                        timeline.modify(seg.id, seg.from, seg.to, "move");
+                        if (seg.from !== newFrom || seg.to !== newTo) {
+                            timeline.modify(seg.id, seg.from, seg.to, "move");
+                        }
                     };
                     document.addEventListener('mousemove', globalMouseMove, true);
                     document.addEventListener('mouseup', globalMouseUp, true);
@@ -467,17 +540,31 @@ Media.prototype.Timeline = function(container, options = {}) {
 
                 bar.append(segDiv);
                 used[seg.id] = true;
+                // Instead, keep a mapping in JS only:
+                segDiv._segId = seg.id;
             }
         }
 
-        
+
         for (const segId in segNodeMap) {
             if (!used[segId]) {
                 Q(segNodeMap[segId]).remove();
             }
         }
+
+        // --- Seek line rendering (only one, always present) ---
+        if (this._seekPos !== null && this._length > 0) {
+            const left = (this._seekPos / this._length * 100).toFixed(2) + '%';
+            seekLine.css({
+                left: left,
+                display: ''
+            });
+        } else {
+            seekLine.css('display', 'none');
+        }
     };
 
+    // Timeline only returns the Q object!
     return timeline;
 };
 

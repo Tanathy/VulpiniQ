@@ -32,6 +32,7 @@ Form.prototype.Dropdown = function(options = {}) {
                 cursor: pointer;
                 user-select: none;
                 width: 100%;
+                box-sizing: border-box;
             }
             .form_dropdown_items {
                 position: absolute;

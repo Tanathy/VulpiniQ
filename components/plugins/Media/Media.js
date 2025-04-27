@@ -3,7 +3,7 @@ function Media(options = {}) {
         return new Media(options);
     }
     if (!Media.initialized) {
-        // Media színek root változóként
+        // Media colors as root variables
         Q.style(`
             --media-timeline-bg: #232323;
             --media-timeline-track-border: #3338;
