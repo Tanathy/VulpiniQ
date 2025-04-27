@@ -1,0 +1,18 @@
+{
+  "Name": "Media.Timeline",
+  "Method": "Component",
+  "Desc": "Interactive timeline component for media annotation and navigation",
+  "LongDesc": "The Media.Timeline component creates an interactive timeline UI that allows users to add, modify, and navigate through time segments. It supports multiple tracks, segment selection, and can be integrated with Media.Video for synchronized playback control.",
+  "Type": "Component",
+  "Example": [
+    "var timeline = Media.Timeline(document.getElementById('container'));",
+    "var timeline = Media.Timeline('#timeline-container').length(60000);",
+    "var timeline = Media.Timeline('#timeline-container').add(1000, 5000, 'normal');",
+    "var timeline = Media.Timeline('#timeline-container').track(3);",
+    "var timeline = Media.Timeline('#timeline-container').select(function(id, from, to, type){ console.log('Selected segment:', id); });",
+    "var timeline = Media.Timeline('#timeline-container').seek(15000);"
+  ],
+  "Dependencies": [
+    "style"
+  ]
+}

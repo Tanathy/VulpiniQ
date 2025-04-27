@@ -1,6 +1,6 @@
-Media.prototype.Video = function(container, options = {}) {
+Media.prototype.Video = function(options = {}) {
 
-    // Q.style: csak CSS, nincs inline style
+    // Q.style: only CSS, no inline style
     if (!Media.videoClassesInitialized) {
         Media.videoClasses = Q.style(`
             --media-video-bg: #000;
@@ -131,11 +131,10 @@ Media.prototype.Video = function(container, options = {}) {
     }
     const classes = Media.videoClasses;
 
-    // DOM felépítés Q-val
+    // DOM structure with Q
     const wrapper = Q(`<div class="${classes['media-video-wrapper']}"></div>`);
     const video = Q(`<video class="${classes['media-video-element']}" preload="auto"></video>`);
     wrapper.append(video);
-    Q(container).append(wrapper);
 
     // Loader overlay
     const loaderOverlay = Q(`<div class="${classes['media-video-loader-overlay']}" style="display:none"></div>`);
@@ -146,7 +145,7 @@ Media.prototype.Video = function(container, options = {}) {
     // Overlay support
     let _customOverlay = null;
 
-    // Belső állapot
+    // Internal state
     let _status = "idle";
     let _timetick = null;
     let _statuscb = null;
@@ -157,26 +156,33 @@ Media.prototype.Video = function(container, options = {}) {
     let _networkTimeout = null;
     let _fpsSamples = [];
 
-    // Loader megjelenítés/eltüntetés animációval és timeout
+    // Loader show/hide with animation and timeout
     function updateLoader(st) {
-        // Loader csak loading/buffering/seeking alatt látszik
+        // Loader only visible during loading/buffering/seeking
         if (st === "loading" || st === "buffering" || st === "seeking") {
-            if (loaderOverlay.css('display') === 'none') {
-                loaderOverlay.css('display', 'flex');
-                setTimeout(() => loaderOverlay.addClass('visible'), 10);
-            } else {
-                loaderOverlay.addClass('visible');
-            }
-            // 30s timeout csak ha tényleg loading/buffering/seeking
+            // Debounce: show loader only if state persists for 1 second
+            Q.Debounce('media-video-loader', 1000, () => {
+                if (_status === st && (st === "loading" || st === "buffering" || st === "seeking")) {
+                    if (loaderOverlay.css('display') === 'none') {
+                        loaderOverlay.css('display', 'flex');
+                        setTimeout(() => loaderOverlay.addClass('visible'), 10);
+                    } else {
+                        loaderOverlay.addClass('visible');
+                    }
+                }
+            });
+            // 30s timeout only if really loading/buffering/seeking
             if (_networkTimeout) clearTimeout(_networkTimeout);
             _networkTimeout = setTimeout(() => {
-                // Ha még mindig loading/buffering/seeking, akkor networkfail
+                // If still loading/buffering/seeking, then networkfail
                 if (_status === "loading" || _status === "buffering" || _status === "seeking") {
                     setStatus("networkfail");
                 }
             }, 30000);
         } else {
-            // Ha nem loading/buffering/seeking, loader mindig tűnjön el
+            // Cancel debounce if leaving loading/buffering/seeking
+            Q.Debounce('media-video-loader', 0, () => {});
+            // If not loading/buffering/seeking, always hide loader
             loaderOverlay.removeClass('visible');
             loaderOverlay.nodes[0].addEventListener('transitionend', function handler(e) {
                 if (!loaderOverlay.hasClass('visible')) {
@@ -184,7 +190,7 @@ Media.prototype.Video = function(container, options = {}) {
                 }
                 loaderOverlay.nodes[0].removeEventListener('transitionend', handler);
             });
-            // Bármilyen más státusznál timeout törlés
+            // On any other status, clear timeout
             if (_networkTimeout) {
                 clearTimeout(_networkTimeout);
                 _networkTimeout = null;
@@ -207,7 +213,7 @@ Media.prototype.Video = function(container, options = {}) {
         "suspend": "networkfail"
     };
     function setStatus(st) {
-        // Ha ready/play/pause/ended, loader mindig tűnjön el, timeout törlődjön
+        // If ready/play/pause/ended, always hide loader and clear timeout
         if (st === "ready" || st === "playing" || st === "paused" || st === "ended") {
             if (_networkTimeout) {
                 clearTimeout(_networkTimeout);
@@ -220,7 +226,7 @@ Media.prototype.Video = function(container, options = {}) {
             _status = st;
             if (_statuscb) _statuscb(st);
         }
-        // Csak akkor hívjuk updateLoader-t, ha nem ready/play/pause/ended
+        // Only call updateLoader if not ready/play/pause/ended
         if (!(st === "ready" || st === "playing" || st === "paused" || st === "ended")) {
             updateLoader(st);
         }
@@ -238,18 +244,18 @@ Media.prototype.Video = function(container, options = {}) {
                 st = "failed";
             }
         }
-        // Ha loop aktív és ended után azonnal canplay jön, maradjon playing státusz
+        // If loop is active and ended is immediately followed by canplay, keep playing status
         if ((evt.type === "canplay" || evt.type === "canplaythrough")) {
             if (_loop && _status === "ended") {
                 st = "playing";
             } else if (video.nodes[0].paused) {
                 st = "ready";
             } else if (!video.nodes[0].paused) {
-                // Ha nem paused, hanem ténylegesen lejátszik, akkor playing
+                // If not paused, actually playing
                 st = "playing";
             }
         }
-        // Ha sebességváltás közben (ratechange) vagyunk, és a video nem paused, akkor is playing
+        // If during ratechange and video is not paused, also playing
         if (evt.type === "ratechange" && !video.nodes[0].paused) {
             st = "playing";
         }
@@ -265,7 +271,7 @@ Media.prototype.Video = function(container, options = {}) {
         if (_timetick && !video.nodes[0].paused && !video.nodes[0].ended) {
             _timetick(instance.pos());
         }
-        // FPS mintavételezés
+        // FPS sampling
         const v = video.nodes[0];
         let frames = null;
         if (typeof v.getVideoPlaybackQuality === "function") {
@@ -279,7 +285,7 @@ Media.prototype.Video = function(container, options = {}) {
         if (frames !== null) {
             const now = performance.now();
             _fpsSamples.push({ t: now, f: frames });
-            // Csak az utolsó 1000ms mintáit tartsuk meg
+            // Keep only last 1000ms samples
             while (_fpsSamples.length > 2 && (_fpsSamples[0].t < now - 1000)) {
                 _fpsSamples.shift();
             }
@@ -313,10 +319,18 @@ Media.prototype.Video = function(container, options = {}) {
         if (_loop) instance.play();
     });
 
-    // Metódusok hozzárendelése a példányhoz (mint Timeline-nál)
+    // Attach methods to instance (like Timeline)
     const instance = wrapper;
+
+    // onSeek: callback(ms) - called on every seek
+    let seekEventCb = null;
+    instance.onSeek = function(cb) {
+        seekEventCb = typeof cb === "function" ? cb : null;
+        return instance;
+    };
+
     instance.load = function(url) {
-        // URL csere esetén video újratöltése, buffer ürítése
+        // On URL change, reload video and clear buffer
         video.attr('src', '');
         video.nodes[0].removeAttribute('src');
         video.nodes[0].load();
@@ -329,21 +343,31 @@ Media.prototype.Video = function(container, options = {}) {
         return instance;
     };
     instance.play = function(from, to) {
-        // Always allow play() or play(from,to) even during playback
-        console.log("play", from, to);
         let videoLen = instance.length();
+        // If called with arguments, set playFrom/playTo accordingly
         if (typeof from === "number") {
             instance.seek(from);
             instance._playFrom = from;
-        } else {
-            instance._playFrom = 0;
         }
         if (typeof to === "number" && to > (typeof from === "number" ? from : 0)) {
             instance._playTo = Math.min(to, videoLen);
-        } else {
-            instance._playTo = null;
         }
-        video.nodes[0].play();
+        // If called with no arguments, use previous playFrom/playTo if set
+        if (typeof from !== "number" && typeof to !== "number") {
+            if (typeof instance._playFrom === "number" && typeof instance._playTo === "number") {
+                instance.seek(instance._playFrom);
+                // _playFrom/_playTo already set, just play
+            } else {
+                // No from/to set, play full video
+                instance._playFrom = 0;
+                instance._playTo = null;
+                instance.seek(0);
+            }
+        }
+        video.nodes[0].play().catch(error => {
+            console.error("Video playback error:", error);
+            setStatus("failed");
+        });
         return instance;
     };
     instance.stop = function() {
@@ -359,8 +383,10 @@ Media.prototype.Video = function(container, options = {}) {
         instance._playFrom = 0;
         return instance;
     };
-    instance.seek = function(ms) {
+    instance.seek = function(ms, _fromSeekBar) {
         video.nodes[0].currentTime = ms / 1000;
+        // Call callback on every seek, except if already called by seekbar drag (to avoid double call)
+        if (!_fromSeekBar && seekEventCb) seekEventCb(ms);
         return instance;
     };
     instance.speed = function(val) {
@@ -385,7 +411,7 @@ Media.prototype.Video = function(container, options = {}) {
             height: video.nodes[0].videoHeight
         };
     };
-    instance.bounds = function() {
+    instance.boundaries = function() {
         const rect = video.nodes[0].getBoundingClientRect();
         const parent = wrapper.nodes[0].getBoundingClientRect();
         return {
@@ -414,207 +440,218 @@ Media.prototype.Video = function(container, options = {}) {
         _autostart = !!val;
         return instance;
     };
-    instance.control = function() {
-        // Minden elem Q-val, csak class, nincs .css()
-        const frag = Q(`<div class="${classes['media-video-controls']}"></div>`);
-        // Play
-        const btnPlay = Q('<button>').text("Play").on('click', () => instance.play());
-        // Pause
-        const btnPause = Q('<button>').text("Pause").on('click', () => instance.pause());
-        // Stop
-        const btnStop = Q('<button>').text("Stop").on('click', () => instance.stop());
 
-        // Define a single Q.Form instance for all controls
-        const form = Q.Form ? new Q.Form() : null;
+    // --- CONTROL ELEMENTS INITIALIZATION (moved out of instance.control) ---
+    // All elements with Q, only class, no .css()
+    const frag = Q(`<div class="${classes['media-video-controls']}"></div>`);
+    // Play
+    const btnPlay = Q('<button>').text("Play").on('click', () => instance.play());
+    // Pause
+    const btnPause = Q('<button>').text("Pause").on('click', () => instance.pause());
+    // Stop
+    const btnStop = Q('<button>').text("Stop").on('click', () => instance.stop());
 
-        // Volume - csak Form.Slider
-        let volSlider = null;
-        if (form && form.Slider) {
-            volSlider = form.Slider(instance.volume(), { min: 0, max: 1 });
-            volSlider.change(function(val) {
-                instance.volume(parseFloat(val));
-            });
-            video.on('volumechange', function() {
-                volSlider.val(instance.volume());
-            });
-        }
+    // Define a single Q.Form instance for all controls
+    const form = Q.Form ? new Q.Form() : null;
 
-        // Speed dropdown Q.Form - max 5x
-        const speedValues = [
-            { value: 0.1, text: "0.1x" },
-            { value: 0.25, text: "0.25x" },
-            { value: 0.5, text: "0.5x" },
-            { value: 0.75, text: "0.75x" },
-            { value: 1, text: "1x" },
-            { value: 1.5, text: "1.5x" },
-            { value: 2, text: "2x" },
-            { value: 2.5, text: "2.5x" },
-            { value: 5, text: "5x" }
-        ];
-        let initialSpeedIdx = speedValues.findIndex(v => v.value === instance.speed());
-        if (initialSpeedIdx === -1) initialSpeedIdx = 4; // default 1x
-
-        let speedDropdown = null;
-        if (form && form.Dropdown) {
-            speedDropdown = form.Dropdown({
-                values: speedValues.map((v, i) => ({
-                    value: v.value,
-                    text: v.text,
-                    default: i === initialSpeedIdx
-                })),
-                change: function(val) {
-                    instance.speed(parseFloat(val));
-                }
-            });
-        }
-
-        // Loop
-        const loop = Q('<input type="checkbox">')
-            .prop('checked', instance.loop())
-            .attr('title', 'Loop')
-            .on('change', function() { instance.loop(this.checked); });
-        const loopLbl = Q('<label>').append(loop, document.createTextNode(" Loop"));
-
-        // Autostart
-        const auto = Q('<input type="checkbox">')
-            .prop('checked', instance.autostart())
-            .attr('title', 'Autostart')
-            .on('change', function() { instance.autostart(this.checked); });
-        const autoLbl = Q('<label>').append(auto, document.createTextNode(" Autostart"));
-
-        // Default sorrend: Play, Pause, Stop, Volume, Speed, Loop, Autostart
-        if (btnPlay) frag.append(btnPlay);
-        if (btnPause) frag.append(btnPause);
-        if (btnStop) frag.append(btnStop);
-        if (volSlider) frag.append(volSlider);
-        if (speedDropdown) frag.append(speedDropdown);
-        frag.append(loopLbl);
-        frag.append(autoLbl);
-
-        // --- SEEKBAR + SCALE ---
-        // Helper: idő formázás
-        function fmt(ms) {
-            ms = Math.max(0, Math.round(ms));
-            let s = Math.floor(ms / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60);
-            let ms3 = (ms % 1000).toString().padStart(3, '0');
-            s = s % 60; m = m % 60;
-            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms3}`;
-        }
-
-        // Seekbar scale (skála)
-        const seekScale = Q(`<div class="${classes['media-video-seek-scale']}"></div>`);
-        function renderScale() {
-            seekScale.html('');
-            const len = instance.length();
-            const scaleDiv = Q('<div style="position:absolute;left:0;top:0;width:100%;height:100%;"></div>');
-            const scaleHeight = parseFloat(seekScale.css('height')) || 8;
-            for (let ms = 0; ms <= len; ms += 30000) {
-                const isMinute = ms % 60000 === 0;
-                const left = (ms / len * 100).toFixed(2) + '%';
-                const height = isMinute ? scaleHeight : scaleHeight * 0.5;
-                const top = isMinute ? 0 : (scaleHeight * 0.5) + 'px';
-                const mark = Q('<div>')
-                    .css({
-                        position: 'absolute',
-                        left: left,
-                        top: top,
-                        width: '1px',
-                        height: height + 'px',
-                        background: isMinute ? '#fff' : '#aaa',
-                        opacity: isMinute ? 0.8 : 0.5
-                    });
-                scaleDiv.append(mark);
-            }
-            seekScale.append(scaleDiv);
-        }
-
-        // Seekbar (custom, nem Form.Slider)
-        const seekBar = Q(`<div class="${classes['media-video-seekbar']}"></div>`);
-        const seekTrack = Q(`<div class="${classes['media-video-seekbar-track']}"></div>`);
-        const seekThumb = Q(`<div class="${classes['media-video-seekbar-thumb']}"></div>`);
-        seekBar.append(seekTrack, seekThumb);
-
-        // Seek info (alatta)
-        const seekInfo = Q(`<div class="${classes['media-video-seek-info']}"></div>`);
-        const seekLeft = Q('<div>').css({flex:'1',textAlign:'left'});
-        const seekCenter = Q('<div>').css({flex:'1',textAlign:'center'});
-        const seekRight = Q('<div>').css({flex:'1',textAlign:'right'});
-        seekInfo.append(seekLeft, seekCenter, seekRight);
-
-        // Seek group wrapper
-        const seekGroup = Q(`<div class="${classes['media-video-seek-group']}"></div>`);
-        seekGroup.append(seekScale, seekBar, seekInfo);
-
-        // Seekbar frissítés
-        function updateSeekUI() {
-            const len = instance.length();
-            const pos = instance.pos();
-            const pct = len > 0 ? pos / len : 0;
-            seekTrack.css('width', (pct * 100) + '%');
-            seekThumb.css('left', (pct * 100) + '%');
-            seekLeft.text(fmt(0) + ' / ' + fmt(pos));
-            seekRight.text(fmt(len));
-            seekCenter.text('');
-        }
-
-        // Seekbar interakció
-        let dragging = false;
-        function seekToClientX(clientX) {
-            const rect = seekBar.nodes[0].getBoundingClientRect();
-            let rel = (clientX - rect.left) / rect.width;
-            rel = Math.max(0, Math.min(1, rel));
-            const len = instance.length();
-            const ms = Math.round(len * rel);
-            instance.seek(ms);
-            updateSeekUI();
-        }
-        seekBar.on('mousedown', function(e) {
-            dragging = true;
-            seekToClientX(e.clientX);
-            document.body.style.userSelect = 'none';
+    // Volume - only Form.Slider
+    let volSlider = null;
+    if (form && form.Slider) {
+        volSlider = form.Slider(instance.volume(), { min: 0, max: 1 });
+        volSlider.change(function(val) {
+            instance.volume(parseFloat(val));
         });
-        document.addEventListener('mousemove', function(e) {
+        video.on('volumechange', function() {
+            volSlider.val(instance.volume());
+        });
+    }
+
+    // Speed dropdown Q.Form - max 5x
+    const speedValues = [
+        { value: 0.1, text: "0.1x" },
+        { value: 0.25, text: "0.25x" },
+        { value: 0.5, text: "0.5x" },
+        { value: 0.75, text: "0.75x" },
+        { value: 1, text: "1x" },
+        { value: 1.5, text: "1.5x" },
+        { value: 2, text: "2x" },
+        { value: 2.5, text: "2.5x" },
+        { value: 5, text: "5x" }
+    ];
+    let initialSpeedIdx = speedValues.findIndex(v => v.value === instance.speed());
+    if (initialSpeedIdx === -1) initialSpeedIdx = 4; // default 1x
+
+    let speedDropdown = null;
+    if (form && form.Dropdown) {
+        speedDropdown = form.Dropdown({
+            values: speedValues.map((v, i) => ({
+                value: v.value,
+                text: v.text,
+                default: i === initialSpeedIdx
+            })),
+            change: function(val) {
+                instance.speed(parseFloat(val));
+            }
+        });
+    }
+
+    // Loop
+    const loop = Q('<input type="checkbox">')
+        .prop('checked', instance.loop())
+        .attr('title', 'Loop')
+        .on('change', function() { instance.loop(this.checked); });
+    const loopLbl = Q('<label>').append(loop, document.createTextNode(" Loop"));
+
+    // Autostart
+    const auto = Q('<input type="checkbox">')
+        .prop('checked', instance.autostart())
+        .attr('title', 'Autostart')
+        .on('change', function() { instance.autostart(this.checked); });
+    const autoLbl = Q('<label>').append(auto, document.createTextNode(" Autostart"));
+
+    // --- SEEKBAR + SCALE ---
+    // Helper: time formatting
+    function fmt(ms) {
+        ms = Math.max(0, Math.round(ms));
+        let s = Math.floor(ms / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60);
+        let ms3 = (ms % 1000).toString().padStart(3, '0');
+        s = s % 60; m = m % 60;
+        return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms3}`;
+    }
+
+    // Seekbar scale
+    const seekScale = Q(`<div class="${classes['media-video-seek-scale']}"></div>`);
+    function renderScale() {
+        seekScale.html('');
+        const len = instance.length();
+        const scaleDiv = Q('<div style="position:absolute;left:0;top:0;width:100%;height:100%;"></div>');
+        const scaleHeight = parseFloat(seekScale.css('height')) || 8;
+        for (let ms = 0; ms <= len; ms += 30000) {
+            const isMinute = ms % 60000 === 0;
+            const left = (ms / len * 100).toFixed(2) + '%';
+            const height = isMinute ? scaleHeight : scaleHeight * 0.5;
+            const top = isMinute ? 0 : (scaleHeight * 0.5) + 'px';
+            const mark = Q('<div>')
+                .css({
+                    position: 'absolute',
+                    left: left,
+                    top: top,
+                    width: '1px',
+                    height: height + 'px',
+                    background: isMinute ? '#fff' : '#aaa',
+                    opacity: isMinute ? 0.8 : 0.5
+                });
+            scaleDiv.append(mark);
+        }
+        seekScale.append(scaleDiv);
+    }
+
+    // Seekbar (custom, not Form.Slider)
+    const seekBar = Q(`<div class="${classes['media-video-seekbar']}"></div>`);
+    const seekTrack = Q(`<div class="${classes['media-video-seekbar-track']}"></div>`);
+    const seekThumb = Q(`<div class="${classes['media-video-seekbar-thumb']}"></div>`);
+    seekBar.append(seekTrack, seekThumb);
+
+    // Seek info (below)
+    const seekInfo = Q(`<div class="${classes['media-video-seek-info']}"></div>`);
+    const seekLeft = Q('<div>').css({flex:'1',textAlign:'left'});
+    const seekCenter = Q('<div>').css({flex:'1',textAlign:'center'});
+    const seekRight = Q('<div>').css({flex:'1',textAlign:'right'});
+    seekInfo.append(seekLeft, seekCenter, seekRight);
+
+    // Seek group wrapper
+    const seekGroup = Q(`<div class="${classes['media-video-seek-group']}"></div>`);
+    seekGroup.append(seekScale, seekBar, seekInfo);
+
+    // Seekbar update
+    function updateSeekUI() {
+        const len = instance.length();
+        const pos = instance.pos();
+        const pct = len > 0 ? pos / len : 0;
+        seekTrack.css('width', (pct * 100) + '%');
+        seekThumb.css('left', (pct * 100) + '%');
+        seekLeft.text(fmt(0) + ' / ' + fmt(pos));
+        seekRight.text(fmt(len));
+        seekCenter.text('');
+    }
+
+    // Seekbar interaction
+    let dragging = false;
+    let lastSeekMs = null; // last seeked ms during seekbar drag
+
+    function seekToClientX(clientX, status) {
+        const rect = seekBar.nodes[0].getBoundingClientRect();
+        let rel = (clientX - rect.left) / rect.width;
+        rel = Math.max(0, Math.min(1, rel));
+        const len = instance.length();
+        const ms = Math.round(len * rel);
+        lastSeekMs = ms;
+        instance.seek(ms, true); // only UI update
+        updateSeekUI();
+        // Call callback on every seekbar drag as well!
+        if (seekEventCb) seekEventCb(ms);
+    }
+
+    // Drag event handlers
+    let mouseMoveHandler = null;
+    let mouseUpHandler = null;
+
+    seekBar.on('mousedown', function(e) {
+        dragging = true;
+        seekToClientX(e.clientX, 'start');
+        document.body.style.userSelect = 'none';
+
+        mouseMoveHandler = function(ev) {
             if (dragging) {
-                seekToClientX(e.clientX);
+                seekToClientX(ev.clientX, 'move');
             }
-        });
-        document.addEventListener('mouseup', function(e) {
+        };
+        mouseUpHandler = function(ev) {
             if (dragging) {
                 dragging = false;
                 document.body.style.userSelect = '';
+                seekToClientX(ev.clientX, 'end');
+                document.removeEventListener('mousemove', mouseMoveHandler);
+                document.removeEventListener('mouseup', mouseUpHandler);
+                mouseMoveHandler = null;
+                mouseUpHandler = null;
             }
-        });
+        };
+        document.addEventListener('mousemove', mouseMoveHandler);
+        document.addEventListener('mouseup', mouseUpHandler);
+    });
 
-        // Frissítés minden ticknél
-        video.on('timeupdate', updateSeekUI);
-        video.on('loadedmetadata', function() {
-            renderScale();
-            updateSeekUI();
-        });
-        // Ha videó hossza változik (pl. új videó)
-        video.on('durationchange', function() {
-            renderScale();
-            updateSeekUI();
-        });
+    // Update on every tick
+    video.on('timeupdate', updateSeekUI);
+    video.on('loadedmetadata', function() {
+        renderScale();
+        updateSeekUI();
+    });
+    // If video length changes (e.g. new video)
+    video.on('durationchange', function() {
+        renderScale();
+        updateSeekUI();
+    });
 
-        // Első render
-        setTimeout(() => {
-            renderScale();
-            updateSeekUI();
-        }, 0);
+    // First render
+    setTimeout(() => {
+        renderScale();
+        updateSeekUI();
+    }, 0);
 
-        // --- Vezérlők összerakása ---
-        // Default sorrend: seekGroup, vezérlők
-        frag.append(seekGroup);
-        if (btnPlay) frag.append(btnPlay);
-        if (btnPause) frag.append(btnPause);
-        if (btnStop) frag.append(btnStop);
-        if (volSlider) frag.append(volSlider);
-        if (speedDropdown) frag.append(speedDropdown);
-        frag.append(loopLbl);
-        frag.append(autoLbl);
+    // --- Assemble controls ---
+    // Default order: seekGroup, controls
+    frag.append(seekGroup);
+    if (btnPlay) frag.append(btnPlay);
+    if (btnPause) frag.append(btnPause);
+    if (btnStop) frag.append(btnStop);
+    if (volSlider) frag.append(volSlider);
+    if (speedDropdown) frag.append(speedDropdown);
+    frag.append(loopLbl);
+    frag.append(autoLbl);
 
-        // Return object with all controls for custom arrangement
+    // --- instance.control just returns the elements ---
+    instance.control = function() {
         return {
             seekGroup,
             seekScale,
@@ -646,7 +683,7 @@ Media.prototype.Video = function(container, options = {}) {
         return instance;
     };
 
-    // Extra: wrapper és video DOM eléréséhez
+    // Extra: wrapper and video DOM access
     instance.wrapper = wrapper.nodes[0];
     instance.video = video.nodes[0];
 
@@ -661,5 +698,7 @@ Media.prototype.Video = function(container, options = {}) {
         return null;
     };
 
-    return instance;
+    return wrapper;
 };
+
+Media.Video = Media.prototype.Video;

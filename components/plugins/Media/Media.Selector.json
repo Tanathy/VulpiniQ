@@ -1,0 +1,18 @@
+{
+  "Name": "Media.Selector",
+  "Method": "Component",
+  "Desc": "Region selection tool for images and videos",
+  "LongDesc": "The Media.Selector component creates an interactive region selection interface allowing users to draw, resize and move selection areas on top of media elements. It supports percentage-based coordinates, aspect ratio constraints, and programmatic control.",
+  "Type": "Component",
+  "Example": [
+    "var selector = Media.Selector(document.getElementById('video-container'));",
+    "var selector = Media.Selector('#image-container', {default: {x: 10, y: 10, w: 30, h: 30}});",
+    "var selector = Media.Selector('#media').add(20, 20, 40, 40);",
+    "var selector = Media.Selector('#media').aspectRatio('16:9');",
+    "var selector = Media.Selector('#media').set(10, 10, 50, 50);",
+    "var coords = Media.Selector('#media').get();"
+  ],
+  "Dependencies": [
+    "style"
+  ]
+}

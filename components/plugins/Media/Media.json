@@ -1,0 +1,15 @@
+{
+  "Name": "Media",
+  "Method": "Constructor",
+  "Desc": "Core media functionality provider for VulpiniQ",
+  "LongDesc": "The Media module provides core functionality for handling various media types including video and timeline features. It initializes global styling variables and serves as the foundation for media components.",
+  "Type": "Constructor",
+  "Example": [
+    "var media = new Media();",
+    "var media = Media();",
+    "Q.Media();"
+  ],
+  "Dependencies": [
+    "style"
+  ]
+}
