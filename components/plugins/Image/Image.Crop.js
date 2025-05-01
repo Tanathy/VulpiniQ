@@ -5,6 +5,7 @@
             preserveContext: true // Whether to preserve the drawing context properties
         };
         
+        this.saveToHistory(); // Save the current state before cropping
         const finalOptions = Object.assign({}, defaultOptions, cropOptions);
         const canvas_node = this.node;
         

@@ -80,6 +80,10 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | JSON | Instance | Utility | A utility class to parse, deflate, inflate, merge, sort, flatten, and unflatten JSON data\. |
 | LAB to RGB Converter | Static | Color Conversion | Converts LAB \(Lightness, a\*, b\*\) color values to RGB \(Red, Green, Blue\) format\. |
 | Leaving | Static | Event Handling | Attaches a function to the window's beforeunload event, allowing actions before the page is closed or refreshed\. |
+| Media | Constructor | Constructor | Core media functionality provider for VulpiniQ |
+| Media\.Selector | Component | Component | Region selection tool for images and videos |
+| Media\.Timeline | Component | Component | Interactive timeline component for media annotation and navigation |
+| Media\.Video | Component | Component | Video player with advanced controls and timeline support |
 | RGB to CMYK Converter | Static | Color Conversion | Converts RGB \(Red, Green, Blue\) color values to CMYK \(Cyan, Magenta, Yellow, Key/Black\) format\. |
 | RGB to HSL Converter | Static | Color Conversion | Converts RGB \(Red, Green, Blue\) color values to HSL \(Hue, Saturation, Lightness\) format\. |
 | RGB to LAB Converter | Static | Color Conversion | Converts RGB \(Red, Green, Blue\) color values to LAB \(Lightness, a\*, b\*\) color space format\. |

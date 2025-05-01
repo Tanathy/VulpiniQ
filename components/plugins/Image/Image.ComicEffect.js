@@ -12,6 +12,7 @@
         
         const finalOptions = Object.assign({}, defaultOptions, effectOptions);
         const canvas_node = this.node;
+        this.saveToHistory(); // Save the current state before applying the effect
         
         // Create a temporary canvas for processing
         let temp = Q('<canvas>', { 

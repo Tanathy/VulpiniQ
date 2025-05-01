@@ -1,4 +1,3 @@
-
 Q.Image.prototype.GodRay = function(rayOptions = {}) {
     const defaultOptions = {
         centerX: 50,            
@@ -11,9 +10,12 @@ Q.Image.prototype.GodRay = function(rayOptions = {}) {
         exposure: 0.3,          
         angle: null,            
         tintColor: null,        
-        blendMode: 'screen'     
+        blendMode: 'screen',
+        fadeOut: 0.1,           // NEW: fade amount per step (0..1)
+        fadeOutType: 'ease'     // NEW: "ease" or "linear"
     };
     
+    this.saveToHistory();
     const finalOptions = Object.assign({}, defaultOptions, rayOptions);
     const canvas_node = this.node;
     
@@ -89,12 +91,27 @@ Q.Image.prototype.GodRay = function(rayOptions = {}) {
             rayCtx.globalCompositeOperation = 'screen';
     }
     
+    // --- FadeOut calculation ---
+    function getFade(progress) {
+        // progress: 0..1
+        if (finalOptions.fadeOutType === 'linear') {
+            return Math.max(0, 1 - finalOptions.fadeOut * progress * samples);
+        } else if (finalOptions.fadeOutType === 'ease') {
+            // ease-out: slow fade at start, fast at end
+            return Math.max(0, 1 - finalOptions.fadeOut * Math.pow(progress, 0.5) * samples);
+        }
+        // fallback
+        return Math.max(0, 1 - finalOptions.fadeOut * progress * samples);
+    }
+    
     for (let i = 0; i < samples; i++) {
         
         const progress = i / (samples - 1);
         const scale = 1 + progress * length;
         
-        const opacity = Math.pow(finalOptions.decay, i) * finalOptions.strength;
+        // Opacity: decay * strength * fadeOut
+        const fade = getFade(progress);
+        const opacity = Math.pow(finalOptions.decay, i) * finalOptions.strength * fade;
         
         let x, y, w, h;
         

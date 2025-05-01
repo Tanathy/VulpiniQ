@@ -1,5 +1,4 @@
-
-    Q.Image.prototype.CRT = function(crtOptions = {}) {
+Q.Image.prototype.CRT = function(crtOptions = {}) {
         // Default options
         const defaultOptions = {
             // Original options
@@ -20,6 +19,12 @@
             rgbOffset: 0,             // RGB subpixel separation
             curvature: true,          // Apply CRT screen curvature
             curvatureAmount: 0.1,     // Amount of screen curvature (0-0.3),
+            curvatureX: 50,           // Curvature center X as percent (0-100)
+            curvatureY: 50,           // Curvature center Y as percent (0-100)
+            curvatureArc: 15,         // Curvature arc in degrees (max 45)
+            curvatureType: "convex",  // "convex" or "concave"
+            zoom: 0,                  // Zoom percent (0 = no zoom, 50 = 50% in)
+            autoFill: false,          // Auto zoom to fill frame if concave
             
             // VHS specific options
             verticalWobble: 5,        // Amplitude of vertical wobble
@@ -30,7 +35,37 @@
         };
         
         const finalOptions = Object.assign({}, defaultOptions, crtOptions);
+        // Clamp curvatureArc to [0, 45]
+        finalOptions.curvatureArc = Math.max(0, Math.min(45, finalOptions.curvatureArc));
+        // Map curvatureArc (0-45deg) to curvatureAmount (0-0.3)
+        const curvatureAmountFromArc = finalOptions.curvatureArc / 45 * 0.3;
+        // Use the smaller of user-supplied curvatureAmount and curvatureAmountFromArc
+        let curveAmount = Math.min(finalOptions.curvatureAmount, curvatureAmountFromArc);
+        // Invert curvature if concave
+        if (finalOptions.curvatureType === "concave") {
+            curveAmount = -curveAmount;
+        }
+        finalOptions._effectiveCurvatureAmount = curveAmount;
+
+        // --- Calculate effective zoom ---
+        // User zoom: percent, 0 = no zoom, 50 = 50% in
+        let zoom = (typeof finalOptions.zoom === "number" ? finalOptions.zoom : 0) / 100;
+        // If autoFill is enabled and concave, calculate minimum zoom to fill frame
+        if (finalOptions.autoFill && finalOptions.curvature && finalOptions.curvatureType === "concave") {
+            // The minimum zoom is determined by the maximum distortion at the corners
+            // Find the maximum distance from center to a corner in normalized space
+            // For normalized nx,ny: corners are at (±1,±1)
+            const maxDistSq = 1*1 + 1*1; // nx^2 + ny^2 at corners
+            const absCurve = Math.abs(curveAmount);
+            // The distortion at the corners
+            const distortion = 1 + maxDistSq * absCurve;
+            // The visible area is shrunk by this factor, so we need to zoom in by distortion
+            // (zoom = distortion - 1, as a ratio)
+            zoom = Math.max(zoom, distortion - 1);
+        }
+
         const canvas_node = this.node;
+        this.saveToHistory();
         
         // Create a temporary canvas for processing
         let temp = Q('<canvas>', { 
@@ -156,30 +191,38 @@
             
             // Apply screen curvature if enabled
             if (finalOptions.curvature) {
-                const curveAmount = finalOptions.curvatureAmount;
-                
+                // Use _effectiveCurvatureAmount for actual distortion
+                const curveAmount = finalOptions._effectiveCurvatureAmount;
+                // Use curvatureX and curvatureY as center in percent
+                const centerX = Math.round((finalOptions.curvatureX / 100) * canvas_node.width);
+                const centerY = Math.round((finalOptions.curvatureY / 100) * canvas_node.height);
+
                 // Draw with curvature distortion
                 for (let y = 0; y < canvas_node.height; y++) {
-                    // Calculate normalized y position (0 to 1)
-                    const ny = y / canvas_node.height * 2 - 1; // -1 to 1
+                    // Calculate normalized y position (-1 to 1) relative to center
+                    const ny = ((y - centerY) / canvas_node.height) * 2;
                     
                     // Apply vertical wobble
                     const vWobble = vWobbleAmp * Math.sin(y / 30 + timePhase);
                     
                     for (let x = 0; x < canvas_node.width; x++) {
-                        // Calculate normalized x position (-1 to 1)
-                        const nx = x / canvas_node.width * 2 - 1; // -1 to 1
-                        
+                        // Calculate normalized x position (-1 to 1) relative to center
+                        const nx = ((x - centerX) / canvas_node.width) * 2;
+
+                        // --- Apply zoom (scale normalized coordinates toward center) ---
+                        let zx = nx / (1 + zoom);
+                        let zy = ny / (1 + zoom);
+
                         // Apply horizontal wobble based on x position and time
                         const hWobble = hWobbleAmp * Math.sin(x / 20 + timePhase * 0.7);
                         
                         // Calculate curved position (barrel distortion)
-                        const distSq = nx * nx + ny * ny;
+                        const distSq = zx * zx + zy * zy;
                         const distortion = 1 + distSq * curveAmount;
                         
-                        // Map back to pixel coordinates with curvature
-                        const srcX = Math.round((nx / distortion + 1) / 2 * canvas_node.width + hWobble);
-                        const srcY = Math.round((ny / distortion + 1) / 2 * canvas_node.height + vWobble);
+                        // Map back to pixel coordinates with curvature and zoom
+                        const srcX = Math.round(centerX + (zx / distortion) * (canvas_node.width / 2) + hWobble);
+                        const srcY = Math.round(centerY + (zy / distortion) * (canvas_node.height / 2) + vWobble);
                         
                         // Only draw if source pixel is within bounds
                         if (srcX >= 0 && srcX < canvas_node.width && srcY >= 0 && srcY < canvas_node.height) {

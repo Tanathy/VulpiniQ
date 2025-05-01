@@ -1,6 +1,6 @@
 Container.prototype.Window = function (options = {}) {
 
-    const defaults = {
+    const defaultOptions = {
         title: 'Window',
         content: '',
         resizable: true,
@@ -258,30 +258,30 @@ Container.prototype.Window = function (options = {}) {
             minWidth: '0'
         };
 
-        switch (defaults.minimizePosition || 'bottom-left') {
+        switch (defaultOptions.minimizePosition || 'bottom-left') {
             case 'bottom-right':
-                taskbarStyle.right = defaults.minimizeOffset + 'px';
-                taskbarStyle.bottom = defaults.minimizeOffset + 'px';
+                taskbarStyle.right = defaultOptions.minimizeOffset + 'px';
+                taskbarStyle.bottom = defaultOptions.minimizeOffset + 'px';
                 break;
             case 'top-left':
-                taskbarStyle.left = defaults.minimizeOffset + 'px';
-                taskbarStyle.top = defaults.minimizeOffset + 'px';
+                taskbarStyle.left = defaultOptions.minimizeOffset + 'px';
+                taskbarStyle.top = defaultOptions.minimizeOffset + 'px';
                 break;
             case 'top-right':
-                taskbarStyle.right = defaults.minimizeOffset + 'px';
-                taskbarStyle.top = defaults.minimizeOffset + 'px';
+                taskbarStyle.right = defaultOptions.minimizeOffset + 'px';
+                taskbarStyle.top = defaultOptions.minimizeOffset + 'px';
                 break;
             case 'bottom-left':
             default:
-                taskbarStyle.left = defaults.minimizeOffset + 'px';
-                taskbarStyle.bottom = defaults.minimizeOffset + 'px';
+                taskbarStyle.left = defaultOptions.minimizeOffset + 'px';
+                taskbarStyle.bottom = defaultOptions.minimizeOffset + 'px';
                 break;
         }
         Container.taskbar = Q('<div>', { class: Container.windowClasses.window_taskbar || 'window_taskbar' }).css(taskbarStyle);
         Q('body').append(Container.taskbar);
     }
 
-    const settings = Object.assign({}, defaults, options);
+    const settings = Object.assign({}, defaultOptions, options);
     const windowElement = Q('<div>', { class: Container.windowClasses.window_container });
 
     if (settings.shadow) {

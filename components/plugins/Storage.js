@@ -41,30 +41,33 @@ Q.Storage = (function () {
         return result;
     };
     return function (storageKey, storageValue, compressionEnabled = false) {
+        const PREFIX_COMPRESSED = 'C|';
+        const PREFIX_STRING = 'S|';
+        const PREFIX_JSON = 'J|';
         if (arguments.length > 1) { 
             if (storageValue === null || storageValue === '') {
                 localStorage.removeItem(storageKey);
                 return;
             }
             let dataString = typeof storageValue === 'string'
-                ? 'S|' + storageValue
-                : 'J|' + JSON.stringify(storageValue);
+                ? PREFIX_STRING + storageValue
+                : PREFIX_JSON + JSON.stringify(storageValue);
             if (compressionEnabled) {
-                dataString = 'C|' + lzw_compress(dataString);
+                dataString = PREFIX_COMPRESSED + lzw_compress(dataString);
             }
             localStorage.setItem(storageKey, dataString);
         } else {
             let dataString = localStorage.getItem(storageKey);
             if (dataString === null) return null;
-            if (dataString.startsWith('C|')) {
-                dataString = lzw_decompress(dataString.slice(2));
+            if (dataString.startsWith(PREFIX_COMPRESSED)) {
+                dataString = lzw_decompress(dataString.slice(PREFIX_COMPRESSED.length));
             }
-            if (dataString.startsWith('S|')) {
-                return dataString.slice(2);
+            if (dataString.startsWith(PREFIX_STRING)) {
+                return dataString.slice(PREFIX_STRING.length);
             }
-            if (dataString.startsWith('J|')) {
-                try { return JSON.parse(dataString.slice(2)); } 
-                catch (error) { return dataString.slice(2); }
+            if (dataString.startsWith(PREFIX_JSON)) {
+                try { return JSON.parse(dataString.slice(PREFIX_JSON.length)); } 
+                catch (error) { return dataString.slice(PREFIX_JSON.length); }
             }
             try { return JSON.parse(dataString); } 
             catch (error) { return dataString; }

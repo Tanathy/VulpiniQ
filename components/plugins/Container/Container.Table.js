@@ -1,6 +1,6 @@
 Container.prototype.Table = function (data = [], options = {}) {
   if (!Array.isArray(data)) throw new Error('Container.Table: data must be an array of objects');
-  const defaults = {
+  const defaultOptions = {
     pageSize: 10,
     sizes: [],
     pageButtonLimit: 5,
@@ -12,7 +12,7 @@ Container.prototype.Table = function (data = [], options = {}) {
     info: true,
     language: ['Search...', 'No results found.', 'Showing [PAGE] to [ALL_PAGES] of [TOTAL] entries','First', 'Prev', 'Next', 'Last'],
   };
-  options = Object.assign({}, defaults, options);
+  options = Object.assign({}, defaultOptions, options);
 
   const {
     debounce: debounceTime,

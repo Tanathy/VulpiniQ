@@ -12,6 +12,7 @@ Q.Image.prototype.ZoomBlur = function(zoomOptions = {}) {
         progressive: true       
     };
     
+    this.saveToHistory();
     const finalOptions = Object.assign({}, defaultOptions, zoomOptions);
     const canvas_node = this.node;
     

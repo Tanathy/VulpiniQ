@@ -4343,6 +4343,7 @@ Form.prototype.Dropdown = function(options = {}) {
                 cursor: pointer;
                 user-select: none;
                 width: 100%;
+                box-sizing: border-box;
             }
             .form_dropdown_items {
                 position: absolute;
@@ -6340,6 +6341,1430 @@ Q.JSON.prototype.unflatten = function (flatObject) {
     this.json = result;
     return result;
 };
+function Media(options = {}) {
+    if (!(this instanceof Media)) {
+        return new Media(options);
+    }
+    if (!Media.initialized) {
+        Q.style(`
+            --media-timeline-bg: #232323;
+            --media-timeline-track-border: #3338;
+            --media-timeline-segment-normal: #4caf50;
+            --media-timeline-segment-alert: #ff9800;
+            --media-timeline-segment-warning: #f44336;
+            --media-timeline-handle-bg:rgba(255, 255, 255, 0.21);
+        `);
+        Media.initialized = true;
+        console.log('Media core initialized');
+    }
+    return this;
+};
+Q.Media = Media;
+Media.prototype.Selector = function(container, options = {}) {
+    if (!Media.selectorClassesInitialized) {
+        Media.selectorClasses = Q.style(`
+            --media-selector-bg: rgba(0,0,0,0.15);
+            --media-selector-rect: #4caf50;
+            --media-selector-rect-active: #ff9800;
+            --media-selector-dot: #fff;
+            --media-selector-dot-border: #333;
+        `, `
+            .media-selector-canvas {
+                position: absolute;
+                left: 0; top: 0; width: 100%; height: 100%;
+                pointer-events: auto;
+                z-index: 20;
+                background: var(--media-selector-bg, rgba(0,0,0,0.15));
+                cursor: crosshair;
+                user-select: none;
+            }
+            .media-selector-rect {
+                position: absolute;
+                border: 2px solid var(--media-selector-rect, #4caf50);
+                background: rgba(76,175,80,0.08);
+                box-sizing: border-box;
+                pointer-events: auto;
+            }
+            .media-selector-rect.active {
+                border-color: var(--media-selector-rect-active, #ff9800);
+                background: rgba(255,152,0,0.08);
+            }
+            .media-selector-dot {
+                position: absolute;
+                width: 12px; height: 12px;
+                border-radius: 50%;
+                background: var(--media-selector-dot, #fff);
+                border: 2px solid var(--media-selector-dot-border, #333);
+                right: -8px; bottom: -8px;
+                cursor: nwse-resize;
+                z-index: 2;
+            }
+        `, null, {
+            'media-selector-canvas': 'media-selector-canvas',
+            'media-selector-rect': 'media-selector-rect',
+            'media-selector-dot': 'media-selector-dot'
+        }, false);
+        Media.selectorClassesInitialized = true;
+    }
+    const classes = Media.selectorClasses;
+    const wrapper = Q(container);
+    if (window.getComputedStyle(wrapper.nodes[0]).position === 'static') {
+        wrapper.css('position', 'relative');
+    }
+    const canvas = Q('<canvas class="' + classes['media-selector-canvas'] + '"></canvas>');
+    wrapper.append(canvas);
+    let selection = null;
+    let defaultDims = { x: 10, y: 10, w: 30, h: 30 }; // percent
+    function getMediaRect() {
+        const media = wrapper.find('video') || wrapper.find('img');
+        if (!media || !media.nodes[0]) {
+            const rect = wrapper.nodes[0].getBoundingClientRect();
+            return { left: 0, top: 0, width: rect.width, height: rect.height };
+        }
+        const mediaRect = media.nodes[0].getBoundingClientRect();
+        const wrapperRect = wrapper.nodes[0].getBoundingClientRect();
+        return {
+            left: mediaRect.left - wrapperRect.left,
+            top: mediaRect.top - wrapperRect.top,
+            width: mediaRect.width,
+            height: mediaRect.height
+        };
+    }
+    function percentToPx({x, y, w, h}) {
+        const mediaRect = getMediaRect();
+        return {
+            x: mediaRect.left + mediaRect.width * x / 100,
+            y: mediaRect.top + mediaRect.height * y / 100,
+            w: mediaRect.width * w / 100,
+            h: mediaRect.height * h / 100
+        };
+    }
+    function pxToPercent({x, y, w, h}) {
+        const mediaRect = getMediaRect();
+        return {
+            x: mediaRect.width ? ((x - mediaRect.left) / mediaRect.width * 100) : 0,
+            y: mediaRect.height ? ((y - mediaRect.top) / mediaRect.height * 100) : 0,
+            w: mediaRect.width ? (w / mediaRect.width * 100) : 0,
+            h: mediaRect.height ? (h / mediaRect.height * 100) : 0
+        };
+    }
+    function renderSelections() {
+        const el = canvas.nodes[0];
+        const rect = wrapper.nodes[0].getBoundingClientRect();
+        el.width = rect.width;
+        el.height = rect.height;
+        el.style.width = rect.width + "px";
+        el.style.height = rect.height + "px";
+        const ctx = el.getContext('2d');
+        ctx.clearRect(0, 0, el.width, el.height);
+        if (!selection) {
+            return;
+        }
+        const dimsPx = percentToPx(selection);
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(0, 0, el.width, el.height);
+        ctx.clearRect(dimsPx.x, dimsPx.y, dimsPx.w, dimsPx.h);
+        ctx.restore();
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(dimsPx.x, dimsPx.y, dimsPx.w, dimsPx.h);
+        ctx.restore();
+        ctx.save();
+        ctx.clearRect(dimsPx.x + dimsPx.w - 3, dimsPx.y + dimsPx.h - 3, 6, 6);
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 0.8;
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.beginPath();
+        ctx.rect(dimsPx.x + dimsPx.w - 3, dimsPx.y + dimsPx.h - 3, 6, 6);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+    let drawing = null;
+    let drag = null;
+    canvas.on('mousedown', function(e) {
+        const rect = wrapper.nodes[0].getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        if (selection) {
+            const dimsPx = percentToPx(selection);
+            const dx = x - (dimsPx.x + dimsPx.w);
+            const dy = y - (dimsPx.y + dimsPx.h);
+            if (dx*dx + dy*dy <= 64) {
+                drag = {
+                    type: 'resize',
+                    startX: e.clientX,
+                    startY: e.clientY,
+                    orig: {...selection}
+                };
+                document.body.style.userSelect = 'none';
+                e.stopPropagation();
+                return;
+            }
+            if (
+                x >= dimsPx.x && x <= dimsPx.x + dimsPx.w &&
+                y >= dimsPx.y && y <= dimsPx.y + dimsPx.h
+            ) {
+                drag = {
+                    type: 'move',
+                    startX: e.clientX,
+                    startY: e.clientY,
+                    orig: {...selection}
+                };
+                document.body.style.userSelect = 'none';
+                e.stopPropagation();
+                return;
+            }
+        }
+        drawing = { startX: x, startY: y, endX: x, endY: y };
+    });
+    document.addEventListener('mousemove', function(e) {
+        if (drawing) {
+            const rect = wrapper.nodes[0].getBoundingClientRect();
+            drawing.endX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+            drawing.endY = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+            renderSelections();
+            const x = Math.min(drawing.startX, drawing.endX);
+            const y = Math.min(drawing.startY, drawing.endY);
+            const w = Math.abs(drawing.endX - drawing.startX);
+            const h = Math.abs(drawing.endY - drawing.startY);
+            const el = canvas.nodes[0];
+            const ctx = el.getContext('2d');
+            ctx.save();
+            ctx.strokeStyle = '#ff9800';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x, y, w, h);
+            ctx.restore();
+        }
+        if (drag && selection) {
+            const sel = selection;
+            const mediaRect = getMediaRect();
+            if (drag.type === 'resize') {
+                let dx = (e.clientX - drag.startX) / mediaRect.width * 100;
+                let dy = (e.clientY - drag.startY) / mediaRect.height * 100;
+                let newW = Math.max(2, drag.orig.w + dx);
+                let newH = Math.max(2, drag.orig.h + dy);
+                newW = Math.min(newW, 100 - drag.orig.x);
+                newH = Math.min(newH, 100 - drag.orig.y);
+                selection = {
+                    x: drag.orig.x,
+                    y: drag.orig.y,
+                    w: newW,
+                    h: newH
+                };
+                renderSelections();
+            } else if (drag.type === 'move') {
+                let dx = (e.clientX - drag.startX) / mediaRect.width * 100;
+                let dy = (e.clientY - drag.startY) / mediaRect.height * 100;
+                selection = {
+                    x: Math.max(0, Math.min(100 - sel.w, drag.orig.x + dx)),
+                    y: Math.max(0, Math.min(100 - sel.h, drag.orig.y + dy)),
+                    w: sel.w,
+                    h: sel.h
+                };
+                renderSelections();
+            }
+        }
+    });
+    document.addEventListener('mouseup', function(e) {
+        if (drawing) {
+            const rect = wrapper.nodes[0].getBoundingClientRect();
+            const x = Math.min(drawing.startX, drawing.endX);
+            const y = Math.min(drawing.startY, drawing.endY);
+            const w = Math.abs(drawing.endX - drawing.startX);
+            const h = Math.abs(drawing.endY - drawing.startY);
+            if (w > 10 && h > 10) {
+                const perc = pxToPercent({x, y, w, h});
+                add(perc.x, perc.y, perc.w, perc.h);
+            }
+            drawing = null;
+            renderSelections();
+        }
+        if (drag) {
+            drag = null;
+        }
+        document.body.style.userSelect = '';
+    });
+    function handleResize() {
+        renderSelections();
+    }
+    window.addEventListener('resize', handleResize);
+    if (window.ResizeObserver) {
+        const ro = new ResizeObserver(handleResize);
+        ro.observe(wrapper.nodes[0]);
+        const media = wrapper.find('video') || wrapper.find('img');
+        if (media && media.nodes[0]) {
+            ro.observe(media.nodes[0]);
+        }
+    }
+    function add(x, y, w, h) {
+        selection = {
+            x: Math.max(0, Math.min(100, x)),
+            y: Math.max(0, Math.min(100, y)),
+            w: Math.max(2, Math.min(100, w)),
+            h: Math.max(2, Math.min(100, h))
+        };
+        renderSelections();
+        return true;
+    }
+    function remove() {
+        if (selection) {
+            selection = null;
+            renderSelections();
+        }
+    }
+    function get() {
+        if (!selection) return null;
+        return {...selection};
+    }
+    function dimensions(x, y, w, h) {
+        if (x === undefined) return {...defaultDims};
+        defaultDims = {
+            x: Math.max(0, Math.min(100, x)),
+            y: Math.max(0, Math.min(100, y)),
+            w: Math.max(2, Math.min(100, w)),
+            h: Math.max(2, Math.min(100, h))
+        };
+        renderSelections();
+        return instance;
+    }
+    function set(x, y, w, h) {
+        selection = {
+            x: Math.max(0, Math.min(100, x)),
+            y: Math.max(0, Math.min(100, y)),
+            w: Math.max(2, Math.min(100, w)),
+            h: Math.max(2, Math.min(100, h))
+        };
+        renderSelections();
+        return instance;
+    }
+    function aspectRatio(ratio) {
+        if (!ratio) {
+            if (!selection) return null;
+            return (selection.w / selection.h).toFixed(4);
+        }
+        let [rw, rh] = ratio.split(':').map(Number);
+        if (!rw || !rh) return instance;
+        const mediaRect = getMediaRect();
+        const mediaW = mediaRect.width;
+        const mediaH = mediaRect.height;
+        if (!mediaW || !mediaH) return instance;
+        let targetW = mediaW, targetH = mediaW * rh / rw;
+        if (targetH > mediaH) {
+            targetH = mediaH;
+            targetW = mediaH * rw / rh;
+        }
+        const wPerc = (targetW / mediaW) * 100;
+        const hPerc = (targetH / mediaH) * 100;
+        const xPerc = (100 - wPerc) / 2;
+        const yPerc = (100 - hPerc) / 2;
+        set(xPerc, yPerc, wPerc, hPerc);
+        return instance;
+    }
+    const instance = canvas;
+    instance.add = add;
+    instance.remove = remove;
+    instance.get = get;
+    instance.dimensions = dimensions;
+    instance.set = set; // <-- new method
+    instance.aspectRatio = aspectRatio; // <-- new method
+    if (options.default) {
+        dimensions(options.default.x, options.default.y, options.default.w, options.default.h);
+    }
+    if (options.init) {
+        add(options.init.x, options.init.y, options.init.w, options.init.h);
+    }
+    renderSelections();
+    return instance;
+};
+Media.prototype.Timeline = function (container, options = {}) {
+    if (!Media.timelineClassesInitialized) {
+        Media.timelineClasses = Q.style(`
+            --media-timeline-segment-height: 8px;
+            --media-timeline-segment-margin: 2px;
+            --media-timeline-track-gap: 0px;
+        `, `
+            .media-timeline-wrapper {
+                width: 100%;
+                background: var(--media-timeline-bg, #232323);
+                position: relative;
+                user-select: none;
+                display: block;
+            }
+            .media-timeline-bar {
+                width: 100%; height: 100%; position: relative; z-index: 2;
+            }
+            .media-timeline-tracks {
+                position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 1;
+                pointer-events: none;
+            }
+            .media-timeline-track-row {
+                position: absolute; left: 0; width: 100%;
+                border-bottom: 1px solid var(--media-timeline-track-border, #3338);
+                box-sizing: border-box;
+            }
+            .media-timeline-track-label {
+                position: absolute; left: 4px; top: 0; font-size: 10px; color: #888; z-index: 3;
+                pointer-events: none;
+            }
+            .media-timeline-segment {
+                position: absolute;
+                border-radius: 5px;
+                min-width: 1px;
+                cursor: pointer;
+                box-sizing: border-box;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                transition: box-shadow 0.1s;
+                margin-top: var(--media-timeline-segment-margin, 2px);
+                margin-bottom: var(--media-timeline-segment-margin, 2px);
+                background: var(--media-timeline-segment-normal, #4caf50);
+                overflow: hidden;
+                height: var(--media-timeline-segment-height, 8px);
+                opacity: 0.5;
+            }
+            .media-timeline-segment.normal { background: var(--media-timeline-segment-normal, #4caf50); }
+            .media-timeline-segment.alert { background: var(--media-timeline-segment-alert, #ff9800); }
+            .media-timeline-segment.warning { background: var(--media-timeline-segment-warning, #f44336); }
+            .media-timeline-segment.selected {z-index: 2; opacity: 1; }
+            .media-timeline-handle {
+                width: 5px; height: 100%; background: var(--media-timeline-handle-bg, #fff4); cursor: ew-resize; z-index: 3;
+            }
+            /* Seek line style */
+            .media-timeline-seek-line {
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                width: 2px;
+                background: #fff;
+                opacity: 0.3;
+                z-index: 10;
+                pointer-events: none;
+            }
+        `, null, {
+            'media-timeline-wrapper': 'media-timeline-wrapper',
+            'media-timeline-bar': 'media-timeline-bar',
+            'media-timeline-tracks': 'media-timeline-tracks',
+            'media-timeline-track-row': 'media-timeline-track-row',
+            'media-timeline-track-label': 'media-timeline-track-label',
+            'media-timeline-segment': 'media-timeline-segment',
+            'media-timeline-handle': 'media-timeline-handle',
+            'selected': 'selected',
+            'normal': 'normal',
+            'alert': 'alert',
+            'warning': 'warning',
+            'left': 'left',
+            'right': 'right',
+            'media-timeline-seek-line': 'media-timeline-seek-line'
+        });
+        Media.timelineClassesInitialized = true;
+    }
+    const classes = Media.timelineClasses;
+    const timeline = Q(`<div class="${classes['media-timeline-wrapper']}"></div>`);
+    const bar = Q(`<div class="${classes['media-timeline-bar']}"></div>`);
+    const tracksBar = Q(`<div class="${classes['media-timeline-tracks']}"></div>`);
+    const seekLine = Q(`<div class="${classes['media-timeline-seek-line']}" style="display:none;height:100%;"></div>`);
+    bar.append(seekLine);
+    timeline.append(bar, tracksBar);
+    timeline._length = 10000;
+    timeline._segments = [];
+    timeline._selected = null;
+    timeline._changeCb = null;
+    timeline._idCounter = 1;
+    timeline._maxTracks = null;
+    timeline._seekPos = null; // ms value or null
+    timeline.seek = function (ms) {
+        if (typeof ms !== "number" || isNaN(ms)) {
+            this._seekPos = null;
+        } else {
+            this._seekPos = Math.max(0, Math.min(ms, this._length));
+        }
+        this._render();
+        return this;
+    };
+    timeline.length = function (ms) {
+        if (typeof ms === 'undefined') return this._length;
+        this._length = Math.max(1, ms);
+        this._render();
+        return this;
+    };
+    timeline.add = function (from, to, type = 'normal', trackIndex) {
+        from = Math.max(0, Math.min(from, this._length));
+        to = Math.max(from, Math.min(to, this._length));
+        const id = 'seg_' + (this._idCounter++);
+        const seg = { id, from, to, type };
+        if (typeof trackIndex === 'number' && trackIndex >= 0) {
+            seg._forceTrack = trackIndex;
+        }
+        this._segments.push(seg);
+        this._render();
+        this._triggerChange();
+        return id;
+    };
+    timeline.modify = function (id, from, to, direction) {
+        const seg = this._segments.find(s => s.id === id);
+        if (!seg) return false;
+        seg.from = Math.max(0, Math.min(from, this._length));
+        seg.to = Math.max(seg.from, Math.min(to, this._length));
+        this._render();
+        this._triggerChange(direction);
+        return true;
+    };
+    timeline.remove = function (id) {
+        this._segments = this._segments.filter(s => s.id !== id);
+        if (this._selected === id) this._selected = null;
+        this._render();
+        this._triggerChange();
+        return this;
+    };
+    timeline.clear = function () {
+        this._segments = [];
+        this._selected = null;
+        this._render();
+        this._triggerChange();
+        return this;
+    };
+    timeline.clone = function (id, from) {
+        const seg = this._segments.find(s => s.id === id);
+        if (!seg) return null;
+        const len = seg.to - seg.from;
+        let newFrom = Math.max(0, Math.min(from, this._length - len));
+        let newTo = newFrom + len;
+        return this.add(newFrom, newTo, seg.type);
+    };
+    timeline.change = function (cb) {
+        this._changeCb = cb;
+        return this;
+    };
+    timeline._selectCb = null;
+    timeline._deselectCb = null;
+    timeline.select = function (arg) {
+        if (typeof arg === "function") {
+            this._selectCb = arg;
+            const seg = this._segments.find(s => s.id === this._selected);
+            if (seg) arg(seg.id, seg.from, seg.to, seg.type);
+            return this;
+        }
+        this._selected = arg;
+        this._render();
+        this._triggerChange("select");
+        if (typeof this._selectCb === "function") {
+            const seg = this._segments.find(s => s.id === this._selected);
+            if (seg) this._selectCb(seg.id, seg.from, seg.to, seg.type);
+        }
+        return this;
+    };
+    timeline.deselect = function (arg) {
+        if (typeof arg === "function") {
+            this._deselectCb = arg;
+            return this;
+        }
+        const wasSelected = this._selected;
+        this._selected = null;
+        this._render();
+        this._triggerChange("deselect");
+        if (wasSelected && typeof this._deselectCb === "function") {
+            this._deselectCb();
+        }
+        return this;
+    };
+    timeline.selected = function (cb) {
+        const seg = this._segments.find(s => s.id === this._selected);
+        if (seg && typeof cb === 'function') {
+            cb(seg.id, seg.from, seg.to, seg.type);
+        }
+        return seg;
+    };
+    timeline.track = function (number) {
+        if (typeof number === 'undefined') return this._maxTracks;
+        this._maxTracks = Math.max(1, parseInt(number, 10));
+        this._render();
+        return this;
+    };
+    timeline._triggerChange = function (event) {
+        if (typeof this._changeCb === 'function') {
+            const seg = this._segments.find(s => s.id === this._selected);
+            this._changeCb({
+                event: event,
+                segment: seg ? { id: seg.id, from: seg.from, to: seg.to, type: seg.type } : null
+            });
+        }
+    };
+    function assignTracks(segments, maxTracks, movingId = null, movingFrom = null, movingTo = null) {
+        let tracks = [];
+        segments.forEach(seg => { seg._track = undefined; });
+        let movingSeg = null;
+        if (movingId && movingFrom !== null && movingTo !== null) {
+            movingSeg = segments.find(s => s.id === movingId);
+            if (movingSeg) {
+                movingSeg._pendingFrom = movingFrom;
+                movingSeg._pendingTo = movingTo;
+            }
+        }
+        segments.forEach(seg => {
+            if (movingSeg && seg.id === movingSeg.id) return;
+            let placed = false;
+            if (typeof seg._forceTrack === 'number' && seg._forceTrack >= 0 && maxTracks) {
+                let t = seg._forceTrack;
+                if (t < maxTracks) {
+                    if (!tracks[t]) tracks[t] = [];
+                    let overlap = tracks[t].some(other =>
+                        !(seg.to <= other.from || seg.from >= other.to)
+                    );
+                    if (!overlap) {
+                        seg._track = t;
+                        tracks[t].push(seg);
+                        placed = true;
+                    }
+                }
+            }
+            if (!placed) {
+                let limit = maxTracks || (tracks.length + 1);
+                for (let t = 0; t < limit; t++) {
+                    if (!tracks[t]) tracks[t] = [];
+                    let overlap = tracks[t].some(other =>
+                        !(seg.to <= other.from || seg.from >= other.to)
+                    );
+                    if (!overlap) {
+                        seg._track = t;
+                        tracks[t].push(seg);
+                        placed = true;
+                        break;
+                    }
+                }
+            }
+            if (!placed) {
+                seg._track = -1;
+            }
+        });
+        if (movingSeg) {
+            let placed = false;
+            let limit = maxTracks || (tracks.length + 1);
+            for (let t = 0; t < limit; t++) {
+                if (!tracks[t]) tracks[t] = [];
+                let overlap = tracks[t].some(other =>
+                    !(
+                        (movingTo <= (other._pendingFrom ?? other.from)) ||
+                        (movingFrom >= (other._pendingTo ?? other.to))
+                    )
+                );
+                if (!overlap) {
+                    movingSeg._track = t;
+                    tracks[t].push(movingSeg);
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed) {
+                movingSeg._track = -1;
+            }
+            delete movingSeg._pendingFrom;
+            delete movingSeg._pendingTo;
+        }
+        return tracks.length;
+    }
+    let globalMouseMove = null, globalMouseUp = null;
+    function cleanupListeners() {
+        if (globalMouseMove) {
+            document.removeEventListener('mousemove', globalMouseMove, true);
+            globalMouseMove = null;
+        }
+        if (globalMouseUp) {
+            document.removeEventListener('mouseup', globalMouseUp, true);
+            globalMouseUp = null;
+        }
+        document.body.style.userSelect = '';
+    }
+    timeline._render = function () {
+        bar.children().each(function (i, el) {
+            if (el !== seekLine.nodes[0] && el.classList && el.classList.contains(classes['media-timeline-seek-line'])) {
+                el.parentNode && el.parentNode.removeChild(el);
+            }
+        });
+        bar.html('');
+        bar.append(seekLine); // always keep only one seekLine
+        tracksBar.html('');
+        this._segments.sort((a, b) => a.from - b.from);
+        const tempDiv = document.createElement('div');
+        tempDiv.className = classes['media-timeline-segment'];
+        document.body.appendChild(tempDiv);
+        const segHeight = parseFloat(getComputedStyle(tempDiv).height) || 8;
+        const segMargin = parseFloat(getComputedStyle(tempDiv).marginTop) || 2;
+        document.body.removeChild(tempDiv);
+        let movingId = null, movingFrom = null, movingTo = null;
+        if (timeline._movingSeg) {
+            movingId = timeline._movingSeg.id;
+            movingFrom = timeline._movingSeg.from;
+            movingTo = timeline._movingSeg.to;
+        }
+        const trackCount = assignTracks(
+            this._segments,
+            this._maxTracks,
+            movingId,
+            movingFrom,
+            movingTo
+        );
+        const maxTracks = this._maxTracks || trackCount || 1;
+        const trackHeight = segHeight + 2 * segMargin + (parseFloat(getComputedStyle(document.body).getPropertyValue('--media-timeline-track-gap')) || 0);
+        const wrapperHeight = maxTracks * trackHeight;
+        timeline.css('height', wrapperHeight + 'px');
+        for (let t = 0; t < maxTracks; t++) {
+            const top = (t * trackHeight) + 'px';
+            const height = trackHeight + 'px';
+            const row = Q(`<div class="${classes['media-timeline-track-row']}" style="top:${top};height:${height};"></div>`);
+            const label = Q(`<div class="${classes['media-timeline-track-label']}" style="top:${top};">${t + 1}</div>`);
+            tracksBar.append(row);
+            tracksBar.append(label);
+        }
+        bar.off('mousedown', bar._timelineDeselectHandler);
+        bar._timelineDeselectHandler = function (e) {
+            if (
+                !e.target.classList.contains(classes['media-timeline-segment']) &&
+                !e.target.classList.contains(classes['media-timeline-handle'])
+            ) {
+                timeline.deselect();
+            }
+        };
+        bar.on('mousedown', bar._timelineDeselectHandler);
+        const barChildren = bar.children();
+        const segNodeMap = {};
+        if (barChildren && barChildren.nodes) {
+            for (let i = 0; i < barChildren.nodes.length; i++) {
+                const n = barChildren.nodes[i];
+                if (n.dataset && n.dataset.segId) segNodeMap[n.dataset.segId] = n;
+            }
+        }
+        const used = {};
+        for (const seg of this._segments) {
+            if (seg._track === -1 || typeof seg._track !== 'number') continue;
+            const left = (seg.from / this._length * 100).toFixed(2) + '%';
+            const width = ((seg.to - seg.from) / this._length * 100).toFixed(2) + '%';
+            const top = (seg._track * trackHeight) + 'px';
+            const height = segHeight + 'px';
+            const typeClass = classes[seg.type] || '';
+            const selectedClass = this._selected === seg.id ? classes['selected'] : '';
+            const segClass = [
+                classes['media-timeline-segment'],
+                typeClass,
+                selectedClass
+            ].filter(Boolean).join(' ');
+            let segDiv = segNodeMap && segNodeMap[seg.id];
+            if (segDiv) {
+                Q(segDiv).css({ left, width, top, height });
+                segDiv.className = segClass;
+                used[seg.id] = true;
+            } else {
+                segDiv = Q(`<div class="${segClass}" style="left:${left};width:${width};top:${top};height:${height};"></div>`);
+                const handleL = Q(`<div class="${classes['media-timeline-handle']} ${classes['left']}"></div>`);
+                const handleR = Q(`<div class="${classes['media-timeline-handle']} ${classes['right']}"></div>`);
+                segDiv.append(handleL, handleR);
+                handleL.on('mousedown', e => {
+                    e.preventDefault(); e.stopPropagation();
+                    cleanupListeners();
+                    timeline.select(seg.id);
+                    let startX = e.clientX, startFrom = seg.from;
+                    document.body.style.userSelect = 'none';
+                    globalMouseMove = ev => {
+                        let dx = ev.clientX - startX;
+                        let percent = dx / bar.nodes[0].offsetWidth;
+                        let ms = Math.round(startFrom + percent * this._length);
+                        ms = Math.max(0, Math.min(ms, seg.to - 1));
+                        timeline.modify(seg.id, ms, seg.to, "left");
+                    };
+                    globalMouseUp = () => {
+                        cleanupListeners();
+                        timeline._render();
+                    };
+                    document.addEventListener('mousemove', globalMouseMove, true);
+                    document.addEventListener('mouseup', globalMouseUp, true);
+                });
+                handleR.on('mousedown', e => {
+                    e.preventDefault(); e.stopPropagation();
+                    cleanupListeners();
+                    timeline.select(seg.id);
+                    let startX = e.clientX, startTo = seg.to;
+                    document.body.style.userSelect = 'none';
+                    globalMouseMove = ev => {
+                        let dx = ev.clientX - startX;
+                        let percent = dx / bar.nodes[0].offsetWidth;
+                        let ms = Math.round(startTo + percent * this._length);
+                        ms = Math.max(seg.from + 1, Math.min(ms, this._length));
+                        timeline.modify(seg.id, seg.from, ms, "right");
+                    };
+                    globalMouseUp = () => {
+                        cleanupListeners();
+                        timeline._render();
+                    };
+                    document.addEventListener('mousemove', globalMouseMove, true);
+                    document.addEventListener('mouseup', globalMouseUp, true);
+                });
+                segDiv.on('mousedown', e => {
+                    if (e.target.classList.contains(classes['media-timeline-handle'])) return;
+                    cleanupListeners();
+                    timeline.select(seg.id);
+                    let dragStartX = e.clientX;
+                    let origFrom = seg.from, origTo = seg.to;
+                    let newFrom = origFrom, newTo = origTo;
+                    document.body.style.userSelect = 'none';
+                    timeline._movingSeg = seg;
+                    globalMouseMove = ev => {
+                        let dx = ev.clientX - dragStartX;
+                        let percent = dx / bar.nodes[0].offsetWidth;
+                        let deltaMs = Math.round(percent * this._length);
+                        newFrom = origFrom + deltaMs;
+                        newTo = origTo + deltaMs;
+                        if (newFrom < 0) {
+                            newTo += -newFrom;
+                            newFrom = 0;
+                        }
+                        if (newTo > this._length) {
+                            newFrom -= (newTo - this._length);
+                            newTo = this._length;
+                        }
+                        if (newTo - newFrom < 1) return;
+                        if (seg.from !== newFrom || seg.to !== newTo) {
+                            seg.from = newFrom;
+                            seg.to = newTo;
+                            timeline._render();
+                            timeline._triggerChange("move");
+                        }
+                    };
+                    globalMouseUp = () => {
+                        cleanupListeners();
+                        delete timeline._movingSeg;
+                        if (seg.from !== newFrom || seg.to !== newTo) {
+                            timeline.modify(seg.id, seg.from, seg.to, "move");
+                        }
+                    };
+                    document.addEventListener('mousemove', globalMouseMove, true);
+                    document.addEventListener('mouseup', globalMouseUp, true);
+                });
+                bar.append(segDiv);
+                used[seg.id] = true;
+                segDiv._segId = seg.id;
+            }
+        }
+        for (const segId in segNodeMap) {
+            if (!used[segId]) {
+                Q(segNodeMap[segId]).remove();
+            }
+        }
+        if (this._seekPos !== null && this._length > 0) {
+            const left = (this._seekPos / this._length * 100).toFixed(2) + '%';
+            seekLine.css({
+                left: left,
+                display: ''
+            });
+        } else {
+            seekLine.css('display', 'none');
+        }
+    };
+    return timeline;
+};
+Media.prototype.Video = function(options = {}) {
+    if (!Media.videoClassesInitialized) {
+        Media.videoClasses = Q.style(`
+            --media-video-bg: #000;
+            --media-video-seekbar-bg: #222;
+            --media-video-seekbar-tr-color: #5af;
+            --media-video-seekbar-th-color: #fff;
+            --media-video-seekbar-group-bg: rgba(0,0,0,0.1);
+        `, `
+            .media-video-wrapper {
+                width: 100%;
+                height: 100%;
+                background: var(--media-video-bg, #000);
+                position: relative;
+                display: block;
+                overflow: hidden;
+            }
+            .media-video-element {
+                width: 100%;
+                height: 100%;
+                display: block;
+                background: var(--media-video-bg, #000);
+                object-fit: contain;
+            }
+            .media-video-controls {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
+            .media-video-seek-group {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 0;
+                margin-bottom: 6px;
+                background: var(--media-video-seekbar-group-bg, #000);
+            }
+            .media-video-seek-scale {
+                width: 100%;
+                position: relative;
+                height: 8px;
+            }
+            .media-video-seekbar {
+                width: 100%;
+                height: 10px;
+                position: relative;
+                cursor: pointer;
+                background: var(--media-video-seekbar-bg, #222);
+                overflow: hidden;
+            }
+            .media-video-seekbar-track {
+                position: absolute;
+                left: 0; top: 0;
+                height: 100%;
+                background: var(--media-video-seekbar-tr-color, #5af);
+                width: 0;
+            }
+            .media-video-seekbar-thumb {
+                position: absolute;
+                top: 50%;
+                width: 1px;
+                height: 20px;
+                background: var(--media-video-seekbar-th-color, #fff);
+                border-radius: 4px;
+                box-shadow: 0 2px 8px #0008;
+                transform: translate(-50%,-50%);
+            }
+            .media-video-seek-info {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                font-size: 11px;
+                font-family: monospace;
+                color: #ccc;
+                margin-top: 2px;
+            }
+            .media-video-loader-overlay {
+                position: absolute;
+                left: 0; top: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10;
+                flex-direction: column;
+                pointer-events: none;
+                opacity: 0;
+                transition: opacity 0.25s;                                                                                                               
+            }
+            .media-video-loader-overlay.visible {
+                opacity: 1;
+                pointer-events: auto;
+            }
+            .media-video-loader {
+                --c:no-repeat linear-gradient(white 0 0);
+                opacity: 0.5;
+                background: 
+                    var(--c),var(--c),var(--c),
+                    var(--c),var(--c),var(--c),
+                    var(--c),var(--c),var(--c);
+                background-size: 16px 16px;
+                animation: 
+                    l32-1 1s infinite,
+                    l32-2 1s infinite;
+                margin-bottom: 12px;
+            }
+            @keyframes l32-1 {
+                0%,100% {width:45px;height: 45px}
+                35%,65% {width:65px;height: 65px}
+            }
+            @keyframes l32-2 {
+                0%,40%  {background-position: 0 0,0 50%, 0 100%,50% 100%,100% 100%,100% 50%,100% 0,50% 0,0 0,  50% 50% }
+                60%,100%{background-position: 0 50%, 0 100%,50% 100%,100% 100%,100% 50%,100% 0,50% 0,0 0,  50% 50% }
+            }
+        `, null, {
+            'media-video-wrapper': 'media-video-wrapper',
+            'media-video-element': 'media-video-element',
+            'media-video-controls': 'media-video-controls',
+            'media-video-seek-scale': 'media-video-seek-scale',
+            'media-video-seekbar-track': 'media-video-seekbar-track',
+            'media-video-seekbar-thumb': 'media-video-seekbar-thumb',
+            'media-video-seekbar': 'media-video-seekbar',
+            'media-video-seek-info': 'media-video-seek-info',
+            'media-video-loader-overlay': 'media-video-loader-overlay',
+            'media-video-loader': 'media-video-loader',
+            'media-video-seek-group': 'media-video-seek-group',
+        },false);
+        Media.videoClassesInitialized = true;
+    }
+    const classes = Media.videoClasses;
+    const wrapper = Q(`<div class="${classes['media-video-wrapper']}"></div>`);
+    const video = Q(`<video class="${classes['media-video-element']}" preload="auto"></video>`);
+    wrapper.append(video);
+    const loaderOverlay = Q(`<div class="${classes['media-video-loader-overlay']}" style="display:none"></div>`);
+    const loaderAnim = Q(`<div class="${classes['media-video-loader']}"></div>`);
+    loaderOverlay.append(loaderAnim);
+    wrapper.append(loaderOverlay);
+    let _customOverlay = null;
+    let _status = "idle";
+    let _timetick = null;
+    let _statuscb = null;
+    let _loop = false;
+    let _tickRAF = null;
+    let _autostart = false;
+    let _playTo = null;
+    let _networkTimeout = null;
+    let _fpsSamples = [];
+    function updateLoader(st) {
+        if (st === "loading" || st === "buffering" || st === "seeking") {
+            Q.Debounce('media-video-loader', 1000, () => {
+                if (_status === st && (st === "loading" || st === "buffering" || st === "seeking")) {
+                    if (loaderOverlay.css('display') === 'none') {
+                        loaderOverlay.css('display', 'flex');
+                        setTimeout(() => loaderOverlay.addClass('visible'), 10);
+                    } else {
+                        loaderOverlay.addClass('visible');
+                    }
+                }
+            });
+            if (_networkTimeout) clearTimeout(_networkTimeout);
+            _networkTimeout = setTimeout(() => {
+                if (_status === "loading" || _status === "buffering" || _status === "seeking") {
+                    setStatus("networkfail");
+                }
+            }, 30000);
+        } else {
+            Q.Debounce('media-video-loader', 0, () => {});
+            loaderOverlay.removeClass('visible');
+            loaderOverlay.nodes[0].addEventListener('transitionend', function handler(e) {
+                if (!loaderOverlay.hasClass('visible')) {
+                    loaderOverlay.css('display', 'none');
+                }
+                loaderOverlay.nodes[0].removeEventListener('transitionend', handler);
+            });
+            if (_networkTimeout) {
+                clearTimeout(_networkTimeout);
+                _networkTimeout = null;
+            }
+        }
+    }
+    const statusMap = {
+        "playing": "playing",
+        "pause": "paused",
+        "ended": "ended",
+        "waiting": "buffering",
+        "seeking": "seeking",
+        "canplay": "ready",
+        "canplaythrough": "ready",
+        "loadstart": "loading",
+        "error": "failed",
+        "stalled": "networkfail",
+        "suspend": "networkfail"
+    };
+    function setStatus(st) {
+        if (st === "ready" || st === "playing" || st === "paused" || st === "ended") {
+            if (_networkTimeout) {
+                clearTimeout(_networkTimeout);
+                _networkTimeout = null;
+            }
+            loaderOverlay.removeClass('visible');
+            loaderOverlay.css('display', 'none');
+        }
+        if (_status !== st) {
+            _status = st;
+            if (_statuscb) _statuscb(st);
+        }
+        if (!(st === "ready" || st === "playing" || st === "paused" || st === "ended")) {
+            updateLoader(st);
+        }
+    }
+    const updateStatus = (evt) => {
+        let st = statusMap[evt.type] || evt.type;
+        if (evt.type === "error") {
+            const err = video.nodes[0].error;
+            if (err) {
+                if (err.code === 2) st = "networkfail";
+                else st = "failed";
+            } else {
+                st = "failed";
+            }
+        }
+        if ((evt.type === "canplay" || evt.type === "canplaythrough")) {
+            if (_loop && _status === "ended") {
+                st = "playing";
+            } else if (video.nodes[0].paused) {
+                st = "ready";
+            } else if (!video.nodes[0].paused) {
+                st = "playing";
+            }
+        }
+        if (evt.type === "ratechange" && !video.nodes[0].paused) {
+            st = "playing";
+        }
+        setStatus(st);
+    };
+    ["playing", "pause", "ended", "waiting", "seeking", "canplay", "canplaythrough", "loadstart", "error", "stalled", "suspend", "ratechange"].forEach(ev =>
+        video.on(ev, updateStatus)
+    );
+    const tick = () => {
+        if (_timetick && !video.nodes[0].paused && !video.nodes[0].ended) {
+            _timetick(instance.pos());
+        }
+        const v = video.nodes[0];
+        let frames = null;
+        if (typeof v.getVideoPlaybackQuality === "function") {
+            const q = v.getVideoPlaybackQuality();
+            frames = q.totalVideoFrames || q.totalFrameCount || null;
+        } else if (typeof v.webkitDecodedFrameCount === "number") {
+            frames = v.webkitDecodedFrameCount;
+        } else if (typeof v.mozDecodedFrames === "number") {
+            frames = v.mozDecodedFrames;
+        }
+        if (frames !== null) {
+            const now = performance.now();
+            _fpsSamples.push({ t: now, f: frames });
+            while (_fpsSamples.length > 2 && (_fpsSamples[0].t < now - 1000)) {
+                _fpsSamples.shift();
+            }
+        }
+        const from = typeof instance._playFrom === "number" ? instance._playFrom : 0;
+        const to = typeof instance._playTo === "number" ? instance._playTo : null;
+        if (to !== null && !video.nodes[0].paused && !video.nodes[0].ended) {
+            if (instance.pos() >= to) {
+                if (_loop) {
+                    instance.seek(from);
+                    video.nodes[0].play();
+                } else {
+                    video.nodes[0].pause();
+                    instance._playTo = null;
+                    instance._playFrom = 0;
+                }
+            }
+        }
+        _tickRAF = requestAnimationFrame(tick);
+    };
+    video.on("play", () => {
+        if (!_tickRAF) _tickRAF = requestAnimationFrame(tick);
+    });
+    video.on("pause", () => {
+        if (_tickRAF) { cancelAnimationFrame(_tickRAF); _tickRAF = null; }
+    });
+    video.on("ended", () => {
+        if (_tickRAF) { cancelAnimationFrame(_tickRAF); _tickRAF = null; }
+        if (_loop) instance.play();
+    });
+    const instance = wrapper;
+    let seekEventCb = null;
+    instance.onSeek = function(cb) {
+        seekEventCb = typeof cb === "function" ? cb : null;
+        return instance;
+    };
+    instance.load = function(url) {
+        video.attr('src', '');
+        video.nodes[0].removeAttribute('src');
+        video.nodes[0].load();
+        video.attr('src', url);
+        video.nodes[0].load();
+        setStatus("loading");
+        if (_autostart) {
+            video.nodes[0].play();
+        }
+        return instance;
+    };
+    instance.play = function(from, to) {
+        let videoLen = instance.length();
+        if (typeof from === "number") {
+            instance.seek(from);
+            instance._playFrom = from;
+        }
+        if (typeof to === "number" && to > (typeof from === "number" ? from : 0)) {
+            instance._playTo = Math.min(to, videoLen);
+        }
+        if (typeof from !== "number" && typeof to !== "number") {
+            if (typeof instance._playFrom === "number" && typeof instance._playTo === "number") {
+                instance.seek(instance._playFrom);
+            } else {
+                instance._playFrom = 0;
+                instance._playTo = null;
+                instance.seek(0);
+            }
+        }
+        video.nodes[0].play().catch(error => {
+            console.error("Video playback error:", error);
+            setStatus("failed");
+        });
+        return instance;
+    };
+    instance.stop = function() {
+        video.nodes[0].pause();
+        instance._playTo = null;
+        instance._playFrom = 0;
+        instance.seek(0);
+        return instance;
+    };
+    instance.pause = function() {
+        video.nodes[0].pause();
+        instance._playTo = null;
+        instance._playFrom = 0;
+        return instance;
+    };
+    instance.seek = function(ms, _fromSeekBar) {
+        video.nodes[0].currentTime = ms / 1000;
+        if (!_fromSeekBar && seekEventCb) seekEventCb(ms);
+        return instance;
+    };
+    instance.speed = function(val) {
+        if (val === undefined) return video.nodes[0].playbackRate;
+        video.nodes[0].playbackRate = Math.max(0.1, Math.min(10, val));
+        return instance;
+    };
+    instance.loop = function(enable) {
+        if (enable === undefined) return _loop;
+        _loop = !!enable;
+        video.nodes[0].loop = false; // always false, we handle loop logic for both full and from-to
+        return instance;
+    };
+    instance.volume = function(val) {
+        if (val === undefined) return video.nodes[0].volume;
+        video.nodes[0].volume = Math.max(0, Math.min(1, val));
+        return instance;
+    };
+    instance.resolution = function() {
+        return {
+            width: video.nodes[0].videoWidth,
+            height: video.nodes[0].videoHeight
+        };
+    };
+    instance.boundaries = function() {
+        const rect = video.nodes[0].getBoundingClientRect();
+        const parent = wrapper.nodes[0].getBoundingClientRect();
+        return {
+            width: ((rect.width / parent.width) * 100) || 0,
+            height: ((rect.height / parent.height) * 100) || 0,
+            left: ((rect.left - parent.left) / parent.width * 100) || 0,
+            top: ((rect.top - parent.top) / parent.height * 100) || 0
+        };
+    };
+    instance.length = function() {
+        return Math.round((video.nodes[0].duration || 0) * 1000);
+    };
+    instance.pos = function() {
+        return Math.round((video.nodes[0].currentTime || 0) * 1000);
+    };
+    instance.timetick = function(cb) {
+        _timetick = typeof cb === "function" ? cb : null;
+        return instance;
+    };
+    instance.status = function(cb) {
+        _statuscb = typeof cb === "function" ? cb : null;
+        return instance;
+    };
+    instance.autostart = function(val) {
+        if (val === undefined) return _autostart;
+        _autostart = !!val;
+        return instance;
+    };
+    const frag = Q(`<div class="${classes['media-video-controls']}"></div>`);
+    const btnPlay = Q('<button>').text("Play").on('click', () => instance.play());
+    const btnPause = Q('<button>').text("Pause").on('click', () => instance.pause());
+    const btnStop = Q('<button>').text("Stop").on('click', () => instance.stop());
+    const form = Q.Form ? new Q.Form() : null;
+    let volSlider = null;
+    if (form && form.Slider) {
+        volSlider = form.Slider(instance.volume(), { min: 0, max: 1 });
+        volSlider.change(function(val) {
+            instance.volume(parseFloat(val));
+        });
+        video.on('volumechange', function() {
+            volSlider.val(instance.volume());
+        });
+    }
+    const speedValues = [
+        { value: 0.1, text: "0.1x" },
+        { value: 0.25, text: "0.25x" },
+        { value: 0.5, text: "0.5x" },
+        { value: 0.75, text: "0.75x" },
+        { value: 1, text: "1x" },
+        { value: 1.5, text: "1.5x" },
+        { value: 2, text: "2x" },
+        { value: 2.5, text: "2.5x" },
+        { value: 5, text: "5x" }
+    ];
+    let initialSpeedIdx = speedValues.findIndex(v => v.value === instance.speed());
+    if (initialSpeedIdx === -1) initialSpeedIdx = 4; // default 1x
+    let speedDropdown = null;
+    if (form && form.Dropdown) {
+        speedDropdown = form.Dropdown({
+            values: speedValues.map((v, i) => ({
+                value: v.value,
+                text: v.text,
+                default: i === initialSpeedIdx
+            })),
+            change: function(val) {
+                instance.speed(parseFloat(val));
+            }
+        });
+    }
+    const loop = Q('<input type="checkbox">')
+        .prop('checked', instance.loop())
+        .attr('title', 'Loop')
+        .on('change', function() { instance.loop(this.checked); });
+    const loopLbl = Q('<label>').append(loop, document.createTextNode(" Loop"));
+    const auto = Q('<input type="checkbox">')
+        .prop('checked', instance.autostart())
+        .attr('title', 'Autostart')
+        .on('change', function() { instance.autostart(this.checked); });
+    const autoLbl = Q('<label>').append(auto, document.createTextNode(" Autostart"));
+    function fmt(ms) {
+        ms = Math.max(0, Math.round(ms));
+        let s = Math.floor(ms / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60);
+        let ms3 = (ms % 1000).toString().padStart(3, '0');
+        s = s % 60; m = m % 60;
+        return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms3}`;
+    }
+    const seekScale = Q(`<div class="${classes['media-video-seek-scale']}"></div>`);
+    function renderScale() {
+        seekScale.html('');
+        const len = instance.length();
+        const scaleDiv = Q('<div style="position:absolute;left:0;top:0;width:100%;height:100%;"></div>');
+        const scaleHeight = parseFloat(seekScale.css('height')) || 8;
+        for (let ms = 0; ms <= len; ms += 30000) {
+            const isMinute = ms % 60000 === 0;
+            const left = (ms / len * 100).toFixed(2) + '%';
+            const height = isMinute ? scaleHeight : scaleHeight * 0.5;
+            const top = isMinute ? 0 : (scaleHeight * 0.5) + 'px';
+            const mark = Q('<div>')
+                .css({
+                    position: 'absolute',
+                    left: left,
+                    top: top,
+                    width: '1px',
+                    height: height + 'px',
+                    background: isMinute ? '#fff' : '#aaa',
+                    opacity: isMinute ? 0.8 : 0.5
+                });
+            scaleDiv.append(mark);
+        }
+        seekScale.append(scaleDiv);
+    }
+    const seekBar = Q(`<div class="${classes['media-video-seekbar']}"></div>`);
+    const seekTrack = Q(`<div class="${classes['media-video-seekbar-track']}"></div>`);
+    const seekThumb = Q(`<div class="${classes['media-video-seekbar-thumb']}"></div>`);
+    seekBar.append(seekTrack, seekThumb);
+    const seekInfo = Q(`<div class="${classes['media-video-seek-info']}"></div>`);
+    const seekLeft = Q('<div>').css({flex:'1',textAlign:'left'});
+    const seekCenter = Q('<div>').css({flex:'1',textAlign:'center'});
+    const seekRight = Q('<div>').css({flex:'1',textAlign:'right'});
+    seekInfo.append(seekLeft, seekCenter, seekRight);
+    const seekGroup = Q(`<div class="${classes['media-video-seek-group']}"></div>`);
+    seekGroup.append(seekScale, seekBar, seekInfo);
+    function updateSeekUI() {
+        const len = instance.length();
+        const pos = instance.pos();
+        const pct = len > 0 ? pos / len : 0;
+        seekTrack.css('width', (pct * 100) + '%');
+        seekThumb.css('left', (pct * 100) + '%');
+        seekLeft.text(fmt(0) + ' / ' + fmt(pos));
+        seekRight.text(fmt(len));
+        seekCenter.text('');
+    }
+    let dragging = false;
+    let lastSeekMs = null; // last seeked ms during seekbar drag
+    function seekToClientX(clientX, status) {
+        const rect = seekBar.nodes[0].getBoundingClientRect();
+        let rel = (clientX - rect.left) / rect.width;
+        rel = Math.max(0, Math.min(1, rel));
+        const len = instance.length();
+        const ms = Math.round(len * rel);
+        lastSeekMs = ms;
+        instance.seek(ms, true); // only UI update
+        updateSeekUI();
+        if (seekEventCb) seekEventCb(ms);
+    }
+    let mouseMoveHandler = null;
+    let mouseUpHandler = null;
+    seekBar.on('mousedown', function(e) {
+        dragging = true;
+        seekToClientX(e.clientX, 'start');
+        document.body.style.userSelect = 'none';
+        mouseMoveHandler = function(ev) {
+            if (dragging) {
+                seekToClientX(ev.clientX, 'move');
+            }
+        };
+        mouseUpHandler = function(ev) {
+            if (dragging) {
+                dragging = false;
+                document.body.style.userSelect = '';
+                seekToClientX(ev.clientX, 'end');
+                document.removeEventListener('mousemove', mouseMoveHandler);
+                document.removeEventListener('mouseup', mouseUpHandler);
+                mouseMoveHandler = null;
+                mouseUpHandler = null;
+            }
+        };
+        document.addEventListener('mousemove', mouseMoveHandler);
+        document.addEventListener('mouseup', mouseUpHandler);
+    });
+    video.on('timeupdate', updateSeekUI);
+    video.on('loadedmetadata', function() {
+        renderScale();
+        updateSeekUI();
+    });
+    video.on('durationchange', function() {
+        renderScale();
+        updateSeekUI();
+    });
+    setTimeout(() => {
+        renderScale();
+        updateSeekUI();
+    }, 0);
+    frag.append(seekGroup);
+    if (btnPlay) frag.append(btnPlay);
+    if (btnPause) frag.append(btnPause);
+    if (btnStop) frag.append(btnStop);
+    if (volSlider) frag.append(volSlider);
+    if (speedDropdown) frag.append(speedDropdown);
+    frag.append(loopLbl);
+    frag.append(autoLbl);
+    instance.control = function() {
+        return {
+            seekGroup,
+            seekScale,
+            seekBar,
+            seekInfo,
+            playButton: btnPlay,
+            pauseButton: btnPause,
+            stopButton: btnStop,
+            volumeSlider: volSlider,
+            speedSelector: speedDropdown,
+            loop: loopLbl,
+            autoPlay: autoLbl,
+            controlPanel: frag
+        };
+    };
+    instance.overlay = function(qobj) {
+        if (_customOverlay) {
+            Q(_customOverlay).remove();
+            _customOverlay = null;
+        }
+        if (qobj && typeof qobj === "object" && qobj.nodes && qobj.nodes[0]) {
+            wrapper.append(qobj);
+            _customOverlay = qobj.nodes[0];
+        }
+        return instance;
+    };
+    instance.wrapper = wrapper.nodes[0];
+    instance.video = video.nodes[0];
+    instance.fps = function() {
+        if (_fpsSamples.length < 2) return null;
+        const first = _fpsSamples[0], last = _fpsSamples[_fpsSamples.length - 1];
+        const dt = (last.t - first.t) / 1000;
+        const df = last.f - first.f;
+        if (dt > 0 && df >= 0) {
+            return df / dt;
+        }
+        return null;
+    };
+    return wrapper;
+};
+Media.Video = Media.prototype.Video;
 Q.Socket = function (url, onMessage, onStatus, options = {}) {
     const {
         retries = 5,                   
@@ -6460,30 +7885,33 @@ Q.Storage = (function () {
         return result;
     };
     return function (storageKey, storageValue, compressionEnabled = false) {
+        const PREFIX_COMPRESSED = 'C|';
+        const PREFIX_STRING = 'S|';
+        const PREFIX_JSON = 'J|';
         if (arguments.length > 1) { 
             if (storageValue === null || storageValue === '') {
                 localStorage.removeItem(storageKey);
                 return;
             }
             let dataString = typeof storageValue === 'string'
-                ? 'S|' + storageValue
-                : 'J|' + JSON.stringify(storageValue);
+                ? PREFIX_STRING + storageValue
+                : PREFIX_JSON + JSON.stringify(storageValue);
             if (compressionEnabled) {
-                dataString = 'C|' + lzw_compress(dataString);
+                dataString = PREFIX_COMPRESSED + lzw_compress(dataString);
             }
             localStorage.setItem(storageKey, dataString);
         } else {
             let dataString = localStorage.getItem(storageKey);
             if (dataString === null) return null;
-            if (dataString.startsWith('C|')) {
-                dataString = lzw_decompress(dataString.slice(2));
+            if (dataString.startsWith(PREFIX_COMPRESSED)) {
+                dataString = lzw_decompress(dataString.slice(PREFIX_COMPRESSED.length));
             }
-            if (dataString.startsWith('S|')) {
-                return dataString.slice(2);
+            if (dataString.startsWith(PREFIX_STRING)) {
+                return dataString.slice(PREFIX_STRING.length);
             }
-            if (dataString.startsWith('J|')) {
-                try { return JSON.parse(dataString.slice(2)); } 
-                catch (error) { return dataString.slice(2); }
+            if (dataString.startsWith(PREFIX_JSON)) {
+                try { return JSON.parse(dataString.slice(PREFIX_JSON.length)); } 
+                catch (error) { return dataString.slice(PREFIX_JSON.length); }
             }
             try { return JSON.parse(dataString); } 
             catch (error) { return dataString; }
