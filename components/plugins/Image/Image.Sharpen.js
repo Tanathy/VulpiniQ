@@ -1,14 +1,14 @@
 Q.Image.prototype.Sharpen = function (options = {}) {
 
     const DEFAULTS = {
-        amount: 1.0,    // 0.0–4.0
-        radius: 1.0,    // blur radius
-        threshold: 0,      // edge threshold
-        details: 0.5     // 0.0–1.0
+        amount: 1.0,
+        radius: 1.0,
+        threshold: 0,
+        details: 0.5
     };
 
     const s = Object.assign({}, DEFAULTS, options);
-    // clamp & sanitize
+
     s.amount = Math.min(4, Math.max(0, s.amount));
     s.radius = Math.max(0, s.radius);
     s.threshold = Math.max(0, s.threshold);
@@ -20,34 +20,34 @@ Q.Image.prototype.Sharpen = function (options = {}) {
     const src = imgData.data;
     const blurred = new Uint8ClampedArray(src);
 
-    // blur copy via Gaussian convolution
+
     const { kernel, size } = createGaussianKernel(s.radius);
     convolve(src, blurred, width, height, kernel, size);
 
-    // smart‑sharpen loop: operate on luminance
+
     const amountFactor = s.amount * 0.75;
     const detailFactor = s.details * 2;
     for (let i = 0; i < src.length; i += 4) {
-        // original & blurred RGB
-        const r = src[i],     g = src[i+1],     b = src[i+2];
-        const rB = blurred[i], gB = blurred[i+1], bB = blurred[i+2];
 
-        // compute luminance
-        const Y  = 0.299*r  + 0.587*g  + 0.114*b;
-        const Yb = 0.299*rB + 0.587*gB + 0.114*bB;
+        const r = src[i], g = src[i + 1], b = src[i + 2];
+        const rB = blurred[i], gB = blurred[i + 1], bB = blurred[i + 2];
+
+
+        const Y = 0.299 * r + 0.587 * g + 0.114 * b;
+        const Yb = 0.299 * rB + 0.587 * gB + 0.114 * bB;
         const diff = Y - Yb;
 
-        // threshold check on luminance difference
+
         if (Math.abs(diff) > s.threshold) {
-            const f    = amountFactor + detailFactor * (Math.abs(diff)/255);
+            const f = amountFactor + detailFactor * (Math.abs(diff) / 255);
             const Ynew = Y + diff * f;
             const ratio = Y > 0 ? Ynew / Y : 1;
 
-            imgData.data[i]     = clamp255(r * ratio);
+            imgData.data[i] = clamp255(r * ratio);
             imgData.data[i + 1] = clamp255(g * ratio);
             imgData.data[i + 2] = clamp255(b * ratio);
         }
-        // alpha unchanged
+
     }
 
     ctx.putImageData(imgData, 0, 0);
@@ -59,7 +59,7 @@ function clamp255(v) {
     return v < 0 ? 0 : v > 255 ? 255 : v;
 }
 
-// Duplicate of Gaussian kernel generator from Image.Blur.js
+
 function createGaussianKernel(radius) {
     radius = Math.floor(Math.max(0, radius));
     const size = 2 * radius + 1;
@@ -90,7 +90,7 @@ function createGaussianKernel(radius) {
     return { kernel, size };
 }
 
-// Duplicate of convolve() from Image.Blur.js
+
 function convolve(src, dst, width, height, kernel, size) {
     const half = Math.floor(size / 2);
     for (let y = 0; y < height; y++) {

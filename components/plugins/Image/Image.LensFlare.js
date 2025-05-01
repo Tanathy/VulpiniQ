@@ -1,5 +1,5 @@
-Q.Image.prototype.LensFlare = function(flareOptions = {}) {
-    // Predefined lens flare presets
+Q.Image.prototype.LensFlare = function (flareOptions = {}) {
+
     const presets = {
         cinematic: {
             type: "anamorphic",
@@ -145,10 +145,10 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
         }
     };
 
-    // Default options
+
     const defaultOptions = {
-        preset: null,               // "cinematic", "sciFi", "vintage", "photo"
-        type: "anamorphic",         // "anamorphic", "circular", "starburst", "polygon"
+        preset: null,
+        type: "anamorphic",
         brightnessThreshold: 200,
         widthModifier: 1.0,
         heightThreshold: 10,
@@ -158,26 +158,26 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
         radius: 40,
         points: 6,
         rotation: 0,
-        blur: 0,                    // px, blur for flare shape
-        falloff: 1.0,               // how quickly the flare fades out (1=linear, >1=fast, <1=slow)
-        intensity: 1.0,             // overall intensity multiplier
-        blendMode: "lighter",       // composite mode for flare
-        directionX: 100,            // percent (0-100), only for starburst
-        directionY: 100,            // percent (0-100), only for starburst
-        // --- Star flare specific options ---
-        starSize: 180,           // px, length of the star rays
-        starIntensity: 1.0,      // 0..2, intensity multiplier for star
-        starColor: null,         // null = default (white->blue), or CSS color
-        starPoints: 8,           // number of rays (4, 6, 8, 12, etc.)
-        starRotation: 0,         // degrees, rotation of the star
-        // --- Opacity for each part ---
+        blur: 0,
+        falloff: 1.0,
+        intensity: 1.0,
+        blendMode: "lighter",
+        directionX: 100,
+        directionY: 100,
+
+        starSize: 180,
+        starIntensity: 1.0,
+        starColor: null,
+        starPoints: 8,
+        starRotation: 0,
+
         starOpacity: 1,
         streakOpacity: 1,
         centerOpacity: 1,
         diagOpacity: 1
     };
 
-    // Apply preset if given
+
     let finalOptions = Object.assign({}, defaultOptions);
     if (flareOptions.preset && presets[flareOptions.preset]) {
         Object.assign(finalOptions, presets[flareOptions.preset]);
@@ -186,7 +186,7 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
 
     const canvas_node = this.node;
 
-    // Create a temporary canvas for processing
+
     let temp = Q('<canvas>', {
         width: canvas_node.width,
         height: canvas_node.height
@@ -195,13 +195,13 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
     let ctx = temp.getContext('2d', { willReadFrequently: true });
     this.saveToHistory();
 
-    // Draw the current canvas content to our temp canvas
+
     ctx.drawImage(canvas_node, 0, 0);
 
-    // Get the image data for analysis
+
     const sourceData = ctx.getImageData(0, 0, temp.width, temp.height).data;
 
-    // Extract flare color if not specified
+
     let flareColor = finalOptions.flareColor;
     if (!flareColor) {
         const avgColor = { r: 0, g: 0, b: 0, count: 0 };
@@ -231,7 +231,7 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
     const flareColorG = flareColor[1];
     const flareColorB = flareColor[2];
 
-    // Find the brightest points
+
     const flares = [];
     for (let y = 0; y < temp.height; y++) {
         for (let x = 0; x < temp.width; x++) {
@@ -244,10 +244,10 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
     }
     flares.sort((a, b) => b.brightness - a.brightness);
 
-    // Draw the lens flares onto the source canvas
+
     const targetCtx = canvas_node.getContext('2d');
 
-    // --- Flare type implementations ---
+
     function applyBlur(ctx, blur) {
         if (blur > 0) {
             ctx.filter = `blur(${blur}px)`;
@@ -257,24 +257,24 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
     }
 
     function getFinalAlpha(baseAlpha, partOpacity = 1) {
-        // opacity is now a multiplier (0..1)
+
         return Math.max(0, Math.min(1, baseAlpha * finalOptions.opacity * partOpacity));
     }
 
     function drawAnamorphic(flare) {
-        // --- 1. STAR FLARE (cross/sunburst) ---
+
         const starPoints = finalOptions.starPoints || 8;
         const starSize = finalOptions.starSize || 180;
         const starIntensity = finalOptions.starIntensity || 1.0;
         const starRotation = (finalOptions.starRotation || 0) * Math.PI / 180;
-        // Star color gradient: white center, blue/purple edge
+
         let starColorStops = [
             { stop: 0.0, color: 'rgba(255,255,255,1)' },
             { stop: 0.5, color: 'rgba(120,180,255,0.7)' },
             { stop: 1.0, color: 'rgba(120,80,255,0.0)' }
         ];
         if (finalOptions.starColor) {
-            // If user gives a color, use that for all stops
+
             starColorStops = [
                 { stop: 0.0, color: finalOptions.starColor },
                 { stop: 1.0, color: 'rgba(0,0,0,0)' }
@@ -283,7 +283,7 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
         const baseAlpha = (flare.brightness / 255) * finalOptions.intensity * starIntensity;
         const starAlpha = getFinalAlpha(baseAlpha, finalOptions.starOpacity);
 
-        // Draw star rays
+
         targetCtx.save();
         targetCtx.globalCompositeOperation = finalOptions.blendMode;
         targetCtx.translate(flare.x, flare.y);
@@ -292,7 +292,7 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
             const angle = (i / starPoints) * Math.PI * 2;
             targetCtx.save();
             targetCtx.rotate(angle);
-            // Ray gradient
+
             const grad = targetCtx.createLinearGradient(0, 0, 0, -starSize);
             starColorStops.forEach(cs => grad.addColorStop(cs.stop, cs.color.replace(/[\d\.]+\)$/g, starAlpha + ')')));
             targetCtx.beginPath();
@@ -311,7 +311,7 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
         }
         targetCtx.restore();
 
-        // --- 2. Központi fény (kékes, erős, kör alakú glow) ---
+
         const centerRadius = Math.max(30, flare.brightness / finalOptions.brightnessThreshold * 60);
         const centerAlpha = getFinalAlpha(baseAlpha, finalOptions.centerOpacity);
         targetCtx.save();
@@ -319,7 +319,7 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
         applyBlur(targetCtx, finalOptions.blur + 6);
         let grad = targetCtx.createRadialGradient(flare.x, flare.y, 0, flare.x, flare.y, centerRadius);
         grad.addColorStop(0, `rgba(120,180,255,${centerAlpha})`);
-        grad.addColorStop(0.5, `rgba(120,180,255,${centerAlpha*0.5})`);
+        grad.addColorStop(0.5, `rgba(120,180,255,${centerAlpha * 0.5})`);
         grad.addColorStop(1, `rgba(120,180,255,0)`);
         targetCtx.beginPath();
         targetCtx.arc(flare.x, flare.y, centerRadius, 0, 2 * Math.PI);
@@ -327,7 +327,7 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
         targetCtx.fill();
         targetCtx.restore();
 
-        // --- 3. Hosszú vízszintes glow (anamorphic streak) ---
+
         const size = flare.brightness / finalOptions.brightnessThreshold * (400 * (finalOptions.widthModifier || 2.5));
         const height = finalOptions.heightThreshold || 8;
         const streakBaseAlpha = (flare.brightness / 255) * finalOptions.intensity * 0.7;
@@ -340,16 +340,16 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
             flare.x + size / 2, flare.y
         );
         streakGrad.addColorStop(0, `rgba(120,180,255,0)`);
-        streakGrad.addColorStop(0.45, `rgba(120,180,255,${streakAlpha*0.2})`);
+        streakGrad.addColorStop(0.45, `rgba(120,180,255,${streakAlpha * 0.2})`);
         streakGrad.addColorStop(0.5, `rgba(120,180,255,${streakAlpha})`);
-        streakGrad.addColorStop(0.55, `rgba(120,180,255,${streakAlpha*0.2})`);
+        streakGrad.addColorStop(0.55, `rgba(120,180,255,${streakAlpha * 0.2})`);
         streakGrad.addColorStop(1, `rgba(120,180,255,0)`);
         targetCtx.beginPath();
         targetCtx.fillStyle = streakGrad;
         targetCtx.fillRect(flare.x - size / 2, flare.y - height / 2, size, height);
         targetCtx.restore();
 
-        // --- 4. Függőleges kereszt streak (halványabb) ---
+
         const vStreakAlpha = streakAlpha * 0.25 * (finalOptions.streakOpacity || 1);
         targetCtx.save();
         targetCtx.globalCompositeOperation = finalOptions.blendMode;
@@ -360,7 +360,7 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
         );
         vStreakGrad.addColorStop(0, `rgba(120,180,255,0)`);
         vStreakGrad.addColorStop(0.45, `rgba(120,180,255,${vStreakAlpha})`);
-        vStreakGrad.addColorStop(0.5, `rgba(120,180,255,${vStreakAlpha*2})`);
+        vStreakGrad.addColorStop(0.5, `rgba(120,180,255,${vStreakAlpha * 2})`);
         vStreakGrad.addColorStop(0.55, `rgba(120,180,255,${vStreakAlpha})`);
         vStreakGrad.addColorStop(1, `rgba(120,180,255,0)`);
         targetCtx.beginPath();
@@ -368,7 +368,7 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
         targetCtx.fillRect(flare.x - height / 2, flare.y - size / 2, height, size);
         targetCtx.restore();
 
-        // --- 5. Átlós streak-ek (halvány, kékes sugarak) ---
+
         const streakCount = 4;
         const diagAlpha = getFinalAlpha(streakBaseAlpha * 0.12, finalOptions.diagOpacity);
         for (let i = 0; i < streakCount; i++) {
@@ -393,23 +393,23 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
     }
 
     function drawCircular(flare) {
-        // --- Classic circular lens flare with halos, ghosts, rainbow arcs ---
+
         const w = temp.width, h = temp.height;
         const cx = flare.x, cy = flare.y;
         const centerX = w / 2, centerY = h / 2;
         const dx = centerX - cx, dy = centerY - cy;
-        const dist = Math.sqrt(dx*dx + dy*dy);
+        const dist = Math.sqrt(dx * dx + dy * dy);
 
-        // Main color: white, but rainbow arcs and ghosts are colored
+
         const mainBaseAlpha = (flare.brightness / 255) * finalOptions.intensity;
         const mainAlpha = getFinalAlpha(mainBaseAlpha);
-        // 1. Main source glow (white)
+
         targetCtx.save();
         targetCtx.globalCompositeOperation = finalOptions.blendMode;
         applyBlur(targetCtx, finalOptions.blur + 8);
         let grad = targetCtx.createRadialGradient(cx, cy, 0, cx, cy, finalOptions.radius * 1.2);
         grad.addColorStop(0, `rgba(255,255,255,${mainAlpha})`);
-        grad.addColorStop(0.5, `rgba(255,255,255,${mainAlpha*0.5})`);
+        grad.addColorStop(0.5, `rgba(255,255,255,${mainAlpha * 0.5})`);
         grad.addColorStop(1, `rgba(255,255,255,0)`);
         targetCtx.beginPath();
         targetCtx.arc(cx, cy, finalOptions.radius * 1.2, 0, 2 * Math.PI);
@@ -417,19 +417,19 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
         targetCtx.fill();
         targetCtx.restore();
 
-        // 2. Multiple halos (large, faint, colored)
-        const haloRadii = [finalOptions.radius*2.2, finalOptions.radius*1.7, finalOptions.radius*1.3];
+
+        const haloRadii = [finalOptions.radius * 2.2, finalOptions.radius * 1.7, finalOptions.radius * 1.3];
         const haloColors = [
-            [180,220,255], // blue
-            [255,220,180], // yellow
-            [200,180,255]  // purple
+            [180, 220, 255],
+            [255, 220, 180],
+            [200, 180, 255]
         ];
         for (let i = 0; i < haloRadii.length; i++) {
             targetCtx.save();
             targetCtx.globalCompositeOperation = finalOptions.blendMode;
             applyBlur(targetCtx, finalOptions.blur + 2 + i);
-            let haloGrad = targetCtx.createRadialGradient(cx, cy, haloRadii[i]*0.7, cx, cy, haloRadii[i]);
-            haloGrad.addColorStop(0, `rgba(${haloColors[i][0]},${haloColors[i][1]},${haloColors[i][2]},${mainAlpha*0.08})`);
+            let haloGrad = targetCtx.createRadialGradient(cx, cy, haloRadii[i] * 0.7, cx, cy, haloRadii[i]);
+            haloGrad.addColorStop(0, `rgba(${haloColors[i][0]},${haloColors[i][1]},${haloColors[i][2]},${mainAlpha * 0.08})`);
             haloGrad.addColorStop(1, `rgba(${haloColors[i][0]},${haloColors[i][1]},${haloColors[i][2]},0)`);
             targetCtx.beginPath();
             targetCtx.arc(cx, cy, haloRadii[i], 0, 2 * Math.PI);
@@ -438,7 +438,7 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
             targetCtx.restore();
         }
 
-        // 3. Rainbow arc (partial circle, faint)
+
         targetCtx.save();
         targetCtx.globalCompositeOperation = finalOptions.blendMode;
         applyBlur(targetCtx, finalOptions.blur + 1);
@@ -465,7 +465,7 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
         targetCtx.shadowBlur = 0;
         targetCtx.restore();
 
-        // 4. Ghost flares (smaller circles) along the line from source to center
+
         const ghostCount = 4;
         for (let i = 1; i <= ghostCount; i++) {
             const t = i / (ghostCount + 1);
@@ -473,19 +473,19 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
             const gy = cy + dy * t;
             const ghostRadius = finalOptions.radius * (0.5 + 0.3 * Math.sin(i));
             const ghostAlpha = mainAlpha * (0.18 + 0.12 * Math.cos(i));
-            // Color: alternate blue/purple/pink
+
             const ghostColors = [
-                [180,220,255],
-                [255,180,220],
-                [220,180,255],
-                [200,255,255]
+                [180, 220, 255],
+                [255, 180, 220],
+                [220, 180, 255],
+                [200, 255, 255]
             ];
             const gc = ghostColors[i % ghostColors.length];
             targetCtx.save();
             targetCtx.globalCompositeOperation = finalOptions.blendMode;
             applyBlur(targetCtx, finalOptions.blur + 1);
             let ghostGrad = targetCtx.createRadialGradient(gx, gy, 0, gx, gy, ghostRadius);
-            ghostGrad.addColorStop(0, `rgba(${gc[0]},${gc[1]},${gc[2]},${ghostAlpha*0.7})`);
+            ghostGrad.addColorStop(0, `rgba(${gc[0]},${gc[1]},${gc[2]},${ghostAlpha * 0.7})`);
             ghostGrad.addColorStop(1, `rgba(${gc[0]},${gc[1]},${gc[2]},0)`);
             targetCtx.beginPath();
             targetCtx.arc(gx, gy, ghostRadius, 0, 2 * Math.PI);
@@ -494,7 +494,7 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
             targetCtx.restore();
         }
 
-        // 5. Small dotted arc (simulate lens iris)
+
         targetCtx.save();
         targetCtx.globalCompositeOperation = finalOptions.blendMode;
         applyBlur(targetCtx, 0);
@@ -513,22 +513,22 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
     }
 
     function drawStarburst(flare) {
-        // --- Starburst with direction, arc, ghosts, hex flare, etc. ---
-        // 1. Direction vector (from flare.x, flare.y to directionX, directionY)
+
+
         const w = temp.width, h = temp.height;
         const dirX = (finalOptions.directionX !== undefined ? finalOptions.directionX : 100) / 100 * w;
         const dirY = (finalOptions.directionY !== undefined ? finalOptions.directionY : 100) / 100 * h;
         const cx = flare.x, cy = flare.y;
         const dx = dirX - cx, dy = dirY - cy;
-        const dist = Math.sqrt(dx*dx + dy*dy);
+        const dist = Math.sqrt(dx * dx + dy * dy);
         const angle = Math.atan2(dy, dx);
 
-        // Flare color: yellowish by default for starburst
+
         let color = flareColor;
         if (!finalOptions.flareColor) color = [255, 200, 120];
         const [r, g, b] = color;
 
-        // 2. Main starburst rays
+
         const points = Math.max(4, finalOptions.points || 12);
         const outerRadius = (flare.brightness / finalOptions.brightnessThreshold) * (finalOptions.radius * 1.2);
         const innerRadius = outerRadius * 0.3;
@@ -555,7 +555,7 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
         targetCtx.shadowBlur = 0;
         targetCtx.restore();
 
-        // 3. Arc (halo) - faint, partial circle
+
         targetCtx.save();
         targetCtx.globalCompositeOperation = finalOptions.blendMode;
         applyBlur(targetCtx, finalOptions.blur + 2);
@@ -565,14 +565,14 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
         const arcEnd = angle + Math.PI / 1.5;
         targetCtx.arc(cx, cy, arcRadius, arcStart, arcEnd, false);
         targetCtx.lineWidth = Math.max(2, outerRadius * 0.08);
-        targetCtx.strokeStyle = `rgba(${r},${g},${b},${alpha*0.25})`;
+        targetCtx.strokeStyle = `rgba(${r},${g},${b},${alpha * 0.25})`;
         targetCtx.shadowColor = `rgba(${r},${g},${b},0.2)`;
         targetCtx.shadowBlur = arcRadius * 0.08;
         targetCtx.stroke();
         targetCtx.shadowBlur = 0;
         targetCtx.restore();
 
-        // 4. Ghost flares (hexagons) along the direction vector
+
         const ghostCount = 5;
         for (let i = 1; i <= ghostCount; i++) {
             const t = i / (ghostCount + 1);
@@ -580,12 +580,12 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
             const gy = cy + dy * t;
             const ghostRadius = outerRadius * (0.18 + 0.12 * Math.sin(i));
             const ghostAlpha = alpha * (0.18 + 0.12 * Math.cos(i));
-            // Draw hexagon
+
             targetCtx.save();
             targetCtx.globalCompositeOperation = finalOptions.blendMode;
             applyBlur(targetCtx, finalOptions.blur + 1);
             targetCtx.translate(gx, gy);
-            targetCtx.rotate(angle + Math.PI/6 * i);
+            targetCtx.rotate(angle + Math.PI / 6 * i);
             targetCtx.beginPath();
             for (let j = 0; j < 6; j++) {
                 const a = (j / 6) * 2 * Math.PI;
@@ -603,12 +603,12 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
             targetCtx.restore();
         }
 
-        // 5. Central glow
+
         targetCtx.save();
         targetCtx.globalCompositeOperation = finalOptions.blendMode;
         applyBlur(targetCtx, finalOptions.blur + 3);
         let grad = targetCtx.createRadialGradient(cx, cy, 0, cx, cy, outerRadius * 0.7);
-        grad.addColorStop(0, `rgba(${r},${g},${b},${alpha*0.8})`);
+        grad.addColorStop(0, `rgba(${r},${g},${b},${alpha * 0.8})`);
         grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
         targetCtx.beginPath();
         targetCtx.arc(cx, cy, outerRadius * 0.7, 0, 2 * Math.PI);
@@ -645,7 +645,7 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
         targetCtx.restore();
     }
 
-    // --- Main flare drawing loop ---
+
     for (let i = 0; i < Math.min(finalOptions.maxFlares, flares.length); i++) {
         const flare = flares[i];
         switch (finalOptions.type) {
@@ -666,7 +666,7 @@ Q.Image.prototype.LensFlare = function(flareOptions = {}) {
         }
     }
 
-    // Reset the blending mode and filter to default
+
     targetCtx.globalCompositeOperation = "source-over";
     targetCtx.filter = "none";
 

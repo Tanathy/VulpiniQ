@@ -1,9 +1,9 @@
-// Add Contrast method directly to the Image prototype
-Q.Image.prototype.Contrast = function(value, contrastOptions = {}) {
-    // Default options
+
+Q.Image.prototype.Contrast = function (value, contrastOptions = {}) {
+
     const defaultOptions = {
         preserveHue: true,
-        clamp: true   // Whether to clamp values to 0-255 range
+        clamp: true
     };
     const finalOptions = Object.assign({}, defaultOptions, contrastOptions);
     const canvas_node = this.node;

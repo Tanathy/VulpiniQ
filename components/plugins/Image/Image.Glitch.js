@@ -1,40 +1,40 @@
-Q.Image.prototype.Glitch = function(options = {}) {
-    // Alapértelmezett opciók
+Q.Image.prototype.Glitch = function (options = {}) {
+
     const defaults = {
         minDistance: 10,
         maxDistance: 80,
-        type: "datamosh", // "datamosh", "corrupted", "macroblock", "pixelsort", or "wave"
-        angle: 0, // fokban, 0 = vízszintes, 90 = függőleges
+        type: "datamosh",
+        angle: 0,
         counts: 12,
         minWidth: 10,
         maxWidth: 80,
         minHeight: 2,
         maxHeight: 30,
-        // Corrupted type specific
+
         corruptedBlockSize: 16,
         corruptedIntensity: 0.3,
         corruptedChannelShift: 8,
-        // Macroblock type specific
+
         macroblockBlockSize: 32,
         macroblockIntensity: 0.5,
         macroblockBlend: 0.3,
         macroblockShift: 24,
         macroblockNoise: 0.1,
-        // pixelsort type specific
-        pixelsortAxis: "vertical", // "vertical" or "horizontal"
-        pixelsortSortBy: "brightness", // "brightness", "hue", "intensity"
-        pixelsortStrength: 1, // 0-1, how much of the axis is affected (fraction of lines/columns)
-        pixelsortRandom: 0, // 0-1, how much randomness to add to sorting
-        // new options
-        pixelsortEdge: false, // enable edge-based sorting
-        pixelsortEdgeThreshold: 0.2, // edge threshold (0-1)
-        pixelsortMass: false, // only sort row/col with most edges
-        pixelsortEdgeInside: true, // sort inside (between edges) or outside (before/after edges)
-        // --- wave type specific ---
-        waveAmplitude: 24, // max pixel shift
-        waveFrequency: 2,  // number of full waves across image
-        wavePhase: 0,      // phase offset in radians
-        waveDirection: "horizontal" // "horizontal" (rows shift) or "vertical" (columns shift)
+
+        pixelsortAxis: "vertical",
+        pixelsortSortBy: "brightness",
+        pixelsortStrength: 1,
+        pixelsortRandom: 0,
+
+        pixelsortEdge: false,
+        pixelsortEdgeThreshold: 0.2,
+        pixelsortMass: false,
+        pixelsortEdgeInside: true,
+
+        waveAmplitude: 24,
+        waveFrequency: 2,
+        wavePhase: 0,
+        waveDirection: "horizontal"
     };
     const opts = Object.assign({}, defaults, options);
 
@@ -43,7 +43,7 @@ Q.Image.prototype.Glitch = function(options = {}) {
     if (w === 0 || h === 0) return this;
     this.saveToHistory();
 
-    // 1. Forgatás: új ideiglenes vászon, ráforgatjuk az eredeti képet
+
     const angleRad = opts.angle * Math.PI / 180;
     const diag = Math.ceil(Math.sqrt(w * w + h * h));
     const temp1 = document.createElement('canvas');
@@ -57,29 +57,29 @@ Q.Image.prototype.Glitch = function(options = {}) {
     ctx1.drawImage(canvas, -w / 2, -h / 2);
     ctx1.restore();
 
-    // --- Maszkolás: csak az eredeti kép területén belül maradjanak pixelek ---
-    // (forgatás után, glitch előtt)
+
+
     {
         const imgData = ctx1.getImageData(0, 0, diag, diag);
         const data = imgData.data;
         for (let y = 0; y < diag; y++) {
             for (let x = 0; x < diag; x++) {
-                // (x, y) -> (cx, cy) középpontba helyezve
+
                 let cx = x - diag / 2;
                 let cy = y - diag / 2;
-                // Visszaforgatjuk az eredeti kép koordinátáira
-                let rx =  Math.cos(-angleRad) * cx - Math.sin(-angleRad) * cy + w / 2;
-                let ry =  Math.sin(-angleRad) * cx + Math.cos(-angleRad) * cy + h / 2;
+
+                let rx = Math.cos(-angleRad) * cx - Math.sin(-angleRad) * cy + w / 2;
+                let ry = Math.sin(-angleRad) * cx + Math.cos(-angleRad) * cy + h / 2;
                 if (rx < 0 || rx >= w || ry < 0 || ry >= h) {
                     const idx = (y * diag + x) * 4;
-                    data[idx + 3] = 0; // alpha = 0, teljesen átlátszó
+                    data[idx + 3] = 0;
                 }
             }
         }
         ctx1.putImageData(imgData, 0, 0);
     }
 
-    // 2. Glitch alkalmazása a forgatott képre
+
     if (opts.type === "datamosh") {
         for (let i = 0; i < opts.counts; i++) {
             const gw = Math.floor(Math.random() * (opts.maxWidth - opts.minWidth + 1)) + opts.minWidth;
@@ -184,9 +184,9 @@ Q.Image.prototype.Glitch = function(options = {}) {
         }
         ctx1.putImageData(imgData, 0, 0);
     } else if (opts.type === "pixelsort") {
-        // pixelsort glitch: sort pixels along axis by brightness/hue/intensity
-        const axis = opts.pixelsortAxis; // "vertical" or "horizontal"
-        const sortBy = opts.pixelsortSortBy; // "brightness", "hue", "intensity"
+
+        const axis = opts.pixelsortAxis;
+        const sortBy = opts.pixelsortSortBy;
         const strength = Math.max(0, Math.min(1, opts.pixelsortStrength));
         const randomness = Math.max(0, Math.min(1, opts.pixelsortRandom));
         const edgeEnabled = !!opts.pixelsortEdge;
@@ -202,7 +202,7 @@ Q.Image.prototype.Glitch = function(options = {}) {
             } else if (sortBy === "intensity") {
                 return (r + g + b) / 3;
             } else if (sortBy === "hue") {
-                // Convert RGB to HSV and return hue
+
                 const max = Math.max(r, g, b), min = Math.min(r, g, b);
                 let h = 0;
                 if (max === min) h = 0;
@@ -214,28 +214,28 @@ Q.Image.prototype.Glitch = function(options = {}) {
             return 0;
         }
 
-        // --- Edge detection (simple Sobel) ---
+
         let edgeMap = null;
         if (edgeEnabled) {
             edgeMap = new Float32Array(diag * diag);
-            // Sobel kernels
-            const gx = [-1,0,1,-2,0,2,-1,0,1];
-            const gy = [-1,-2,-1,0,0,0,1,2,1];
-            for (let y = 1; y < diag-1; y++) {
-                for (let x = 1; x < diag-1; x++) {
+
+            const gx = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
+            const gy = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
+            for (let y = 1; y < diag - 1; y++) {
+                for (let x = 1; x < diag - 1; x++) {
                     let sx = 0, sy = 0;
                     for (let ky = -1; ky <= 1; ky++) {
                         for (let kx = -1; kx <= 1; kx++) {
-                            const idx = ((y+ky)*diag + (x+kx)) * 4;
-                            // Use sortBy for edge detection
+                            const idx = ((y + ky) * diag + (x + kx)) * 4;
+
                             let v;
                             if (sortBy === "brightness") {
-                                v = 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
+                                v = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
                             } else if (sortBy === "intensity") {
-                                v = (data[idx] + data[idx+1] + data[idx+2]) / 3;
+                                v = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
                             } else if (sortBy === "hue") {
-                                // Calculate hue for edge detection
-                                const r = data[idx], g = data[idx+1], b = data[idx+2];
+
+                                const r = data[idx], g = data[idx + 1], b = data[idx + 2];
                                 const max = Math.max(r, g, b), min = Math.min(r, g, b);
                                 let h = 0;
                                 if (max === min) h = 0;
@@ -244,20 +244,20 @@ Q.Image.prototype.Glitch = function(options = {}) {
                                 else if (max === b) h = (60 * ((r - g) / (max - min)) + 240) % 360;
                                 v = h;
                             } else {
-                                v = 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
+                                v = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
                             }
-                            const kIdx = (ky+1)*3 + (kx+1);
+                            const kIdx = (ky + 1) * 3 + (kx + 1);
                             sx += gx[kIdx] * v;
                             sy += gy[kIdx] * v;
                         }
                     }
-                    const mag = Math.sqrt(sx*sx + sy*sy) / 1448; // normalize (max possible sobel value for 255 input)
-                    edgeMap[y*diag + x] = mag;
+                    const mag = Math.sqrt(sx * sx + sy * sy) / 1448;
+                    edgeMap[y * diag + x] = mag;
                 }
             }
         }
 
-        // --- Helper: get edge mask for a line (row or column) ---
+
         function getEdgeMask(lineIdx, axis) {
             const mask = [];
             if (!edgeMap) return null;
@@ -268,7 +268,7 @@ Q.Image.prototype.Glitch = function(options = {}) {
             return mask;
         }
 
-        // --- Helper: count edges in a line ---
+
         function countEdges(lineIdx, axis) {
             if (!edgeMap) return 0;
             let count = 0;
@@ -279,7 +279,7 @@ Q.Image.prototype.Glitch = function(options = {}) {
             return count;
         }
 
-        // --- Find mass line if needed ---
+
         let massLine = -1;
         if (edgeEnabled && massMode) {
             let maxCount = -1;
@@ -293,7 +293,7 @@ Q.Image.prototype.Glitch = function(options = {}) {
         }
 
         if (axis === "vertical") {
-            // For each column
+
             for (let x = 0; x < diag; x++) {
                 if (Math.random() > strength) continue;
                 if (massMode && x !== massLine) continue;
@@ -318,14 +318,14 @@ Q.Image.prototype.Glitch = function(options = {}) {
                     }
                     if (first !== -1 && last !== -1 && last > first) {
                         if (edgeInside) {
-                            // Sort only between first and last edge (inclusive)
+
                             let segment = pixels.slice(first, last + 1);
                             segment.sort((a, b) => a.sort - b.sort);
                             for (let i = first; i <= last; i++) {
                                 pixels[i] = segment[i - first];
                             }
                         } else {
-                            // Sort before first edge
+
                             if (first > 0) {
                                 let segment = pixels.slice(0, first);
                                 segment.sort((a, b) => a.sort - b.sort);
@@ -333,7 +333,7 @@ Q.Image.prototype.Glitch = function(options = {}) {
                                     pixels[i] = segment[i];
                                 }
                             }
-                            // Sort after last edge
+
                             if (last < diag - 1) {
                                 let segment = pixels.slice(last + 1);
                                 segment.sort((a, b) => a.sort - b.sort);
@@ -346,15 +346,15 @@ Q.Image.prototype.Glitch = function(options = {}) {
                 } else {
                     pixels.sort((a, b) => a.sort - b.sort);
                 }
-                // Write back ONLY inside the original image area
+
                 for (let y = 0; y < diag; y++) {
-                    // Only write if (x, y) is inside the original image bounds after rotation
-                    // Calculate the coordinates of (x, y) in the rotated space
-                    // Reverse transform: move center, rotate back, move center back
+
+
+
                     let cx = x - diag / 2;
                     let cy = y - diag / 2;
-                    let rx =  Math.cos(-angleRad) * cx - Math.sin(-angleRad) * cy + w / 2;
-                    let ry =  Math.sin(-angleRad) * cx + Math.cos(-angleRad) * cy + h / 2;
+                    let rx = Math.cos(-angleRad) * cx - Math.sin(-angleRad) * cy + w / 2;
+                    let ry = Math.sin(-angleRad) * cx + Math.cos(-angleRad) * cy + h / 2;
                     if (rx >= 0 && rx < w && ry >= 0 && ry < h) {
                         const idx = (y * diag + x) * 4;
                         data[idx] = pixels[y].r;
@@ -365,7 +365,7 @@ Q.Image.prototype.Glitch = function(options = {}) {
                 }
             }
         } else {
-            // For each row
+
             for (let y = 0; y < diag; y++) {
                 if (Math.random() > strength) continue;
                 if (massMode && y !== massLine) continue;
@@ -396,7 +396,7 @@ Q.Image.prototype.Glitch = function(options = {}) {
                                 pixels[i] = segment[i - first];
                             }
                         } else {
-                            // Sort before first edge
+
                             if (first > 0) {
                                 let segment = pixels.slice(0, first);
                                 segment.sort((a, b) => a.sort - b.sort);
@@ -404,7 +404,7 @@ Q.Image.prototype.Glitch = function(options = {}) {
                                     pixels[i] = segment[i];
                                 }
                             }
-                            // Sort after last edge
+
                             if (last < diag - 1) {
                                 let segment = pixels.slice(last + 1);
                                 segment.sort((a, b) => a.sort - b.sort);
@@ -417,13 +417,13 @@ Q.Image.prototype.Glitch = function(options = {}) {
                 } else {
                     pixels.sort((a, b) => a.sort - b.sort);
                 }
-                // Write back ONLY inside the original image area
+
                 for (let x = 0; x < diag; x++) {
-                    // Only write if (x, y) is inside the original image bounds after rotation
+
                     let cx = x - diag / 2;
                     let cy = y - diag / 2;
-                    let rx =  Math.cos(-angleRad) * cx - Math.sin(-angleRad) * cy + w / 2;
-                    let ry =  Math.sin(-angleRad) * cx + Math.cos(-angleRad) * cy + h / 2;
+                    let rx = Math.cos(-angleRad) * cx - Math.sin(-angleRad) * cy + w / 2;
+                    let ry = Math.sin(-angleRad) * cx + Math.cos(-angleRad) * cy + h / 2;
                     if (rx >= 0 && rx < w && ry >= 0 && ry < h) {
                         const idx = (y * diag + x) * 4;
                         data[idx] = pixels[x].r;
@@ -436,8 +436,8 @@ Q.Image.prototype.Glitch = function(options = {}) {
         }
         ctx1.putImageData(imgData, 0, 0);
     } else if (opts.type === "wave") {
-        // --- WAVE GLITCH ---
-        // Hullámszerű eltolás soronként/oszloponként
+
+
         const amplitude = opts.waveAmplitude;
         const frequency = opts.waveFrequency;
         const phase = opts.wavePhase;
@@ -448,9 +448,9 @@ Q.Image.prototype.Glitch = function(options = {}) {
         const outData = out.data;
 
         if (direction === "horizontal") {
-            // Soronként hullám
+
             for (let y = 0; y < diag; y++) {
-                // Számoljuk ki az eltolást szinusz hullámmal
+
                 const shift = Math.round(
                     Math.sin(2 * Math.PI * frequency * y / diag + phase) * amplitude
                 );
@@ -466,7 +466,7 @@ Q.Image.prototype.Glitch = function(options = {}) {
                 }
             }
         } else {
-            // Oszloponként hullám
+
             for (let x = 0; x < diag; x++) {
                 const shift = Math.round(
                     Math.sin(2 * Math.PI * frequency * x / diag + phase) * amplitude
@@ -486,7 +486,7 @@ Q.Image.prototype.Glitch = function(options = {}) {
         ctx1.putImageData(out, 0, 0);
     }
 
-    // 3. Visszaforgatás: új ideiglenes vászon, visszaforgatjuk az eredményt
+
     const temp2 = document.createElement('canvas');
     temp2.width = w;
     temp2.height = h;
@@ -499,7 +499,7 @@ Q.Image.prototype.Glitch = function(options = {}) {
     ctx2.drawImage(temp1, -diag / 2, -diag / 2);
     ctx2.restore();
 
-    // 4. Visszamásolás az eredeti vászonra
+
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     ctx.clearRect(0, 0, w, h);
     ctx.drawImage(temp2, 0, 0);
