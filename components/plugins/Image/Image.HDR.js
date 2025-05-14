@@ -13,6 +13,7 @@
         
         const finalOptions = Object.assign({}, defaultOptions, hdrOptions);
         const canvas_node = this.node;
+        this.saveToHistory(); // Save the current state to history
         
         // Create a temporary canvas for processing
         let temp = Q('<canvas>', { 

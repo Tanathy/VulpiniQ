@@ -1,5 +1,4 @@
-
-    Q.Image.prototype.Flip = function(direction = 'horizontal', flipOptions = {}) {
+Q.Image.prototype.Flip = function(direction = 'horizontal', flipOptions = {}) {
         // Default options
         const defaultOptions = {
             smoothing: true,    // Whether to use smoothing
@@ -15,6 +14,7 @@
         }).nodes[0];
         
         let ctx = temp.getContext('2d');
+        this.saveToHistory(); // Save the current state to history
         
         // Set smoothing options
         ctx.imageSmoothingEnabled = finalOptions.smoothing;

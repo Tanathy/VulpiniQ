@@ -1,9 +1,0 @@
-{
-    "Name": "Image",
-    "Method": "Plugin",
-    "Desc": "Useful to manipulate images.",
-    "Type": "Component",
-    "Dependencies": "RGB2HSL, HSL2RGB",
-    "Example": "var image = Q.Image();",
-    "Status": "Stable"
-}

@@ -1,9 +1,0 @@
-{
-    "Name": "Image.Noise",
-    "Method": "Plugin",
-    "Desc": "Apply random noise to an image.",
-    "Type": "Component",
-    "Dependencies": "Image",
-    "Example": "const image = Q.Image(); <br> image.Noise({ threshold: 30 }); // Adds random noise with a threshold of 30 <br> image.Noise({ threshold: 50, isBlackAndWhite: true, mode: 'mix' }); // Black and white mixed noise",
-    "Status": "Stable"
-}

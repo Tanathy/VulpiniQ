@@ -1,9 +1,0 @@
-{
-    "Name": "Image.Crop",
-    "Method": "Plugin",
-    "Desc": "Crop image to specified dimensions.",
-    "Type": "Component",
-    "Dependencies": "Image",
-    "Example": "const image = Q.Image(); <br> image.Crop(10, 10, 200, 200); // Crops the image to a 200x200 area starting at (10, 10) <br> image.Crop(50, 50, 400, 300, { preserveContext: true }); // Crops while preserving context properties",
-    "Status": "Stable"
-}

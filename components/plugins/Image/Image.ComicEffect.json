@@ -1,9 +1,0 @@
-{
-    "Name": "Image.ComicEffect",
-    "Method": "Plugin",
-    "Desc": "Apply a comic book style effect to an image.",
-    "Type": "Component",
-    "Dependencies": "Image",
-    "Example": "const image = Q.Image(); <br> image.ComicEffect(4); // Applies a comic effect with 4 color steps <br> image.ComicEffect(6, { edgeDetection: true, saturation: 1.4 }); // Comic effect with edge detection and enhanced saturation",
-    "Status": "Stable"
-}

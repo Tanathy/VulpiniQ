@@ -1,9 +1,0 @@
-{
-    "Name": "Image.Emboss",
-    "Method": "Plugin",
-    "Desc": "Apply embossing effect to images.",
-    "Type": "Component",
-    "Dependencies": "Image",
-    "Example": "const image = Q.Image(); <br> image.Emboss({ strength: 2 }); // Embosses the image with strength of 2 <br> image.Emboss({ direction: 'top-right', grayscale: false }); // Colored emboss from top-right",
-    "Status": "Stable"
-}

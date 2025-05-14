@@ -1,9 +1,0 @@
-{
-    "Name": "Image.Brightness",
-    "Method": "Plugin",
-    "Desc": "Adjust image brightness.",
-    "Type": "Component",
-    "Dependencies": "Image",
-    "Example": "const image = Q.Image(); <br> image.Brightness(20); // Increases brightness by 20 <br> image.Brightness(-15, { clamp: true }); // Decreases brightness with value clamping",
-    "Status": "Stable"
-}

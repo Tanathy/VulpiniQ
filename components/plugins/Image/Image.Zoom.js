@@ -19,6 +19,7 @@
         }).nodes[0];
         
         let ctx = temp.getContext('2d');
+        this.saveToHistory(); // Save the current state to history
         
         // Set smoothing options
         ctx.imageSmoothingEnabled = finalOptions.smoothing;

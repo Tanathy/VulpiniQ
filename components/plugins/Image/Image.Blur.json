@@ -1,9 +1,0 @@
-{
-    "Name": "Image.Blur",
-    "Method": "Plugin",
-    "Desc": "Apply standard blur to images.",
-    "Type": "Component",
-    "Dependencies": "Image",
-    "Example": "const image = Q.Image(); <br> image.Blur({ radius: 5 }); // Applies a blur with a radius of 5 <br> image.Blur({ radius: 8, quality: 2 }); // Higher quality blur with larger radius",
-    "Status": "Stable"
-}

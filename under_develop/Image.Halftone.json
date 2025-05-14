@@ -1,9 +1,0 @@
-{
-    "Name": "Image.Halftone",
-    "Method": "Plugin",
-    "Desc": "Apply a halftone effect to an image.",
-    "Type": "Component",
-    "Dependencies": "Image",
-    "Example": "const image = Q.Image(); <br> image.Halftone({ dotSize: 8 }); // Applies halftone effect with dot size of 8 <br> image.Halftone({ shape: 'hexagon', colored: false, spacing: 3 }); // Black and white hexagon pattern",
-    "Status": "Stable"
-}

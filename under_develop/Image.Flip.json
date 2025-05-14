@@ -1,9 +1,0 @@
-{
-    "Name": "Image.Flip",
-    "Method": "Plugin",
-    "Desc": "Flip image horizontally or vertically.",
-    "Type": "Component",
-    "Dependencies": "Image",
-    "Example": "const image = Q.Image(); <br> image.Flip('horizontal'); // Flips the image horizontally <br> image.Flip('vertical'); // Flips the image vertically <br> image.Flip('both'); // Flips the image both horizontally and vertically",
-    "Status": "Stable"
-}

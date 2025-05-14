@@ -1,9 +1,0 @@
-{
-    "Name": "Image.RGBSubpixel",
-    "Method": "Plugin",
-    "Desc": "Apply RGB subpixel emulation effect to an image.",
-    "Type": "Component",
-    "Dependencies": "Image",
-    "Example": "const image = Q.Image(); <br> image.RGBSubpixel({ subpixelLayout: 'rgb', subpixelScale: 3.0 }); // Applies RGB subpixel effect <br> image.RGBSubpixel({ scanlines: true, phosphorSize: 0.7 }); // Applies subpixel effect with scanlines",
-    "Status": "Experimental"
-}

@@ -1,9 +1,0 @@
-{
-    "Name": "Image.CRT",
-    "Method": "Plugin",
-    "Desc": "Apply CRT (old TV) and VHS effects to an image.",
-    "Type": "Component",
-    "Dependencies": "Image",
-    "Example": "const image = Q.Image(); <br> image.CRT({ noiseStrength: 10 }); // Applies CRT effect with noise strength of 10 <br> image.CRT({ scanlines: true, curvature: true, vignette: true }); // Full retro CRT screen effect",
-    "Status": "Experimental"
-}

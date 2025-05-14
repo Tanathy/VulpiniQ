@@ -1,9 +1,0 @@
-{
-    "Name": "Image.Rotate",
-    "Method": "Plugin",
-    "Desc": "Rotate image by specified degrees.",
-    "Type": "Component",
-    "Dependencies": "Image",
-    "Example": "const image = Q.Image(); <br> image.Rotate(90); // Rotates the image by 90 degrees <br> image.Rotate(-45, { keepSize: true }); // Rotates by -45 degrees while maintaining canvas size",
-    "Status": "Stable"
-}
