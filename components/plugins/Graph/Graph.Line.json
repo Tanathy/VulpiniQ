@@ -1,0 +1,15 @@
+{
+  "Name": "Graph.Line",
+  "Method": "Constructor",
+  "Desc": "Line graph plotting and visualization for VulpiniQ.",
+  "LongDesc": "The Graph.Line module enables the creation and rendering of line graphs, supporting features such as grid, axes, tooltips, and customizable styles. It is designed for visualizing data series with advanced options for interactivity and appearance.",
+  "Type": "Constructor",
+  "Example": [
+    "// Create a new Line graph and append to body\nvar line = new Graph.Line();\ndocument.body.appendChild(line);",
+    "// Create a Line graph, set data, and append\nvar line = new Graph.Line();\nline.data([1, 3, 2, 5, 4]);\ndocument.body.appendChild(line);",
+    "// Using Q helper to create and show a Line graph\nQ.Graph.Line().data([5, 10, 7, 12]).appendTo(document.body);"
+  ],
+  "Dependencies": [
+    "Graph"
+  ]
+}

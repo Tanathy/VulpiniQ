@@ -62,6 +62,39 @@ const Q = (() => {
         if (typeof identifier === 'string') {
             const isCreating = attributes || identifier.indexOf('<') > -1;
             if (isCreating) {
+                const svgTags = ['svg','g','line','polyline','rect','circle','ellipse','text','path','polygon'];
+                const tagMatch = identifier.match(/^<([a-zA-Z0-9\-]+)(\s|>|\/)*/);
+                const tag = tagMatch ? tagMatch[1].toLowerCase() : null;
+                if (tag && svgTags.includes(tag)) {
+                    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+                    if (attributes) {
+                        for (const [k, v] of Object.entries(attributes)) {
+                            if (k === 'children' && Array.isArray(v)) {
+                                v.forEach(child => {
+                                    if (child instanceof Node) {
+                                        el.appendChild(child);
+                                    } else if (child instanceof Q) {
+                                        child.nodes.forEach(n => el.appendChild(n));
+                                    } else if (typeof child === 'string') {
+                                        const temp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                                        temp.innerHTML = child;
+                                        Array.from(temp.childNodes).forEach(n => el.appendChild(n));
+                                    }
+                                });
+                            } else if (k !== 'children') {
+                                el.setAttribute(k, v);
+                            }
+                        }
+                    }
+                    const inner = identifier.replace(/^<[^>]+>/, '').replace(/<\/[a-zA-Z0-9\-]+>$/, '');
+                    if (inner.trim()) {
+                        const temp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                        temp.innerHTML = inner;
+                        Array.from(temp.childNodes).forEach(n => el.appendChild(n));
+                    }
+                    this.nodes = [el];
+                    return;
+                }
                 const template = document.createElement('template');
                 template.innerHTML = identifier.trim();
                 this.nodes = _ar.from(template.content.childNodes);
@@ -255,8 +288,14 @@ Q.Ext('append', function (...contents) {
     for (let j = 0, clen = contents.length; j < clen; j++) {
       const child = contents[j];
       if (typeof child === "string") {
-        parent.insertAdjacentHTML('beforeend', child);
-      } else if (child instanceof HTMLElement || child instanceof Q) {
+        if (parent instanceof SVGElement) {
+          const temp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          temp.innerHTML = child;
+          Array.from(temp.childNodes).forEach(n => parent.appendChild(n));
+        } else {
+          parent.insertAdjacentHTML('beforeend', child);
+        }
+      } else if (child instanceof HTMLElement || child instanceof Q || child instanceof SVGElement) {
         parent.appendChild(child.nodes ? child.nodes[0] : child);
       } else if (Array.isArray(child) || child instanceof NodeList) {
         const subNodes = Array.from(child);

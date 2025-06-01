@@ -48,14 +48,8 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | Average Color | Static | Image Processing | Calculates the average color of an image from a given source\. |
 | CMYK to RGB Converter | Static | Color Conversion | Converts CMYK \(Cyan, Magenta, Yellow, Key/Black\) color values to RGB \(Red, Green, Blue\) format\. |
 | Color Brightness | Static | Color Manipulation | Adjusts the brightness of a color by a specified percentage\. |
-| Container | Plugin | Constructor | Useful to create containers for your elements, like tabs, accordions, etc\. |
-| Container\.Tab | Method | Method | Tab component for Container plugin |
-| Container\.Table | Method | Method | Datatable component for Container plugin |
-| Container\.Window | Plugin | Component | Creates a draggable, resizable window container with title bar and control buttons |
-| Cookie | Static | Utility | A utility function to set, get, and delete cookies\. |
 | Debounce | Static | Performance Optimization | Delays the execution of a function until after a specified wait period has elapsed since the last invocation\. |
 | Done | Static | Event Handling | Executes a function once the window's load event is fired, indicating all resources are loaded\. |
-| Fetch | Static | Utility | A utility function to make HTTP requests using the Fetch API with extended features\. |
 | Form | Plugin | Plugin | Form is a simple library for creating forms and windows in the browser\. It provides a set of methods for creating form elements, windows, and other UI components\. |
 | Form\.Button | Component | Component | Button component for Form plugin |
 | Form\.CheckBox | Component | Component | CheckBox component for Form plugin |
@@ -71,13 +65,7 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | Form\.Uploader | Component | Component | File upload component with drag and drop functionality |
 | HSL to RGB Converter | Static | Color Conversion | Converts HSL \(Hue, Saturation, Lightness\) color values to RGB \(Red, Green, Blue\) format\. |
 | ID Generator | Static | Utility | Generates a random hexadecimal identifier with customizable length and prefix\. |
-| Icons | Plugin | Plugin | A plugin to add additional icons to the VulpiniQ library\. |
-| Image | Plugin | Component | Useful to manipulate images\. |
-| Image\.Blur | Plugin | Component | Apply standard blur to images\. |
-| Image\.Brightness | Plugin | Component | Adjust image brightness\. |
-| Image\.Contrast | Plugin | Component | Adjust image contrast\. |
 | Is Dark Color | Static | Color Analysis | Determines if a color is considered dark based on its luminance value\. |
-| JSON | Instance | Utility | A utility class to parse, deflate, inflate, merge, sort, flatten, and unflatten JSON data\. |
 | LAB to RGB Converter | Static | Color Conversion | Converts LAB \(Lightness, a\*, b\*\) color values to RGB \(Red, Green, Blue\) format\. |
 | Leaving | Static | Event Handling | Attaches a function to the window's beforeunload event, allowing actions before the page is closed or refreshed\. |
 | Media | Constructor | Constructor | Core media functionality provider for VulpiniQ |
@@ -89,11 +77,6 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | RGB to LAB Converter | Static | Color Conversion | Converts RGB \(Red, Green, Blue\) color values to LAB \(Lightness, a\*, b\*\) color space format\. |
 | Ready | Static | Event Handling | Executes a function when the document is fully loaded, ensuring all elements are accessible\. |
 | Resize | Static | Event Handling | Attaches a function to the window's resize event, executing it with the new innerWidth and innerHeight\. |
-| Socket | Static | Utility | A utility function to create and manage WebSocket connections\. |
-| Storage | Static | Utility | A utility function to manage data in localStorage with optional compression\. |
-| String | Instance | Utility | A utility class to perform string operations\. |
-| Thread | Static | Utility | A utility function to create and manage a thread pool for executing tasks in parallel using web workers\. |
-| Timer | Static | Utility | A utility function to create and manage timers\. |
 | addClass | Prototype | Class Manipulation | Adds one or more classes to each node, ignoring duplicates\. |
 | after | Prototype | DOM Manipulation | Inserts content after each element in the current set of matched elements\. |
 | animate | Prototype | Animation | Animates each node using specified CSS properties over a given duration, with an optional callback when complete\. |

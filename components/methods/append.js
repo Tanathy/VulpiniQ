@@ -5,8 +5,15 @@ Q.Ext('append', function (...contents) {
     for (let j = 0, clen = contents.length; j < clen; j++) {
       const child = contents[j];
       if (typeof child === "string") {
-        parent.insertAdjacentHTML('beforeend', child);
-      } else if (child instanceof HTMLElement || child instanceof Q) {
+        if (parent instanceof SVGElement) {
+          // SVG string beszúrása: SVG namespace-ben hozzuk létre
+          const temp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          temp.innerHTML = child;
+          Array.from(temp.childNodes).forEach(n => parent.appendChild(n));
+        } else {
+          parent.insertAdjacentHTML('beforeend', child);
+        }
+      } else if (child instanceof HTMLElement || child instanceof Q || child instanceof SVGElement) {
         parent.appendChild(child.nodes ? child.nodes[0] : child);
       } else if (Array.isArray(child) || child instanceof NodeList) {
         const subNodes = Array.from(child);
