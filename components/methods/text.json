@@ -1,14 +1,16 @@
 {
     "Name": "text",
     "Method": "Prototype",
-    "Desc": "Gets or sets the text content of the nodes.",
-    "LongDesc": "Provides a simple way to get or set the text content of elements, ignoring any HTML tags. When called without parameters, returns the combined text content of all matched elements. When provided with a value, sets the text content for all elements in the set, replacing any existing content. This method is particularly useful for safely displaying user-generated content without risk of HTML injection.",
+    "Desc": "Gets or sets the text content of the nodes. Returns null for empty selection. Chainable as setter.",
+    "LongDesc": "Provides a simple way to get or set the text content of elements, ignoring any HTML tags. When called without parameters, returns the text content of the first matched element, or null if the selection is empty. When provided with a value, sets the text content for all elements in the set, replacing any existing content. The setter is chainable. This method is particularly useful for safely displaying user-generated content without risk of HTML injection.",
     "Type": "Content Manipulation",
     "Example": [
-        "Q(selector).text(string);",
-        "const message = Q('#notification').text();",
-        "Q('.error').text('An error occurred');",
-        "Q('li').text(function(i) { return `Item ${i+1}`; });"
+        "Q(selector).text('Hello'); // Set text for all",
+        "const message = Q('#notification').text(); // Get text from #notification",
+        "Q('.error').text('An error occurred'); // Set error message",
+        "Q('li').text((i) => `Item ${i+1}`); // Set text with function (if supported)",
+        "Q('.panel').text('Panel').addClass('labeled'); // Chaining after set",
+        "Q('.missing').text(); // Returns null for empty selection"
     ],
     "Dependencies": []
 }

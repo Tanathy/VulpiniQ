@@ -1,0 +1,13 @@
+{
+  "Name": "Image.Grayscale",
+  "Method": "Prototype",
+  "Desc": "Converts the image to grayscale using various algorithms.",
+  "LongDesc": "The Grayscale method transforms the image to grayscale using selectable algorithms such as average, luminance, lightness, desaturation, or single channel. It supports partial intensity and thresholding for black-and-white effects.",
+  "Type": "Image Effect",
+  "Example": [
+    "var img = new Q.Image({ width: 300, height: 200 });\nimg.Load('photo.jpg', function() { img.Grayscale({ algorithm: 'luminance' }); });",
+    "Q.Image().Load('img.png').Grayscale({ intensity: 0.5, threshold: 128 });"
+  ],
+  "Dependencies": ["Q.Image"],
+  "Variables": ["defaultGrayOptions", "finalOptions", "ctx", "data", "pixels"]
+}

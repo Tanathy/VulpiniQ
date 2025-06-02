@@ -1,0 +1,13 @@
+{
+  "Name": "Image.Sharpen",
+  "Method": "Prototype",
+  "Desc": "Sharpens the image using an unsharp mask technique.",
+  "LongDesc": "The Sharpen method enhances image details by applying an unsharp mask algorithm. It supports configurable amount, radius, threshold, and detail level for fine-tuned sharpening. Useful for improving clarity and edge definition in photos and graphics.",
+  "Type": "Image Effect",
+  "Example": [
+    "var img = new Q.Image({ width: 300, height: 200 });\nimg.Load('photo.jpg', function() { img.Sharpen({ amount: 1.5, radius: 2 }); });",
+    "Q.Image().Load('img.png').Sharpen({ threshold: 10, details: 0.8 });"
+  ],
+  "Dependencies": ["Q.Image"],
+  "Variables": ["DEFAULTS", "s", "ctx", "imgData", "src", "blurred", "kernel", "size"]
+}

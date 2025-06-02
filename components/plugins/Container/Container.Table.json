@@ -1,0 +1,13 @@
+{
+  "Name": "Container.Table",
+  "Method": "Prototype",
+  "Desc": "Dynamic data table with sorting, filtering, and pagination.",
+  "LongDesc": "The Container.Table method creates a feature-rich data table supporting sorting, searching, filtering, pagination, and row selection. It is highly customizable and suitable for displaying tabular data interactively.",
+  "Type": "UI Component",
+  "Example": [
+    "var table = Q.Container().Table([{ name: 'Alice', age: 30 }, { name: 'Bob', age: 25 }]);\ndocument.body.appendChild(table);",
+    "var table = Q.Container().Table([{ id: 1, value: 'A' }, { id: 2, value: 'B' }], { pageSize: 1 });\ntable.select(0);\ndocument.body.appendChild(table);"
+  ],
+  "Dependencies": ["Q", "Container"],
+  "Variables": ["wrapper", "table", "allData", "currentPage", "sortKey", "sortOrder", "selectedIdx", "filteredIndices"]
+}

@@ -1,15 +1,18 @@
 {
   "Name": "Media",
   "Method": "Constructor",
-  "Desc": "Core media functionality provider for VulpiniQ",
-  "LongDesc": "The Media module provides core functionality for handling various media types including video and timeline features. It initializes global styling variables and serves as the foundation for media components.",
+  "Desc": "Core media functionality provider for VulpiniQ. If used as a constructor, returns a new Media instance. If called without new, returns a Media instance. No effect on empty selection.",
+  "LongDesc": "The Media module provides core functionality for handling various media types including video and timeline features. It initializes global styling variables and serves as the foundation for media components. This constructor is robust: it can be called with or without 'new' and always returns a Media instance. If called on an empty selection, it returns a valid instance with no effect.",
   "Type": "Constructor",
   "Example": [
     "var media = new Media();",
     "var media = Media();",
-    "Q.Media();"
+    "Q.Media();",
+    "var empty = Media(null); // returns a valid instance, no error",
+    "var media2 = Media(); media2 && media2 instanceof Media; // always returns a Media instance"
   ],
   "Dependencies": [
     "style"
-  ]
+  ],
+  "Variables": []
 }

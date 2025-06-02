@@ -1,0 +1,13 @@
+{
+  "Name": "Container.Frame",
+  "Method": "Prototype",
+  "Desc": "Flexible frame splitter for horizontal or vertical layouts.",
+  "LongDesc": "The Container.Frame method creates a resizable frame layout, allowing you to split a container into multiple sections with draggable resizers. It supports horizontal and vertical directions, persistent size storage, responsive layouts, and programmatic resizing.",
+  "Type": "Layout",
+  "Example": [
+    "var frame = Q.Container().Frame({ direction: 'horizontal' });\nframe.frames([{ name: 'left' }, { name: 'right' }]);\ndocument.body.appendChild(frame);",
+    "var frame = Q.Container().Frame({ direction: 'vertical', id: 'mainFrame' });\nframe.frames([{ name: 'top', size: '30%' }, { name: 'bottom', size: '70%' }]);\ndocument.body.appendChild(frame);"
+  ],
+  "Dependencies": ["Q", "Container"],
+  "Variables": ["direction", "root", "frameId", "sections", "resizers", "frameMap"]
+}

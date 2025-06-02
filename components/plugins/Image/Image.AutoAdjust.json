@@ -1,0 +1,15 @@
+{
+  "Name": "Image.AutoAdjust",
+  "Method": "Prototype",
+  "Desc": "Automatically adjusts tone, contrast, brightness, or color. Chainable. If the selection is empty, no action is taken and the chain continues.",
+  "LongDesc": "The AutoAdjust method analyzes the image and applies automatic tone, contrast, brightness, or color correction based on the selected mode. It supports advanced options for clipping, target brightness, color neutralization, and more. This method is chainable: it returns the Q.Image instance for further operations. If called on an empty selection, it does nothing and returns the chain.",
+  "Type": "Image Effect",
+  "Example": [
+    "var img = new Q.Image({ width: 300, height: 200 });\nimg.Load('photo.jpg', function() { img.AutoAdjust({ mode: 'autoTone' }); });",
+    "Q.Image().Load('img.png').AutoAdjust({ mode: 'autoContrast', clipPercentage: 1 });",
+    "Q.Image().Load('img.png').AutoAdjust({ mode: 'autoTone' }).AutoAdjust({ mode: 'autoColor' }); // chaining",
+    "Q.Image([]).AutoAdjust({ mode: 'autoTone' }).AutoAdjust({ mode: 'autoContrast' }); // empty selection, no error, chain continues"
+  ],
+  "Dependencies": ["Q.Image"],
+  "Variables": ["defaultOptions", "finalOptions", "canvas_node", "ctx", "imageData", "pixels", "pixelCount", "imageStats"]
+}

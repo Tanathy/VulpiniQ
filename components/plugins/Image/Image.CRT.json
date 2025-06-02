@@ -1,0 +1,15 @@
+{
+  "Name": "Image.CRT",
+  "Method": "Prototype",
+  "Desc": "Applies a CRT (cathode ray tube) simulation effect to the image. Chainable. If the selection is empty, no action is taken and the chain continues.",
+  "LongDesc": "The CRT method simulates the look of old cathode ray tube displays, adding scanlines, noise, color shifts, curvature, and other retro display artifacts. It supports extensive customization for noise, curvature, scanlines, vignette, and more. This method is chainable: it returns the Q.Image instance for further operations. If called on an empty selection, it does nothing and returns the chain.",
+  "Type": "Image Effect",
+  "Example": [
+    "var img = new Q.Image({ width: 320, height: 240 });\nimg.Load('photo.jpg', function() { img.CRT({ scanlineOpacity: 0.2, curvature: true }); });",
+    "Q.Image().Load('img.png').CRT({ vignette: true, noiseStrength: 20 });",
+    "Q.Image().Load('img.png').CRT({ curvature: true }).CRT({ scanlineOpacity: 0.5 }); // chaining",
+    "Q.Image([]).CRT({ scanlineOpacity: 0.2 }).CRT({ vignette: true }); // empty selection, no error, chain continues"
+  ],
+  "Dependencies": ["Q.Image"],
+  "Variables": ["defaultOptions", "finalOptions", "canvas_node", "temp", "ctx", "imageData", "data", "wobbleCanvas", "wobbleCtx", "resultCtx"]
+}

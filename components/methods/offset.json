@@ -1,14 +1,15 @@
 {
     "Name": "offset",
     "Method": "Prototype",
-    "Desc": "Gets the position of the first node relative to the document.",
-    "LongDesc": "Returns an object containing the top and left coordinates of an element relative to the document. Unlike position(), which provides coordinates relative to the offset parent, offset() calculates coordinates from the top-left corner of the document. This method is particularly useful for absolute positioning of elements anywhere in the document, creating tooltips, overlays, or popovers that need to be placed relative to the entire page regardless of the element's position in the DOM tree.",
+    "Desc": "Gets the position of the first node relative to the document. Returns undefined for empty selection.",
+    "LongDesc": "Returns an object containing the top and left coordinates of an element relative to the document. Unlike position(), which provides coordinates relative to the offset parent, offset() calculates coordinates from the top-left corner of the document. If the selection is empty, returns undefined. This method is particularly useful for absolute positioning of elements anywhere in the document, creating tooltips, overlays, or popovers that need to be placed relative to the entire page regardless of the element's position in the DOM tree.",
     "Type": "Position",
     "Example": [
-        "const pos = Q('#element').offset();",
-        "const { top, left } = Q('.tooltip-trigger').offset();",
-        "Q('#popup').css({ top: Q('#reference').offset().top + 10 + 'px' });",
-        "const coords = Q('button').offset(); console.log(`Document position: ${coords.left}, ${coords.top}`);"
+        "const pos = Q('#element').offset(); // { top: ..., left: ... } or undefined",
+        "const { top, left } = Q('.tooltip-trigger').offset() || {}; // Destructuring with fallback",
+        "Q('#popup').css({ top: Q('#reference').offset().top + 10 + 'px' }); // Use offset for positioning",
+        "const coords = Q('button').offset(); console.log(`Document position: ${coords?.left}, ${coords?.top}`); // Safe logging",
+        "Q('.missing').offset(); // Returns undefined for empty selection"
     ],
     "Dependencies": [],
     "Variables": ["node", "box"]

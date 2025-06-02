@@ -1,14 +1,17 @@
 {
     "Name": "trigger",
     "Method": "Prototype",
-    "Desc": "Triggers a specific event on each node.",
-    "LongDesc": "Executes all handlers attached to the selected elements for the specified event type. This method provides a way to manually fire event handlers bound to elements without user interaction. It's useful for simulating user actions programmatically, testing event handlers, or creating custom interaction flows that need to trigger existing event bindings at specific times.",
+    "Desc": "Triggers a specific event on each node. Chainable. Does nothing for empty selection.",
+    "LongDesc": "Executes all handlers attached to the selected elements for the specified event type. The method is chainable and does nothing if the selection is empty. This method provides a way to manually fire event handlers bound to elements without user interaction. It's useful for simulating user actions programmatically, testing event handlers, or creating custom interaction flows that need to trigger existing event bindings at specific times.",
     "Type": "Event Handling",
     "Example": [
-        "Q('#submitButton').trigger('click');",
-        "Q('.accordion-header').trigger('mouseenter');",
-        "const eventName = 'change'; Q('input').trigger(eventName);",
-        "Q('.custom-element').trigger('customEvent');"
+        "Q('#submitButton').trigger('click'); // Trigger click event",
+        "Q('.accordion-header').trigger('mouseenter'); // Trigger mouseenter",
+        "const eventName = 'change'; Q('input').trigger(eventName); // Dynamic event name",
+        "Q('.custom-element').trigger('customEvent'); // Custom event",
+        "Q('.panel').trigger('show').addClass('shown'); // Chaining after trigger",
+        "Q('.missing').trigger('foo'); // Does nothing for empty selection"
     ],
-    "Dependencies": []
+    "Dependencies": [],
+    "Variables": []
 }

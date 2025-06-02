@@ -1,0 +1,13 @@
+{
+  "Name": "Image.Hue",
+  "Method": "Prototype",
+  "Desc": "Shifts the hue of the image by a specified angle.",
+  "LongDesc": "The Hue method rotates the hue of all pixels in the image by a given angle, supporting clamping for safe color values. Useful for color correction, creative effects, and color shifting.",
+  "Type": "Image Effect",
+  "Example": [
+    "var img = new Q.Image({ width: 300, height: 200 });\nimg.Load('photo.jpg', function() { img.Hue(90); });",
+    "Q.Image().Load('img.png').Hue(180, { clamp: false });"
+  ],
+  "Dependencies": ["Q.Image"],
+  "Variables": ["defaultOptions", "finalOptions", "canvas_node", "ctx", "imageData", "data", "hueShift"]
+}

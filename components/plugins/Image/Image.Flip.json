@@ -1,0 +1,13 @@
+{
+  "Name": "Image.Flip",
+  "Method": "Prototype",
+  "Desc": "Flips the image horizontally, vertically, or both.",
+  "LongDesc": "The Flip method mirrors the image along the specified axis (horizontal, vertical, or both). It supports smoothing and quality options for high-quality transformations.",
+  "Type": "Image Effect",
+  "Example": [
+    "var img = new Q.Image({ width: 300, height: 200 });\nimg.Load('photo.jpg', function() { img.Flip('vertical'); });",
+    "Q.Image().Load('img.png').Flip('both', { quality: 'medium' });"
+  ],
+  "Dependencies": ["Q.Image"],
+  "Variables": ["defaultOptions", "finalOptions", "canvas_node", "temp", "ctx"]
+}

@@ -48,9 +48,14 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | Average Color | Static | Image Processing | Calculates the average color of an image from a given source\. |
 | CMYK to RGB Converter | Static | Color Conversion | Converts CMYK \(Cyan, Magenta, Yellow, Key/Black\) color values to RGB \(Red, Green, Blue\) format\. |
 | Color Brightness | Static | Color Manipulation | Adjusts the brightness of a color by a specified percentage\. |
+| Container | Constructor | Constructor | Core container and layout manager for VulpiniQ UI components\. |
+| Container\.Frame | Prototype | Layout | Flexible frame splitter for horizontal or vertical layouts\. |
+| Container\.Tab | Prototype | UI Component | Tabbed navigation component for organizing content\. |
+| Container\.Table | Prototype | UI Component | Dynamic data table with sorting, filtering, and pagination\. |
+| Container\.Window | Prototype | UI Component | Movable, resizable window component with taskbar integration\. |
 | Debounce | Static | Performance Optimization | Delays the execution of a function until after a specified wait period has elapsed since the last invocation\. |
 | Done | Static | Event Handling | Executes a function once the window's load event is fired, indicating all resources are loaded\. |
-| Form | Plugin | Plugin | Form is a simple library for creating forms and windows in the browser\. It provides a set of methods for creating form elements, windows, and other UI components\. |
+| Form | Constructor | Constructor | Form is a simple library for creating forms and windows in the browser\. It provides a set of methods for creating form elements, windows, and other UI components\. |
 | Form\.Button | Component | Component | Button component for Form plugin |
 | Form\.CheckBox | Component | Component | CheckBox component for Form plugin |
 | Form\.ColorPicker | Component | Component | Photoshop\-like Color Picker component for Form plugin\. Renders a canvas with an outer detail \(24–color\) ring, a full–rainbow middle ring, and an inner triangle for selecting saturation and brightness by mixing the selected hue with white and black\. |
@@ -63,8 +68,30 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | Form\.TextArea | Component | Component | TextArea component for Form plugin |
 | Form\.TextBox | Component | Component | TextBox component for Form plugin |
 | Form\.Uploader | Component | Component | File upload component with drag and drop functionality |
+| Graph | Constructor | Constructor | Core graph plotting and visualization provider for VulpiniQ\. |
+| Graph\.Line | Constructor | Constructor | Line graph plotting and visualization for VulpiniQ\. |
 | HSL to RGB Converter | Static | Color Conversion | Converts HSL \(Hue, Saturation, Lightness\) color values to RGB \(Red, Green, Blue\) format\. |
 | ID Generator | Static | Utility | Generates a random hexadecimal identifier with customizable length and prefix\. |
+| Image | Constructor | Constructor | Canvas\-based image manipulation and processing utility\. |
+| Image\.AutoAdjust | Prototype | Image Effect | Automatically adjusts tone, contrast, brightness, or color\. Chainable\. If the selection is empty, no action is taken and the chain continues\. |
+| Image\.Blur | Prototype | Image Effect | Applies a blur effect to the image using various kernels\. |
+| Image\.Brightness | Prototype | Image Effect | Adjusts the brightness of the image\. |
+| Image\.CRT | Prototype | Image Effect | Applies a CRT \(cathode ray tube\) simulation effect to the image\. Chainable\. If the selection is empty, no action is taken and the chain continues\. |
+| Image\.ComicEffect | Prototype | Image Effect | Applies a comic\-style color quantization and optional edge detection\. Chainable\. If the selection is empty, no action is taken and the chain continues\. |
+| Image\.Contrast | Prototype | Image Effect | Adjusts the contrast of the image\. Chainable\. If the selection is empty, no action is taken and the chain continues\. |
+| Image\.Crop | Prototype | Image Effect | Crops the image to a specified rectangle\. |
+| Image\.Flip | Prototype | Image Effect | Flips the image horizontally, vertically, or both\. |
+| Image\.Glitch | Prototype | Image Effect | Applies a glitch effect to the image using various algorithms\. |
+| Image\.Glow | Prototype | Image Effect | Adds a glow effect to bright areas of the image\. |
+| Image\.GodRay | Prototype | Image Effect | Adds volumetric light rays \(god rays\) to the image\. |
+| Image\.Grayscale | Prototype | Image Effect | Converts the image to grayscale using various algorithms\. |
+| Image\.HDR | Prototype | Image Effect | Applies a high dynamic range \(HDR\) effect to the image\. |
+| Image\.Hue | Prototype | Image Effect | Shifts the hue of the image by a specified angle\. |
+| Image\.LensFlare | Prototype | Image Effect | Adds a lens flare effect to the image using various presets\. |
+| Image\.RGBSubpixel | Prototype | Image Effect | Simulates RGB subpixel rendering on the image\. |
+| Image\.Sharpen | Prototype | Image Effect | Sharpens the image using an unsharp mask technique\. |
+| Image\.Zoom | Prototype | Image Effect | Zooms the image in or out around a center point\. |
+| Image\.ZoomBlur | Prototype | Image Effect | Applies a zoom blur effect to the image\. |
 | Is Dark Color | Static | Color Analysis | Determines if a color is considered dark based on its luminance value\. |
 | LAB to RGB Converter | Static | Color Conversion | Converts LAB \(Lightness, a\*, b\*\) color values to RGB \(Red, Green, Blue\) format\. |
 | Leaving | Static | Event Handling | Attaches a function to the window's beforeunload event, allowing actions before the page is closed or refreshed\. |
@@ -92,7 +119,7 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | css | Prototype | CSS Manipulation | Gets or sets one or more CSS properties for the nodes\. |
 | data | Prototype | Data Manipulation | Retrieves or sets data\-\* attributes on the selected nodes\. Provides an easy way to store and access custom data associated with the elements\. |
 | detach | Method | Method | Removes the elements from the DOM but keeps them in memory for later reattachment\. |
-| each | Prototype | Iteration | Iterates over all nodes in the Q object and executes a callback on each node, providing access to the index and element\. |
+| each | Prototype | Iteration | Iterates over all nodes in the Q object and executes a callback on each node, providing access to the index and element\. Chainable\. Does nothing for empty selection\. |
 | empty | Prototype | Content Manipulation | Empties the innerHTML of each node\. |
 | eq | Prototype | Traversal | Returns a specific node by index\. |
 | fadeIn | Prototype | Animation | Fades in all nodes over a specified duration\. |
@@ -103,7 +130,7 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | first | Prototype | Traversal | Returns the first node\. |
 | focus | Prototype | Form Manipulation | Focuses on the first node\. |
 | hasClass | Prototype | Class Manipulation | Checks if the first node has a specific class\. |
-| height | Prototype | Dimensions | Gets or sets the height of the first node\. |
+| height | Prototype | Dimensions | Gets or sets the height of the first node, or sets the height for all nodes\. Returns undefined for empty selection\. |
 | hide | Prototype | Display | Hides each node, optionally with a fade\-out effect over a specified duration\. |
 | html | Prototype | Content Manipulation | Gets or sets the innerHTML of the nodes\. This method allows for easy manipulation of the content inside the selected elements\. |
 | id | Prototype | Attributes | Gets or sets the id attribute of the first node\. |
@@ -115,10 +142,10 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | map | Prototype | Array | Maps each node to a new array\. |
 | next | Prototype | Traversal | Gets the next sibling element of each node, optionally filtered by a selector\. |
 | off | Prototype | Event Handling | Removes an event listener from each node\. |
-| offset | Prototype | Position | Gets the position of the first node relative to the document\. |
+| offset | Prototype | Position | Gets the position of the first node relative to the document\. Returns undefined for empty selection\. |
 | on | Prototype | Event Handling | Adds an event listener to each node\. |
 | parent | Prototype | Traversal | Gets the parent element of each node, optionally filtered by a selector\. |
-| position | Prototype | Position | Gets the position of the first node relative to its offset parent\. |
+| position | Prototype | Position | Gets the position of the first node relative to its offset parent\. Returns undefined for empty selection\. |
 | prepend | Prototype | DOM Manipulation | Inserts content at the beginning of each node\. |
 | prev | Prototype | Traversal | Gets the previous sibling element of each node, optionally filtered by a selector\. |
 | prop | Prototype | Property Manipulation | Gets or sets a property on the nodes\. |
@@ -128,22 +155,22 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | removeData | Prototype | Data Manipulation | Removes a data\-\* attribute from each node\. |
 | removeProp | Prototype | Property Manipulation | Removes a property from each node\. |
 | removeTransition | Prototype | Display | Removes the transition from each node\. |
-| scrollHeight | Prototype | Dimensions | Returns the scroll height of the first node\. |
-| scrollLeft | Prototype | Scroll Manipulation | Gets or sets the horizontal scroll position of the first node, with an option to increment\. |
-| scrollTop | Prototype | Scroll Manipulation | Gets or sets the vertical scroll position of the first node, with an option to increment\. |
-| scrollWidth | Prototype | Dimensions | Returns the scroll width of the first node\. |
+| scrollHeight | Prototype | Dimensions | Returns the scroll height of the first node\. Returns undefined for empty selection\. |
+| scrollLeft | Prototype | Scroll Manipulation | Gets or sets the horizontal scroll position of the first node, with an option to increment\. Returns undefined for empty selection\. |
+| scrollTop | Prototype | Scroll Manipulation | Gets or sets the vertical scroll position of the first node, with an option to increment\. Returns undefined for empty selection\. |
+| scrollWidth | Prototype | Dimensions | Returns the scroll width of the first node\. Returns undefined for empty selection\. |
 | show | Prototype | Display | Shows each node, optionally with a fade\-in effect over a specified duration\. |
 | siblings | Prototype | Traversal | Gets all sibling elements of each node, optionally filtered by a selector\. |
 | size | Prototype | Dimensions | Returns the width and height of the first node\. |
-| text | Prototype | Content Manipulation | Gets or sets the text content of the nodes\. |
-| toggle | Prototype | Display | Toggles the display of each node\. |
-| toggleClass | Prototype | Class Manipulation | Toggles a class on each node\. |
-| trigger | Prototype | Event Handling | Triggers a specific event on each node\. |
-| unwrap | Prototype | DOM Manipulation | Removes the parent wrapper of each node\. |
-| val | Prototype | Form Manipulation | Gets or sets the value of form elements in the nodes\. |
-| wait | Prototype | Utility | Returns a promise that resolves after a given time\. Useful for delaying actions\. |
-| walk | Prototype | Iteration | Walks through all nodes in the Q object and executes a callback on each node, passing the current node as a Q object or raw element based on the boolean parameter\. |
-| width | Prototype | Dimensions | Gets or sets the width of the first node\. |
+| text | Prototype | Content Manipulation | Gets or sets the text content of the nodes\. Returns null for empty selection\. Chainable as setter\. |
+| toggle | Prototype | Display | Toggles the display of each node\. Chainable\. Does nothing for empty selection\. |
+| toggleClass | Prototype | Class Manipulation | Toggles a class on each node\. Chainable\. Does nothing for empty selection\. |
+| trigger | Prototype | Event Handling | Triggers a specific event on each node\. Chainable\. Does nothing for empty selection\. |
+| unwrap | Prototype | DOM Manipulation | Removes the parent wrapper of each node\. Chainable\. Does nothing for empty selection\. |
+| val | Prototype | Form Manipulation | Gets or sets the value of form elements in the nodes\. Returns null for empty selection\. Chainable as setter\. |
+| wait | Prototype | Utility | Returns a promise that resolves with the Q object after a given time\. Enables async chainable actions\. |
+| walk | Prototype | Iteration | Walks through all nodes in the Q object and executes a callback on each node, passing the current node as a Q object or raw element based on the boolean parameter\. Chainable\. Does nothing for empty selection\. |
+| width | Prototype | Dimensions | Gets or sets the width of the first node, or sets the width for all nodes\. Returns undefined for empty selection\. |
 | wrap | Prototype | DOM Manipulation | Wraps each node with the specified wrapper element\. |
 | wrapAll | Prototype | DOM Manipulation | Wraps all nodes together in a single wrapper element\. |
-| zIndex | Prototype | Display | Gets or sets the z\-index of the first node\. |
+| zIndex | Prototype | Display | Gets or sets the z\-index of the first node, or sets the z\-index for all nodes\. Returns undefined for empty selection\. |

@@ -1,14 +1,18 @@
 {
     "Name": "val",
     "Method": "Prototype",
-    "Desc": "Gets or sets the value of form elements in the nodes.",
-    "LongDesc": "Provides a convenient way to access or modify form element values. When called without parameters, returns the current value of the first element in the set. When provided with a value, sets this value for all matched form elements. This method works with input, select, and textarea elements, making it versatile for form handling operations like validation, auto-filling, or data extraction.",
+    "Desc": "Gets or sets the value of form elements in the nodes. Returns null for empty selection. Chainable as setter.",
+    "LongDesc": "Provides a convenient way to access or modify form element values. When called without parameters, returns the current value of the first element in the set, or null if the selection is empty or not a form element. When provided with a value, sets this value for all matched form elements. The setter is chainable. This method works with input, select, and textarea elements, making it versatile for form handling operations like validation, auto-filling, or data extraction.",
     "Type": "Form Manipulation",
     "Example": [
-        "Q('input').val('New text');",
-        "const username = Q('#username').val();",
-        "Q('select').val('option2');",
-        "Q('textarea').val('').val(Q('#template').text());"
+        "Q('input').val('New text'); // Set value for all inputs",
+        "const username = Q('#username').val(); // Get value from #username input",
+        "Q('select').val('option2'); // Set value for all selects",
+        "Q('textarea').val('').val(Q('#template').text()); // Chain set and get",
+        "Q('.non-input').val(); // Returns null for non-input elements",
+        "Q('input').val('A').addClass('changed'); // Chaining after set",
+        "Q('.missing').val(); // Returns null for empty selection"
     ],
-    "Dependencies": []
+    "Dependencies": [],
+    "Variables": []
 }

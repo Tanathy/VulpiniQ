@@ -1,9 +1,9 @@
 {
   "Name": "Form",
-  "Method": "Plugin",
+  "Method": "Constructor",
   "Desc": "Form is a simple library for creating forms and windows in the browser. It provides a set of methods for creating form elements, windows, and other UI components.",
   "LongDesc": "The Form plugin provides a unified API for creating, styling, and managing form components and modal windows in the browser. It includes a set of methods for generating form elements, handling events, and managing UI state, and serves as the foundation for all Form.* components.",
-  "Type": "Plugin",
+  "Type": "Constructor",
   "Example": [
     "var form = new Q.Form();",
     "var textbox = form.TextBox('text', '', 'Enter your name');",

@@ -1,8 +1,8 @@
 {
   "Name": "Media.Video",
   "Method": "Component",
-  "Desc": "Video player with advanced controls and timeline support",
-  "LongDesc": "The Media.Video component creates a fully featured video player with controls including play/pause, seeking, volume, speed control, and custom timeline integration. It supports looping, autostart, and detailed status tracking.",
+  "Desc": "Video player with advanced controls and timeline support. Chainable. If the selection is empty, no action is taken and the chain continues.",
+  "LongDesc": "The Media.Video component creates a fully featured video player with controls including play/pause, seeking, volume, speed control, and custom timeline integration. It supports looping, autostart, and detailed status tracking. This component is chainable: it returns the Media.Video instance for further operations. If called on an empty selection, it does nothing and returns the chain.",
   "Type": "Component",
   "Example": [
     "var player = Media.Video();",
@@ -11,10 +11,13 @@
     "var player = Media.Video().load('video.mp4').play();",
     "var player = Media.Video().load('video.mp4').play(5000, 10000);",
     "var player = Media.Video().load('video.mp4').volume(0.5).loop(true);",
-    "var player = Media.Video().load('video.mp4').status(function(status){ console.log('Video status:', status); });"
+    "var player = Media.Video().load('video.mp4').status(function(status){ console.log('Video status:', status); });",
+    "Media.Video().load('video.mp4').autostart(true).volume(0.8).loop(true).play(); // chaining",
+    "Media.Video([]).load('video.mp4').play().volume(0.5); // empty selection, no error, chain continues"
   ],
   "Dependencies": [
     "style",
     "Debounce"
-  ]
+  ],
+  "Variables": []
 }

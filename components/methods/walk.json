@@ -1,14 +1,17 @@
 {
     "Name": "walk",
     "Method": "Prototype",
-    "Desc": "Walks through all nodes in the Q object and executes a callback on each node, passing the current node as a Q object or raw element based on the boolean parameter.",
-    "LongDesc": "Provides an efficient way to iterate over all matched elements and perform operations on each one. The callback receives either the raw DOM element or a Q-wrapped element depending on the second parameter, along with the current index. This method is useful for inspecting or manipulating DOM elements one by one while maintaining chainability. Unlike native array iteration methods, it preserves the Q context and returns the original Q object.",
+    "Desc": "Walks through all nodes in the Q object and executes a callback on each node, passing the current node as a Q object or raw element based on the boolean parameter. Chainable. Does nothing for empty selection.",
+    "LongDesc": "Provides an efficient way to iterate over all matched elements and perform operations on each one. The callback receives either the raw DOM element or a Q-wrapped element depending on the second parameter (useQObject), along with the current index. The method is chainable and does nothing if the selection is empty. This method is useful for inspecting or manipulating DOM elements one by one while maintaining chainability. Unlike native array iteration methods, it preserves the Q context and returns the original Q object.",
     "Type": "Iteration",
     "Example": [
-        "Q(selector).walk((node) => console.log(node));",
-        "Q('li').walk((node, index) => node.textContent = `Item ${index + 1}`);", 
-        "Q('.items').walk((node) => node.classList.add('processed'), true);",
-        "let total = 0; Q('input').walk((node) => total += parseInt(node.value) || 0);"
+        "Q(selector).walk((node) => console.log(node)); // Walk all nodes, raw element",
+        "Q('li').walk((node, index) => node.textContent = `Item ${index + 1}`); // Set text by index",
+        "Q('.items').walk((node) => node.classList.add('processed'), true); // Use Q object",
+        "let total = 0; Q('input').walk((node) => total += parseInt(node.value) || 0); // Aggregate values",
+        "Q('.panel').walk((node) => node.classList.add('checked')).addClass('done'); // Chaining after walk",
+        "Q('.missing').walk((node) => console.log(node)); // Does nothing for empty selection"
     ],
-    "Dependencies": []
+    "Dependencies": [],
+    "Variables": []
 }

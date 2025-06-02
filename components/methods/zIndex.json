@@ -1,14 +1,17 @@
 {
     "Name": "zIndex",
     "Method": "Prototype",
-    "Desc": "Gets or sets the z-index of the first node.",
-    "LongDesc": "Controls the stacking order of HTML elements that overlap. Higher z-index values appear in front of elements with lower values. When called without parameters, returns the current z-index value of the first element in the set. When provided with a value, sets the z-index for all elements in the set, allowing for layering control in complex layouts.",
+    "Desc": "Gets or sets the z-index of the first node, or sets the z-index for all nodes. Returns undefined for empty selection.",
+    "LongDesc": "Controls the stacking order of HTML elements that overlap. Higher z-index values appear in front of elements with lower values. When called without parameters, returns the current z-index value of the first element in the set, or undefined if the selection is empty. When provided with a value, sets the z-index for all elements in the set, allowing for layering control in complex layouts. The setter is chainable, allowing further method calls.",
     "Type": "Display",
     "Example": [
-        "Q(selector).zIndex();",
-        "Q('.overlay').zIndex(10);",
-        "const currentIndex = Q('#popup').zIndex();",
-        "Q('.modal').zIndex(Q('.header').zIndex() + 5);"
+        "Q(selector).zIndex(); // Get z-index of first element or undefined",
+        "Q('.overlay').zIndex(10); // Set z-index for all .overlay elements",
+        "const currentIndex = Q('#popup').zIndex(); // Get z-index for #popup",
+        "Q('.modal').zIndex(Q('.header').zIndex() + 5); // Set relative z-index",
+        "Q('.modal').zIndex(100).addClass('on-top'); // Chaining after set",
+        "Q('.missing').zIndex(); // Returns undefined for empty selection"
     ],
-    "Dependencies": []
+    "Dependencies": [],
+    "Variables": []
 }

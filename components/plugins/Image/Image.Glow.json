@@ -1,0 +1,13 @@
+{
+  "Name": "Image.Glow",
+  "Method": "Prototype",
+  "Desc": "Adds a glow effect to bright areas of the image.",
+  "LongDesc": "The Glow method detects bright regions in the image and applies a blurred, colored glow to them. It supports threshold, blur radius, intensity, color tint, and blend mode. Useful for artistic highlights and simulating light effects.",
+  "Type": "Image Effect",
+  "Example": [
+    "var img = new Q.Image({ width: 300, height: 200 });\nimg.Load('photo.jpg', function() { img.Glow({ blurRadius: 20, intensity: 1.5 }); });",
+    "Q.Image().Load('img.png').Glow({ color: '#ff0', blendMode: 'screen' });"
+  ],
+  "Dependencies": ["Q.Image"],
+  "Variables": ["defaultOptions", "finalOptions", "w", "h", "src", "srcCtx", "thr", "thrCtx", "img", "data", "glow", "gctx", "dst"]
+}

@@ -1,14 +1,16 @@
 {
     "Name": "scrollTop",
     "Method": "Prototype",
-    "Desc": "Gets or sets the vertical scroll position of the first node, with an option to increment.",
-    "LongDesc": "Controls the vertical scrolling position of elements. When called without parameters, returns the current vertical scroll position of the first element. When provided with a value, sets the vertical scroll position for all elements, respecting maximum scroll boundaries. The increment parameter allows for relative scrolling (adding to current position) rather than absolute positioning. This method is essential for programmatic scrolling in overflow containers, panels, or implementing custom scroll behaviors.",
+    "Desc": "Gets or sets the vertical scroll position of the first node, with an option to increment. Returns undefined for empty selection.",
+    "LongDesc": "Controls the vertical scrolling position of elements. When called without parameters, returns the current vertical scroll position of the first element, or undefined if the selection is empty. When provided with a value, sets the vertical scroll position for all elements, respecting maximum scroll boundaries. The increment parameter allows for relative scrolling (adding to current position) rather than absolute positioning. The setter is chainable. This method is essential for programmatic scrolling in overflow containers, panels, or implementing custom scroll behaviors.",
     "Type": "Scroll Manipulation",
     "Example": [
-        "const position = Q('#container').scrollTop();",
-        "Q('.scroll-area').scrollTop(300);",
+        "const position = Q('#container').scrollTop(); // Get scroll position",
+        "Q('.scroll-area').scrollTop(300); // Set scroll position",
         "Q('#content').scrollTop(100, true); // Increment by 100px",
-        "const scrollAmount = 50; Q('.panel').scrollTop(scrollAmount, true);"
+        "const scrollAmount = 50; Q('.panel').scrollTop(scrollAmount, true); // Increment by variable",
+        "Q('.panel').scrollTop(200).addClass('scrolled'); // Chaining after set",
+        "Q('.missing').scrollTop(); // Returns undefined for empty selection"
     ],
     "Dependencies": []
 }

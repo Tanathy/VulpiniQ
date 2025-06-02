@@ -1,8 +1,8 @@
 {
   "Name": "Media.Selector",
   "Method": "Component",
-  "Desc": "Region selection tool for images and videos",
-  "LongDesc": "The Media.Selector component creates an interactive region selection interface allowing users to draw, resize and move selection areas on top of media elements. It supports percentage-based coordinates, aspect ratio constraints, and programmatic control.",
+  "Desc": "Region selection tool for images and videos. Chainable. If the selection is empty, no action is taken and the chain continues.",
+  "LongDesc": "The Media.Selector component creates an interactive region selection interface allowing users to draw, resize and move selection areas on top of media elements. It supports percentage-based coordinates, aspect ratio constraints, and programmatic control. This component is chainable: it returns the Media.Selector instance for further operations. If called on an empty selection, it does nothing and returns the chain.",
   "Type": "Component",
   "Example": [
     "var selector = Media.Selector(document.getElementById('video-container'));",
@@ -10,9 +10,12 @@
     "var selector = Media.Selector('#media').add(20, 20, 40, 40);",
     "var selector = Media.Selector('#media').aspectRatio('16:9');",
     "var selector = Media.Selector('#media').set(10, 10, 50, 50);",
-    "var coords = Media.Selector('#media').get();"
+    "var coords = Media.Selector('#media').get();",
+    "Media.Selector('#media').add(10,10,20,20).set(30,30,40,40).aspectRatio('4:3'); // chaining",
+    "Media.Selector([]).add(10,10,20,20).set(30,30,40,40); // empty selection, no error, chain continues"
   ],
   "Dependencies": [
     "style"
-  ]
+  ],
+  "Variables": []
 }

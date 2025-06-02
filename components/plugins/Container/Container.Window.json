@@ -1,0 +1,13 @@
+{
+  "Name": "Container.Window",
+  "Method": "Prototype",
+  "Desc": "Movable, resizable window component with taskbar integration.",
+  "LongDesc": "The Container.Window method creates a draggable and resizable window UI element with support for minimization, maximization, and taskbar management. It offers advanced features like shadow, blur, and animation, and can be used to display any content in a floating window.",
+  "Type": "UI Component",
+  "Example": [
+    "var win = Q.Container().Window({ title: 'My Window', content: '<b>Hello</b>' });\nwin.Open();",
+    "var win = Q.Container().Window({ width: 500, height: 400 });\nwin.Content('Dynamic content');\nwin.Position(100, 100);\nwin.Open();"
+  ],
+  "Dependencies": ["Q", "Container"],
+  "Variables": ["windowElement", "titlebar", "contentContainer", "settings", "taskbarButton", "isMinimized", "isMaximized", "isOpen"]
+}

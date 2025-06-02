@@ -1250,6 +1250,2062 @@ Q.RGB2LAB = (r, g, b) => {
   const b_val = 200 * (fy - fz);
   return [L, a, b_val];
 };
+function Container(options = {}) {
+    if (!(this instanceof Container)) {
+        return new Container(options);
+    }
+    this.elements = [];
+    this.options = options;
+    if (!Container.initialized) {
+        Container.classes = Q.style('', `
+            .container_icon {
+                width: 100%;
+                height: 100%;
+                color: #777; /* Default color */
+                pointer-events: none;
+                z-index: 1;
+            }
+        `, null, {
+            'container_icon': 'container_icon'
+        });
+        Q.Icons();
+        Container.initialized = true;
+        console.log('Container core initialized');
+    }
+}
+Container.prototype.Icon = function(icon) {
+    const iconInstance = Q.Icons();
+    return iconInstance.get(icon, 'container_icon');
+};
+Q.Container = Container;
+Container.prototype.Frame = function(options = {}) {
+    const self = this;
+    const defaultOptions = {
+        direction: 'horizontal', // 'horizontal' or 'vertical'
+        id: "ok",                // unique id for saving/restoring positions
+        savePosition: true,      // save/restore frame sizes in localStorage
+        minSize: 20,             // minimum size in px for a frame section
+        responsive: true,
+        responsivesMaxCount: 5, // maximum number of responsive frames
+        responsiveAnimation: 250,
+        responsiveAnimationEasing: 'ease-in-out',
+        storageKey: "settings.frames"
+    };
+    options = Object.assign({}, defaultOptions, options);
+    if (!Container.frameClassesInitialized) {
+        Container.frameClasses = Q.style('', `
+            .frame_root {
+                display: flex;
+                width: 100%;
+                height: 100%;
+                min-height: 100px;
+                min-width: 100px;
+                border-radius: 6px;
+                overflow: hidden;
+                position: relative;
+            }
+            .frame_horizontal {
+                flex-direction: row;
+            }
+            .frame_vertical {
+                flex-direction: column;
+            }
+            .frame_section {
+                position: relative;
+                overflow: auto;
+                min-width: 20px;
+                min-height: 20px;
+            }
+            .frame_resizer {
+                background: var(--form-default-accent-color, #444);
+                opacity: 0.2;
+                z-index: 10;
+                position: relative;
+                user-select: none;
+            }
+            .frame_resizer_horizontal {
+                width: 3px;
+                cursor: col-resize;
+            }
+            .frame_resizer_vertical {
+                height: 3px;
+                cursor: row-resize;
+            }
+            .frame_resizer:hover {
+                opacity: 0.5;
+            }
+        `, null, {
+            'frame_root': 'frame_root',
+            'frame_horizontal': 'frame_horizontal',
+            'frame_vertical': 'frame_vertical',
+            'frame_section': 'frame_section',
+            'frame_resizer': 'frame_resizer',
+            'frame_resizer_horizontal': 'frame_resizer_horizontal',
+            'frame_resizer_vertical': 'frame_resizer_vertical'
+        },false);
+        Container.frameClassesInitialized = true;
+    }
+    let direction = options.direction === 'vertical' ? 'vertical' : 'horizontal';
+    const root = Q('<div>', { class: Container.frameClasses.frame_root });
+    root.addClass(direction === 'horizontal' ? Container.frameClasses.frame_horizontal : Container.frameClasses.frame_vertical);
+    const frameId = options.id || null;
+    const savePosition = !!options.savePosition;
+    const storageKey = options.storageKey;
+    const minSize = options.minSize;
+    const responsive = !!options.responsive;
+    const responsivesMaxCount = options.responsivesMaxCount || 5;
+    function getSavedFrames() {
+        return Q.Storage(storageKey) || {};
+    }
+    function saveFrames(framesObj) {
+        console.log('Saving frames:', framesObj);
+        Q.Storage(storageKey, framesObj);
+    }
+    function clearFramePos(id) {
+        const all = getSavedFrames();
+        if (all[id]) {
+            delete all[id];
+            saveFrames(all);
+        }
+    }
+    function getScreenSizeBucket() {
+        const px = direction === 'horizontal'
+            ? window.innerWidth
+            : window.innerHeight;
+        return Math.floor(px / 100); // pl. 1842 -> 18
+    }
+    function findSavedSizeByBucket(saved, bucket) {
+        if (!saved || !Array.isArray(saved) || saved.length === 0) return null;
+        for (let i = 0; i < saved.length; ++i) {
+            const entry = saved[i];
+            if (entry && typeof entry.screenSizeBucket === 'number' && entry.screenSizeBucket === bucket) {
+                return entry;
+            }
+        }
+        return null;
+    }
+    root.direction = function(dir) {
+        direction = dir === 'vertical' ? 'vertical' : 'horizontal';
+        root.removeClass(Container.frameClasses.frame_horizontal + ' ' + Container.frameClasses.frame_vertical);
+        root.addClass(direction === 'horizontal' ? Container.frameClasses.frame_horizontal : Container.frameClasses.frame_vertical);
+        return this;
+    };
+    root.clearPos = function() {
+        if (frameId) clearFramePos(frameId);
+        return this;
+    };
+    root.frames = function(frameDefs) {
+        root.empty();
+        const frameMap = {};
+        let totalFlex = 0;
+        root._frameDefs = frameDefs;
+        frameDefs.forEach(def => {
+            if (def.size && typeof def.size === 'string' && def.size.endsWith('%')) {
+                totalFlex += parseFloat(def.size);
+            }
+        });
+        const defaultSize = frameDefs.length > 0 ? (100 - totalFlex) / frameDefs.filter(f => !f.size).length : 100;
+        let savedSizes = null;
+        let savedResponsiveList = null;
+        let currentScreenSizeBucket = getScreenSizeBucket();
+        if (savePosition && frameId) {
+            const all = getSavedFrames();
+            if (all[frameId]) {
+                if (responsive && Array.isArray(all[frameId].responsive)) {
+                    savedResponsiveList = all[frameId].responsive;
+                    const found = findSavedSizeByBucket(savedResponsiveList, currentScreenSizeBucket);
+                    if (found && Array.isArray(found.sizes) && found.sizes.length === frameDefs.length) {
+                        savedSizes = found.sizes;
+                    }
+                } else if (Array.isArray(all[frameId].sizes) && all[frameId].sizes.length === frameDefs.length) {
+                    savedSizes = all[frameId].sizes;
+                }
+            }
+        }
+        const sections = [];
+        const resizers = [];
+        frameDefs.forEach((def, idx) => {
+            const section = Q('<div>', { class: Container.frameClasses.frame_section });
+            let sizeVal = null;
+            if (savedSizes && savedSizes[idx]) {
+                sizeVal = savedSizes[idx];
+            } else if (def.size) {
+                sizeVal = def.size;
+            } else {
+                sizeVal = defaultSize + '%';
+            }
+            if (direction === 'horizontal') section.css('width', sizeVal);
+            else section.css('height', sizeVal);
+            frameMap[def.name] = section;
+            sections.push(section);
+            root.append(section);
+            if (def.resize && idx < frameDefs.length - 1) {
+                const resizer = Q('<div>', { class: Container.frameClasses.frame_resizer });
+                resizer.addClass(direction === 'horizontal' ? Container.frameClasses.frame_resizer_horizontal : Container.frameClasses.frame_resizer_vertical);
+                resizer.on('mousedown', function(e) {
+                    e.preventDefault();
+                    const prev = section;
+                    const next = sections[idx + 1];
+                    if (!prev || !next) return;
+                    const parent = root.nodes[0];
+                    const isHorizontal = direction === 'horizontal';
+                    const prevRect = prev.nodes[0].getBoundingClientRect();
+                    const nextRect = next.nodes[0].getBoundingClientRect();
+                    const parentPx = isHorizontal ? parent.clientWidth : parent.clientHeight;
+                    const prevPercent = (isHorizontal ? prevRect.width : prevRect.height) / parentPx * 100;
+                    const nextPercent = (isHorizontal ? nextRect.width : nextRect.height) / parentPx * 100;
+                    const startX = e.clientX, startY = e.clientY;
+                    function onMove(ev) {
+                        let deltaPx = isHorizontal ? ev.clientX - startX : ev.clientY - startY;
+                        let newPrevPercent = prevPercent + (deltaPx / parentPx) * 100;
+                        let newNextPercent = nextPercent - (deltaPx / parentPx) * 100;
+                        const minPercent = minSize / parentPx * 100;
+                        if (newPrevPercent < minPercent) {
+                            newNextPercent -= (minPercent - newPrevPercent);
+                            newPrevPercent = minPercent;
+                        }
+                        if (newNextPercent < minPercent) {
+                            newPrevPercent -= (minPercent - newNextPercent);
+                            newNextPercent = minPercent;
+                        }
+                        if (isHorizontal) {
+                            prev.css('width', newPrevPercent + '%');
+                            next.css('width', newNextPercent + '%');
+                        } else {
+                            prev.css('height', newPrevPercent + '%');
+                            next.css('height', newNextPercent + '%');
+                        }
+                    }
+                    function onUp() {
+                        document.removeEventListener('mousemove', onMove);
+                        document.removeEventListener('mouseup', onUp);
+                        saveCurrentSizes();
+                    }
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                });
+                root.append(resizer);
+                resizers.push(resizer); // Store reference
+            }
+        });
+        if (responsive && frameId) {
+            let lastScreenSizeBucket = currentScreenSizeBucket;
+            let lastFrameDefs = frameDefs;
+            Q.Resize(function handleResize() {
+                Q.Debounce('frame-resize-' + frameId, 250, function () {
+                    const newScreenSizeBucket = getScreenSizeBucket();
+                    if (newScreenSizeBucket !== lastScreenSizeBucket) {
+                        const all = getSavedFrames();
+                        let responsiveArr = (all[frameId] && Array.isArray(all[frameId].responsive)) ? all[frameId].responsive : [];
+                        const found = findSavedSizeByBucket(responsiveArr, newScreenSizeBucket);
+                        if (found && Array.isArray(found.sizes) && found.sizes.length === lastFrameDefs.length) {
+                            for (let i = 0; i < sections.length; ++i) {
+                                const sec = sections[i];
+                                const sizeVal = found.sizes[i];
+                                if (direction === 'horizontal') {
+                                    sec.css({
+                                        transition: `width ${options.responsiveAnimation}ms ${options.responsiveAnimationEasing}`
+                                    });
+                                    sec.css('width', sizeVal);
+                                } else {
+                                    sec.css({
+                                        transition: `height ${options.responsiveAnimation}ms ${options.responsiveAnimationEasing}`
+                                    });
+                                    sec.css('height', sizeVal);
+                                }
+                                setTimeout(() => {
+                                    if (direction === 'horizontal') {
+                                        sec.css('transition', '');
+                                    } else {
+                                        sec.css('transition', '');
+                                    }
+                                }, options.responsiveAnimation + 10);
+                            }
+                        } else {
+                            let totalFlex = 0;
+                            lastFrameDefs.forEach(def => {
+                                if (def.size && typeof def.size === 'string' && def.size.endsWith('%')) {
+                                    totalFlex += parseFloat(def.size);
+                                }
+                            });
+                            const defaultSize = lastFrameDefs.length > 0 ? (100 - totalFlex) / lastFrameDefs.filter(f => !f.size).length : 100;
+                            for (let i = 0; i < sections.length; ++i) {
+                                let sizeVal = lastFrameDefs[i].size ? lastFrameDefs[i].size : (defaultSize + '%');
+                                const sec = sections[i];
+                                if (direction === 'horizontal') {
+                                    sec.css({
+                                        transition: `width ${options.responsiveAnimation}ms ${options.responsiveAnimationEasing}`
+                                    });
+                                    sec.css('width', sizeVal);
+                                } else {
+                                    sec.css({
+                                        transition: `height ${options.responsiveAnimation}ms ${options.responsiveAnimationEasing}`
+                                    });
+                                    sec.css('height', sizeVal);
+                                }
+                                setTimeout(() => {
+                                    if (direction === 'horizontal') {
+                                        sec.css('transition', '');
+                                    } else {
+                                        sec.css('transition', '');
+                                    }
+                                }, options.responsiveAnimation + 10);
+                            }
+                        }
+                        lastScreenSizeBucket = newScreenSizeBucket;
+                    }
+                });
+            });
+        }
+        function saveCurrentSizes() {
+            if (savePosition && frameId) {
+                const sizes = sections.map(sec => {
+                    if (direction === 'horizontal') {
+                        const px = sec.nodes[0].getBoundingClientRect().width;
+                        const parentPx = root.nodes[0].clientWidth;
+                        return (px / parentPx * 100) + '%';
+                    } else {
+                        const px = sec.nodes[0].getBoundingClientRect().height;
+                        const parentPx = root.nodes[0].clientHeight;
+                        return (px / parentPx * 100) + '%';
+                    }
+                });
+                const all = getSavedFrames();
+                if (responsive) {
+                    let responsiveArr = (all[frameId] && Array.isArray(all[frameId].responsive)) ? all[frameId].responsive : [];
+                    const screenSizeBucket = getScreenSizeBucket();
+                    responsiveArr = responsiveArr.filter(entry => entry.screenSizeBucket !== screenSizeBucket);
+                    if (responsiveArr.length >= responsivesMaxCount) {
+                        responsiveArr.shift();
+                    }
+                    responsiveArr.push({ screenSizeBucket, sizes });
+                    all[frameId] = { responsive: responsiveArr };
+                } else {
+                    all[frameId] = { sizes };
+                }
+                saveFrames(all);
+            }
+        }
+        root._frameSections = sections;
+        root._frameMap = frameMap;
+        root.resize = function(name, size) {
+            if (root._frameMap && root._frameMap[name]) {
+                const section = root._frameMap[name].nodes[0];
+                const isHorizontal = root.hasClass(Container.frameClasses.frame_horizontal);
+                if (isHorizontal) {
+                    section.style.width = typeof size === 'number' ? size + 'px' : size;
+                } else {
+                    section.style.height = typeof size === 'number' ? size + 'px' : size;
+                }
+            }
+            return this;
+        };
+        return frameMap;
+    };
+    this.elements.push(root);
+    return root;
+};
+Container.prototype.Tab = function(data, horizontal = true) {
+    if (!Container.tabClassesInitialized) {
+        Container.tabClasses = Q.style('', `
+            .tab_navigation_buttons {
+                box-sizing: border-box;
+                width: 30px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                user-select: none;
+            }
+            .tab_navigation_buttons_vertical {
+                width: auto;
+                height: 20px;
+            }
+            .tab_navigation_buttons:hover {
+                background-color: var(--form-default-background-hover);
+            }
+            .tab_container {
+                width: 100%;
+                min-height: 300px;
+            }
+            .tab_container_vertical {
+                display: flex;
+            }
+            .tab_navigation_header {
+                background-color: var(--form-default-background);
+                display: flex;
+            }
+            .tab_navigation_header_vertical {
+                flex-direction: column;
+                width: auto;
+            }
+            .tab_navigation_tabs {
+                user-select: none;
+                display: flex;
+                flex-direction: row;
+                width: 100%;
+                overflow: hidden;
+            }
+            .tab_navigation_tabs_vertical {
+                flex-direction: column;
+            }
+            .tab_active {
+                background-color: var(--form-default-accent-color);
+                color: var(--form-default-accent-text-color);
+                color: #fff;
+            }
+            .tab {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                cursor: default;
+                padding: var(--form-default-padding);
+                font-size: var(--form-default-font-size);
+                white-space: nowrap;     /* prevent text wrap */
+            }
+            .tab_disabled {
+                background-color: var(--form-default-background-disabled);
+                color: var(--form-default-text-color-disabled);
+            }
+            .tab_content {
+                display: none;
+                width: 100%;
+                height: 100%;
+                overflow: auto;
+            }
+            .tab_content_active {
+                display: block;
+            }
+            .tab_content_container {
+                width: 100%;
+                height: 100%;
+                overflow: auto;
+                position: relative;
+            }
+        `, null, {
+            'tab_navigation_buttons': 'tab_navigation_buttons',
+            'tab_navigation_buttons_vertical': 'tab_navigation_buttons_vertical',
+            'tab_container': 'tab_container',
+            'tab_container_vertical': 'tab_container_vertical',
+            'tab_navigation_header': 'tab_navigation_header',
+            'tab_navigation_header_vertical': 'tab_navigation_header_vertical',
+            'tab_navigation_tabs': 'tab_navigation_tabs',
+            'tab_navigation_tabs_vertical': 'tab_navigation_tabs_vertical',
+            'tab_active': 'tab_active',
+            'tab': 'tab',
+            'tab_disabled': 'tab_disabled',
+            'tab_content_container': 'tab_content_container'
+        });
+        Container.tabClassesInitialized = true;
+    }
+    const wrapper = Q('<div>', { class: Container.tabClasses.tab_container });
+    const header = Q('<div>', { class: Container.tabClasses.tab_navigation_header });
+    const prevBtn = Q('<div>', { class: Container.tabClasses.tab_navigation_buttons });
+    const nextBtn = Q('<div>', { class: Container.tabClasses.tab_navigation_buttons });
+    const tabs = Q('<div>', { class: Container.tabClasses.tab_navigation_tabs });
+    const contentContainer = Q('<div>', { class: Container.tabClasses.tab_content_container });
+    if (!horizontal) {
+        wrapper.addClass(Container.tabClasses.tab_container_vertical);
+        header.addClass(Container.tabClasses.tab_navigation_header_vertical);
+        tabs.addClass(Container.tabClasses.tab_navigation_tabs_vertical);
+        prevBtn.addClass(Container.tabClasses.tab_navigation_buttons_vertical);
+        nextBtn.addClass(Container.tabClasses.tab_navigation_buttons_vertical);
+        prevBtn.html('▲');
+        nextBtn.html('▼');
+    } else {
+        prevBtn.html('◀');
+        nextBtn.html('▶');
+    }
+    header.append(prevBtn, tabs, nextBtn);
+    wrapper.append(header, contentContainer);
+    function updateNavButtons() {
+        const el = tabs.nodes[0];
+        const hasOverflow = horizontal
+            ? el.scrollWidth > el.clientWidth
+            : el.scrollHeight > el.clientHeight;
+        const disp = hasOverflow ? 'flex' : 'none';
+        prevBtn.css('display', disp);
+        nextBtn.css('display', disp);
+    }
+    const data_tabs = {};
+    const data_contents = {};
+    let activeTab = null;
+    prevBtn.off('click').on('click', () => {
+        const scrollAmount = horizontal ? tabs.width() : tabs.height();
+        const el = tabs.nodes[0];
+        if (el && el.scrollBy) {
+            el.scrollBy({
+                left: horizontal ? -scrollAmount : 0,
+                top:  horizontal ? 0 : -scrollAmount,
+                behavior: 'smooth'
+            });
+        } else {
+            horizontal ? tabs.scrollLeft(-scrollAmount, true)
+                       : tabs.scrollTop(-scrollAmount, true);
+        }
+    });
+    nextBtn.off('click').on('click', () => {
+        const scrollAmount = horizontal ? tabs.width() : tabs.height();
+        const el = tabs.nodes[0];
+        if (el && el.scrollBy) {
+            el.scrollBy({
+                left: horizontal ?  scrollAmount : 0,
+                top:  horizontal ?  0 :  scrollAmount,
+                behavior: 'smooth'
+            });
+        } else {
+            horizontal ? tabs.scrollLeft( scrollAmount, true)
+                       : tabs.scrollTop( scrollAmount, true);
+        }
+    });
+    data.forEach(item => {
+        const tab = Q('<div>', { class: Container.tabClasses.tab })
+            .attr('data-value', item.value)
+            .text(item.title);
+        if (item.disabled) {
+            tab.addClass(Container.tabClasses.tab_disabled);
+        }
+        let content;
+        if (typeof item.content === 'string') {
+            content = Q('<div>').html(item.content);
+        } else if (item.content instanceof Element) {
+            content = Q(item.content);
+        } else if (item.content instanceof Q) {
+            content = item.content;
+        } else {
+            content = Q('<div>');
+        }
+        data_tabs[item.value] = tab;
+        data_contents[item.value] = content;
+        tab.on('click', function() {
+            if (tab.hasClass(Container.tabClasses.tab_disabled)) return;
+            const activeTabs = tabs.find('.' + Container.tabClasses.tab_active);
+            if (activeTabs) activeTabs.removeClass(Container.tabClasses.tab_active);
+            tab.addClass(Container.tabClasses.tab_active);
+            showContent(item.value);
+        });
+        tabs.append(tab);
+    });
+    updateNavButtons();
+    function showContent(value) {
+        if (!data_contents[value]) return;
+        if (activeTab && data_contents[activeTab]) {
+            data_contents[activeTab].detach();
+        }
+        activeTab = value;
+        contentContainer.append(data_contents[value]);
+    }
+    wrapper.select = function(value) {
+        const tab = data_tabs[value];
+        if (tab) tab.click();
+        return this;
+    };
+    wrapper.disabled = function(value, state) {
+        const tab = data_tabs[value];
+        if (tab) {
+            state ? tab.addClass(Container.tabClasses.tab_disabled) : 
+                  tab.removeClass(Container.tabClasses.tab_disabled);
+        }
+        return this;
+    };
+    wrapper.addTab = function(tabData) {
+        if (!tabData) return null;
+        const tab = Q('<div>', { class: Container.tabClasses.tab })
+            .attr('data-value', tabData.value)
+            .text(tabData.title);
+        if (tabData.disabled) {
+            tab.addClass(Container.tabClasses.tab_disabled);
+        }
+        let content;
+        if (typeof tabData.content === 'string') {
+            content = Q('<div>').html(tabData.content);
+        } else if (tabData.content instanceof Element) {
+            content = Q(tabData.content);
+        } else if (tabData.content instanceof Q) {
+            content = tabData.content;
+        } else {
+            content = Q('<div>');
+        }
+        data_tabs[tabData.value] = tab;
+        data_contents[tabData.value] = content;
+        tab.on('click', function() {
+            if (tab.hasClass(Container.tabClasses.tab_disabled)) return;
+            const activeTabs = tabs.find('.' + Container.tabClasses.tab_active);
+            if (activeTabs) activeTabs.removeClass(Container.tabClasses.tab_active);
+            tab.addClass(Container.tabClasses.tab_active);
+            showContent(tabData.value);
+        });
+        tabs.append(tab);
+        updateNavButtons();
+        return tab;
+    };
+    wrapper.removeTab = function(value) {
+        if (data_tabs[value]) {
+            data_tabs[value].remove();
+            if (activeTab === value) {
+                const availableTab = Object.keys(data_tabs).find(key => key !== value);
+                if (availableTab) {
+                    this.select(availableTab);
+                } else {
+                    contentContainer.empty();
+                    activeTab = null;
+                }
+            }
+            if (data_contents[value]) {
+                data_contents[value].remove();
+            }
+            delete data_tabs[value];
+            delete data_contents[value];
+        }
+        updateNavButtons();
+        return this;
+    };
+    wrapper.getContent = function(value) {
+        return data_contents[value] || null;
+    };
+    wrapper.updateContent = function(value, newContent) {
+        if (!data_contents[value]) return this;
+        if (typeof newContent === 'string') {
+            data_contents[value].html(newContent);
+        } else if (newContent instanceof Element || newContent instanceof Q) {
+            data_contents[value].empty().append(newContent);
+        }
+        return this;
+    };
+    this.elements.push(wrapper);
+    return wrapper;
+};
+Container.prototype.Table = function (data = [], options = {}) {
+  if (!Array.isArray(data)) throw new Error('Container.Table: data must be an array of objects');
+  const defaultOptions = {
+    pageSize: 10,
+    sizes: [],
+    pageButtonLimit: 5,
+    debounce: 250,
+    search: true,
+    sort: true,
+    filter: true,
+    page: true,
+    info: true,
+    language: ['Search...', 'No results found.', 'Showing [PAGE] to [ALL_PAGES] of [TOTAL] entries','First', 'Prev', 'Next', 'Last'],
+  };
+  options = Object.assign({}, defaultOptions, options);
+  const {
+    debounce: debounceTime,
+    search: enableSearch,
+    sort: enableSort,
+    filter: enableFilter,
+    page: enablePage,
+    info: enableInfo
+  } = options;
+  if (!Container.tableClassesInitialized) {
+    Container.tableClasses = Q.style('', `
+      .tbl_wrapper { display: flex; flex-direction: column; }
+      .tbl_top { display: flex; justify-content: space-between; margin-bottom: 5px; }
+      .tbl_table { width:100%; border-collapse: collapse; 
+      border-radius: var(--form-default-border-radius);
+      overflow: hidden;
+      }
+      .tbl_table th, .tbl_table td {
+      border: var(--form-default-dataset-border);
+      padding:6px;
+      text-align:left;
+      cursor: default;
+      }
+      .tbl_row.selected { background: var(--form-default-accent-color); color: var(--form-default-accent-text-color); }
+            .tbl_table th
+      {
+        background: var(--form-default-dataset-header-background);
+        color: var(--form-default-dataset-header-text-color);
+        font-weight: var(--form-default-dataset-header-font-weight);
+        font-size: var(--form-default-dataset-header-font-size);
+        padding-right: 25px;
+}
+        .tbl_table td
+      {
+        font-size: var(--form-default-dataset-header-data-font-size);
+        color: var(--form-default-dataset-data-text-color);
+    }
+      .tbl_bottom {
+      display: flex;
+      justify-content: space-between;
+      margin-top:5px; 
+      font-size: var(--form-default-dataset-header-data-font-size);
+      color: var(--form-default-dataset-data-text-color);
+      }
+      .tbl_pagination {
+      display:flex;
+      gap:2px;
+      }
+      .tbl_page_btn {
+      padding: 5px 15px;
+      cursor: default;
+      user-select: none;
+      }
+      .tbl_page_btn.active { 
+      background: var(--form-default-accent-color);
+        color: var(--form-default-text-color-active);
+    }
+      .tbl_table th { position: relative; }
+      .tbl_table th .sort-icons {
+        position: absolute; right: 8px; top: 50%;
+        transform: translateY(-50%);
+        display: flex; flex-direction: column;
+        font-size: 8px; line-height: 1.3;
+      }
+      .sort_active {
+      color: var(--form-default-accent-color);
+    }
+    `, null, {
+      'tbl_wrapper': 'tbl_wrapper',
+      'tbl_top': 'tbl_top',
+      'tbl_search': 'tbl_search',
+      'tbl_page_size': 'tbl_page_size',
+      'tbl_table': 'tbl_table',
+      'tbl_row': 'tbl_row',
+      'tbl_bottom': 'tbl_bottom',
+      'tbl_pagination': 'tbl_pagination',
+      'tbl_page_btn': 'tbl_page_btn',
+      'sort-icons': 'sort-icons',
+      'asc': 'asc', 'desc': 'desc',
+      'sort_active': 'sort_active',
+      'active': 'active',
+      'selected': 'selected',
+    }, true);
+    Container.tableClassesInitialized = true;
+  }
+  const wrapper = Q('<div>', { class: Container.tableClasses.tbl_wrapper });
+  const top = Q('<div>', { class: Container.tableClasses.tbl_top });
+  let allData = [...data],
+    currentPage = 1,
+    sortKey = null,
+    sortOrder = 'off',
+    selectedIdx = null,
+    onChange = null,
+    filteredIndices = [];
+  const columnSizes = options.sizes;
+  const form = new Q.Form();
+  const searchInput = form.TextBox('text', '', options.language[0]);
+  const search = Q('<div>', { class: Container.tableClasses.tbl_search })
+    .append(searchInput.nodes[0]);
+  if (enableSearch) top.append(search);
+  const searchDebounceId = Q.ID('tbl_search_');
+  const table = Q('<table>', { class: Container.tableClasses.tbl_table });
+  const bottom = Q('<div>', { class: Container.tableClasses.tbl_bottom });
+  const status = Q('<div>');
+  const pagination = Q('<div>', { class: Container.tableClasses.tbl_pagination });
+  bottom.append(status, pagination);
+  wrapper.append(top, table, bottom);
+  let pageSizeVal = options.pageSize;
+  const pageSizeDropdown = form.Dropdown({
+    values: [10, 25, 50, 100].map(n => ({ value: n, text: '' + n, default: n === pageSizeVal }))
+  });
+  const pageSize = Q('<div>', { class: Container.tableClasses.tbl_page_size })
+    .append(pageSizeDropdown.nodes[0]);
+  if (enablePage) top.append(pageSize);
+  pageSizeDropdown.change(v => {
+    pageSizeVal = +v;
+    currentPage = 1;
+    render();
+  });
+  pageSizeVal = +pageSizeDropdown.val().value;
+  function render() {
+    const rawVal = searchInput.val() || '';
+    const term = rawVal.trim();
+    if (enableFilter) {
+      filteredIndices = allData.map((row, i) => i);
+      if (term.includes(':')) {
+        const clauses = term.split(',').map(c => {
+          const [field, ...rest] = c.split(':');
+          return [field.trim(), rest.join(':').trim()];
+        });
+        filteredIndices = filteredIndices.filter(i => {
+          const row = allData[i];
+          return clauses.every(([field, val]) => {
+            const fv = row[field];
+            if (fv == null) return false;
+            const str = typeof fv === 'object' ? JSON.stringify(fv) : String(fv);
+            return str.toLowerCase().includes(val.toLowerCase());
+          });
+        });
+      } else {
+        const lower = term.toLowerCase();
+        filteredIndices = filteredIndices.filter(i =>
+          JSON.stringify(allData[i]).toLowerCase().includes(lower)
+        );
+      }
+    } else {
+      filteredIndices = allData.map((_, i) => i);
+    }
+    if (enableSort && sortKey && sortOrder !== 'off') {
+      filteredIndices.sort((a, b) => {
+        const aVal = allData[a][sortKey];
+        const bVal = allData[b][sortKey];
+        if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    const total = filteredIndices.length;
+    const totalPages = Math.ceil(total / pageSizeVal) || 1;
+    currentPage = Math.min(currentPage, totalPages);
+    const start = (currentPage - 1) * pageSizeVal,
+      end = start + pageSizeVal;
+    const pageIndices = enablePage
+      ? filteredIndices.slice(start, end)
+      : filteredIndices;
+    const keys = Object.keys(allData[0] || {});
+    const thead = `<thead><tr>${keys.map((k, i) => {
+      const icons = enableSort
+        ? `<span class="${Container.tableClasses['sort-icons']}">
+               <span class="${Container.tableClasses.asc}">▲</span>
+               <span class="${Container.tableClasses.desc}">▼</span>
+             </span>`
+        : '';
+      return `<th data-key="${k}"${columnSizes[i] ? ` style="width:${columnSizes[i]}"` : ''}>${k}${icons}</th>`;
+    }).join('')
+      }</tr></thead>`;
+    const tbody = pageIndices.map(idx => {
+      const row = allData[idx];
+      return `<tr data-idx="${idx}" class="${Container.tableClasses.tbl_row}${idx === selectedIdx ? ' '+ Container.tableClasses.selected : ''}">${Object.values(row).map(v => {
+        if (Array.isArray(v)) return `<td>${v.join(', ')}</td>`;
+        if (typeof v === 'object') return `<td>${JSON.stringify(v)}</td>`;
+        return `<td>${v}</td>`;
+      }).join('')
+        }</tr>`;
+    }).join('');
+    table.html('');
+    table.append(thead + `<tbody>${tbody}</tbody>`);
+    if (enableInfo) {
+      if (total === 0) {
+        status.html(options.language[1]);
+      } else{
+      const pageInfo = options.language[2]
+        .replace('[PAGE]', currentPage)
+        .replace('[ALL_PAGES]', totalPages)
+        .replace('[TOTAL]', total);
+      status.html(pageInfo);
+      }
+    }
+    if (enablePage) {
+      pagination.html('');
+      [options.language[3], options.language[4]].forEach(t => {
+        const btn = `<span class="${Container.tableClasses.tbl_page_btn}" data-action="${t.toLowerCase()}">${t}</span>`;
+        pagination.append(btn);
+      });
+      const limit = options.pageButtonLimit;
+      const half = Math.floor(limit / 2);
+      let startPage = Math.max(1, currentPage - half);
+      let endPage = Math.min(totalPages, startPage + limit - 1);
+      if (endPage - startPage + 1 < limit) {
+        startPage = Math.max(1, endPage - limit + 1);
+      }
+      for (let p = startPage; p <= endPage; p++) {
+        const cls = p === currentPage ? ' '+ Container.tableClasses.active : '';
+        pagination.append(`<span class="${Container.tableClasses.tbl_page_btn + cls}" data-page="${p}">${p}</span>`);
+      }
+      [options.language[5], options.language[6]].forEach(t => {
+        const btn = `<span class="${Container.tableClasses.tbl_page_btn}" data-action="${t.toLowerCase()}">${t}</span>`;
+        pagination.append(btn);
+      });
+    }
+  }
+  if (enableSearch) {
+    searchInput.change(() => {
+      Q.Debounce(searchDebounceId, debounceTime, () => {
+        currentPage = 1;
+        render();
+      });
+    });
+  }
+  table.on('click', evt => {
+    const th = evt.target.closest('th');
+    const tr = evt.target.closest('tr[data-idx]');
+    if (enableSort && th) {
+      const key = th.dataset.key;
+      if (sortKey === key) {
+        if (sortOrder === 'off') sortOrder = 'asc';
+        else if (sortOrder === 'asc') sortOrder = 'desc';
+        else { sortOrder = 'off'; sortKey = null; }
+      } else {
+        sortKey = key;
+        sortOrder = 'asc';
+      }
+      render();
+      Q('.' + Container.tableClasses.sort_active).removeClass(Container.tableClasses.sort_active);
+      if (sortOrder != 'off') {
+        const arrowKey = sortOrder === 'asc' ? Container.tableClasses.asc : Container.tableClasses.desc;
+        const head = Q(`[data-key="${key}"] .${arrowKey}`);
+        head.addClass(Container.tableClasses.sort_active);
+      }
+    } else if (tr) {
+      const idx = +tr.dataset.idx;
+      wrapper.select(idx);
+    }
+  });
+  if (enablePage) {
+    pagination.on('click', evt => {
+      const tgt = evt.target;
+      if (tgt.dataset.page) currentPage = +tgt.dataset.page;
+      else if (tgt.dataset.action === 'first') currentPage = 1;
+      else if (tgt.dataset.action === 'prev') currentPage = Math.max(1, currentPage - 1);
+      else if (tgt.dataset.action === 'next') currentPage = Math.min(Math.ceil(filteredIndices.length / pageSizeVal), currentPage + 1);
+      else if (tgt.dataset.action === 'last') currentPage = Math.ceil(filteredIndices.length / pageSizeVal);
+      render();
+    });
+  }
+  wrapper.load = function (newData, stayOn = false) {
+    allData = [...newData];
+    if (!stayOn) { sortKey = null; sortOrder = 'off'; currentPage = 1; }
+    wrapper; render(); return this;
+  };
+  wrapper.select = function (idx, key, val) {
+    if (key != null) {
+      const found = allData.findIndex(o => o[key] === val);
+      if (found >= 0) idx = found;
+    }
+    selectedIdx = idx;
+    table.find('tr').removeClass(Container.tableClasses.selected);
+    table.find(`tr[data-idx="${idx}"]`).addClass(Container.tableClasses.selected);
+    if (onChange) onChange(idx, allData[idx]);
+    return this;
+  };
+  wrapper.change = function (cb) { onChange = cb; return this; };
+  wrapper.index = function (idx) { return wrapper.select(idx); };
+  wrapper.clear = function () { allData = []; render(); return this; };
+  this.elements.push(wrapper);
+  render();
+  return wrapper;
+};
+Container.prototype.Window = function (options = {}) {
+    const defaultOptions = {
+        title: 'Window',
+        content: '',
+        resizable: true,
+        minimizable: true,
+        maximizable: true,
+        closable: true,
+        draggable: true,
+        x: 50,
+        y: 50,
+        width: 400,
+        height: 300,
+        minWidth: 200,
+        minHeight: 150,
+        zIndex: 1000,
+        minimizePosition: 'bottom-left',
+        minimizeContainer: null,
+        minimizeOffset: 10,
+        animate: 150,
+        shadow: true,
+        shadowColor: 'rgba(0, 0, 0, 0.5)',
+        shadowBlur: 10,
+        shadowOffsetX: 0,
+        shadowOffsetY: 5,
+        shadowSpread: 0,
+        blur: false,
+        blurInactive: false,
+        blurRadius: 10,
+        blurGradientOpacity: 0.3,
+    };
+    if (!Container.windowClassesInitialized) {
+        Container.windowClasses = Q.style(`
+            --window-bg-color:rgb(37, 37, 37);
+            --window-shadow-color: rgba(0, 0, 0, 0.1);
+            --window-titlebar-bg:rgb(17, 17, 17);
+            --window-titlebar-text: #ffffff;
+            --window-button-bg:rgb(17, 17, 17);
+            --window-button-hover-bg: #777777;
+            --window-button-text: #ffffff;
+            --window-close-color: #e74c3c;
+            --window-titlebar-height: 28px; /* Add fixed titlebar height */
+        `, `
+            .window_container {
+                position: fixed; /* Change from absolute to fixed */
+                min-width: 200px;
+                border-radius: 4px;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                z-index: 1000;
+                transition-property: opacity, transform, width, height, top, left;
+                transition-timing-function: ease-out;
+            }
+            .window_titlebar {
+                color: var(--window-titlebar-text);
+                background-color: var(--window-titlebar-bg);
+                font-size: 12px;
+                cursor: default;
+                user-select: none;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                box-sizing: border-box;
+                height: var(--window-titlebar-height); /* Fixed height for titlebar */
+            }
+            .window_title {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                flex: 1;
+                margin: 0 10px;
+                text-shadow: 0px 1px 5px rgba(0, 0, 0, 1.0);
+            }
+            .window_controls {
+                display: flex;
+                height:100%;
+            }
+            .window_button {
+                background-color: var(--window-button-bg);
+                cursor: default;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                height: 100%;
+                width: 30px;
+            }
+            .window_button:hover {
+                background-color: var(--window-button-hover-bg);
+            }
+            .window_close:hover {
+                background-color: var(--window-close-color);
+            }
+            .window_content {
+                flex: 1;
+                overflow: auto;
+                padding: 10px;
+                position: relative;
+                background-color: var(--window-bg-color);
+                box-sizing: border-box;
+            }
+            .window_content:empty {
+            padding: 0;
+            }
+            .window_resize_handle {
+                position: absolute;
+                z-index: 1;
+            }
+            .window_resize_n {
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 5px;
+                cursor: n-resize;
+            }
+            .window_resize_e {
+                top: 0;
+                right: 0;
+                bottom: 0;
+                width: 5px;
+                cursor: e-resize;
+            }
+            .window_resize_s {
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 5px;
+                cursor: s-resize;
+            }
+            .window_resize_w {
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: 5px;
+                cursor: w-resize;
+            }
+            .window_resize_nw {
+                top: 0;
+                left: 0;
+                width: 10px;
+                height: 10px;
+                cursor: nw-resize;
+            }
+            .window_resize_ne {
+                top: 0;
+                right: 0;
+                width: 10px;
+                height: 10px;
+                cursor: ne-resize;
+            }
+            .window_resize_se {
+                bottom: 0;
+                right: 0;
+                width: 10px;
+                height: 10px;
+                cursor: se-resize;
+            }
+            .window_resize_sw {
+                bottom: 0;
+                left: 0;
+                width: 10px;
+                height: 10px;
+                cursor: sw-resize;
+            }
+            .window_minimized {
+                height: var(--window-titlebar-height) !important; /* Fixed to titlebar height */
+                width: auto !important;
+                min-width: 200px;
+                position: fixed !important;
+                bottom: 10px;
+                left: 10px;
+                overflow: hidden;
+            }
+            .window_minimized .window_content {
+                display: none !important; /* Biztosítjuk, hogy valóban ne jelenjen meg */
+                height: 0 !important;
+            }
+            .window_minimized .window_resize_handle {
+                display: none;
+            }
+            .window_maximized {
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                border-radius: 0;
+                position: fixed !important;
+            }
+            .window_maximized .window_resize_handle {
+                display: none;
+            }
+            .window_button_icon {
+                width: 10px;
+                height: 10px;
+                color: var(--window-button-text);
+                pointer-events: none;
+            }
+            .window_taskbar_btn {
+                min-width: 100px;
+                max-width: 220px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                background: #222;
+                color: #fff;
+                border: 1px solid #444;
+                border-radius: 4px;
+                padding: 0 12px;
+                height: 28px;
+                display: flex;
+                align-items: center;
+                cursor: pointer;
+                font-size: 13px;
+                box-sizing: border-box;
+            }
+        `, null, {
+            'window_container': 'window_container',
+            'window_titlebar': 'window_titlebar',
+            'window_title': 'window_title',
+            'window_controls': 'window_controls',
+            'window_button': 'window_button',
+            'window_minimize': 'window_minimize',
+            'window_maximize': 'window_maximize',
+            'window_restore': 'window_restore',
+            'window_close': 'window_close',
+            'window_content': 'window_content',
+            'window_resize_handle': 'window_resize_handle',
+            'window_resize_n': 'window_resize_n',
+            'window_resize_e': 'window_resize_e',
+            'window_resize_s': 'window_resize_s',
+            'window_resize_w': 'window_resize_w',
+            'window_resize_nw': 'window_resize_nw',
+            'window_resize_ne': 'window_resize_ne',
+            'window_resize_se': 'window_resize_se',
+            'window_resize_sw': 'window_resize_sw',
+            'window_minimized': 'window_minimized',
+            'window_maximized': 'window_maximized',
+            'window_button_icon': 'window_button_icon',
+            'window_taskbar_btn': 'window_taskbar_btn'
+        }, false);
+        Container.windowClassesInitialized = true;
+    }
+    if (!Container.taskbar) {
+        let taskbarStyle = {
+            position: 'fixed',
+            height: '32px',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            maxWidth: '100vw',
+            minHeight: '0',
+            minWidth: '0'
+        };
+        switch (defaultOptions.minimizePosition || 'bottom-left') {
+            case 'bottom-right':
+                taskbarStyle.right = defaultOptions.minimizeOffset + 'px';
+                taskbarStyle.bottom = defaultOptions.minimizeOffset + 'px';
+                break;
+            case 'top-left':
+                taskbarStyle.left = defaultOptions.minimizeOffset + 'px';
+                taskbarStyle.top = defaultOptions.minimizeOffset + 'px';
+                break;
+            case 'top-right':
+                taskbarStyle.right = defaultOptions.minimizeOffset + 'px';
+                taskbarStyle.top = defaultOptions.minimizeOffset + 'px';
+                break;
+            case 'bottom-left':
+            default:
+                taskbarStyle.left = defaultOptions.minimizeOffset + 'px';
+                taskbarStyle.bottom = defaultOptions.minimizeOffset + 'px';
+                break;
+        }
+        Container.taskbar = Q('<div>', { class: Container.windowClasses.window_taskbar || 'window_taskbar' }).css(taskbarStyle);
+        Q('body').append(Container.taskbar);
+    }
+    const settings = Object.assign({}, defaultOptions, options);
+    const windowElement = Q('<div>', { class: Container.windowClasses.window_container });
+    if (settings.shadow) {
+        windowElement.css({
+            boxShadow: `${settings.shadowOffsetX}px ${settings.shadowOffsetY}px ${settings.shadowBlur}px ${settings.shadowSpread}px ${settings.shadowColor}`
+        });
+    } else {
+        windowElement.css({ boxShadow: 'none' });
+    }
+    const titlebar = Q('<div>', { class: Container.windowClasses.window_titlebar });
+    function setTitlebarBlurElement(titlebarElem, active, blurRadius, gradientOpacity, animateMs) {
+        if (!titlebarElem) return;
+        if (typeof animateMs === 'number' && animateMs > 0) {
+            titlebarElem.style.transition = `backdrop-filter ${animateMs}ms, -webkit-backdrop-filter ${animateMs}ms, background-image ${animateMs}ms`;
+        } else {
+            titlebarElem.style.transition = '';
+        }
+        if (active) {
+            titlebarElem.style.backdropFilter = `blur(${blurRadius}px)`;
+            titlebarElem.style.WebkitBackdropFilter = `blur(${blurRadius}px)`;
+            titlebarElem.style.backgroundColor = 'transparent';
+            const buttonBg = getComputedStyle(document.documentElement)
+                .getPropertyValue('--window-button-bg') || '#111';
+            const leftAlpha = Math.max(0, Math.min(1, gradientOpacity));
+            titlebarElem.style.backgroundImage =
+                `linear-gradient(to right, rgba(17,17,17,${leftAlpha}), ${buttonBg.trim()} 80%)`;
+        } else {
+            titlebarElem.style.backdropFilter = 'blur(0px)';
+            titlebarElem.style.WebkitBackdropFilter = 'blur(0px)';
+            titlebarElem.style.backgroundColor = '';
+            titlebarElem.style.backgroundImage = '';
+        }
+    }
+    function updateAllTitlebarBlur() {
+        const allWindows = document.querySelectorAll('.' + Container.windowClasses.window_container);
+        let maxZ = -Infinity, activeWindow = null;
+        allWindows.forEach(win => {
+            const z = parseInt(win.style.zIndex || window.getComputedStyle(win).zIndex, 10) || 0;
+            if (z > maxZ) {
+                maxZ = z;
+                activeWindow = win;
+            }
+        });
+        allWindows.forEach(win => {
+            const tb = win.querySelector('.' + Container.windowClasses.window_titlebar);
+            if (!tb) return;
+            if (settings.blurInactive) {
+                setTitlebarBlurElement(
+                    tb,
+                    win !== activeWindow,
+                    settings.blurRadius,
+                    settings.blurGradientOpacity,
+                    settings.animate
+                );
+            } else if (settings.blur) {
+                setTitlebarBlurElement(tb, true, settings.blurRadius, settings.blurGradientOpacity, 0);
+            } else {
+                setTitlebarBlurElement(tb, false, settings.blurRadius, settings.blurGradientOpacity, 0);
+            }
+        });
+    }
+    if (settings.blurInactive) {
+        setTimeout(updateAllTitlebarBlur, 0);
+        windowElement.on('mousedown', function () {
+            setTimeout(updateAllTitlebarBlur, 0);
+        });
+    } else if (settings.blur) {
+        setTitlebarBlurElement(titlebar.nodes[0], true, settings.blurRadius, settings.blurGradientOpacity, 0);
+    } else {
+        setTitlebarBlurElement(titlebar.nodes[0], false, settings.blurRadius, settings.blurGradientOpacity, 0);
+    }
+    const titleElement = Q('<div>', { class: Container.windowClasses.window_title }).text(settings.title);
+    const controls = Q('<div>', { class: Container.windowClasses.window_controls });
+    const contentContainer = Q('<div>', { class: Container.windowClasses.window_content });
+    if (settings.minimizable) {
+        const minimizeButton = Q('<div>', {
+            class: Container.windowClasses.window_button + ' ' + Container.windowClasses.window_minimize
+        });
+        minimizeButton.append(this.Icon('window-minimize').addClass(Container.windowClasses.window_button_icon));
+        controls.append(minimizeButton);
+    }
+    if (settings.maximizable) {
+        const maximizeButton = Q('<div>', {
+            class: Container.windowClasses.window_button + ' ' + Container.windowClasses.window_maximize
+        });
+        maximizeButton.append(this.Icon('window-full').addClass(Container.windowClasses.window_button_icon));
+        controls.append(maximizeButton);
+    }
+    if (settings.closable) {
+        const closeButton = Q('<div>', {
+            class: Container.windowClasses.window_button + ' ' + Container.windowClasses.window_close
+        });
+        closeButton.append(this.Icon('window-close').addClass(Container.windowClasses.window_button_icon));
+        controls.append(closeButton);
+    }
+    titlebar.append(titleElement, controls);
+    windowElement.append(titlebar, contentContainer);
+    if (settings.resizable) {
+        const resizeHandles = [
+            Q('<div>', { class: Container.windowClasses.window_resize_handle + ' ' + Container.windowClasses.window_resize_n, 'data-resize': 'n' }),
+            Q('<div>', { class: Container.windowClasses.window_resize_handle + ' ' + Container.windowClasses.window_resize_e, 'data-resize': 'e' }),
+            Q('<div>', { class: Container.windowClasses.window_resize_handle + ' ' + Container.windowClasses.window_resize_s, 'data-resize': 's' }),
+            Q('<div>', { class: Container.windowClasses.window_resize_handle + ' ' + Container.windowClasses.window_resize_w, 'data-resize': 'w' }),
+            Q('<div>', { class: Container.windowClasses.window_resize_handle + ' ' + Container.windowClasses.window_resize_nw, 'data-resize': 'nw' }),
+            Q('<div>', { class: Container.windowClasses.window_resize_handle + ' ' + Container.windowClasses.window_resize_ne, 'data-resize': 'ne' }),
+            Q('<div>', { class: Container.windowClasses.window_resize_handle + ' ' + Container.windowClasses.window_resize_se, 'data-resize': 'se' }),
+            Q('<div>', { class: Container.windowClasses.window_resize_handle + ' ' + Container.windowClasses.window_resize_sw, 'data-resize': 'sw' })
+        ];
+        for (let i = 0; i < resizeHandles.length; i++) {
+            windowElement.append(resizeHandles[i]);
+        }
+    }
+    if (settings.content) {
+        if (typeof settings.content === 'string') {
+            contentContainer.html(settings.content);
+        } else if (settings.content instanceof Element || settings.content instanceof Q) {
+            contentContainer.append(settings.content);
+        }
+    }
+    let isMinimized = false;
+    let isMaximized = false;
+    let previousState = {
+        width: settings.width,
+        height: settings.height,
+        x: 0,
+        y: 0
+    };
+    let isOpen = false;
+    let isAnimating = false;
+    let taskbarButton = null;
+    function setTransitionDuration(duration) {
+        if (!settings.animate) return;
+        windowElement.css('transition-duration', duration + 'ms');
+    }
+    function resetTransition() {
+        setTimeout(() => {
+            windowElement.css('transition-duration', '');
+            isAnimating = false;
+        }, settings.animate);
+    }
+    function calculateInitialPosition() {
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const windowWidth = settings.width;
+        const windowHeight = settings.height;
+        let left = (viewportWidth * settings.x / 100) - (windowWidth / 2);
+        let top = (viewportHeight * settings.y / 100) - (windowHeight / 2);
+        left = Math.max(0, Math.min(left, viewportWidth - windowWidth));
+        top = Math.max(0, Math.min(top, viewportHeight - windowHeight));
+        return { left, top };
+    }
+    function setInitialPositionAndSize() {
+        const position = calculateInitialPosition();
+        windowElement.css({
+            position: 'fixed',
+            width: settings.width + 'px',
+            height: settings.height + 'px',
+            left: position.left + 'px',
+            top: position.top + 'px',
+            zIndex: settings.zIndex
+        });
+        previousState.x = position.left;
+        previousState.y = position.top;
+    }
+    function bringToFront() {
+        const windowIndex = Container.openWindows.indexOf(windowElement.nodes[0]);
+        if (windowIndex !== -1) {
+            Container.openWindows.splice(windowIndex, 1);
+        }
+        Container.openWindows.push(windowElement.nodes[0]);
+        updateZIndices();
+        if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
+    }
+    function updateZIndices() {
+        const baseZIndex = settings.zIndex;
+        for (let i = 0; i < Container.openWindows.length; i++) {
+            const windowNode = Container.openWindows[i];
+            windowNode.style.zIndex = baseZIndex + i;
+        }
+        Container.highestZIndex = baseZIndex + Container.openWindows.length - 1;
+    }
+    function setupDraggable() {
+        if (!settings.draggable) return;
+        let isDragging = false;
+        let startX, startY, startLeft, startTop;
+        function onMouseMove(e) {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            const newLeft = startLeft + dx;
+            const newTop = startTop + dy;
+            if (isMinimized) {
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                const minWidth = windowElement.width();
+                const minHeight = windowElement.height();
+                const constrainedLeft = Math.max(0, Math.min(newLeft, viewportWidth - minWidth));
+                const constrainedTop = Math.max(0, Math.min(newTop, viewportHeight - minHeight));
+                windowElement.css({
+                    left: constrainedLeft + 'px',
+                    top: constrainedTop + 'px',
+                    right: 'auto',
+                    bottom: 'auto'
+                });
+                return;
+            }
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const windowWidth = windowElement.width();
+            const windowHeight = windowElement.height();
+            const constrainedLeft = Math.max(0, Math.min(newLeft, viewportWidth - windowWidth));
+            const constrainedTop = Math.max(0, Math.min(newTop, viewportHeight - windowHeight));
+            windowElement.css({
+                left: constrainedLeft + 'px',
+                top: constrainedTop + 'px',
+                right: 'auto',
+                bottom: 'auto'
+            });
+            previousState.x = constrainedLeft;
+            previousState.y = constrainedTop;
+        }
+        function onMouseUp() {
+            isDragging = false;
+            Q(document).off('mousemove', onMouseMove);
+            Q(document).off('mouseup', onMouseUp);
+        }
+        Q(titlebar).on('mousedown', function (e) {
+            if (isMaximized || isMinimized) return;
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startLeft = parseInt(windowElement.css('left'), 10);
+            startTop = parseInt(windowElement.css('top'), 10);
+            bringToFront();
+            Q(document).on('mousemove', onMouseMove);
+            Q(document).on('mouseup', onMouseUp);
+            e.preventDefault();
+        });
+        Q(titlebar).on('dblclick', function (e) {
+            if (settings.maximizable) {
+                toggleMaximize();
+            }
+        });
+    }
+    function setupResizable() {
+        if (!settings.resizable) return;
+        let isResizing = false;
+        let resizeDirection = '';
+        let startX, startY, startWidth, startHeight, startLeft, startTop;
+        const resizeHandles = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_resize_handle);
+        function onMouseMove(e) {
+            if (!isResizing) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            let newWidth = startWidth;
+            let newHeight = startHeight;
+            let newLeft = startLeft;
+            let newTop = startTop;
+            if (resizeDirection.includes('e')) {
+                newWidth = startWidth + dx;
+            }
+            if (resizeDirection.includes('s')) {
+                newHeight = startHeight + dy;
+            }
+            if (resizeDirection.includes('w')) {
+                newWidth = startWidth - dx;
+                newLeft = startLeft + dx;
+            }
+            if (resizeDirection.includes('n')) {
+                newHeight = startHeight - dy;
+                newTop = startTop + dy;
+            }
+            if (newWidth < settings.minWidth) {
+                if (resizeDirection.includes('w')) {
+                    newLeft = startLeft + startWidth - settings.minWidth;
+                }
+                newWidth = settings.minWidth;
+            }
+            if (newHeight < settings.minHeight) {
+                if (resizeDirection.includes('n')) {
+                    newTop = startTop + startHeight - settings.minHeight;
+                }
+                newHeight = settings.minHeight;
+            }
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            if (newLeft + newWidth > viewportWidth) {
+                if (resizeDirection.includes('e')) {
+                    newWidth = viewportWidth - newLeft;
+                }
+            }
+            if (newTop + newHeight > viewportHeight) {
+                if (resizeDirection.includes('s')) {
+                    newHeight = viewportHeight - newTop;
+                }
+            }
+            if (newLeft < 0) {
+                if (resizeDirection.includes('w')) {
+                    const adjustment = -newLeft;
+                    newLeft = 0;
+                    newWidth -= adjustment;
+                }
+            }
+            if (newTop < 0) {
+                if (resizeDirection.includes('n')) {
+                    const adjustment = -newTop;
+                    newTop = 0;
+                    newHeight -= adjustment;
+                }
+            }
+            windowElement.css({
+                width: newWidth + 'px',
+                height: newHeight + 'px',
+                left: newLeft + 'px',
+                top: newTop + 'px'
+            });
+            previousState.width = newWidth;
+            previousState.height = newHeight;
+            previousState.x = newLeft;
+            previousState.y = newTop;
+        }
+        function onMouseUp() {
+            isResizing = false;
+            Q(document).off('mousemove', onMouseMove);
+            Q(document).off('mouseup', onMouseUp);
+        }
+        for (let i = 0; i < resizeHandles.length; i++) {
+            const handle = resizeHandles[i];
+            Q(handle).on('mousedown', function (e) {
+                if (isMaximized || isMinimized) return;
+                isResizing = true;
+                resizeDirection = this.getAttribute('data-resize');
+                startX = e.clientX;
+                startY = e.clientY;
+                startWidth = windowElement.width();
+                startHeight = windowElement.height();
+                startLeft = parseInt(windowElement.css('left'), 10);
+                startTop = parseInt(windowElement.css('top'), 10);
+                windowElement.css('zIndex', settings.zIndex + 10);
+                Q(document).on('mousemove', onMouseMove);
+                Q(document).on('mouseup', onMouseUp);
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        }
+    }
+    function setupControls() {
+        const minimizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_minimize);
+        if (minimizeButtons.length) {
+            for (let i = 0; i < minimizeButtons.length; i++) {
+                Q(minimizeButtons[i]).on('click', function () {
+                    bringToFront();
+                    toggleMinimize();
+                });
+            }
+        }
+        const maximizeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_maximize);
+        if (maximizeButtons.length) {
+            for (let i = 0; i < maximizeButtons.length; i++) {
+                Q(maximizeButtons[i]).on('click', function () {
+                    bringToFront();
+                    toggleMaximize();
+                });
+            }
+        }
+        const closeButtons = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_close);
+        if (closeButtons.length) {
+            for (let i = 0; i < closeButtons.length; i++) {
+                Q(closeButtons[i]).on('click', function () {
+                    closeWindow();
+                });
+            }
+        }
+        Q(contentContainer).on('mousedown', function () {
+            bringToFront();
+        });
+    }
+    if (!Container.highestZIndex) {
+        Container.highestZIndex = settings.zIndex;
+        Container.openWindows = [];
+    }
+    function toggleMinimize() {
+        if (isAnimating) return;
+        isAnimating = true;
+        if (!isMinimized) {
+            const rect = windowElement.nodes[0].getBoundingClientRect();
+            const start = {
+                width: rect.width,
+                height: rect.height,
+                left: rect.left,
+                top: rect.top,
+                opacity: 1
+            };
+            let taskbarRect = { left: 0, top: window.innerHeight, width: 160, height: 28 };
+            if (Container.taskbar && taskbarButton) {
+                const btnRect = taskbarButton.nodes[0].getBoundingClientRect();
+                taskbarRect = {
+                    left: btnRect.left,
+                    top: btnRect.top,
+                    width: btnRect.width,
+                    height: btnRect.height
+                };
+            } else if (Container.taskbar) {
+                const barRect = Container.taskbar.nodes[0].getBoundingClientRect();
+                taskbarRect.left = barRect.left;
+                taskbarRect.top = barRect.top;
+            }
+            windowElement.css({
+                willChange: 'width,height,left,top,opacity',
+                transition: `all ${settings.animate}ms cubic-bezier(.4,0,.2,1)`
+            });
+            windowElement.css({
+                width: start.width + 'px',
+                height: start.height + 'px',
+                left: start.left + 'px',
+                top: start.top + 'px',
+                opacity: 1
+            });
+            setTimeout(() => {
+                windowElement.css({
+                    width: taskbarRect.width + 'px',
+                    height: taskbarRect.height + 'px',
+                    left: taskbarRect.left + 'px',
+                    top: taskbarRect.top + 'px',
+                    opacity: 0.2
+                });
+            }, 10);
+            setTimeout(() => {
+                windowElement.css({ transition: '', willChange: '' });
+                if (!taskbarButton) {
+                    let shortTitle = settings.title;
+                    if (shortTitle.length > 18) {
+                        shortTitle = shortTitle.slice(0, 15) + '...';
+                    }
+                    taskbarButton = Q('<div>', { class: Container.windowClasses.window_taskbar_btn, text: shortTitle });
+                    taskbarButton.on('click', function () {
+                        toggleMinimize();
+                    });
+                    if (settings.minimizePosition === 'bottom-left' || settings.minimizePosition === 'top-left') {
+                        Q(Container.taskbar).prepend(taskbarButton);
+                    } else {
+                        Q(Container.taskbar).append(taskbarButton);
+                    }
+                }
+                windowElement.detach();
+                isMinimized = true;
+                isAnimating = false;
+            }, settings.animate + 10);
+        } else {
+            Q('body').append(windowElement);
+            let btnRect = { left: 0, top: window.innerHeight, width: 160, height: 28 };
+            if (taskbarButton) {
+                const rect = taskbarButton.nodes[0].getBoundingClientRect();
+                btnRect = {
+                    left: rect.left,
+                    top: rect.top,
+                    width: rect.width,
+                    height: rect.height
+                };
+            }
+            const end = {
+                width: previousState.width,
+                height: previousState.height,
+                left: previousState.x,
+                top: previousState.y,
+                opacity: 1
+            };
+            windowElement.css({
+                willChange: 'width,height,left,top,opacity',
+                transition: `all ${settings.animate}ms cubic-bezier(.4,0,.2,1)`,
+                width: btnRect.width + 'px',
+                height: btnRect.height + 'px',
+                left: btnRect.left + 'px',
+                top: btnRect.top + 'px',
+                opacity: 0.2,
+                display: ''
+            });
+            setTimeout(() => {
+                windowElement.css({
+                    width: end.width + 'px',
+                    height: end.height + 'px',
+                    left: end.left + 'px',
+                    top: end.top + 'px',
+                    opacity: 1
+                });
+            }, 10);
+            setTimeout(() => {
+                windowElement.css({ transition: '', willChange: '' });
+                if (taskbarButton) {
+                    taskbarButton.remove();
+                    taskbarButton = null;
+                }
+                isMinimized = false;
+                bringToFront();
+                isAnimating = false;
+            }, settings.animate + 10);
+        }
+    }
+    function toggleMaximize() {
+        if (isAnimating) return;
+        isAnimating = true;
+        if (!isMaximized) {
+            const rect = windowElement.nodes[0].getBoundingClientRect();
+            const start = {
+                width: rect.width,
+                height: rect.height,
+                left: rect.left,
+                top: rect.top
+            };
+            windowElement.css({
+                willChange: 'width,height,left,top',
+                transition: `all ${settings.animate}ms cubic-bezier(.4,0,.2,1)`,
+                width: start.width + 'px',
+                height: start.height + 'px',
+                left: start.left + 'px',
+                top: start.top + 'px'
+            });
+            setTimeout(() => {
+                windowElement.addClass(Container.windowClasses.window_maximized);
+                windowElement.css({
+                    left: 0,
+                    top: 0,
+                    width: '100vw',
+                    height: '100vh',
+                    borderRadius: 0
+                });
+            }, 10);
+            setTimeout(() => {
+                windowElement.css({ transition: '', willChange: '' });
+                isMaximized = true;
+                previousState.width = start.width;
+                previousState.height = start.height;
+                previousState.x = start.left;
+                previousState.y = start.top;
+                isAnimating = false;
+            }, settings.animate + 10);
+        } else {
+            const end = {
+                width: previousState.width,
+                height: previousState.height,
+                left: previousState.x,
+                top: previousState.y
+            };
+            windowElement.removeClass(Container.windowClasses.window_maximized);
+            windowElement.css({
+                willChange: 'width,height,left,top',
+                transition: `all ${settings.animate}ms cubic-bezier(.4,0,.2,1)`,
+                width: '100vw',
+                height: '100vh',
+                left: 0,
+                top: 0,
+                borderRadius: '0'
+            });
+            setTimeout(() => {
+                windowElement.css({
+                    width: end.width + 'px',
+                    height: end.height + 'px',
+                    left: end.left + 'px',
+                    top: end.top + 'px',
+                    borderRadius: '4px'
+                });
+            }, 10);
+            setTimeout(() => {
+                windowElement.css({ transition: '', willChange: '' });
+                isMaximized = false;
+                isAnimating = false;
+            }, settings.animate + 10);
+        }
+    }
+    function closeWindow() {
+        if (isAnimating) return;
+        if (taskbarButton) {
+            taskbarButton.remove();
+            taskbarButton = null;
+        }
+        const savedContent = windowElement.data('detached-content');
+        if (savedContent) {
+            windowElement.removeData('detached-content');
+        }
+        if (settings.animate) {
+            isAnimating = true;
+            setTransitionDuration(settings.animate);
+            windowElement.css({
+                opacity: '0',
+                transform: 'scale(0.90)'
+            });
+            setTimeout(() => {
+                if (windowElement.nodes[0]._resizeHandler) {
+                    window.removeEventListener('resize', windowElement.nodes[0]._resizeHandler);
+                    windowElement.nodes[0]._resizeHandler = null;
+                }
+                const windowIndex = Container.openWindows.indexOf(windowElement.nodes[0]);
+                if (windowIndex !== -1) {
+                    Container.openWindows.splice(windowIndex, 1);
+                    updateZIndices();
+                }
+                windowElement.remove();
+                isOpen = false;
+            }, settings.animate);
+        } else {
+            if (windowElement.nodes[0]._resizeHandler) {
+                window.removeEventListener('resize', windowElement.nodes[0]._resizeHandler);
+                windowElement.nodes[0]._resizeHandler = null;
+            }
+            const windowIndex = Container.openWindows.indexOf(windowElement.nodes[0]);
+            if (windowIndex !== -1) {
+                Container.openWindows.splice(windowIndex, 1);
+                updateZIndices();
+            }
+            windowElement.remove();
+            isOpen = false;
+        }
+        setTimeout(function () {
+            const selector = '.' + (Container.windowClasses.window_container || 'window_container');
+            if (!Q(selector).nodes.length) {
+                if (Container.taskbar) {
+                    Q(Container.taskbar).remove();
+                    Container.taskbar = null;
+                }
+            }
+        }, 0);
+        if (settings.blurInactive) {
+            setTimeout(updateAllTitlebarBlur, 0);
+        }
+    }
+    function handleWindowResize() {
+        if (isMaximized) {
+            return;
+        }
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const currentWidth = windowElement.width();
+        const currentHeight = windowElement.height();
+        let currentLeft = parseInt(windowElement.css('left'), 10);
+        let currentTop = parseInt(windowElement.css('top'), 10);
+        let needsUpdate = false;
+        if (currentWidth > viewportWidth) {
+            windowElement.css('width', viewportWidth + 'px');
+            previousState.width = viewportWidth;
+            needsUpdate = true;
+        }
+        if (currentHeight > viewportHeight) {
+            windowElement.css('height', viewportHeight + 'px');
+            previousState.height = viewportHeight;
+            needsUpdate = true;
+        }
+        if (currentLeft + currentWidth > viewportWidth) {
+            currentLeft = Math.max(0, viewportWidth - currentWidth);
+            needsUpdate = true;
+        }
+        if (currentTop + currentHeight > viewportHeight) {
+            currentTop = Math.max(0, viewportHeight - currentHeight);
+            needsUpdate = true;
+        }
+        if (needsUpdate) {
+            windowElement.css({
+                left: currentLeft + 'px',
+                top: currentTop + 'px'
+            });
+            previousState.x = currentLeft;
+            previousState.y = currentTop;
+        }
+    }
+    function setupWindowResizeHandler() {
+        function resizeHandler() {
+            handleWindowResize();
+        }
+        windowElement.nodes[0]._resizeHandler = resizeHandler;
+        window.addEventListener('resize', resizeHandler);
+    }
+    const windowAPI = {
+        Open: function () {
+            if (!isOpen) {
+                Q('body').append(windowElement);
+                setInitialPositionAndSize();
+                if (settings.animate) {
+                    windowElement.css({
+                        opacity: '0',
+                        transform: 'scale(0.90)'
+                    });
+                    void windowElement.nodes[0].offsetWidth;
+                    isAnimating = true;
+                    setTransitionDuration(settings.animate);
+                    windowElement.css({
+                        opacity: '1',
+                        transform: 'scale(1)'
+                    });
+                    resetTransition();
+                }
+                setupDraggable();
+                setupResizable();
+                setupControls();
+                setupWindowResizeHandler();
+                isOpen = true;
+                bringToFront();
+                if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
+            } else {
+                windowElement.show();
+                bringToFront();
+            }
+            return this;
+        },
+        Close: function () {
+            closeWindow();
+            if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
+            return this;
+        },
+        Content: function (content) {
+            if (content === undefined) {
+                return contentContainer.html();
+            }
+            contentContainer.empty();
+            if (typeof content === 'string') {
+                contentContainer.html(content);
+            } else if (content instanceof Element || content instanceof Q) {
+                contentContainer.append(content);
+            }
+            return this;
+        },
+        Title: function (title) {
+            if (title === undefined) {
+                return titleElement.text();
+            }
+            titleElement.text(title);
+            return this;
+        },
+        Position: function (x, y) {
+            if (x === undefined || y === undefined) {
+                return {
+                    x: parseInt(windowElement.css('left'), 10),
+                    y: parseInt(windowElement.css('top'), 10)
+                };
+            }
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const windowWidth = windowElement.width();
+            const windowHeight = windowElement.height();
+            let left = typeof x === 'string' && x.endsWith('%')
+                ? (viewportWidth * parseInt(x, 10) / 100) - (windowWidth / 2)
+                : x;
+            let top = typeof y === 'string' && y.endsWith('%')
+                ? (viewportHeight * parseInt(y, 10) / 100) - (windowHeight / 2)
+                : y;
+            left = Math.max(0, Math.min(left, viewportWidth - windowWidth));
+            top = Math.max(0, Math.min(top, viewportHeight - windowHeight));
+            windowElement.css({
+                left: left + 'px',
+                top: top + 'px'
+            });
+            previousState.x = left;
+            previousState.y = top;
+            return this;
+        },
+        Size: function (width, height) {
+            if (width === undefined || height === undefined) {
+                return {
+                    width: windowElement.width(),
+                    height: windowElement.height()
+                };
+            }
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            let currentLeft = parseInt(windowElement.css('left'), 10);
+            let currentTop = parseInt(windowElement.css('top'), 10);
+            width = Math.max(settings.minWidth, width);
+            height = Math.max(settings.minHeight, height);
+            if (currentLeft + width > viewportWidth) {
+                currentLeft = Math.max(0, viewportWidth - width);
+                windowElement.css('left', currentLeft + 'px');
+                previousState.x = currentLeft;
+            }
+            if (currentTop + height > viewportHeight) {
+                currentTop = Math.max(0, viewportHeight - height);
+                windowElement.css('top', currentTop + 'px');
+                previousState.y = currentTop;
+            }
+            windowElement.css({
+                width: width + 'px',
+                height: height + 'px'
+            });
+            previousState.width = width;
+            previousState.height = height;
+            return this;
+        },
+        Minimize: function () {
+            if (!isMinimized) {
+                toggleMinimize();
+            }
+            return this;
+        },
+        Maximize: function () {
+            if (!isMaximized) {
+                toggleMaximize();
+            }
+            return this;
+        },
+        Restore: function () {
+            if (isMinimized) {
+                toggleMinimize();
+            } else if (isMaximized) {
+                toggleMaximize();
+            }
+            return this;
+        },
+        IsMinimized: function () {
+            return isMinimized;
+        },
+        IsMaximized: function () {
+            return isMaximized;
+        },
+        IsOpen: function () {
+            return isOpen;
+        },
+        Element: function () {
+            return windowElement;
+        },
+        BringToFront: function () {
+            bringToFront();
+            return this;
+        },
+        MinimizePosition: function (position, container, offset) {
+            if (position === undefined) {
+                return {
+                    position: settings.minimizePosition,
+                    container: settings.minimizeContainer,
+                    offset: settings.minimizeOffset
+                };
+            }
+            if (position) {
+                settings.minimizePosition = position;
+            }
+            if (container !== undefined) {
+                settings.minimizeContainer = container;
+            }
+            if (offset !== undefined) {
+                settings.minimizeOffset = offset;
+            }
+            if (isMinimized) {
+                toggleMinimize();
+                toggleMinimize();
+            }
+            return this;
+        },
+        Animation: function (duration) {
+            if (duration === undefined) {
+                return settings.animate;
+            }
+            settings.animate = parseInt(duration) || 0;
+            return this;
+        }
+    };
+    this.elements.push(windowAPI);
+    return windowAPI;
+};
 function Form(options = {}) {
     if (!(this instanceof Form)) {
         return new Form(options);
@@ -3946,6 +6002,3667 @@ Form.prototype.Uploader = function (options = {}) {
     };
     this.elements.push(container);
     return container;
+};
+function Graph(options = {}) {
+    if (!(this instanceof Graph)) {
+        return new Graph(options);
+    }
+    if (!Graph.initialized) {
+        Q.style(`
+        `);
+        Graph.initialized = true;
+    }
+    return this;
+};
+Graph.deepMerge = function(target, src) {
+    for (const k in src) {
+        if (src[k] && typeof src[k] === 'object' && !Array.isArray(src[k])) {
+            if (!target[k]) target[k] = {};
+            Graph.deepMerge(target[k], src[k]);
+        } else {
+            target[k] = src[k];
+        }
+    }
+    return target;
+};
+Graph.getPadding = function(pad) {
+    if (Array.isArray(pad)) {
+        if (pad.length === 2) return [pad[0], pad[1], pad[0], pad[1]];
+        if (pad.length === 3) return [pad[0], pad[1], pad[2], pad[1]];
+        if (pad.length === 4) return pad;
+    }
+    return [pad, pad, pad, pad];
+};
+Graph.catmullRom2bezier = function(points) {
+    let d = '';
+    for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[i - 1] || points[i];
+        const p1 = points[i];
+        const p2 = points[i + 1];
+        const p3 = points[i + 2] || p2;
+        if (i === 0) d += `M${p1[0]},${p1[1]}`;
+        const c1x = p1[0] + (p2[0] - p0[0]) / 6;
+        const c1y = p1[1] + (p2[1] - p0[1]) / 6;
+        const c2x = p2[0] - (p3[0] - p1[0]) / 6;
+        const c2y = p2[1] - (p3[1] - p1[1]) / 6;
+        d += ` C${c1x},${c1y} ${c2x},${c2y} ${p2[0]},${p2[1]}`;
+    }
+    return d;
+};
+Q.Graph = Graph;
+Graph.prototype.Line = function (options = {}) {
+    const defaults = {
+        size: {
+            width: 600,
+            height: 300,
+            padding: 40
+        },
+        background: '#181818',
+        range: {
+            min: 0,
+            max: 100,
+            autoscaleX: true,
+            autoscaleY: true
+        },
+        line: {
+            type: 'line',
+            color: 'rgb(100, 60, 240)',
+            thickness: 2,
+            fill: null,
+            triangle: {
+                size: 8,
+                fill: null,
+                stroke: null,
+                strokeWidth: null,
+                opacity: null
+            }
+        },
+        dot: {
+            radius: 2,
+            stroke: '#222',
+            strokeWidth: 0
+        },
+        zeroLine: {
+            enabled: false,
+            color: '#607d8b',
+            thickness: 2,
+            dasharray: '',
+            point: undefined,
+            points: undefined
+        },
+        grid: {
+            resolutionX: 0,
+            resolutionY: 0,
+            color: '#333',
+            thickness: 1,
+            dasharray: '2,2',
+            showValuesX: false,
+            showValuesY: false
+        },
+        text: {
+            value: {
+                color: '#bbb',
+                fontSize: 14,
+                fontFamily: 'monospace',
+                fontWeight: 'normal',
+                shadow: '',
+            },
+            axis: {
+                color: '#aaa',
+                fontSize: 14,
+                fontFamily: 'monospace',
+                fontWeight: 'bold',
+                shadow: '',
+            },
+            label: {
+                color: '#fff',
+                fontSize: 12,
+                fontFamily: 'monospace',
+                fontWeight: 'bold',
+                shadow: '',
+            }
+        },
+        current: {
+            show: false
+        },
+        average: {
+            enabled: true,
+            dasharray: '2,2',
+            color: '#ff9800',
+            thickness: 3,
+            label: {
+                color: '#ff9800',
+                fontSize: 12,
+                fontFamily: 'monospace',
+                fontWeight: 'bold',
+                shadow: '',
+            }
+        },
+        hover: {
+            value: false,
+            onlyPoints: false,
+            digits: 5,
+            distance: 20,
+            wrap: false,
+            show: 'both',
+            xDigits: 5,
+            yDigits: 5,
+            dot: {
+                radius: 10,
+                fill: 'rgb(100, 60, 240)',
+                stroke: '#fff',
+                strokeWidth: 0
+            },
+            margin: [0, 20],
+            cursor: false,
+            padding: [8, 8, 8, 8],
+            background: '#111',
+            opacity: 1,
+            shadow: '',
+            text: {
+                color: '#fff',
+                fontSize: 14,
+                fontFamily: 'monospace',
+                fontWeight: 'normal',
+                shadow: ''
+            }
+        },
+        valueDigits: 2
+    };
+    const opts = Graph.deepMerge(JSON.parse(JSON.stringify(defaults)), options);
+    let dataX = [], dataY = [];
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', opts.size.width);
+    svg.setAttribute('height', opts.size.height);
+    svg.style.background = opts.background;
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    svg.appendChild(g);
+    function render() {
+        g.innerHTML = '';
+        if (!dataY.length) return;
+        let xArr = dataX.length ? dataX : dataY.map((_, i) => i);
+        let minY = opts.range.autoscaleY ? Math.min(...dataY) : opts.range.min;
+        let maxY = opts.range.autoscaleY ? Math.max(...dataY) : opts.range.max;
+        let minX = opts.range.autoscaleX ? Math.min(...xArr) : 0;
+        let maxX = opts.range.autoscaleX ? Math.max(...xArr) : xArr.length - 1;
+        const pad = Graph.getPadding(opts.size.padding);
+        const [padT, padR, padB, padL] = pad;
+        const w = opts.size.width - padL - padR;
+        const h = opts.size.height - padT - padB;
+        const scaleX = v => padL + (w) * (v - minX) / (maxX - minX);
+        const scaleY = v => opts.size.height - padB - (h) * (v - minY) / (maxY - minY);
+        if (opts.grid.resolutionX > 0) {
+            let xVal = Math.ceil(minX / opts.grid.resolutionX) * opts.grid.resolutionX;
+            for (; xVal <= maxX; xVal += opts.grid.resolutionX) {
+                const x = scaleX(xVal);
+                const grid = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                Q(grid).attr({
+                    x1: x,
+                    y1: padT,
+                    x2: x,
+                    y2: opts.size.height - padB,
+                    stroke: opts.grid.color,
+                    'stroke-width': opts.grid.thickness,
+                    'stroke-dasharray': opts.grid.dasharray
+                });
+                g.appendChild(grid);
+                if (opts.grid.showValuesX) {
+                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    Q(label).attr({
+                        x: x,
+                        y: opts.size.height - padB + 18,
+                        fill: opts.text.value.color,
+                        'font-size': opts.text.value.fontSize,
+                        'font-family': opts.text.value.fontFamily,
+                        'font-weight': opts.text.value.fontWeight
+                    });
+                    label.textContent = xVal.toFixed(opts.valueDigits);
+                    g.appendChild(label);
+                }
+            }
+        }
+        if (opts.grid.resolutionY > 0) {
+            let yVal = Math.ceil(minY / opts.grid.resolutionY) * opts.grid.resolutionY;
+            for (; yVal <= maxY; yVal += opts.grid.resolutionY) {
+                const y = scaleY(yVal);
+                const grid = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                Q(grid).attr({
+                    x1: padL,
+                    y1: y,
+                    x2: opts.size.width - padR,
+                    y2: y,
+                    stroke: opts.grid.color,
+                    'stroke-width': opts.grid.thickness,
+                    'stroke-dasharray': opts.grid.dasharray
+                });
+                g.appendChild(grid);
+                if (opts.grid.showValuesY) {
+                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    Q(label).attr({
+                        x: padL - 8,
+                        y: y + 4,
+                        fill: opts.text.value.color,
+                        'font-size': opts.text.value.fontSize,
+                        'font-family': opts.text.value.fontFamily,
+                        'font-weight': opts.text.value.fontWeight,
+                        'text-anchor': 'end'
+                    });
+                    label.textContent = yVal.toFixed(opts.valueDigits);
+                    g.appendChild(label);
+                }
+            }
+        }
+        let d = '';
+        if (opts.line.type === 'curve' && dataY.length > 2) {
+            const points = dataY.map((y, i) => [scaleX(xArr[i]), scaleY(y)]);
+            d = Graph.catmullRom2bezier(points);
+        } else if (opts.line.type === 'dots') {
+            for (let i = 0; i < dataY.length; i++) {
+                const x = scaleX(xArr[i]);
+                const y = scaleY(dataY[i]);
+                const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                Q(dot).attr({
+                    cx: x,
+                    cy: y,
+                    r: opts.dot.radius,
+                    fill: opts.line.color,
+                    stroke: opts.dot.stroke,
+                    'stroke-width': opts.dot.strokeWidth
+                });
+                g.appendChild(dot);
+            }
+            d = '';
+        } else {
+            for (let i = 0; i < dataY.length; i++) {
+                const x = scaleX(xArr[i]);
+                const y = scaleY(dataY[i]);
+                d += (i === 0 ? 'M' : 'L') + x + ',' + y;
+            }
+        }
+        if (opts.line.fill && d && dataY.length > 1) {
+            let areaPath = '';
+            let fillColor = typeof opts.line.fill === 'object' ? opts.line.fill.color : opts.line.fill;
+            let lowerY = [];
+            if (opts.zeroLine && opts.zeroLine.enabled) {
+                if (Array.isArray(opts.zeroLine.points) && opts.zeroLine.points.length === dataY.length) {
+                    lowerY = opts.zeroLine.points;
+                } else if (Array.isArray(opts.zeroLine.point) && opts.zeroLine.point.length === 2) {
+                    lowerY = Array(dataY.length).fill(opts.zeroLine.point[1]);
+                } else {
+                    lowerY = Array(dataY.length).fill(opts.range.min);
+                }
+            } else {
+                lowerY = Array(dataY.length).fill(opts.range.min);
+            }
+            if (opts.line.type === 'curve' && dataY.length > 2) {
+                const points = dataY.map((y, i) => [scaleX(xArr[i]), scaleY(y)]);
+                areaPath = Graph.catmullRom2bezier(points);
+                for (let i = dataY.length - 1; i >= 0; i--) {
+                    areaPath += 'L' + scaleX(xArr[i]) + ',' + scaleY(lowerY[i]);
+                }
+                areaPath += 'Z';
+            } else {
+                areaPath = '';
+                for (let i = 0; i < dataY.length; i++) {
+                    const x = scaleX(xArr[i]);
+                    const y = scaleY(dataY[i]);
+                    areaPath += (i === 0 ? 'M' : 'L') + x + ',' + y;
+                }
+                for (let i = dataY.length - 1; i >= 0; i--) {
+                    areaPath += 'L' + scaleX(xArr[i]) + ',' + scaleY(lowerY[i]);
+                }
+                areaPath += 'Z';
+            }
+            const fillPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            Q(fillPath).attr({
+                d: areaPath,
+                fill: fillColor
+            });
+            g.appendChild(fillPath);
+        }
+        if (d) {
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            Q(path).attr({
+                d: d,
+                stroke: opts.line.color,
+                'stroke-width': opts.line.thickness,
+                fill: 'none'
+            });
+            g.appendChild(path);
+        }
+        if (opts.zeroLine && opts.zeroLine.enabled) {
+            let nullD = '';
+            let started = false;
+            for (let i = 0; i < dataY.length; i++) {
+                if (dataY[i] === 0) {
+                    const x = scaleX(xArr[i]);
+                    const y = scaleY(dataY[i]);
+                    nullD += (started ? 'L' : 'M') + x + ',' + y;
+                    started = true;
+                }
+            }
+            if (nullD) {
+                const nullPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                Q(nullPath).attr({
+                    d: nullD,
+                    stroke: opts.zeroLine.color,
+                    'stroke-width': opts.zeroLine.thickness,
+                    fill: 'none'
+                });
+                g.appendChild(nullPath);
+            }
+            if (Array.isArray(opts.zeroLine.point) && opts.zeroLine.point.length === 2) {
+                const [nullX, nullY] = opts.zeroLine.point;
+                if (typeof nullX === 'number' && typeof nullY === 'number') {
+                    const x = scaleX(nullX);
+                    const nullLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    Q(nullLine).attr({
+                        x1: x,
+                        y1: padT,
+                        x2: x,
+                        y2: opts.size.height - padB,
+                        stroke: opts.zeroLine.color,
+                        'stroke-width': opts.zeroLine.thickness,
+                        'stroke-dasharray': opts.zeroLine.dasharray
+                    });
+                    g.appendChild(nullLine);
+                    const y = scaleY(nullY);
+                    const nullLineH = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    Q(nullLineH).attr({
+                        x1: padL,
+                        y1: y,
+                        x2: opts.size.width - padR,
+                        y2: y,
+                        stroke: opts.zeroLine.color,
+                        'stroke-width': opts.zeroLine.thickness,
+                        'stroke-dasharray': opts.zeroLine.dasharray
+                    });
+                    g.appendChild(nullLineH);
+                }
+            }
+            if (Array.isArray(opts.zeroLine.points) && opts.zeroLine.points.length > 0) {
+                const n = opts.zeroLine.points.length;
+                if (n === 1) {
+                    const y = scaleY(opts.zeroLine.points[0]);
+                    const nullLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    Q(nullLine).attr({
+                        x1: padL,
+                        y1: y,
+                        x2: opts.size.width - padR,
+                        y2: y,
+                        stroke: opts.zeroLine.color,
+                        'stroke-width': opts.zeroLine.thickness,
+                        'stroke-dasharray': opts.zeroLine.dasharray
+                    });
+                    g.appendChild(nullLine);
+                } else {
+                    let points = [];
+                    for (let i = 0; i < n; i++) {
+                        const x = padL + (w) * (n === 1 ? 0.5 : i / (n - 1));
+                        const y = scaleY(opts.zeroLine.points[i]);
+                        points.push([x, y]);
+                    }
+                    let d = '';
+                    for (let i = 0; i < points.length; i++) {
+                        d += (i === 0 ? 'M' : 'L') + points[i][0] + ',' + points[i][1];
+                    }
+                    const nullPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    Q(nullPath).attr({
+                        d: d,
+                        stroke: opts.zeroLine.color,
+                        'stroke-width': opts.zeroLine.thickness,
+                        fill: 'none',
+                        'stroke-dasharray': opts.zeroLine.dasharray
+                    });
+                    g.appendChild(nullPath);
+                }
+            }
+        }
+        if (opts.current.show && dataX.length && dataY.length) {
+            const lastX = dataX[dataX.length - 1];
+            const lastY = dataY[dataX.length - 1];
+            const x = scaleX(lastX);
+            const y = scaleY(lastY);
+            const triOpts = opts.line.triangle;
+            const triXSize = triOpts.size;
+            const triYSize = triOpts.size;
+            const triX = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            Q(triX).attr({
+                points: `${x - triXSize},${opts.size.height - padB} ${x + triXSize},${opts.size.height - padB} ${x},${opts.size.height - padB + triXSize}`,
+                fill: triOpts.fill || opts.line.color,
+                stroke: triOpts.stroke,
+                'stroke-width': triOpts.strokeWidth,
+                opacity: triOpts.opacity
+            });
+            g.appendChild(triX);
+            const xValStr = lastX.toFixed(opts.valueDigits);
+            const xFont = opts.text.value.fontFamily;
+            const xFontSize = opts.text.value.fontSize;
+            const xLabelBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            Q(xLabelBg).attr({
+                x: x - 22,
+                y: opts.size.height - padB + triXSize + 2,
+                width: 44,
+                height: 22,
+                fill: '#111',
+                rx: 4
+            });
+            g.appendChild(xLabelBg);
+            const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            Q(xLabel).attr({
+                x: x,
+                y: opts.size.height - padB + triXSize + 18,
+                'text-anchor': 'middle',
+                fill: opts.text.value.color,
+                'font-size': xFontSize,
+                'font-family': xFont
+            });
+            xLabel.textContent = xValStr;
+            g.appendChild(xLabel);
+            const triY = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            Q(triY).attr({
+                points: `${padL},${y - triYSize} ${padL},${y + triYSize} ${padL - triYSize},${y}`,
+                fill: triOpts.fill || opts.line.color,
+                stroke: triOpts.stroke,
+                'stroke-width': triOpts.strokeWidth,
+                opacity: triOpts.opacity
+            });
+            g.appendChild(triY);
+            const yValStr = lastY.toFixed(opts.valueDigits);
+            const yFont = opts.text.value.fontFamily;
+            const yFontSize = opts.text.value.fontSize;
+            const yLabelBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            Q(yLabelBg).attr({
+                x: padL - triYSize - 46,
+                y: y - 11,
+                width: 44,
+                height: 22,
+                fill: '#111',
+                rx: 4
+            });
+            g.appendChild(yLabelBg);
+            const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            Q(yLabel).attr({
+                x: padL - triYSize - 24,
+                y: y + 6,
+                'text-anchor': 'middle',
+                fill: opts.text.value.color,
+                'font-size': yFontSize,
+                'font-family': yFont
+            });
+            yLabel.textContent = yValStr;
+            g.appendChild(yLabel);
+        }
+        if (opts.average && opts.average.enabled && dataY.length > 0) {
+            const avgY = dataY.reduce((a, b) => a + b, 0) / dataY.length;
+            const pad = Graph.getPadding(opts.size.padding);
+            const [padT, padR, padB, padL] = pad;
+            const w = opts.size.width - padL - padR;
+            const h = opts.size.height - padT - padB;
+            let minY = opts.range.autoscaleY ? Math.min(...dataY) : opts.range.min;
+            let maxY = opts.range.autoscaleY ? Math.max(...dataY) : opts.range.max;
+            const scaleY = v => opts.size.height - padB - (h) * (v - minY) / (maxY - minY);
+            const y = scaleY(avgY);
+            const avgLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            Q(avgLine).attr({
+                x1: padL,
+                y1: y,
+                x2: opts.size.width - padR,
+                y2: y,
+                stroke: opts.average.color,
+                'stroke-width': opts.average.thickness,
+                'stroke-dasharray': opts.average.dasharray
+            });
+            g.appendChild(avgLine);
+            const avgLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            Q(avgLabel).attr({
+                x: padL - 8,
+                y: y + 4,
+                fill: opts.average.label.color,
+                'font-size': opts.average.label.fontSize,
+                'font-family': opts.average.label.fontFamily,
+                'font-weight': opts.average.label.fontWeight,
+                'text-anchor': 'end',
+                opacity: 1
+            });
+            avgLabel.textContent = avgY.toFixed(typeof opts.valueDigits === 'number' ? opts.valueDigits : 2);
+            g.appendChild(avgLabel);
+        }
+        if (opts.hover.value) {
+            svg.onmousemove = function (e) {
+                const rect = svg.getBoundingClientRect();
+                const pad = Graph.getPadding(opts.size.padding);
+                const [padT, padR, padB, padL] = pad;
+                const w = opts.size.width - padL - padR;
+                const h = opts.size.height - padT - padB;
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                let minX = opts.range.autoscaleX ? Math.min(...dataX) : opts.range.min;
+                let maxX = opts.range.autoscaleX ? Math.max(...dataX) : dataX.length - 1;
+                let minY = opts.range.autoscaleY ? Math.min(...dataY) : opts.range.min;
+                let maxY = opts.range.autoscaleY ? Math.max(...dataY) : opts.range.max;
+                let xVal = minX + (mouseX - padL) * (maxX - minX) / (w);
+                let yVal = maxY - (mouseY - padT) * (maxY - minY) / (h);
+                let showX = xVal, showY = yVal, dist = 0;
+                if (opts.hover.onlyPoints && dataX.length) {
+                    let minDist = Infinity, idx = 0;
+                    for (let i = 0; i < dataX.length; i++) {
+                        const px = padL + (w) * (dataX[i] - minX) / (maxX - minX);
+                        const py = opts.size.height - padB - (h) * (dataY[i] - minY) / (maxY - minY);
+                        const d = Math.hypot(mouseX - px, mouseY - py);
+                        if (d < minDist) { minDist = d; idx = i; }
+                    }
+                    showX = dataX[idx];
+                    showY = dataY[idx];
+                    dist = minDist;
+                } else if (dataX.length > 1) {
+                    let minDist = Infinity;
+                    for (let i = 0; i < dataX.length - 1; i++) {
+                        const x1 = padL + (w) * (dataX[i] - minX) / (maxX - minX);
+                        const y1 = opts.size.height - padB - (h) * (dataY[i] - minY) / (maxY - minY);
+                        const x2 = padL + (w) * (dataX[i + 1] - minX) / (maxX - minX);
+                        const y2 = opts.size.height - padB - (h) * (dataY[i + 1] - minY) / (maxY - minY);
+                        const t = Math.max(0, Math.min(1, ((mouseX - x1) * (x2 - x1) + (mouseY - y1) * (y2 - y1)) / ((x2 - x1) ** 2 + (y2 - y1) ** 2)));
+                        const projX = x1 + t * (x2 - x1);
+                        const projY = y1 + t * (x2 - x1);
+                        const d = Math.hypot(mouseX - projX, mouseY - projY);
+                        if (d < minDist) {
+                            minDist = d;
+                            showX = dataX[i] + t * (dataX[i + 1] - dataX[i]);
+                            showY = dataY[i] + t * (dataY[i + 1] - dataY[i]);
+                            dist = d;
+                        }
+                    }
+                }
+                if (dist > (opts.hover.distance)) {
+                    let old = svg.querySelector('.q-graph-hover-label');
+                    if (old) old.remove();
+                    svg.style.cursor = opts.hover.cursor === false ? '' : (opts.hover.cursor === true ? 'pointer' : 'auto');
+                    return;
+                }
+                if (opts.hover.cursor === false) {
+                    svg.style.cursor = 'none';
+                } else if (opts.hover.cursor === true) {
+                    svg.style.cursor = 'pointer';
+                } else {
+                    svg.style.cursor = '';
+                }
+                const hoverShow = opts.hover.show;
+                const xDigits = typeof opts.hover.xDigits === 'number' ? opts.hover.xDigits : (typeof opts.hover.digits === 'number' ? opts.hover.digits : 5);
+                const yDigits = typeof opts.hover.yDigits === 'number' ? opts.hover.yDigits : (typeof opts.hover.digits === 'number' ? opts.hover.digits : 5);
+                const showXVal = +showX.toFixed(xDigits);
+                const showYVal = +showY.toFixed(yDigits);
+                let old = svg.querySelector('.q-graph-hover-label');
+                if (old) old.remove();
+                const gHover = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                gHover.classList.add('q-graph-hover-label');
+                const cx = padL + (w) * (showX - minX) / (maxX - minX);
+                const cy = opts.size.height - padB - (h) * (showY - minY) / (maxY - minY);
+                const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                const hoverDot = opts.hover.dot;
+                Q(dot).attr({
+                    cx: cx,
+                    cy: cy,
+                    r: hoverDot.radius,
+                    fill: hoverDot.fill,
+                    stroke: hoverDot.stroke,
+                    'stroke-width': hoverDot.strokeWidth
+                });
+                gHover.appendChild(dot);
+                const hoverText = opts.hover.text;
+                let labelText = '';
+                if (hoverShow === 'both') {
+                    labelText = opts.hover.wrap ? `x: ${showXVal}\ny: ${showYVal}` : `x: ${showXVal}, y: ${showYVal}`;
+                } else if (hoverShow === 'x') {
+                    labelText = `x: ${showXVal}`;
+                } else if (hoverShow === 'y') {
+                    labelText = `y: ${showYVal}`;
+                }
+                const tempText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                Q(tempText).attr({
+                    'font-size': hoverText.fontSize,
+                    'font-family': hoverText.fontFamily,
+                    'font-weight': hoverText.fontWeight
+                });
+                if (opts.hover.wrap && labelText.includes('\n')) {
+                    const lines = labelText.split('\n');
+                    lines.forEach((line, i) => {
+                        const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                        Q(tspan).attr({
+                            x: 0,
+                            dy: i === 0 ? '0' : (hoverText.fontSize) * 1.2
+                        });
+                        tspan.textContent = line;
+                        tempText.appendChild(tspan);
+                    });
+                } else {
+                    tempText.textContent = labelText;
+                }
+                svg.appendChild(tempText);
+                const bbox = tempText.getBBox();
+                svg.removeChild(tempText);
+                function getBox(box, def, count) {
+                    if (Array.isArray(box)) {
+                        if (box.length === 2 && count === 2) return box;
+                        if (box.length === 2 && count === 4) return [box[0], box[1], box[0], box[1]];
+                        if (box.length === 3) return [box[0], box[1], box[2], box[1]];
+                        if (box.length === 4) return box;
+                    }
+                    return Array(count).fill(def);
+                }
+                const hoverPadArr = getBox(opts.hover.padding, 8, 4);
+                const hoverMarginArr = getBox(opts.hover.margin, 8, 2);
+                const labelW = bbox.width + hoverPadArr[1] + hoverPadArr[3];
+                const labelH = bbox.height + hoverPadArr[0] + hoverPadArr[2];
+                const labelX = cx + hoverMarginArr[1];
+                const labelY = cy - labelH / 2 + hoverMarginArr[0];
+                const labelBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                Q(labelBg).attr({
+                    x: labelX,
+                    y: labelY,
+                    width: labelW,
+                    height: labelH,
+                    fill: opts.hover.background,
+                    rx: 5,
+                    opacity: opts.hover.opacity
+                });
+                if (opts.hover.shadow) labelBg.setAttribute('filter', `drop-shadow(${opts.hover.shadow})`);
+                gHover.appendChild(labelBg);
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                Q(label).attr({
+                    fill: hoverText.color,
+                    'font-size': hoverText.fontSize,
+                    'font-family': hoverText.fontFamily,
+                    'font-weight': hoverText.fontWeight,
+                    'alignment-baseline': 'middle',
+                    'text-anchor': 'middle'
+                });
+                if (hoverText.shadow) label.setAttribute('filter', `drop-shadow(${hoverText.shadow})`);
+                if (opts.hover.wrap && labelText.includes('\n')) {
+                    const lines = labelText.split('\n');
+                    for (let i = 0; i < lines.length; i++) {
+                        const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                        Q(tspan).attr({
+                            x: labelX + labelW / 2,
+                            dy: i === 0 ? '0' : (hoverText.fontSize) * 1.2
+                        });
+                        tspan.textContent = lines[i];
+                        label.appendChild(tspan);
+                    }
+                    label.setAttribute('y', labelY + hoverPadArr[0] + (hoverText.fontSize));
+                } else {
+                    label.setAttribute('x', labelX + labelW / 2);
+                    label.setAttribute('y', labelY + labelH / 2 + (hoverText.fontSize ? hoverText.fontSize / 3 - 2 : 6));
+                    label.textContent = labelText;
+                }
+                gHover.appendChild(label);
+                svg.appendChild(gHover);
+                svg.style.cursor = 'none';
+            };
+            svg.onmouseleave = function () {
+                let old = svg.querySelector('.q-graph-hover-label');
+                if (old) old.remove();
+                svg.style.cursor = opts.hover.cursor === false ? '' : (opts.hover.cursor === true ? 'pointer' : 'auto');
+            };
+        } else {
+            svg.style.cursor = '';
+            svg.onmousemove = null;
+            svg.onmouseleave = null;
+        }
+    }
+    const qsvg = Q(svg);
+    qsvg.data = function (arr) {
+        if (Array.isArray(arr)) {
+            dataY = arr;
+            dataX = arr.map((_, i) => i);
+        } else if (arr && typeof arr === 'object' && arr.x && arr.y) {
+            dataX = arr.x;
+            dataY = arr.y;
+        }
+        render();
+        return qsvg;
+    };
+    qsvg.add = function (val) {
+        if (typeof val === 'object' && val.x !== undefined && val.y !== undefined) {
+            dataX.push(val.x);
+            dataY.push(val.y);
+        } else if (typeof val === 'number') {
+            dataX.push(dataX.length);
+            dataY.push(val);
+        }
+        render();
+        return qsvg;
+    };
+    render();
+    return qsvg;
+};
+Q.Image = function (options) {
+    const defaultOptions = {
+        width: 0,
+        height: 0,
+        format: 'png',
+        fill: 'transparent',
+        quality: 1,
+        historyLimit: 10,
+        autoSaveHistory: true
+    };
+    this.options = Object.assign({}, defaultOptions, options);
+    this.canvas = Q('<canvas>');
+    this.node = this.canvas.nodes[0];
+    if (this.options.width && this.options.height) {
+        this.node.width = this.options.width;
+        this.node.height = this.options.height;
+    }
+    this.history = {
+        states: [],
+        position: -1,
+        isUndoRedoing: false
+    };
+};
+Q.Image.prototype.Load = function (src, callback) {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+        if (this.node.width === 0 || this.node.height === 0 ||
+            this.options.width === 0 || this.options.height === 0) {
+            this.node.width = img.width;
+            this.node.height = img.height;
+        }
+        const ctx = this.node.getContext('2d');
+        ctx.clearRect(0, 0, this.node.width, this.node.height);
+        ctx.drawImage(img, 0, 0, img.width, img.height,
+            0, 0, this.node.width, this.node.height);
+        this.history.states = [];
+        this.history.position = -1;
+        this.saveToHistory();
+        if (callback) callback.call(this, null);
+    };
+    img.onerror = (err) => {
+        console.error('Hiba a kép betöltésekor:', src, err);
+        if (callback) callback.call(this, new Error('Error loading image'));
+    };
+    img.src = typeof src === 'string' ? src : src.src;
+    return this;
+};
+Q.Image.prototype.Clear = function (fill = this.options.fill) {
+    let ctx = this.node.getContext('2d');
+    ctx.fillStyle = fill;
+    ctx.fillRect(0, 0, this.node.width, this.node.height);
+    this.saveToHistory();
+    return this;
+};
+Q.Image.prototype.Render = function (target) {
+    const targetNode = (typeof target === 'string')
+        ? document.querySelector(target)
+        : (target instanceof HTMLElement)
+            ? target
+            : (target.nodes ? target.nodes[0] : null);
+    if (!targetNode) {
+        console.error('Invalid render target');
+        return this;
+    }
+    let ctxTarget;
+    if (targetNode.tagName.toLowerCase() === 'canvas') {
+        targetNode.width = this.node.width;
+        targetNode.height = this.node.height;
+        ctxTarget = targetNode.getContext('2d');
+        ctxTarget.drawImage(this.node, 0, 0);
+    } else if (targetNode.tagName.toLowerCase() === 'img') {
+        targetNode.src = this.node.toDataURL(`image/${this.options.format}`, this.options.quality);
+    } else {
+        console.error('Unsupported element for rendering');
+    }
+    return this;
+};
+Q.Image.prototype.Save = function (filename) {
+    const dataUrl = this.node.toDataURL('image/' + this.options.format, this.options.quality);
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = dataUrl;
+    link.click();
+    link.remove();
+    return this;
+};
+Q.Image.prototype.saveToHistory = function () {
+    if (this.history.isUndoRedoing || !this.options.autoSaveHistory) return;
+    if (this.node.width === 0 || this.node.height === 0) return;
+    const ctx = this.node.getContext('2d', { willReadFrequently: true });
+    const imageData = ctx.getImageData(0, 0, this.node.width, this.node.height);
+    if (this.history.position < this.history.states.length - 1) {
+        this.history.states.length = this.history.position + 1;
+    }
+    this.history.states.push(imageData);
+    if (this.history.states.length > this.options.historyLimit) {
+        this.history.states.shift();
+        if (this.history.position > 0) {
+            this.history.position--;
+        }
+    } else {
+        this.history.position++;
+    }
+};
+/* 
+ * IMPORTANT: Every image manipulation method should call saveToHistory() 
+ * after modifying the canvas to ensure proper history tracking.
+ */
+Q.Image.prototype.Undo = function () {
+    return this.History(-1);
+};
+Q.Image.prototype.Redo = function () {
+    return this.History(1);
+};
+Q.Image.prototype.History = function (offset) {
+    if (this.history.states.length === 0) {
+        console.warn('No history states available.');
+        return this;
+    }
+    const target = this.history.position + offset;
+    if (target < 0 || target >= this.history.states.length) {
+        console.warn('Nem lehetséges további visszalépés vagy előreugrás.');
+        return this;
+    }
+    this.history.isUndoRedoing = true;
+    const ctx = this.node.getContext('2d', { willReadFrequently: true });
+    const historyState = this.history.states[target];
+    if (this.node.width !== historyState.width || this.node.height !== historyState.height) {
+        this.node.width = historyState.width;
+        this.node.height = historyState.height;
+    }
+    ctx.putImageData(historyState, 0, 0);
+    this.history.position = target;
+    this.history.isUndoRedoing = false;
+    return this;
+};
+Q.Image.prototype.AutoAdjust = function(autoAdjustOptions = {}) {
+    const defaultOptions = {
+        mode: 'autoTone',
+        clipPercentage: 0.5,
+        targetBrightness: 128,
+        neutralizeColors: true,
+        enhanceShadows: true,
+        enhanceHighlights: true,
+        preserveContrast: true,
+        strength: 1.0,
+        preserveHue: true,
+        clamp: true
+    };
+    const finalOptions = Object.assign({}, defaultOptions, autoAdjustOptions);
+    const canvas_node = this.node;
+    const ctx = canvas_node.getContext('2d');
+    const imageData = ctx.getImageData(0, 0, canvas_node.width, canvas_node.height);
+    const pixels = imageData.data;
+    const pixelCount = pixels.length / 4;
+    const imageStats = analyzeImage(pixels, pixelCount);
+    switch (finalOptions.mode) {
+        case 'autoTone':
+            applyAutoTone(pixels, imageStats, finalOptions);
+            break;
+        case 'autoContrast':
+            applyAutoContrast(pixels, imageStats, finalOptions);
+            break;
+        case 'autoBrightness':
+            applyAutoBrightness(pixels, imageStats, finalOptions);
+            break;
+        case 'autoColor':
+            applyAutoColor(pixels, imageStats, finalOptions);
+            break;
+        default:
+            applyAutoTone(pixels, imageStats, finalOptions);
+    }
+    ctx.putImageData(imageData, 0, 0);
+    this.saveToHistory();
+    return this;
+};
+function applyAutoTone(pixels, imageStats, options) {
+    const { histogram, avgR, avgG, avgB } = imageStats;
+    const clipAmount = Math.floor(imageStats.pixelCount * (options.clipPercentage / 100));
+    const blackPoint = {
+        r: findBlackPoint(histogram.r, clipAmount, options.enhanceShadows),
+        g: findBlackPoint(histogram.g, clipAmount, options.enhanceShadows),
+        b: findBlackPoint(histogram.b, clipAmount, options.enhanceShadows)
+    };
+    const whitePoint = {
+        r: findWhitePoint(histogram.r, clipAmount, options.enhanceHighlights),
+        g: findWhitePoint(histogram.g, clipAmount, options.enhanceHighlights),
+        b: findWhitePoint(histogram.b, clipAmount, options.enhanceHighlights)
+    };
+    for (let i = 0; i < pixels.length; i += 4) {
+        let r = pixels[i];
+        let g = pixels[i + 1];
+        let b = pixels[i + 2];
+        const originalR = r;
+        const originalG = g;
+        const originalB = b;
+        const originalLuminance = 0.299 * r + 0.587 * g + 0.114 * b;
+        r = mapTone(r, blackPoint.r, whitePoint.r);
+        g = mapTone(g, blackPoint.g, whitePoint.g);
+        b = mapTone(b, blackPoint.b, whitePoint.b);
+        r = lerp(originalR, r, options.strength);
+        g = lerp(originalG, g, options.strength);
+        b = lerp(originalB, b, options.strength);
+        if (options.preserveHue && originalLuminance > 0) {
+            const newLuminance = 0.299 * r + 0.587 * g + 0.114 * b;
+            if (newLuminance > 0) {
+                const luminanceRatio = newLuminance / originalLuminance;
+                r = originalR * luminanceRatio;
+                g = originalG * luminanceRatio;
+                b = originalB * luminanceRatio;
+            }
+        }
+        if (options.clamp) {
+            r = Math.min(255, Math.max(0, r));
+            g = Math.min(255, Math.max(0, g));
+            b = Math.min(255, Math.max(0, b));
+        }
+        pixels[i] = r;
+        pixels[i + 1] = g;
+        pixels[i + 2] = b;
+    }
+}
+function applyAutoContrast(pixels, imageStats, options) {
+    const { histogram } = imageStats;
+    const clipAmount = Math.floor(imageStats.pixelCount * (options.clipPercentage / 100));
+    const blackPoint = findBlackPoint(histogram.luminance, clipAmount, true);
+    const whitePoint = findWhitePoint(histogram.luminance, clipAmount, true);
+    for (let i = 0; i < pixels.length; i += 4) {
+        let r = pixels[i];
+        let g = pixels[i + 1];
+        let b = pixels[i + 2];
+        const originalR = r;
+        const originalG = g;
+        const originalB = b;
+        const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+        const newLuminance = mapTone(luminance, blackPoint, whitePoint);
+        if (luminance > 0) {
+            const luminanceRatio = newLuminance / luminance;
+            r = r * luminanceRatio;
+            g = g * luminanceRatio;
+            b = b * luminanceRatio;
+        }
+        r = lerp(originalR, r, options.strength);
+        g = lerp(originalG, g, options.strength);
+        b = lerp(originalB, b, options.strength);
+        if (options.clamp) {
+            r = Math.min(255, Math.max(0, r));
+            g = Math.min(255, Math.max(0, g));
+            b = Math.min(255, Math.max(0, b));
+        }
+        pixels[i] = r;
+        pixels[i + 1] = g;
+        pixels[i + 2] = b;
+    }
+}
+function applyAutoBrightness(pixels, imageStats, options) {
+    const { avgLuminance } = imageStats;
+    const targetBrightness = options.targetBrightness;
+    const brightnessAdjust = targetBrightness - avgLuminance;
+    const maxAdjustment = 80;
+    const actualAdjustment = Math.max(-maxAdjustment, Math.min(maxAdjustment, 
+                             brightnessAdjust * options.strength));
+    for (let i = 0; i < pixels.length; i += 4) {
+        const r = pixels[i];
+        const g = pixels[i + 1];
+        const b = pixels[i + 2];
+        pixels[i] = Math.min(255, Math.max(0, r + actualAdjustment));
+        pixels[i + 1] = Math.min(255, Math.max(0, g + actualAdjustment));
+        pixels[i + 2] = Math.min(255, Math.max(0, b + actualAdjustment));
+    }
+}
+function applyAutoColor(pixels, imageStats, options) {
+    const { avgR, avgG, avgB } = imageStats;
+    const neutralGray = (avgR + avgG + avgB) / 3;
+    const rFactor = neutralGray / avgR;
+    const gFactor = neutralGray / avgG;
+    const bFactor = neutralGray / avgB;
+    const limitFactor = 2.0;
+    const rAdjust = Math.max(1/limitFactor, Math.min(limitFactor, rFactor));
+    const gAdjust = Math.max(1/limitFactor, Math.min(limitFactor, gFactor));
+    const bAdjust = Math.max(1/limitFactor, Math.min(limitFactor, bFactor));
+    for (let i = 0; i < pixels.length; i += 4) {
+        let r = pixels[i];
+        let g = pixels[i + 1];
+        let b = pixels[i + 2];
+        const originalR = r;
+        const originalG = g;
+        const originalB = b;
+        const originalLuminance = 0.299 * r + 0.587 * g + 0.114 * b;
+        r = r * rAdjust;
+        g = g * gAdjust;
+        b = b * bAdjust;
+        r = lerp(originalR, r, options.strength);
+        g = lerp(originalG, g, options.strength);
+        b = lerp(originalB, b, options.strength);
+        if (options.preserveHue && originalLuminance > 0) {
+            const newLuminance = 0.299 * r + 0.587 * g + 0.114 * b;
+            if (newLuminance > 0) {
+                const luminanceRatio = newLuminance / originalLuminance;
+                r = originalR * luminanceRatio;
+                g = originalG * luminanceRatio;
+                b = originalB * luminanceRatio;
+            }
+        }
+        if (options.clamp) {
+            r = Math.min(255, Math.max(0, r));
+            g = Math.min(255, Math.max(0, g));
+            b = Math.min(255, Math.max(0, b));
+        }
+        pixels[i] = r;
+        pixels[i + 1] = g;
+        pixels[i + 2] = b;
+    }
+}
+function analyzeImage(pixels, pixelCount) {
+    const histogram = {
+        r: new Array(256).fill(0),
+        g: new Array(256).fill(0),
+        b: new Array(256).fill(0),
+        luminance: new Array(256).fill(0)
+    };
+    let totalR = 0, totalG = 0, totalB = 0, totalLuminance = 0;
+    let minR = 255, minG = 255, minB = 255, minLuminance = 255;
+    let maxR = 0, maxG = 0, maxB = 0, maxLuminance = 0;
+    for (let i = 0; i < pixels.length; i += 4) {
+        const r = pixels[i];
+        const g = pixels[i + 1];
+        const b = pixels[i + 2];
+        histogram.r[r]++;
+        histogram.g[g]++;
+        histogram.b[b]++;
+        const luminance = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+        histogram.luminance[luminance]++;
+        totalR += r;
+        totalG += g;
+        totalB += b;
+        totalLuminance += luminance;
+        minR = Math.min(minR, r);
+        minG = Math.min(minG, g);
+        minB = Math.min(minB, b);
+        minLuminance = Math.min(minLuminance, luminance);
+        maxR = Math.max(maxR, r);
+        maxG = Math.max(maxG, g);
+        maxB = Math.max(maxB, b);
+        maxLuminance = Math.max(maxLuminance, luminance);
+    }
+    const avgR = totalR / pixelCount;
+    const avgG = totalG / pixelCount;
+    const avgB = totalB / pixelCount;
+    const avgLuminance = totalLuminance / pixelCount;
+    return {
+        histogram,
+        pixelCount,
+        avgR, avgG, avgB, avgLuminance,
+        minR, minG, minB, minLuminance,
+        maxR, maxG, maxB, maxLuminance
+    };
+}
+function findBlackPoint(histogram, clipAmount, enhanceShadows) {
+    let count = 0;
+    let blackPoint = 0;
+    for (let i = 0; i < 256; i++) {
+        count += histogram[i];
+        if (count > clipAmount) {
+            blackPoint = i;
+            break;
+        }
+    }
+    if (enhanceShadows) {
+        blackPoint = Math.max(0, blackPoint - 5);
+    }
+    return blackPoint;
+}
+function findWhitePoint(histogram, clipAmount, enhanceHighlights) {
+    let count = 0;
+    let whitePoint = 255;
+    for (let i = 255; i >= 0; i--) {
+        count += histogram[i];
+        if (count > clipAmount) {
+            whitePoint = i;
+            break;
+        }
+    }
+    if (enhanceHighlights) {
+        whitePoint = Math.min(255, whitePoint + 5);
+    }
+    return whitePoint;
+}
+function mapTone(value, blackPoint, whitePoint) {
+    if (whitePoint <= blackPoint) {
+        whitePoint = blackPoint + 1;
+    }
+    return 255 * (value - blackPoint) / (whitePoint - blackPoint);
+}
+function lerp(a, b, t) {
+    return a + (b - a) * Math.max(0, Math.min(1, t));
+}
+Q.Image.prototype.AutoTone = function(options = {}) {
+    return this.AutoAdjust(Object.assign({}, options, { mode: 'autoTone' }));
+};
+Q.Image.prototype.AutoContrast = function(options = {}) {
+    return this.AutoAdjust(Object.assign({}, options, { mode: 'autoContrast' }));
+};
+Q.Image.prototype.AutoBrightness = function(options = {}) {
+    return this.AutoAdjust(Object.assign({}, options, { mode: 'autoBrightness' }));
+};
+Q.Image.prototype.AutoColor = function(options = {}) {
+    return this.AutoAdjust(Object.assign({}, options, { mode: 'autoColor' }));
+};
+Q.Image.prototype.Blur = function (options = {}) {
+  const DEFAULTS = {
+    type: 'gaussian',
+    radius: 5,
+    quality: 1,
+    direction: 0,
+    distance: 10,
+    focalDistance: 0.5,
+    shape: 'circle',
+    blades: 6,
+    bladeCurvature: 0,
+    rotation: 0,
+    specularHighlights: 0,
+    noise: 0
+  };
+  const settings = Object.assign({}, DEFAULTS, options);
+  settings.radius = Math.max(1, Math.floor(settings.radius));
+  settings.quality = Math.max(1, Math.round(settings.quality));
+  settings.distance = Math.max(1, Math.round(settings.distance));
+  settings.blades = Math.min(8, Math.max(5, Math.floor(settings.blades)));
+  settings.bladeCurvature = clamp01(settings.bladeCurvature);
+  settings.focalDistance = clamp01(settings.focalDistance);
+  settings.specularHighlights = clamp01(settings.specularHighlights);
+  settings.noise = clamp01(settings.noise);
+  const ctx = this.node.getContext('2d', { willReadFrequently: true });
+  const { width, height } = this.node;
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const srcPixels = imageData.data;
+  const dstPixels = new Uint8ClampedArray(srcPixels);
+  const { kernel, size } = buildKernel(settings);
+  for (let i = 0; i < settings.quality; i++) {
+    convolve(srcPixels, dstPixels, width, height, kernel, size);
+    srcPixels.set(dstPixels);
+  }
+  imageData.data.set(dstPixels);
+  ctx.putImageData(imageData, 0, 0);
+  this.saveToHistory();
+  return this;
+};
+function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+function buildKernel(s) {
+  switch (s.type.toLowerCase()) {
+    case 'box':
+      return createBoxKernel(s.radius);
+    case 'motion':
+      return createMotionKernel(s.radius, s.distance, s.direction);
+    case 'lens':
+      return createLensKernel(s);
+    case 'gaussian':
+    default:
+      return createGaussianKernel(s.radius);
+  }
+}
+function createGaussianKernel(radius) {
+  radius = Math.max(0, Math.floor(radius));
+  const size = 2 * radius + 1;
+  if (size < 1 || !Number.isInteger(size)) {
+    console.warn("Gaussian kernel: Invalid size derived from radius, using fallback 1x1 kernel.");
+    return { kernel: new Float32Array([1]), size: 1 };
+  }
+  if (radius === 0) {
+    return { kernel: new Float32Array([1]), size: 1 };
+  }
+  const kernel = new Float32Array(size * size);
+  const sigma = radius / 3; 
+  const twoSigmaSquare = 2 * sigma * sigma;
+  let sum = 0;
+  const center = radius; 
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const dx = x - center;
+      const dy = y - center;
+      const weight = Math.exp(-(dx * dx + dy * dy) / twoSigmaSquare);
+      kernel[y * size + x] = weight;
+      sum += weight;
+    }
+  }
+  if (sum <= 0 || !isFinite(sum)) {
+    console.warn("Gaussian kernel: Sum is zero or non-finite (" + sum + "), using fallback 1x1 kernel.");
+    kernel.fill(0);
+    const centerIndex = center * size + center;
+    if (centerIndex >= 0 && centerIndex < kernel.length) {
+      kernel[centerIndex] = 1;
+    } else {
+      return { kernel: new Float32Array([1]), size: 1 };
+    }
+    sum = 1; 
+  } else {
+    for (let i = 0; i < kernel.length; i++) {
+      kernel[i] /= sum;
+      if (!isFinite(kernel[i])) {
+        console.warn("Gaussian kernel: Non-finite value after normalization, resetting to fallback 1x1 kernel.");
+        kernel.fill(0);
+        kernel[center * size + center] = 1; 
+        break; 
+      }
+    }
+  }
+  return { kernel, size };
+}
+function createBoxKernel(radius) {
+  const size = 2 * radius + 1;
+  const kernel = new Float32Array(size * size).fill(1 / (size * size));
+  return { kernel, size };
+}
+function createMotionKernel(radius, distance, direction) {
+  const size = 2 * distance + 1;
+  const kernel = new Float32Array(size * size).fill(0);
+  const half = Math.floor(size / 2);
+  const angle = direction * Math.PI / 180; 
+  let totalWeight = 0;
+  for (let t = -half; t <= half; t++) {
+    const x = Math.round(Math.cos(angle) * t) + half;
+    const y = Math.round(Math.sin(angle) * t) + half;
+    if (x >= 0 && x < size && y >= 0 && y < size) {
+      let weight = 1;
+      if (radius > 1) {
+        const dist = Math.abs(t) / half;
+        weight = Math.exp(-dist * dist / (2 * (radius / distance) * (radius / distance)));
+      }
+      kernel[y * size + x] = weight;
+      totalWeight += weight;
+    }
+  }
+  if (totalWeight > 0) {
+    for (let i = 0; i < kernel.length; i++) {
+      kernel[i] /= totalWeight;
+    }
+  }
+  return { kernel, size };
+}
+function createLensKernel({ radius, shape, blades, bladeCurvature, rotation, focalDistance, specularHighlights, noise }) {
+  const size = 2 * radius + 1;
+  const kernel = new Float32Array(size * size).fill(0);
+  const half = radius;
+  const rotationRad = rotation * Math.PI / 180; 
+  const focalFactor = 1 - focalDistance;
+  let totalWeight = 0;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const dx = x - half;
+      const dy = y - half;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance <= radius) {
+        const angle = Math.atan2(dy, dx) + rotationRad;
+        let weight = 0;
+        switch (shape) {
+          case 'hexagon':
+          case 'pentagon':
+          case 'octagon':
+            const bladeAngle = 2 * Math.PI / blades;
+            const normalizedAngle = (angle % bladeAngle) / bladeAngle - 0.5;
+            const bladeDistance = radius * (1 - bladeCurvature * Math.abs(normalizedAngle));
+            weight = distance <= bladeDistance ? 1 : 0;
+            break;
+          case 'circle':
+          default:
+            weight = 1;
+            const normalizedDist = distance / radius;
+            if (normalizedDist > focalFactor) {
+              weight *= Math.max(0, 1 - (normalizedDist - focalFactor) / (1 - focalFactor));
+            }
+            break;
+        }
+        if (specularHighlights > 0) {
+          const highlightFactor = Math.max(0, 1 - distance / radius);
+          weight *= 1 + specularHighlights * highlightFactor * 2;
+        }
+        if (noise > 0) {
+          weight *= 1 + (Math.random() - 0.5) * noise;
+        }
+        kernel[y * size + x] = Math.max(0, weight);
+        totalWeight += kernel[y * size + x];
+      }
+    }
+  }
+  if (totalWeight > 0) {
+    for (let i = 0; i < kernel.length; i++) {
+      kernel[i] /= totalWeight;
+    }
+  }
+  return { kernel, size };
+}
+function convolve(src, dst, width, height, kernel, size) {
+  const half = Math.floor(size / 2);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      let r = 0, g = 0, b = 0, a = 0;
+      const dstOff = (y * width + x) * 4;
+      let weightSum = 0;
+      for (let ky = 0; ky < size; ky++) {
+        for (let kx = 0; kx < size; kx++) {
+          const ny = y + ky - half;
+          const nx = x + kx - half;
+          if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
+            const srcOff = (ny * width + nx) * 4;
+            const weight = kernel[ky * size + kx];
+            if (isFinite(weight)) {
+              r += src[srcOff] * weight;
+              g += src[srcOff + 1] * weight;
+              b += src[srcOff + 2] * weight;
+              a += src[srcOff + 3] * weight;
+              weightSum += weight;
+            }
+          }
+        }
+      }
+      if (weightSum > 0 && isFinite(weightSum)) {
+        dst[dstOff] = r / weightSum;
+        dst[dstOff + 1] = g / weightSum;
+        dst[dstOff + 2] = b / weightSum;
+        dst[dstOff + 3] = a / weightSum;
+      } else {
+        dst[dstOff] = src[dstOff];
+        dst[dstOff + 1] = src[dstOff + 1];
+        dst[dstOff + 2] = src[dstOff + 2];
+        dst[dstOff + 3] = src[dstOff + 3];
+      }
+    }
+  }
+};
+Q.Image.prototype.Brightness = function (value, brightOptions = {}) {
+    const defaultOptions = {
+        preserveAlpha: true,
+        clamp: true
+    };
+    const finalOptions = Object.assign({}, defaultOptions, brightOptions);
+    const canvas_node = this.node;
+    let data = canvas_node.getContext('2d').getImageData(0, 0, canvas_node.width, canvas_node.height);
+    let pixels = data.data;
+    for (let i = 0; i < pixels.length; i += 4) {
+        pixels[i] += value;
+        pixels[i + 1] += value;
+        pixels[i + 2] += value;
+        if (finalOptions.clamp) {
+            pixels[i] = Math.min(255, Math.max(0, pixels[i]));
+            pixels[i + 1] = Math.min(255, Math.max(0, pixels[i + 1]));
+            pixels[i + 2] = Math.min(255, Math.max(0, pixels[i + 2]));
+        }
+    }
+    canvas_node.getContext('2d').putImageData(data, 0, 0);
+    this.saveToHistory();
+    return this;
+};
+Q.Image.prototype.CRT = function (crtOptions = {}) {
+    const defaultOptions = {
+        noiseStrength: 10,
+        strongNoiseStrength: 100,
+        strongNoiseCount: 5,
+        noiseMaxLength: 20000,
+        redShift: 3,
+        blueShift: 3,
+        scanlineHeight: 1,
+        scanlineMargin: 3,
+        scanlineOpacity: 0.1,
+        vignette: false,
+        vignetteStrength: 0.5,
+        scanlineBrightness: 0.5,
+        rgbOffset: 0,
+        curvature: true,
+        curvatureAmount: 0.1,
+        curvatureX: 50,
+        curvatureY: 50,
+        curvatureArc: 15,
+        curvatureType: "convex",
+        zoom: 0,
+        autoFill: false,
+        verticalWobble: 5,
+        horizontalWobble: 2,
+        wobbleSpeed: 10,
+        colorBleed: 0,
+        jitterChance: 0,
+    };
+    const finalOptions = Object.assign({}, defaultOptions, crtOptions);
+    finalOptions.curvatureArc = Math.max(0, Math.min(45, finalOptions.curvatureArc));
+    const curvatureAmountFromArc = finalOptions.curvatureArc / 45 * 0.3;
+    let curveAmount = Math.min(finalOptions.curvatureAmount, curvatureAmountFromArc);
+    if (finalOptions.curvatureType === "concave") {
+        curveAmount = -curveAmount;
+    }
+    finalOptions._effectiveCurvatureAmount = curveAmount;
+    let zoom = (typeof finalOptions.zoom === "number" ? finalOptions.zoom : 0) / 100;
+    if (finalOptions.autoFill && finalOptions.curvature && finalOptions.curvatureType === "concave") {
+        const maxDistSq = 1 * 1 + 1 * 1;
+        const absCurve = Math.abs(curveAmount);
+        const distortion = 1 + maxDistSq * absCurve;
+        zoom = Math.max(zoom, distortion - 1);
+    }
+    const canvas_node = this.node;
+    this.saveToHistory();
+    let temp = Q('<canvas>', {
+        width: canvas_node.width,
+        height: canvas_node.height
+    }).nodes[0];
+    let ctx = temp.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(canvas_node, 0, 0);
+    const imageData = ctx.getImageData(0, 0, temp.width, temp.height);
+    const data = imageData.data;
+    function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    }
+    function CRTRandomBetween(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    const noiseStrength = finalOptions.noiseStrength;
+    for (let i = 0; i < data.length; i += 4) {
+        const noise = (Math.random() - 0.5) * noiseStrength;
+        data[i] = clamp(data[i] + noise, 0, 255);
+        data[i + 1] = clamp(data[i + 1] + noise, 0, 255);
+        data[i + 2] = clamp(data[i + 2] + noise, 0, 255);
+    }
+    const strongNoiseStrength = finalOptions.strongNoiseStrength;
+    const strongNoiseCount = finalOptions.strongNoiseCount;
+    const noiseMaxLength = finalOptions.noiseMaxLength;
+    for (let i0 = 0; i0 < strongNoiseCount; i0++) {
+        const startPos = CRTRandomBetween(
+            CRTRandomBetween(0, data.length - noiseMaxLength),
+            data.length - noiseMaxLength
+        );
+        const endPos = startPos + CRTRandomBetween(0, noiseMaxLength);
+        for (let i = startPos; i < endPos; i += 4) {
+            if (i + 2 < data.length) {
+                const noise = (Math.random() - 0.4) * strongNoiseStrength;
+                data[i] = clamp(data[i] + noise, 0, 255);
+                data[i + 1] = clamp(data[i + 1] + noise, 0, 255);
+                data[i + 2] = clamp(data[i + 2] + noise, 0, 255);
+            }
+        }
+    }
+    let wobbleCanvas = Q('<canvas>', {
+        width: canvas_node.width,
+        height: canvas_node.height
+    }).nodes[0];
+    let wobbleCtx = wobbleCanvas.getContext('2d', { willReadFrequently: true });
+    const tempData = new Uint8ClampedArray(data);
+    const redShift = finalOptions.redShift;
+    const blueShift = finalOptions.blueShift;
+    const rgbOffset = finalOptions.rgbOffset;
+    if (finalOptions.colorBleed > 0) {
+        const bleed = Math.floor(finalOptions.colorBleed);
+        for (let y = 0; y < temp.height; y++) {
+            for (let x = 0; x < temp.width; x++) {
+                const currentIndex = (y * temp.width + x) * 4;
+                if (x + bleed < temp.width) {
+                    const bleedIndex = (y * temp.width + (x + bleed)) * 4;
+                    data[bleedIndex] = Math.max(data[bleedIndex], data[currentIndex] * 0.7);
+                }
+                if (y > bleed) {
+                    const bleedIndex = ((y - bleed) * temp.width + x) * 4 + 2;
+                    data[bleedIndex] = Math.max(data[bleedIndex], data[currentIndex + 2] * 0.7);
+                }
+            }
+        }
+    }
+    ctx.putImageData(imageData, 0, 0);
+    wobbleCtx.drawImage(temp, 0, 0);
+    const resultCtx = canvas_node.getContext('2d', { willReadFrequently: true });
+    resultCtx.clearRect(0, 0, canvas_node.width, canvas_node.height);
+    let applyScanlines = !finalOptions.subpixelEmulation || !finalOptions.applyScanlineAfterSubpixel;
+    if (finalOptions.jitterChance > 0 && Math.random() * 100 < finalOptions.jitterChance) {
+        const jumpOffset = CRTRandomBetween(5, 20);
+        resultCtx.drawImage(wobbleCanvas, 0, jumpOffset, canvas_node.width, canvas_node.height - jumpOffset);
+        resultCtx.drawImage(wobbleCanvas, 0, 0, canvas_node.width, jumpOffset, 0, canvas_node.height - jumpOffset, canvas_node.width, jumpOffset);
+    } else {
+        const vWobbleAmp = finalOptions.verticalWobble;
+        const hWobbleAmp = finalOptions.horizontalWobble;
+        const wobbleSpeed = finalOptions.wobbleSpeed / 10;
+        const timePhase = Date.now() / 1000 * wobbleSpeed;
+        if (finalOptions.curvature) {
+            const curveAmount = finalOptions._effectiveCurvatureAmount;
+            const centerX = Math.round((finalOptions.curvatureX / 100) * canvas_node.width);
+            const centerY = Math.round((finalOptions.curvatureY / 100) * canvas_node.height);
+            for (let y = 0; y < canvas_node.height; y++) {
+                const ny = ((y - centerY) / canvas_node.height) * 2;
+                const vWobble = vWobbleAmp * Math.sin(y / 30 + timePhase);
+                for (let x = 0; x < canvas_node.width; x++) {
+                    const nx = ((x - centerX) / canvas_node.width) * 2;
+                    let zx = nx / (1 + zoom);
+                    let zy = ny / (1 + zoom);
+                    const hWobble = hWobbleAmp * Math.sin(x / 20 + timePhase * 0.7);
+                    const distSq = zx * zx + zy * zy;
+                    const distortion = 1 + distSq * curveAmount;
+                    const srcX = Math.round(centerX + (zx / distortion) * (canvas_node.width / 2) + hWobble);
+                    const srcY = Math.round(centerY + (zy / distortion) * (canvas_node.height / 2) + vWobble);
+                    if (srcX >= 0 && srcX < canvas_node.width && srcY >= 0 && srcY < canvas_node.height) {
+                        if (rgbOffset > 0) {
+                            const rOffset = Math.min(canvas_node.width - 1, srcX + Math.floor(rgbOffset));
+                            const gOffset = srcX;
+                            const bOffset = Math.max(0, srcX - Math.floor(rgbOffset));
+                            const rData = wobbleCtx.getImageData(rOffset, srcY, 1, 1).data;
+                            const gData = wobbleCtx.getImageData(gOffset, srcY, 1, 1).data;
+                            const bData = wobbleCtx.getImageData(bOffset, srcY, 1, 1).data;
+                            resultCtx.fillStyle = `rgb(${rData[0]}, ${gData[1]}, ${bData[2]})`;
+                            resultCtx.fillRect(x, y, 1, 1);
+                        } else {
+                            const pixelData = wobbleCtx.getImageData(srcX, srcY, 1, 1).data;
+                            resultCtx.fillStyle = `rgba(${pixelData[0]}, ${pixelData[1]}, ${pixelData[2]}, ${pixelData[3] / 255})`;
+                            resultCtx.fillRect(x, y, 1, 1);
+                        }
+                    }
+                }
+            }
+        } else {
+            for (let y = 0; y < canvas_node.height; y++) {
+                const vWobble = vWobbleAmp * Math.sin(y / 30 + timePhase);
+                for (let x = 0; x < canvas_node.width; x++) {
+                    const hWobble = hWobbleAmp * Math.sin(x / 20 + timePhase * 0.7);
+                    const srcX = Math.round(x + hWobble);
+                    const srcY = Math.round(y + vWobble);
+                    if (srcX >= 0 && srcX < canvas_node.width && srcY >= 0 && srcY < canvas_node.height) {
+                        if (rgbOffset > 0) {
+                            const rOffset = Math.min(canvas_node.width - 1, srcX + Math.floor(rgbOffset));
+                            const gOffset = srcX;
+                            const bOffset = Math.max(0, srcX - Math.floor(rgbOffset));
+                            const rData = wobbleCtx.getImageData(rOffset, srcY, 1, 1).data;
+                            const gData = wobbleCtx.getImageData(gOffset, srcY, 1, 1).data;
+                            const bData = wobbleCtx.getImageData(bOffset, srcY, 1, 1).data;
+                            resultCtx.fillStyle = `rgb(${rData[0]}, ${gData[1]}, ${bData[2]})`;
+                            resultCtx.fillRect(x, y, 1, 1);
+                        } else {
+                            const pixelData = wobbleCtx.getImageData(srcX, srcY, 1, 1).data;
+                            resultCtx.fillStyle = `rgba(${pixelData[0]}, ${pixelData[1]}, ${pixelData[2]}, ${pixelData[3] / 255})`;
+                            resultCtx.fillRect(x, y, 1, 1);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    function drawHorizontalLines(ctx, width, height, totalHeight, margin, color, brightnessFactor) {
+        ctx.fillStyle = color;
+        for (let i = 0; i < totalHeight; i += (height + margin)) {
+            ctx.fillRect(0, i, width, height);
+            if (brightnessFactor > 0 && i + height < totalHeight) {
+                const brightColor = `rgba(255, 255, 255, ${brightnessFactor * 0.1})`;
+                ctx.fillStyle = brightColor;
+                ctx.fillRect(0, i + height, width, margin);
+                ctx.fillStyle = color;
+            }
+        }
+    }
+    if (applyScanlines) {
+        drawHorizontalLines(
+            resultCtx,
+            canvas_node.width,
+            finalOptions.scanlineHeight,
+            canvas_node.height,
+            finalOptions.scanlineMargin,
+            `rgba(0, 0, 0, ${finalOptions.scanlineOpacity})`,
+            finalOptions.scanlineBrightness
+        );
+    }
+    if (finalOptions.subpixelEmulation && finalOptions.applyScanlineAfterSubpixel) {
+        drawHorizontalLines(
+            resultCtx,
+            canvas_node.width,
+            finalOptions.scanlineHeight,
+            canvas_node.height,
+            finalOptions.scanlineMargin,
+            `rgba(0, 0, 0, ${finalOptions.scanlineOpacity})`,
+            finalOptions.scanlineBrightness
+        );
+    }
+    if (finalOptions.vignette) {
+        const centerX = canvas_node.width / 2;
+        const centerY = canvas_node.height / 2;
+        const radius = Math.max(centerX, centerY);
+        const gradient = resultCtx.createRadialGradient(
+            centerX, centerY, radius * 0.5,
+            centerX, centerY, radius * 1.5
+        );
+        gradient.addColorStop(0, 'rgba(0,0,0,0)');
+        gradient.addColorStop(1, `rgba(0,0,0,${finalOptions.vignetteStrength})`);
+        resultCtx.fillStyle = gradient;
+        resultCtx.globalCompositeOperation = 'multiply';
+        resultCtx.fillRect(0, 0, canvas_node.width, canvas_node.height);
+        resultCtx.globalCompositeOperation = 'source-over';
+    }
+    return this;
+};
+Q.Image.prototype.ComicEffect = function (colorSteps = 4, effectOptions = {}) {
+    const defaultOptions = {
+        redSteps: colorSteps,
+        greenSteps: colorSteps,
+        blueSteps: colorSteps,
+        edgeDetection: false,
+        edgeThickness: 1,
+        edgeThreshold: 20,
+        saturation: 1.2
+    };
+    const finalOptions = Object.assign({}, defaultOptions, effectOptions);
+    const canvas_node = this.node;
+    this.saveToHistory();
+    let temp = Q('<canvas>', {
+        width: canvas_node.width,
+        height: canvas_node.height
+    }).nodes[0];
+    let ctx = temp.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(canvas_node, 0, 0);
+    const imageData = ctx.getImageData(0, 0, temp.width, temp.height);
+    const pixels = imageData.data;
+    const redIntervalSize = 256 / finalOptions.redSteps;
+    const greenIntervalSize = 256 / finalOptions.greenSteps;
+    const blueIntervalSize = 256 / finalOptions.blueSteps;
+    for (let i = 0; i < pixels.length; i += 4) {
+        if (finalOptions.saturation !== 1.0) {
+            let r = pixels[i] / 255;
+            let g = pixels[i + 1] / 255;
+            let b = pixels[i + 2] / 255;
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            if (max === min) {
+                h = s = 0;
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            s = Math.min(1, s * finalOptions.saturation);
+            if (s === 0) {
+                r = g = b = l;
+            } else {
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+                r = hue2rgb(p, q, h + 1 / 3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1 / 3);
+            }
+            pixels[i] = Math.round(r * 255);
+            pixels[i + 1] = Math.round(g * 255);
+            pixels[i + 2] = Math.round(b * 255);
+        }
+        const redIndex = Math.floor(pixels[i] / redIntervalSize);
+        const greenIndex = Math.floor(pixels[i + 1] / greenIntervalSize);
+        const blueIndex = Math.floor(pixels[i + 2] / blueIntervalSize);
+        pixels[i] = redIndex * redIntervalSize;
+        pixels[i + 1] = greenIndex * greenIntervalSize;
+        pixels[i + 2] = blueIndex * blueIntervalSize;
+    }
+    if (finalOptions.edgeDetection) {
+        const edgeImageData = new ImageData(
+            new Uint8ClampedArray(pixels),
+            temp.width,
+            temp.height
+        );
+        for (let y = finalOptions.edgeThickness; y < temp.height - finalOptions.edgeThickness; y++) {
+            for (let x = finalOptions.edgeThickness; x < temp.width - finalOptions.edgeThickness; x++) {
+                const pos = (y * temp.width + x) * 4;
+                let edgeDetected = false;
+                const leftPos = (y * temp.width + (x - finalOptions.edgeThickness)) * 4;
+                const rightPos = (y * temp.width + (x + finalOptions.edgeThickness)) * 4;
+                const topPos = ((y - finalOptions.edgeThickness) * temp.width + x) * 4;
+                const bottomPos = ((y + finalOptions.edgeThickness) * temp.width + x) * 4;
+                const diffH = Math.abs(pixels[leftPos] - pixels[rightPos]) +
+                    Math.abs(pixels[leftPos + 1] - pixels[rightPos + 1]) +
+                    Math.abs(pixels[leftPos + 2] - pixels[rightPos + 2]);
+                const diffV = Math.abs(pixels[topPos] - pixels[bottomPos]) +
+                    Math.abs(pixels[topPos + 1] - pixels[bottomPos + 1]) +
+                    Math.abs(pixels[topPos + 2] - pixels[bottomPos + 2]);
+                if (diffH > finalOptions.edgeThreshold || diffV > finalOptions.edgeThreshold) {
+                    edgeImageData.data[pos] = 0;
+                    edgeImageData.data[pos + 1] = 0;
+                    edgeImageData.data[pos + 2] = 0;
+                }
+            }
+        }
+        ctx.putImageData(edgeImageData, 0, 0);
+    } else {
+        ctx.putImageData(imageData, 0, 0);
+    }
+    canvas_node.getContext('2d').clearRect(0, 0, canvas_node.width, canvas_node.height);
+    canvas_node.getContext('2d').drawImage(temp, 0, 0);
+    return this;
+};
+function hue2rgb(p, q, t) {
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+}
+Q.Image.prototype.Contrast = function (value, contrastOptions = {}) {
+    const defaultOptions = {
+        preserveHue: true,
+        clamp: true
+    };
+    const finalOptions = Object.assign({}, defaultOptions, contrastOptions);
+    const canvas_node = this.node;
+    let data = canvas_node.getContext('2d').getImageData(0, 0, canvas_node.width, canvas_node.height);
+    let pixels = data.data;
+    let factor = (259 * (value + 255)) / (255 * (259 - value));
+    for (let i = 0; i < pixels.length; i += 4) {
+        pixels[i] = factor * (pixels[i] - 128) + 128;
+        pixels[i + 1] = factor * (pixels[i + 1] - 128) + 128;
+        pixels[i + 2] = factor * (pixels[i + 2] - 128) + 128;
+        if (finalOptions.clamp) {
+            pixels[i] = Math.min(255, Math.max(0, pixels[i]));
+            pixels[i + 1] = Math.min(255, Math.max(0, pixels[i + 1]));
+            pixels[i + 2] = Math.min(255, Math.max(0, pixels[i + 2]));
+        }
+    }
+    canvas_node.getContext('2d').putImageData(data, 0, 0);
+    this.saveToHistory();
+    return this;
+};
+Q.Image.prototype.Crop = function (x, y, width, height, cropOptions = {}) {
+    const defaultOptions = {
+        preserveContext: true
+    };
+    this.saveToHistory();
+    const finalOptions = Object.assign({}, defaultOptions, cropOptions);
+    const canvas_node = this.node;
+    let temp = Q('<canvas>', { width: width, height: height }).nodes[0];
+    let tempCtx = temp.getContext('2d');
+    if (finalOptions.preserveContext) {
+        const ctx = canvas_node.getContext('2d');
+        tempCtx.globalAlpha = ctx.globalAlpha;
+        tempCtx.globalCompositeOperation = ctx.globalCompositeOperation;
+    }
+    tempCtx.drawImage(canvas_node, x, y, width, height, 0, 0, width, height);
+    canvas_node.width = width;
+    canvas_node.height = height;
+    canvas_node.getContext('2d').drawImage(temp, 0, 0);
+    return this;
+};
+Q.Image.prototype.Flip = function(direction = 'horizontal', flipOptions = {}) {
+        const defaultOptions = {
+            smoothing: true,    // Whether to use smoothing
+            quality: 'high'     // Smoothing quality: 'low', 'medium', 'high'
+        };
+        const finalOptions = Object.assign({}, defaultOptions, flipOptions);
+        const canvas_node = this.node;
+        let temp = Q('<canvas>', { 
+            width: canvas_node.width, 
+            height: canvas_node.height 
+        }).nodes[0];
+        let ctx = temp.getContext('2d');
+        this.saveToHistory(); // Save the current state to history
+        ctx.imageSmoothingEnabled = finalOptions.smoothing;
+        ctx.imageSmoothingQuality = finalOptions.quality;
+        if (direction === 'horizontal') {
+            ctx.translate(canvas_node.width, 0);
+            ctx.scale(-1, 1);
+        } else if (direction === 'vertical') {
+            ctx.translate(0, canvas_node.height);
+            ctx.scale(1, -1);
+        } else if (direction === 'both') {
+            ctx.translate(canvas_node.width, canvas_node.height);
+            ctx.scale(-1, -1);
+        }
+        ctx.drawImage(canvas_node, 0, 0);
+        canvas_node.getContext('2d').drawImage(temp, 0, 0);
+        return this;
+    };
+Q.Image.prototype.Glitch = function (options = {}) {
+    const defaults = {
+        minDistance: 10,
+        maxDistance: 80,
+        type: "datamosh",
+        angle: 0,
+        counts: 12,
+        minWidth: 10,
+        maxWidth: 80,
+        minHeight: 2,
+        maxHeight: 30,
+        corruptedBlockSize: 16,
+        corruptedIntensity: 0.3,
+        corruptedChannelShift: 8,
+        macroblockBlockSize: 32,
+        macroblockIntensity: 0.5,
+        macroblockBlend: 0.3,
+        macroblockShift: 24,
+        macroblockNoise: 0.1,
+        pixelsortAxis: "vertical",
+        pixelsortSortBy: "brightness",
+        pixelsortStrength: 1,
+        pixelsortRandom: 0,
+        pixelsortEdge: false,
+        pixelsortEdgeThreshold: 0.2,
+        pixelsortMass: false,
+        pixelsortEdgeInside: true,
+        waveAmplitude: 24,
+        waveFrequency: 2,
+        wavePhase: 0,
+        waveDirection: "horizontal"
+    };
+    const opts = Object.assign({}, defaults, options);
+    const canvas = this.node;
+    const w = canvas.width, h = canvas.height;
+    if (w === 0 || h === 0) return this;
+    this.saveToHistory();
+    const angleRad = opts.angle * Math.PI / 180;
+    const diag = Math.ceil(Math.sqrt(w * w + h * h));
+    const temp1 = document.createElement('canvas');
+    temp1.width = diag;
+    temp1.height = diag;
+    const ctx1 = temp1.getContext('2d', { willReadFrequently: true });
+    ctx1.save();
+    ctx1.translate(diag / 2, diag / 2);
+    ctx1.rotate(angleRad);
+    ctx1.drawImage(canvas, -w / 2, -h / 2);
+    ctx1.restore();
+    {
+        const imgData = ctx1.getImageData(0, 0, diag, diag);
+        const data = imgData.data;
+        for (let y = 0; y < diag; y++) {
+            for (let x = 0; x < diag; x++) {
+                let cx = x - diag / 2;
+                let cy = y - diag / 2;
+                let rx = Math.cos(-angleRad) * cx - Math.sin(-angleRad) * cy + w / 2;
+                let ry = Math.sin(-angleRad) * cx + Math.cos(-angleRad) * cy + h / 2;
+                if (rx < 0 || rx >= w || ry < 0 || ry >= h) {
+                    const idx = (y * diag + x) * 4;
+                    data[idx + 3] = 0;
+                }
+            }
+        }
+        ctx1.putImageData(imgData, 0, 0);
+    }
+    if (opts.type === "datamosh") {
+        for (let i = 0; i < opts.counts; i++) {
+            const gw = Math.floor(Math.random() * (opts.maxWidth - opts.minWidth + 1)) + opts.minWidth;
+            const gh = Math.floor(Math.random() * (opts.maxHeight - opts.minHeight + 1)) + opts.minHeight;
+            const gx = Math.floor(Math.random() * (diag - gw));
+            const gy = Math.floor(Math.random() * (diag - gh));
+            let distance = Math.floor(Math.random() * (opts.maxDistance - opts.minDistance + 1)) + opts.minDistance;
+            if (Math.random() < 0.5) distance *= -1;
+            let nx = gx + distance;
+            if (nx < 0) nx = 0;
+            if (nx + gw > diag) nx = diag - gw;
+            const imageData = ctx1.getImageData(gx, gy, gw, gh);
+            ctx1.putImageData(imageData, nx, gy);
+        }
+    } else if (opts.type === "corrupted") {
+        const blockSize = opts.corruptedBlockSize;
+        const intensity = opts.corruptedIntensity;
+        const channelShift = opts.corruptedChannelShift;
+        const imgData = ctx1.getImageData(0, 0, diag, diag);
+        const data = imgData.data;
+        for (let i = 0; i < opts.counts; i++) {
+            const bx = Math.floor(Math.random() * (diag - blockSize));
+            const by = Math.floor(Math.random() * (diag - blockSize));
+            for (let y = 0; y < blockSize; y++) {
+                for (let x = 0; x < blockSize; x++) {
+                    const px = bx + x;
+                    const py = by + y;
+                    const idx = (py * diag + px) * 4;
+                    if (Math.random() < intensity) {
+                        const rx = bx + Math.floor(Math.random() * blockSize);
+                        const ry = by + Math.floor(Math.random() * blockSize);
+                        const ridx = (ry * diag + rx) * 4;
+                        for (let c = 0; c < 4; c++) {
+                            const tmp = data[idx + c];
+                            data[idx + c] = data[ridx + c];
+                            data[ridx + c] = tmp;
+                        }
+                    }
+                }
+            }
+        }
+        for (let i = 0; i < opts.counts; i++) {
+            const bx = Math.floor(Math.random() * (diag - blockSize));
+            const by = Math.floor(Math.random() * (diag - blockSize));
+            const shiftR = Math.floor((Math.random() - 0.5) * 2 * channelShift);
+            const shiftG = Math.floor((Math.random() - 0.5) * 2 * channelShift);
+            const shiftB = Math.floor((Math.random() - 0.5) * 2 * channelShift);
+            for (let y = 0; y < blockSize; y++) {
+                for (let x = 0; x < blockSize; x++) {
+                    const px = bx + x;
+                    const py = by + y;
+                    const idx = (py * diag + px) * 4;
+                    let rIdx = ((py) * diag + Math.min(diag - 1, Math.max(0, px + shiftR))) * 4;
+                    let gIdx = ((py) * diag + Math.min(diag - 1, Math.max(0, px + shiftG))) * 4;
+                    let bIdx = ((py) * diag + Math.min(diag - 1, Math.max(0, px + shiftB))) * 4;
+                    data[idx] = data[rIdx];
+                    data[idx + 1] = data[gIdx + 1];
+                    data[idx + 2] = data[bIdx + 2];
+                }
+            }
+        }
+        ctx1.putImageData(imgData, 0, 0);
+    } else if (opts.type === "macroblock") {
+        const blockSize = opts.macroblockBlockSize;
+        const intensity = opts.macroblockIntensity;
+        const blend = opts.macroblockBlend;
+        const shift = opts.macroblockShift;
+        const noise = opts.macroblockNoise;
+        const imgData = ctx1.getImageData(0, 0, diag, diag);
+        const data = imgData.data;
+        for (let by = 0; by < diag; by += blockSize) {
+            for (let bx = 0; bx < diag; bx += blockSize) {
+                if (Math.random() < intensity) {
+                    let sx = bx + Math.floor((Math.random() - 0.5) * 2 * shift);
+                    let sy = by + Math.floor((Math.random() - 0.5) * 2 * shift);
+                    sx = Math.max(0, Math.min(diag - blockSize, sx));
+                    sy = Math.max(0, Math.min(diag - blockSize, sy));
+                    for (let y = 0; y < blockSize; y++) {
+                        for (let x = 0; x < blockSize; x++) {
+                            const dstX = bx + x;
+                            const dstY = by + y;
+                            const srcX = sx + x;
+                            const srcY = sy + y;
+                            if (dstX < diag && dstY < diag && srcX < diag && srcY < diag) {
+                                const dstIdx = (dstY * diag + dstX) * 4;
+                                const srcIdx = (srcY * diag + srcX) * 4;
+                                for (let c = 0; c < 3; c++) {
+                                    data[dstIdx + c] = Math.round(
+                                        data[srcIdx + c] * blend + data[dstIdx + c] * (1 - blend)
+                                    );
+                                }
+                                if (noise > 0) {
+                                    for (let c = 0; c < 3; c++) {
+                                        data[dstIdx + c] = Math.min(255, Math.max(0, data[dstIdx + c] + (Math.random() - 0.5) * 255 * noise));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        ctx1.putImageData(imgData, 0, 0);
+    } else if (opts.type === "pixelsort") {
+        const axis = opts.pixelsortAxis;
+        const sortBy = opts.pixelsortSortBy;
+        const strength = Math.max(0, Math.min(1, opts.pixelsortStrength));
+        const randomness = Math.max(0, Math.min(1, opts.pixelsortRandom));
+        const edgeEnabled = !!opts.pixelsortEdge;
+        const edgeThreshold = Math.max(0, Math.min(1, opts.pixelsortEdgeThreshold || 0.2));
+        const massMode = !!opts.pixelsortMass;
+        const edgeInside = opts.pixelsortEdgeInside !== undefined ? !!opts.pixelsortEdgeInside : true;
+        const imgData = ctx1.getImageData(0, 0, diag, diag);
+        const data = imgData.data;
+        function getSortValue(r, g, b) {
+            if (sortBy === "brightness") {
+                return 0.299 * r + 0.587 * g + 0.114 * b;
+            } else if (sortBy === "intensity") {
+                return (r + g + b) / 3;
+            } else if (sortBy === "hue") {
+                const max = Math.max(r, g, b), min = Math.min(r, g, b);
+                let h = 0;
+                if (max === min) h = 0;
+                else if (max === r) h = (60 * ((g - b) / (max - min)) + 360) % 360;
+                else if (max === g) h = (60 * ((b - r) / (max - min)) + 120) % 360;
+                else if (max === b) h = (60 * ((r - g) / (max - min)) + 240) % 360;
+                return h;
+            }
+            return 0;
+        }
+        let edgeMap = null;
+        if (edgeEnabled) {
+            edgeMap = new Float32Array(diag * diag);
+            const gx = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
+            const gy = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
+            for (let y = 1; y < diag - 1; y++) {
+                for (let x = 1; x < diag - 1; x++) {
+                    let sx = 0, sy = 0;
+                    for (let ky = -1; ky <= 1; ky++) {
+                        for (let kx = -1; kx <= 1; kx++) {
+                            const idx = ((y + ky) * diag + (x + kx)) * 4;
+                            let v;
+                            if (sortBy === "brightness") {
+                                v = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+                            } else if (sortBy === "intensity") {
+                                v = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+                            } else if (sortBy === "hue") {
+                                const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+                                const max = Math.max(r, g, b), min = Math.min(r, g, b);
+                                let h = 0;
+                                if (max === min) h = 0;
+                                else if (max === r) h = (60 * ((g - b) / (max - min)) + 360) % 360;
+                                else if (max === g) h = (60 * ((b - r) / (max - min)) + 120) % 360;
+                                else if (max === b) h = (60 * ((r - g) / (max - min)) + 240) % 360;
+                                v = h;
+                            } else {
+                                v = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+                            }
+                            const kIdx = (ky + 1) * 3 + (kx + 1);
+                            sx += gx[kIdx] * v;
+                            sy += gy[kIdx] * v;
+                        }
+                    }
+                    const mag = Math.sqrt(sx * sx + sy * sy) / 1448;
+                    edgeMap[y * diag + x] = mag;
+                }
+            }
+        }
+        function getEdgeMask(lineIdx, axis) {
+            const mask = [];
+            if (!edgeMap) return null;
+            for (let i = 0; i < diag; i++) {
+                let idx = axis === "vertical" ? (i * diag + lineIdx) : (lineIdx * diag + i);
+                mask.push(edgeMap[idx] > edgeThreshold);
+            }
+            return mask;
+        }
+        function countEdges(lineIdx, axis) {
+            if (!edgeMap) return 0;
+            let count = 0;
+            for (let i = 0; i < diag; i++) {
+                let idx = axis === "vertical" ? (i * diag + lineIdx) : (lineIdx * diag + i);
+                if (edgeMap[idx] > edgeThreshold) count++;
+            }
+            return count;
+        }
+        let massLine = -1;
+        if (edgeEnabled && massMode) {
+            let maxCount = -1;
+            for (let i = 0; i < diag; i++) {
+                const cnt = countEdges(i, axis);
+                if (cnt > maxCount) {
+                    maxCount = cnt;
+                    massLine = i;
+                }
+            }
+        }
+        if (axis === "vertical") {
+            for (let x = 0; x < diag; x++) {
+                if (Math.random() > strength) continue;
+                if (massMode && x !== massLine) continue;
+                let pixels = [];
+                let mask = edgeEnabled ? getEdgeMask(x, "vertical") : null;
+                for (let y = 0; y < diag; y++) {
+                    const idx = (y * diag + x) * 4;
+                    pixels.push({
+                        r: data[idx],
+                        g: data[idx + 1],
+                        b: data[idx + 2],
+                        a: data[idx + 3],
+                        sort: getSortValue(data[idx], data[idx + 1], data[idx + 2]) + (Math.random() - 0.5) * 255 * randomness,
+                        edge: mask ? mask[y] : false
+                    });
+                }
+                if (edgeEnabled) {
+                    let first = pixels.findIndex(p => p.edge);
+                    let last = -1;
+                    for (let i = diag - 1; i >= 0; i--) {
+                        if (pixels[i].edge) { last = i; break; }
+                    }
+                    if (first !== -1 && last !== -1 && last > first) {
+                        if (edgeInside) {
+                            let segment = pixels.slice(first, last + 1);
+                            segment.sort((a, b) => a.sort - b.sort);
+                            for (let i = first; i <= last; i++) {
+                                pixels[i] = segment[i - first];
+                            }
+                        } else {
+                            if (first > 0) {
+                                let segment = pixels.slice(0, first);
+                                segment.sort((a, b) => a.sort - b.sort);
+                                for (let i = 0; i < first; i++) {
+                                    pixels[i] = segment[i];
+                                }
+                            }
+                            if (last < diag - 1) {
+                                let segment = pixels.slice(last + 1);
+                                segment.sort((a, b) => a.sort - b.sort);
+                                for (let i = last + 1; i < diag; i++) {
+                                    pixels[i] = segment[i - (last + 1)];
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    pixels.sort((a, b) => a.sort - b.sort);
+                }
+                for (let y = 0; y < diag; y++) {
+                    let cx = x - diag / 2;
+                    let cy = y - diag / 2;
+                    let rx = Math.cos(-angleRad) * cx - Math.sin(-angleRad) * cy + w / 2;
+                    let ry = Math.sin(-angleRad) * cx + Math.cos(-angleRad) * cy + h / 2;
+                    if (rx >= 0 && rx < w && ry >= 0 && ry < h) {
+                        const idx = (y * diag + x) * 4;
+                        data[idx] = pixels[y].r;
+                        data[idx + 1] = pixels[y].g;
+                        data[idx + 2] = pixels[y].b;
+                        data[idx + 3] = pixels[y].a;
+                    }
+                }
+            }
+        } else {
+            for (let y = 0; y < diag; y++) {
+                if (Math.random() > strength) continue;
+                if (massMode && y !== massLine) continue;
+                let pixels = [];
+                let mask = edgeEnabled ? getEdgeMask(y, "horizontal") : null;
+                for (let x = 0; x < diag; x++) {
+                    const idx = (y * diag + x) * 4;
+                    pixels.push({
+                        r: data[idx],
+                        g: data[idx + 1],
+                        b: data[idx + 2],
+                        a: data[idx + 3],
+                        sort: getSortValue(data[idx], data[idx + 1], data[idx + 2]) + (Math.random() - 0.5) * 255 * randomness,
+                        edge: mask ? mask[x] : false
+                    });
+                }
+                if (edgeEnabled) {
+                    let first = pixels.findIndex(p => p.edge);
+                    let last = -1;
+                    for (let i = diag - 1; i >= 0; i--) {
+                        if (pixels[i].edge) { last = i; break; }
+                    }
+                    if (first !== -1 && last !== -1 && last > first) {
+                        if (edgeInside) {
+                            let segment = pixels.slice(first, last + 1);
+                            segment.sort((a, b) => a.sort - b.sort);
+                            for (let i = first; i <= last; i++) {
+                                pixels[i] = segment[i - first];
+                            }
+                        } else {
+                            if (first > 0) {
+                                let segment = pixels.slice(0, first);
+                                segment.sort((a, b) => a.sort - b.sort);
+                                for (let i = 0; i < first; i++) {
+                                    pixels[i] = segment[i];
+                                }
+                            }
+                            if (last < diag - 1) {
+                                let segment = pixels.slice(last + 1);
+                                segment.sort((a, b) => a.sort - b.sort);
+                                for (let i = last + 1; i < diag; i++) {
+                                    pixels[i] = segment[i - (last + 1)];
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    pixels.sort((a, b) => a.sort - b.sort);
+                }
+                for (let x = 0; x < diag; x++) {
+                    let cx = x - diag / 2;
+                    let cy = y - diag / 2;
+                    let rx = Math.cos(-angleRad) * cx - Math.sin(-angleRad) * cy + w / 2;
+                    let ry = Math.sin(-angleRad) * cx + Math.cos(-angleRad) * cy + h / 2;
+                    if (rx >= 0 && rx < w && ry >= 0 && ry < h) {
+                        const idx = (y * diag + x) * 4;
+                        data[idx] = pixels[x].r;
+                        data[idx + 1] = pixels[x].g;
+                        data[idx + 2] = pixels[x].b;
+                        data[idx + 3] = pixels[x].a;
+                    }
+                }
+            }
+        }
+        ctx1.putImageData(imgData, 0, 0);
+    } else if (opts.type === "wave") {
+        const amplitude = opts.waveAmplitude;
+        const frequency = opts.waveFrequency;
+        const phase = opts.wavePhase;
+        const direction = opts.waveDirection;
+        const imgData = ctx1.getImageData(0, 0, diag, diag);
+        const data = imgData.data;
+        const out = ctx1.createImageData(diag, diag);
+        const outData = out.data;
+        if (direction === "horizontal") {
+            for (let y = 0; y < diag; y++) {
+                const shift = Math.round(
+                    Math.sin(2 * Math.PI * frequency * y / diag + phase) * amplitude
+                );
+                for (let x = 0; x < diag; x++) {
+                    let sx = x + shift;
+                    if (sx < 0 || sx >= diag) continue;
+                    const srcIdx = (y * diag + sx) * 4;
+                    const dstIdx = (y * diag + x) * 4;
+                    outData[dstIdx] = data[srcIdx];
+                    outData[dstIdx + 1] = data[srcIdx + 1];
+                    outData[dstIdx + 2] = data[srcIdx + 2];
+                    outData[dstIdx + 3] = data[srcIdx + 3];
+                }
+            }
+        } else {
+            for (let x = 0; x < diag; x++) {
+                const shift = Math.round(
+                    Math.sin(2 * Math.PI * frequency * x / diag + phase) * amplitude
+                );
+                for (let y = 0; y < diag; y++) {
+                    let sy = y + shift;
+                    if (sy < 0 || sy >= diag) continue;
+                    const srcIdx = (sy * diag + x) * 4;
+                    const dstIdx = (y * diag + x) * 4;
+                    outData[dstIdx] = data[srcIdx];
+                    outData[dstIdx + 1] = data[srcIdx + 1];
+                    outData[dstIdx + 2] = data[srcIdx + 2];
+                    outData[dstIdx + 3] = data[srcIdx + 3];
+                }
+            }
+        }
+        ctx1.putImageData(out, 0, 0);
+    }
+    const temp2 = document.createElement('canvas');
+    temp2.width = w;
+    temp2.height = h;
+    const ctx2 = temp2.getContext('2d', { willReadFrequently: true });
+    ctx2.save();
+    ctx2.clearRect(0, 0, w, h);
+    ctx2.translate(w / 2, h / 2);
+    ctx2.rotate(-angleRad);
+    ctx2.drawImage(temp1, -diag / 2, -diag / 2);
+    ctx2.restore();
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.clearRect(0, 0, w, h);
+    ctx.drawImage(temp2, 0, 0);
+    return this;
+};
+Q.Image.prototype.Glow = function (glowOptions = {}) {
+    const defaultOptions = {
+        illuminanceThreshold: 200,
+        blurRadius: 10,
+        intensity: 1.0,
+        color: null,
+        blendMode: 'lighter'
+    };
+    const finalOptions = Object.assign({}, defaultOptions, glowOptions);
+    const w = this.node.width, h = this.node.height;
+    if (w === 0 || h === 0) return this;
+    this.saveToHistory();
+    const src = document.createElement('canvas');
+    src.width = w; src.height = h;
+    const srcCtx = src.getContext('2d');
+    srcCtx.drawImage(this.node, 0, 0);
+    const thr = document.createElement('canvas');
+    thr.width = w; thr.height = h;
+    const thrCtx = thr.getContext('2d');
+    const img = srcCtx.getImageData(0, 0, w, h);
+    const data = img.data;
+    let tint = null;
+    if (finalOptions.color) {
+        const tmp = document.createElement('canvas');
+        tmp.width = tmp.height = 1;
+        const tctx = tmp.getContext('2d');
+        tctx.fillStyle = finalOptions.color;
+        tctx.fillRect(0, 0, 1, 1);
+        const pd = tctx.getImageData(0, 0, 1, 1).data;
+        tint = { r: pd[0], g: pd[1], b: pd[2] };
+    }
+    for (let i = 0; i < data.length; i += 4) {
+        const lum = 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+        if (lum <= finalOptions.illuminanceThreshold) {
+            data[i + 3] = 0;
+        } else if (tint) {
+            data[i] = tint.r;
+            data[i + 1] = tint.g;
+            data[i + 2] = tint.b;
+        }
+    }
+    thrCtx.putImageData(img, 0, 0);
+    const glow = document.createElement('canvas');
+    glow.width = w; glow.height = h;
+    const gctx = glow.getContext('2d');
+    gctx.filter = `blur(${finalOptions.blurRadius}px)`;
+    gctx.globalAlpha = finalOptions.intensity;
+    gctx.drawImage(thr, 0, 0);
+    const dst = this.node.getContext('2d');
+    dst.drawImage(src, 0, 0);
+    dst.globalCompositeOperation = finalOptions.blendMode;
+    dst.drawImage(glow, 0, 0);
+    dst.globalCompositeOperation = 'source-over';
+    return this;
+};
+Q.Image.prototype.GodRay = function (rayOptions = {}) {
+    const defaultOptions = {
+        centerX: 50,
+        centerY: 50,
+        threshold: 200,
+        length: 50,
+        samples: 20,
+        strength: 1.0,
+        decay: 0.95,
+        exposure: 0.3,
+        angle: null,
+        tintColor: null,
+        blendMode: 'screen',
+        fadeOut: 0.1,
+        fadeOutType: 'ease'
+    };
+    this.saveToHistory();
+    const finalOptions = Object.assign({}, defaultOptions, rayOptions);
+    const canvas_node = this.node;
+    const centerX = (finalOptions.centerX / 100) * canvas_node.width;
+    const centerY = (finalOptions.centerY / 100) * canvas_node.height;
+    const samples = Math.max(5, Math.min(50, finalOptions.samples));
+    const length = Math.max(1, Math.min(100, finalOptions.length)) / 100;
+    const maxScale = 1 + length;
+    const sourceCanvas = document.createElement('canvas');
+    sourceCanvas.width = canvas_node.width;
+    sourceCanvas.height = canvas_node.height;
+    const sourceCtx = sourceCanvas.getContext('2d');
+    sourceCtx.drawImage(canvas_node, 0, 0);
+    const brightCanvas = document.createElement('canvas');
+    brightCanvas.width = canvas_node.width;
+    brightCanvas.height = canvas_node.height;
+    const brightCtx = brightCanvas.getContext('2d');
+    const imageData = sourceCtx.getImageData(0, 0, canvas_node.width, canvas_node.height);
+    const brightData = brightCtx.createImageData(canvas_node.width, canvas_node.height);
+    for (let i = 0; i < imageData.data.length; i += 4) {
+        const r = imageData.data[i];
+        const g = imageData.data[i + 1];
+        const b = imageData.data[i + 2];
+        const brightness = Math.max(r, g, b);
+        if (brightness >= finalOptions.threshold) {
+            const factor = finalOptions.exposure * (brightness - finalOptions.threshold) / (255 - finalOptions.threshold);
+            if (finalOptions.tintColor) {
+                const color = parseColor(finalOptions.tintColor);
+                brightData.data[i] = Math.min(255, r * color.r / 255 * factor);
+                brightData.data[i + 1] = Math.min(255, g * color.g / 255 * factor);
+                brightData.data[i + 2] = Math.min(255, b * color.b / 255 * factor);
+            } else {
+                brightData.data[i] = Math.min(255, r * factor);
+                brightData.data[i + 1] = Math.min(255, g * factor);
+                brightData.data[i + 2] = Math.min(255, b * factor);
+            }
+            brightData.data[i + 3] = 255;
+        } else {
+            brightData.data[i] = 0;
+            brightData.data[i + 1] = 0;
+            brightData.data[i + 2] = 0;
+            brightData.data[i + 3] = 0;
+        }
+    }
+    brightCtx.putImageData(brightData, 0, 0);
+    const rayCanvas = document.createElement('canvas');
+    rayCanvas.width = canvas_node.width;
+    rayCanvas.height = canvas_node.height;
+    const rayCtx = rayCanvas.getContext('2d');
+    switch (finalOptions.blendMode) {
+        case 'screen':
+            rayCtx.globalCompositeOperation = 'screen';
+            break;
+        case 'add':
+            rayCtx.globalCompositeOperation = 'lighter';
+            break;
+        case 'lighten':
+            rayCtx.globalCompositeOperation = 'lighten';
+            break;
+        default:
+            rayCtx.globalCompositeOperation = 'screen';
+    }
+    function getFade(progress) {
+        if (finalOptions.fadeOutType === 'linear') {
+            return Math.max(0, 1 - finalOptions.fadeOut * progress * samples);
+        } else if (finalOptions.fadeOutType === 'ease') {
+            return Math.max(0, 1 - finalOptions.fadeOut * Math.pow(progress, 0.5) * samples);
+        }
+        return Math.max(0, 1 - finalOptions.fadeOut * progress * samples);
+    }
+    for (let i = 0; i < samples; i++) {
+        const progress = i / (samples - 1);
+        const scale = 1 + progress * length;
+        const fade = getFade(progress);
+        const opacity = Math.pow(finalOptions.decay, i) * finalOptions.strength * fade;
+        let x, y, w, h;
+        if (finalOptions.angle !== null) {
+            const angleDeg = parseFloat(finalOptions.angle);
+            const angleRad = (angleDeg * Math.PI) / 180;
+            const distance = progress * length * 50;
+            x = centerX - (Math.cos(angleRad) * distance);
+            y = centerY - (Math.sin(angleRad) * distance);
+            w = canvas_node.width;
+            h = canvas_node.height;
+        } else {
+            w = canvas_node.width * scale;
+            h = canvas_node.height * scale;
+            x = centerX - (centerX * scale);
+            y = centerY - (centerY * scale);
+        }
+        rayCtx.globalAlpha = opacity;
+        rayCtx.drawImage(brightCanvas, 0, 0, brightCanvas.width, brightCanvas.height,
+            x, y, w, h);
+    }
+    const finalCanvas = document.createElement('canvas');
+    finalCanvas.width = canvas_node.width;
+    finalCanvas.height = canvas_node.height;
+    const finalCtx = finalCanvas.getContext('2d');
+    finalCtx.drawImage(sourceCanvas, 0, 0);
+    finalCtx.globalCompositeOperation = 'screen';
+    finalCtx.drawImage(rayCanvas, 0, 0);
+    const ctx = canvas_node.getContext('2d');
+    ctx.clearRect(0, 0, canvas_node.width, canvas_node.height);
+    ctx.drawImage(finalCanvas, 0, 0);
+    return this;
+    function parseColor(color) {
+        let r = 255, g = 255, b = 255;
+        if (typeof color === 'string') {
+            if (color.startsWith('#')) {
+                if (color.length === 4) {
+                    r = parseInt(color[1] + color[1], 16);
+                    g = parseInt(color[2] + color[2], 16);
+                    b = parseInt(color[3] + color[3], 16);
+                } else if (color.length === 7) {
+                    r = parseInt(color.substring(1, 3), 16);
+                    g = parseInt(color.substring(3, 5), 16);
+                    b = parseInt(color.substring(5, 7), 16);
+                }
+            }
+            else if (color.startsWith('rgb')) {
+                const parts = color.match(/\d+/g);
+                if (parts && parts.length >= 3) {
+                    r = parseInt(parts[0]);
+                    g = parseInt(parts[1]);
+                    b = parseInt(parts[2]);
+                }
+            }
+        }
+        return { r, g, b };
+    }
+};
+Q.Image.prototype.Grayscale = function(grayOptions = {}) {
+    const defaultGrayOptions = {
+        algorithm: 'average', // 'average', 'luminance', 'lightness', 'desaturation', 'red', 'green', 'blue'
+        intensity: 1.0,       // 0.0 to 1.0 for partial grayscale effect
+        threshold: null       // optional: 0-255, if set, output is black/white
+    };
+    const finalOptions = Object.assign({}, defaultGrayOptions, grayOptions);
+    finalOptions.intensity = Math.max(0, Math.min(1, finalOptions.intensity));
+    const ctx = this.node.getContext('2d');
+    this.saveToHistory(); // Save the current state to history
+    let data = ctx.getImageData(0, 0, this.node.width, this.node.height);
+    let pixels = data.data;
+    for (let i = 0; i < pixels.length; i += 4) {
+        let r = pixels[i];
+        let g = pixels[i + 1];
+        let b = pixels[i + 2];
+        let gray;
+        switch (finalOptions.algorithm) {
+            case 'luminance':
+                gray = 0.299 * r + 0.587 * g + 0.114 * b;
+                break;
+            case 'lightness':
+                gray = (Math.max(r, g, b) + Math.min(r, g, b)) / 2;
+                break;
+            case 'desaturation':
+                gray = (Math.max(r, g, b) + Math.min(r, g, b)) / 2;
+                break;
+            case 'red':
+                gray = r;
+                break;
+            case 'green':
+                gray = g;
+                break;
+            case 'blue':
+                gray = b;
+                break;
+            case 'average':
+            default:
+                gray = (r + g + b) / 3;
+                break;
+        }
+        if (finalOptions.threshold !== null && !isNaN(finalOptions.threshold)) {
+            gray = gray >= finalOptions.threshold ? 255 : 0;
+        }
+        if (finalOptions.intensity < 1.0) {
+            pixels[i]     = Math.round(r * (1 - finalOptions.intensity) + gray * finalOptions.intensity);
+            pixels[i + 1] = Math.round(g * (1 - finalOptions.intensity) + gray * finalOptions.intensity);
+            pixels[i + 2] = Math.round(b * (1 - finalOptions.intensity) + gray * finalOptions.intensity);
+        } else {
+            pixels[i] = pixels[i + 1] = pixels[i + 2] = Math.round(gray);
+        }
+    }
+    ctx.putImageData(data, 0, 0);
+    return this;
+};
+Q.Image.prototype.HDR = function(hdrOptions = {}) {
+        const defaultOptions = {
+            shadowAdjust: 15,        // Shadow level adjustment
+            brightnessAdjust: 10,    // Brightness adjustment
+            contrastAdjust: 1.2,     // Contrast adjustment
+            vibrance: 0.2,           // Vibrance adjustment (saturation for less saturated colors)
+            highlights: -10,         // Highlight level adjustment
+            clarity: 10,             // Clarity/local contrast enhancement
+            tonal: true              // Apply tonal balancing
+        };
+        const finalOptions = Object.assign({}, defaultOptions, hdrOptions);
+        const canvas_node = this.node;
+        this.saveToHistory(); // Save the current state to history
+        let temp = Q('<canvas>', { 
+            width: canvas_node.width, 
+            height: canvas_node.height 
+        }).nodes[0];
+        let ctx = temp.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(canvas_node, 0, 0);
+        const imageData = ctx.getImageData(0, 0, temp.width, temp.height);
+        const data = imageData.data;
+        let minBrightness = 255;
+        let maxBrightness = 0;
+        let avgBrightness = 0;
+        if (finalOptions.tonal) {
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                minBrightness = Math.min(minBrightness, brightness);
+                maxBrightness = Math.max(maxBrightness, brightness);
+                avgBrightness += brightness;
+            }
+            avgBrightness /= (data.length / 4);
+        }
+        for (let i = 0; i < data.length; i += 4) {
+            let r = data[i];
+            let g = data[i + 1];
+            let b = data[i + 2];
+            const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            const shadowFactor = Math.max(0, 1 - brightness / 128);
+            r += finalOptions.shadowAdjust * shadowFactor;
+            g += finalOptions.shadowAdjust * shadowFactor;
+            b += finalOptions.shadowAdjust * shadowFactor;
+            const highlightFactor = Math.max(0, brightness / 128 - 1);
+            r += finalOptions.highlights * highlightFactor;
+            g += finalOptions.highlights * highlightFactor;
+            b += finalOptions.highlights * highlightFactor;
+            r += finalOptions.brightnessAdjust;
+            g += finalOptions.brightnessAdjust;
+            b += finalOptions.brightnessAdjust;
+            r = (r - 128) * finalOptions.contrastAdjust + 128;
+            g = (g - 128) * finalOptions.contrastAdjust + 128;
+            b = (b - 128) * finalOptions.contrastAdjust + 128;
+            if (finalOptions.vibrance !== 0) {
+                const max = Math.max(r, g, b);
+                const min = Math.min(r, g, b);
+                const lightness = (max + min) / 510; // Normalize to 0-1
+                if (max - min < 100) {  // Lower values = less saturated
+                    const satAdjust = finalOptions.vibrance * (1 - (max - min) / 100);
+                    if (max === r) {
+                        g = g - satAdjust * (g - min);
+                        b = b - satAdjust * (b - min);
+                    } else if (max === g) {
+                        r = r - satAdjust * (r - min);
+                        b = b - satAdjust * (b - min);
+                    } else {
+                        r = r - satAdjust * (r - min);
+                        g = g - satAdjust * (g - min);
+                    }
+                }
+            }
+            if (finalOptions.tonal && maxBrightness > minBrightness) {
+                const normalizedBrightness = (brightness - minBrightness) / (maxBrightness - minBrightness);
+                const tonalFactor = (normalizedBrightness < 0.5) ? 
+                    2 * normalizedBrightness : 2 - 2 * normalizedBrightness;
+                const tonalAdjust = finalOptions.clarity * tonalFactor;
+                r += tonalAdjust;
+                g += tonalAdjust;
+                b += tonalAdjust;
+            }
+            data[i] = Math.min(255, Math.max(0, r));
+            data[i + 1] = Math.min(255, Math.max(0, g));
+            data[i + 2] = Math.min(255, Math.max(0, b));
+        }
+        ctx.putImageData(imageData, 0, 0);
+        canvas_node.getContext('2d').clearRect(0, 0, canvas_node.width, canvas_node.height);
+        canvas_node.getContext('2d').drawImage(temp, 0, 0);
+        return this;
+    };
+Q.Image.prototype.Hue = function (angle = 0, options = {}) {
+    const defaultOptions = {
+        clamp: true // Clamp RGB values to [0,255]
+    };
+    const finalOptions = Object.assign({}, defaultOptions, options);
+    const canvas_node = this.node;
+    this.saveToHistory();
+    const ctx = canvas_node.getContext('2d', { willReadFrequently: true });
+    const imageData = ctx.getImageData(0, 0, canvas_node.width, canvas_node.height);
+    const data = imageData.data;
+    const hueShift = ((angle % 360) + 360) % 360 / 360;
+    for (let i = 0; i < data.length; i += 4) {
+        let r = data[i] / 255, g = data[i + 1] / 255, b = data[i + 2] / 255;
+        let max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+        if (max === min) {
+            h = s = 0;
+        } else {
+            let d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            h /= 6;
+        }
+        h = (h + hueShift) % 1;
+        if (h < 0) h += 1;
+        let q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        let p = 2 * l - q;
+        function hue2rgb(p, q, t) {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+        }
+        let rr = hue2rgb(p, q, h + 1 / 3);
+        let gg = hue2rgb(p, q, h);
+        let bb = hue2rgb(p, q, h - 1 / 3);
+        data[i] = finalOptions.clamp ? Math.min(255, Math.max(0, Math.round(rr * 255))) : Math.round(rr * 255);
+        data[i + 1] = finalOptions.clamp ? Math.min(255, Math.max(0, Math.round(gg * 255))) : Math.round(gg * 255);
+        data[i + 2] = finalOptions.clamp ? Math.min(255, Math.max(0, Math.round(bb * 255))) : Math.round(bb * 255);
+    }
+    ctx.putImageData(imageData, 0, 0);
+    return this;
+};
+Q.Image.prototype.LensFlare = function (flareOptions = {}) {
+    const presets = {
+        cinematic: {
+            type: "anamorphic",
+            widthModifier: 2.5,
+            heightThreshold: 8,
+            opacity: 0.18,
+            blur: 8,
+            falloff: 1.2,
+            intensity: 1.1,
+            blendMode: "overlay"
+        },
+        sciFi: {
+            type: "starburst",
+            points: 12,
+            radius: 60,
+            opacity: 0.22,
+            blur: 6,
+            falloff: 1.6,
+            intensity: 1.3,
+            blendMode: "lighter"
+        },
+        vintage: {
+            type: "polygon",
+            points: 6,
+            radius: 38,
+            opacity: 0.16,
+            blur: 4,
+            falloff: 1.0,
+            intensity: 0.9,
+            blendMode: "lighter"
+        },
+        photo: {
+            type: "circular",
+            radius: 32,
+            opacity: 0.12,
+            blur: 10,
+            falloff: 1.0,
+            intensity: 1.0,
+            blendMode: "screen"
+        },
+        blockbuster: {
+            type: "anamorphic",
+            widthModifier: 3.5,
+            heightThreshold: 12,
+            opacity: 0.22,
+            blur: 10,
+            falloff: 1.4,
+            intensity: 1.5,
+            blendMode: "lighter",
+            starSize: 320,
+            starIntensity: 1.2,
+            starPoints: 12,
+            starRotation: 15,
+            starOpacity: 1,
+            streakOpacity: 1,
+            centerOpacity: 1,
+            diagOpacity: 1
+        },
+        dreamy: {
+            type: "circular",
+            radius: 80,
+            opacity: 0.09,
+            blur: 18,
+            falloff: 0.7,
+            intensity: 0.7,
+            blendMode: "screen"
+        },
+        hardcore: {
+            type: "starburst",
+            points: 24,
+            radius: 120,
+            opacity: 0.35,
+            blur: 2,
+            falloff: 2.0,
+            intensity: 2.0,
+            blendMode: "lighter",
+            starSize: 400,
+            starIntensity: 2,
+            starPoints: 24,
+            starRotation: 0
+        },
+        minimal: {
+            type: "polygon",
+            points: 4,
+            radius: 20,
+            opacity: 0.08,
+            blur: 2,
+            falloff: 1.0,
+            intensity: 0.5,
+            blendMode: "overlay"
+        },
+        blueStreak: {
+            type: "anamorphic",
+            widthModifier: 4.0,
+            heightThreshold: 6,
+            opacity: 0.19,
+            blur: 12,
+            falloff: 1.1,
+            intensity: 1.0,
+            blendMode: "lighter",
+            starColor: "#7cf",
+            starSize: 220,
+            starIntensity: 1.1,
+            starPoints: 8,
+            starRotation: 0
+        },
+        rainbow: {
+            type: "circular",
+            radius: 60,
+            opacity: 0.18,
+            blur: 8,
+            falloff: 1.0,
+            intensity: 1.2,
+            blendMode: "lighter"
+        },
+        classic: {
+            type: "starburst",
+            points: 8,
+            radius: 48,
+            opacity: 0.18,
+            blur: 4,
+            falloff: 1.0,
+            intensity: 1.0,
+            blendMode: "lighter",
+            starSize: 180,
+            starIntensity: 1.0,
+            starPoints: 8,
+            starRotation: 0
+        },
+        crossStar: {
+            type: "anamorphic",
+            widthModifier: 1.5,
+            heightThreshold: 8,
+            opacity: 0.15,
+            blur: 6,
+            falloff: 1.0,
+            intensity: 1.0,
+            blendMode: "lighter",
+            starSize: 300,
+            starIntensity: 1.5,
+            starPoints: 4,
+            starRotation: 45
+        }
+    };
+    const defaultOptions = {
+        preset: null,
+        type: "anamorphic",
+        brightnessThreshold: 200,
+        widthModifier: 1.0,
+        heightThreshold: 10,
+        maxFlares: 20,
+        opacity: 0.2,
+        flareColor: null,
+        radius: 40,
+        points: 6,
+        rotation: 0,
+        blur: 0,
+        falloff: 1.0,
+        intensity: 1.0,
+        blendMode: "lighter",
+        directionX: 100,
+        directionY: 100,
+        starSize: 180,
+        starIntensity: 1.0,
+        starColor: null,
+        starPoints: 8,
+        starRotation: 0,
+        starOpacity: 1,
+        streakOpacity: 1,
+        centerOpacity: 1,
+        diagOpacity: 1
+    };
+    let finalOptions = Object.assign({}, defaultOptions);
+    if (flareOptions.preset && presets[flareOptions.preset]) {
+        Object.assign(finalOptions, presets[flareOptions.preset]);
+    }
+    Object.assign(finalOptions, flareOptions);
+    const canvas_node = this.node;
+    let temp = Q('<canvas>', {
+        width: canvas_node.width,
+        height: canvas_node.height
+    }).nodes[0];
+    let ctx = temp.getContext('2d', { willReadFrequently: true });
+    this.saveToHistory();
+    ctx.drawImage(canvas_node, 0, 0);
+    const sourceData = ctx.getImageData(0, 0, temp.width, temp.height).data;
+    let flareColor = finalOptions.flareColor;
+    if (!flareColor) {
+        const avgColor = { r: 0, g: 0, b: 0, count: 0 };
+        for (let y = 0; y < temp.height; y++) {
+            for (let x = 0; x < temp.width; x++) {
+                const index = (y * temp.width + x) * 4;
+                const brightness = (sourceData[index] + sourceData[index + 1] + sourceData[index + 2]) / 3;
+                if (brightness >= finalOptions.brightnessThreshold) {
+                    avgColor.r += sourceData[index];
+                    avgColor.g += sourceData[index + 1];
+                    avgColor.b += sourceData[index + 2];
+                    avgColor.count++;
+                }
+            }
+        }
+        if (avgColor.count > 0) {
+            flareColor = [
+                Math.round(avgColor.r / avgColor.count),
+                Math.round(avgColor.g / avgColor.count),
+                Math.round(avgColor.b / avgColor.count)
+            ];
+        } else {
+            flareColor = [255, 255, 255];
+        }
+    }
+    const flareColorR = flareColor[0];
+    const flareColorG = flareColor[1];
+    const flareColorB = flareColor[2];
+    const flares = [];
+    for (let y = 0; y < temp.height; y++) {
+        for (let x = 0; x < temp.width; x++) {
+            const index = (y * temp.width + x) * 4;
+            const brightness = (sourceData[index] + sourceData[index + 1] + sourceData[index + 2]) / 3;
+            if (brightness >= finalOptions.brightnessThreshold) {
+                flares.push({ x, y, brightness });
+            }
+        }
+    }
+    flares.sort((a, b) => b.brightness - a.brightness);
+    const targetCtx = canvas_node.getContext('2d');
+    function applyBlur(ctx, blur) {
+        if (blur > 0) {
+            ctx.filter = `blur(${blur}px)`;
+        } else {
+            ctx.filter = "none";
+        }
+    }
+    function getFinalAlpha(baseAlpha, partOpacity = 1) {
+        return Math.max(0, Math.min(1, baseAlpha * finalOptions.opacity * partOpacity));
+    }
+    function drawAnamorphic(flare) {
+        const starPoints = finalOptions.starPoints || 8;
+        const starSize = finalOptions.starSize || 180;
+        const starIntensity = finalOptions.starIntensity || 1.0;
+        const starRotation = (finalOptions.starRotation || 0) * Math.PI / 180;
+        let starColorStops = [
+            { stop: 0.0, color: 'rgba(255,255,255,1)' },
+            { stop: 0.5, color: 'rgba(120,180,255,0.7)' },
+            { stop: 1.0, color: 'rgba(120,80,255,0.0)' }
+        ];
+        if (finalOptions.starColor) {
+            starColorStops = [
+                { stop: 0.0, color: finalOptions.starColor },
+                { stop: 1.0, color: 'rgba(0,0,0,0)' }
+            ];
+        }
+        const baseAlpha = (flare.brightness / 255) * finalOptions.intensity * starIntensity;
+        const starAlpha = getFinalAlpha(baseAlpha, finalOptions.starOpacity);
+        targetCtx.save();
+        targetCtx.globalCompositeOperation = finalOptions.blendMode;
+        targetCtx.translate(flare.x, flare.y);
+        targetCtx.rotate(starRotation);
+        for (let i = 0; i < starPoints; i++) {
+            const angle = (i / starPoints) * Math.PI * 2;
+            targetCtx.save();
+            targetCtx.rotate(angle);
+            const grad = targetCtx.createLinearGradient(0, 0, 0, -starSize);
+            starColorStops.forEach(cs => grad.addColorStop(cs.stop, cs.color.replace(/[\d\.]+\)$/g, starAlpha + ')')));
+            targetCtx.beginPath();
+            targetCtx.moveTo(-2, 0);
+            targetCtx.lineTo(-1, -starSize * 0.15);
+            targetCtx.lineTo(0, -starSize);
+            targetCtx.lineTo(1, -starSize * 0.15);
+            targetCtx.lineTo(2, 0);
+            targetCtx.closePath();
+            targetCtx.fillStyle = grad;
+            targetCtx.shadowColor = 'rgba(120,180,255,0.5)';
+            targetCtx.shadowBlur = starSize * 0.12;
+            targetCtx.globalAlpha = 1.0;
+            targetCtx.fill();
+            targetCtx.restore();
+        }
+        targetCtx.restore();
+        const centerRadius = Math.max(30, flare.brightness / finalOptions.brightnessThreshold * 60);
+        const centerAlpha = getFinalAlpha(baseAlpha, finalOptions.centerOpacity);
+        targetCtx.save();
+        targetCtx.globalCompositeOperation = finalOptions.blendMode;
+        applyBlur(targetCtx, finalOptions.blur + 6);
+        let grad = targetCtx.createRadialGradient(flare.x, flare.y, 0, flare.x, flare.y, centerRadius);
+        grad.addColorStop(0, `rgba(120,180,255,${centerAlpha})`);
+        grad.addColorStop(0.5, `rgba(120,180,255,${centerAlpha * 0.5})`);
+        grad.addColorStop(1, `rgba(120,180,255,0)`);
+        targetCtx.beginPath();
+        targetCtx.arc(flare.x, flare.y, centerRadius, 0, 2 * Math.PI);
+        targetCtx.fillStyle = grad;
+        targetCtx.fill();
+        targetCtx.restore();
+        const size = flare.brightness / finalOptions.brightnessThreshold * (400 * (finalOptions.widthModifier || 2.5));
+        const height = finalOptions.heightThreshold || 8;
+        const streakBaseAlpha = (flare.brightness / 255) * finalOptions.intensity * 0.7;
+        const streakAlpha = getFinalAlpha(streakBaseAlpha, finalOptions.streakOpacity);
+        targetCtx.save();
+        targetCtx.globalCompositeOperation = finalOptions.blendMode;
+        applyBlur(targetCtx, finalOptions.blur + 2);
+        let streakGrad = targetCtx.createLinearGradient(
+            flare.x - size / 2, flare.y,
+            flare.x + size / 2, flare.y
+        );
+        streakGrad.addColorStop(0, `rgba(120,180,255,0)`);
+        streakGrad.addColorStop(0.45, `rgba(120,180,255,${streakAlpha * 0.2})`);
+        streakGrad.addColorStop(0.5, `rgba(120,180,255,${streakAlpha})`);
+        streakGrad.addColorStop(0.55, `rgba(120,180,255,${streakAlpha * 0.2})`);
+        streakGrad.addColorStop(1, `rgba(120,180,255,0)`);
+        targetCtx.beginPath();
+        targetCtx.fillStyle = streakGrad;
+        targetCtx.fillRect(flare.x - size / 2, flare.y - height / 2, size, height);
+        targetCtx.restore();
+        const vStreakAlpha = streakAlpha * 0.25 * (finalOptions.streakOpacity || 1);
+        targetCtx.save();
+        targetCtx.globalCompositeOperation = finalOptions.blendMode;
+        applyBlur(targetCtx, finalOptions.blur + 1);
+        let vStreakGrad = targetCtx.createLinearGradient(
+            flare.x, flare.y - size / 2,
+            flare.x, flare.y + size / 2
+        );
+        vStreakGrad.addColorStop(0, `rgba(120,180,255,0)`);
+        vStreakGrad.addColorStop(0.45, `rgba(120,180,255,${vStreakAlpha})`);
+        vStreakGrad.addColorStop(0.5, `rgba(120,180,255,${vStreakAlpha * 2})`);
+        vStreakGrad.addColorStop(0.55, `rgba(120,180,255,${vStreakAlpha})`);
+        vStreakGrad.addColorStop(1, `rgba(120,180,255,0)`);
+        targetCtx.beginPath();
+        targetCtx.fillStyle = vStreakGrad;
+        targetCtx.fillRect(flare.x - height / 2, flare.y - size / 2, height, size);
+        targetCtx.restore();
+        const streakCount = 4;
+        const diagAlpha = getFinalAlpha(streakBaseAlpha * 0.12, finalOptions.diagOpacity);
+        for (let i = 0; i < streakCount; i++) {
+            const angle = (Math.PI / 2) * i + Math.PI / 4;
+            targetCtx.save();
+            targetCtx.globalCompositeOperation = finalOptions.blendMode;
+            targetCtx.translate(flare.x, flare.y);
+            targetCtx.rotate(angle);
+            applyBlur(targetCtx, finalOptions.blur);
+            let diagGrad = targetCtx.createLinearGradient(
+                -size / 2, 0,
+                size / 2, 0
+            );
+            diagGrad.addColorStop(0, `rgba(120,180,255,0)`);
+            diagGrad.addColorStop(0.5, `rgba(120,180,255,${diagAlpha})`);
+            diagGrad.addColorStop(1, `rgba(120,180,255,0)`);
+            targetCtx.beginPath();
+            targetCtx.fillStyle = diagGrad;
+            targetCtx.fillRect(-size / 2, -height / 2, size, height);
+            targetCtx.restore();
+        }
+    }
+    function drawCircular(flare) {
+        const w = temp.width, h = temp.height;
+        const cx = flare.x, cy = flare.y;
+        const centerX = w / 2, centerY = h / 2;
+        const dx = centerX - cx, dy = centerY - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const mainBaseAlpha = (flare.brightness / 255) * finalOptions.intensity;
+        const mainAlpha = getFinalAlpha(mainBaseAlpha);
+        targetCtx.save();
+        targetCtx.globalCompositeOperation = finalOptions.blendMode;
+        applyBlur(targetCtx, finalOptions.blur + 8);
+        let grad = targetCtx.createRadialGradient(cx, cy, 0, cx, cy, finalOptions.radius * 1.2);
+        grad.addColorStop(0, `rgba(255,255,255,${mainAlpha})`);
+        grad.addColorStop(0.5, `rgba(255,255,255,${mainAlpha * 0.5})`);
+        grad.addColorStop(1, `rgba(255,255,255,0)`);
+        targetCtx.beginPath();
+        targetCtx.arc(cx, cy, finalOptions.radius * 1.2, 0, 2 * Math.PI);
+        targetCtx.fillStyle = grad;
+        targetCtx.fill();
+        targetCtx.restore();
+        const haloRadii = [finalOptions.radius * 2.2, finalOptions.radius * 1.7, finalOptions.radius * 1.3];
+        const haloColors = [
+            [180, 220, 255],
+            [255, 220, 180],
+            [200, 180, 255]
+        ];
+        for (let i = 0; i < haloRadii.length; i++) {
+            targetCtx.save();
+            targetCtx.globalCompositeOperation = finalOptions.blendMode;
+            applyBlur(targetCtx, finalOptions.blur + 2 + i);
+            let haloGrad = targetCtx.createRadialGradient(cx, cy, haloRadii[i] * 0.7, cx, cy, haloRadii[i]);
+            haloGrad.addColorStop(0, `rgba(${haloColors[i][0]},${haloColors[i][1]},${haloColors[i][2]},${mainAlpha * 0.08})`);
+            haloGrad.addColorStop(1, `rgba(${haloColors[i][0]},${haloColors[i][1]},${haloColors[i][2]},0)`);
+            targetCtx.beginPath();
+            targetCtx.arc(cx, cy, haloRadii[i], 0, 2 * Math.PI);
+            targetCtx.fillStyle = haloGrad;
+            targetCtx.fill();
+            targetCtx.restore();
+        }
+        targetCtx.save();
+        targetCtx.globalCompositeOperation = finalOptions.blendMode;
+        applyBlur(targetCtx, finalOptions.blur + 1);
+        let arcRadius = finalOptions.radius * 2.1;
+        let arcCenter = { x: cx, y: cy };
+        let arcStart = Math.PI * 0.15, arcEnd = Math.PI * 1.85;
+        let arcGrad = targetCtx.createLinearGradient(
+            arcCenter.x - arcRadius, arcCenter.y,
+            arcCenter.x + arcRadius, arcCenter.y
+        );
+        arcGrad.addColorStop(0.0, "rgba(255,0,0,0.13)");
+        arcGrad.addColorStop(0.2, "rgba(255,255,0,0.13)");
+        arcGrad.addColorStop(0.4, "rgba(0,255,0,0.13)");
+        arcGrad.addColorStop(0.6, "rgba(0,255,255,0.13)");
+        arcGrad.addColorStop(0.8, "rgba(0,0,255,0.13)");
+        arcGrad.addColorStop(1.0, "rgba(255,0,255,0.13)");
+        targetCtx.beginPath();
+        targetCtx.arc(arcCenter.x, arcCenter.y, arcRadius, arcStart, arcEnd, false);
+        targetCtx.lineWidth = Math.max(2, finalOptions.radius * 0.08);
+        targetCtx.strokeStyle = arcGrad;
+        targetCtx.shadowColor = "rgba(255,255,255,0.08)";
+        targetCtx.shadowBlur = arcRadius * 0.08;
+        targetCtx.stroke();
+        targetCtx.shadowBlur = 0;
+        targetCtx.restore();
+        const ghostCount = 4;
+        for (let i = 1; i <= ghostCount; i++) {
+            const t = i / (ghostCount + 1);
+            const gx = cx + dx * t;
+            const gy = cy + dy * t;
+            const ghostRadius = finalOptions.radius * (0.5 + 0.3 * Math.sin(i));
+            const ghostAlpha = mainAlpha * (0.18 + 0.12 * Math.cos(i));
+            const ghostColors = [
+                [180, 220, 255],
+                [255, 180, 220],
+                [220, 180, 255],
+                [200, 255, 255]
+            ];
+            const gc = ghostColors[i % ghostColors.length];
+            targetCtx.save();
+            targetCtx.globalCompositeOperation = finalOptions.blendMode;
+            applyBlur(targetCtx, finalOptions.blur + 1);
+            let ghostGrad = targetCtx.createRadialGradient(gx, gy, 0, gx, gy, ghostRadius);
+            ghostGrad.addColorStop(0, `rgba(${gc[0]},${gc[1]},${gc[2]},${ghostAlpha * 0.7})`);
+            ghostGrad.addColorStop(1, `rgba(${gc[0]},${gc[1]},${gc[2]},0)`);
+            targetCtx.beginPath();
+            targetCtx.arc(gx, gy, ghostRadius, 0, 2 * Math.PI);
+            targetCtx.fillStyle = ghostGrad;
+            targetCtx.fill();
+            targetCtx.restore();
+        }
+        targetCtx.save();
+        targetCtx.globalCompositeOperation = finalOptions.blendMode;
+        applyBlur(targetCtx, 0);
+        let dotArcRadius = finalOptions.radius * 2.3;
+        let dotCount = 32;
+        for (let i = 0; i < dotCount; i++) {
+            const theta = Math.PI * 0.2 + (Math.PI * 1.6) * (i / dotCount);
+            const x = cx + Math.cos(theta) * dotArcRadius;
+            const y = cy + Math.sin(theta) * dotArcRadius;
+            targetCtx.beginPath();
+            targetCtx.arc(x, y, 1.2 + Math.sin(i) * 0.7, 0, 2 * Math.PI);
+            targetCtx.fillStyle = `rgba(255,255,255,0.13)`;
+            targetCtx.fill();
+        }
+        targetCtx.restore();
+    }
+    function drawStarburst(flare) {
+        const w = temp.width, h = temp.height;
+        const dirX = (finalOptions.directionX !== undefined ? finalOptions.directionX : 100) / 100 * w;
+        const dirY = (finalOptions.directionY !== undefined ? finalOptions.directionY : 100) / 100 * h;
+        const cx = flare.x, cy = flare.y;
+        const dx = dirX - cx, dy = dirY - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx);
+        let color = flareColor;
+        if (!finalOptions.flareColor) color = [255, 200, 120];
+        const [r, g, b] = color;
+        const points = Math.max(4, finalOptions.points || 12);
+        const outerRadius = (flare.brightness / finalOptions.brightnessThreshold) * (finalOptions.radius * 1.2);
+        const innerRadius = outerRadius * 0.3;
+        const angleStep = Math.PI / points;
+        const rotation = finalOptions.rotation || 0;
+        const baseAlpha = (flare.brightness / 255) * finalOptions.intensity;
+        const alpha = getFinalAlpha(baseAlpha);
+        targetCtx.save();
+        targetCtx.globalCompositeOperation = finalOptions.blendMode;
+        applyBlur(targetCtx, finalOptions.blur);
+        targetCtx.translate(cx, cy);
+        targetCtx.rotate(rotation * Math.PI / 180 + angle);
+        targetCtx.beginPath();
+        for (let i = 0; i < points * 2; i++) {
+            const r0 = (i % 2 === 0) ? outerRadius : innerRadius;
+            const a = i * angleStep;
+            targetCtx.lineTo(Math.cos(a) * r0, Math.sin(a) * r0);
+        }
+        targetCtx.closePath();
+        targetCtx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+        targetCtx.shadowColor = `rgba(${r},${g},${b},0.7)`;
+        targetCtx.shadowBlur = outerRadius * 0.5 * finalOptions.falloff;
+        targetCtx.fill();
+        targetCtx.shadowBlur = 0;
+        targetCtx.restore();
+        targetCtx.save();
+        targetCtx.globalCompositeOperation = finalOptions.blendMode;
+        applyBlur(targetCtx, finalOptions.blur + 2);
+        targetCtx.beginPath();
+        const arcRadius = dist * 0.7;
+        const arcStart = angle - Math.PI / 3;
+        const arcEnd = angle + Math.PI / 1.5;
+        targetCtx.arc(cx, cy, arcRadius, arcStart, arcEnd, false);
+        targetCtx.lineWidth = Math.max(2, outerRadius * 0.08);
+        targetCtx.strokeStyle = `rgba(${r},${g},${b},${alpha * 0.25})`;
+        targetCtx.shadowColor = `rgba(${r},${g},${b},0.2)`;
+        targetCtx.shadowBlur = arcRadius * 0.08;
+        targetCtx.stroke();
+        targetCtx.shadowBlur = 0;
+        targetCtx.restore();
+        const ghostCount = 5;
+        for (let i = 1; i <= ghostCount; i++) {
+            const t = i / (ghostCount + 1);
+            const gx = cx + dx * t;
+            const gy = cy + dy * t;
+            const ghostRadius = outerRadius * (0.18 + 0.12 * Math.sin(i));
+            const ghostAlpha = alpha * (0.18 + 0.12 * Math.cos(i));
+            targetCtx.save();
+            targetCtx.globalCompositeOperation = finalOptions.blendMode;
+            applyBlur(targetCtx, finalOptions.blur + 1);
+            targetCtx.translate(gx, gy);
+            targetCtx.rotate(angle + Math.PI / 6 * i);
+            targetCtx.beginPath();
+            for (let j = 0; j < 6; j++) {
+                const a = (j / 6) * 2 * Math.PI;
+                const x = Math.cos(a) * ghostRadius;
+                const y = Math.sin(a) * ghostRadius;
+                if (j === 0) targetCtx.moveTo(x, y);
+                else targetCtx.lineTo(x, y);
+            }
+            targetCtx.closePath();
+            targetCtx.fillStyle = `rgba(${r},${g},${b},${ghostAlpha})`;
+            targetCtx.shadowColor = `rgba(${r},${g},${b},0.18)`;
+            targetCtx.shadowBlur = ghostRadius * 0.7;
+            targetCtx.fill();
+            targetCtx.shadowBlur = 0;
+            targetCtx.restore();
+        }
+        targetCtx.save();
+        targetCtx.globalCompositeOperation = finalOptions.blendMode;
+        applyBlur(targetCtx, finalOptions.blur + 3);
+        let grad = targetCtx.createRadialGradient(cx, cy, 0, cx, cy, outerRadius * 0.7);
+        grad.addColorStop(0, `rgba(${r},${g},${b},${alpha * 0.8})`);
+        grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+        targetCtx.beginPath();
+        targetCtx.arc(cx, cy, outerRadius * 0.7, 0, 2 * Math.PI);
+        targetCtx.fillStyle = grad;
+        targetCtx.fill();
+        targetCtx.restore();
+    }
+    function drawPolygon(flare) {
+        const sides = Math.max(3, finalOptions.points || 6);
+        const radius = (flare.brightness / finalOptions.brightnessThreshold) * finalOptions.radius;
+        const rotation = finalOptions.rotation || 0;
+        const baseAlpha = (flare.brightness / 255) * finalOptions.intensity;
+        const alpha = getFinalAlpha(baseAlpha);
+        targetCtx.save();
+        targetCtx.globalCompositeOperation = finalOptions.blendMode;
+        applyBlur(targetCtx, finalOptions.blur);
+        targetCtx.translate(flare.x, flare.y);
+        targetCtx.rotate(rotation * Math.PI / 180);
+        targetCtx.beginPath();
+        for (let i = 0; i < sides; i++) {
+            const angle = (i / sides) * 2 * Math.PI;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+            if (i === 0) targetCtx.moveTo(x, y);
+            else targetCtx.lineTo(x, y);
+        }
+        targetCtx.closePath();
+        targetCtx.fillStyle = `rgba(${flareColorR}, ${flareColorG}, ${flareColorB}, ${alpha})`;
+        targetCtx.shadowColor = `rgba(${flareColorR}, ${flareColorG}, ${flareColorB}, 0.5)`;
+        targetCtx.shadowBlur = radius * 0.3 * finalOptions.falloff;
+        targetCtx.fill();
+        targetCtx.shadowBlur = 0;
+        targetCtx.restore();
+    }
+    for (let i = 0; i < Math.min(finalOptions.maxFlares, flares.length); i++) {
+        const flare = flares[i];
+        switch (finalOptions.type) {
+            case "anamorphic":
+                drawAnamorphic(flare);
+                break;
+            case "circular":
+                drawCircular(flare);
+                break;
+            case "starburst":
+                drawStarburst(flare);
+                break;
+            case "polygon":
+                drawPolygon(flare);
+                break;
+            default:
+                drawAnamorphic(flare);
+        }
+    }
+    targetCtx.globalCompositeOperation = "source-over";
+    targetCtx.filter = "none";
+    return this;
+};
+Q.Image.prototype.RGBSubpixel = function (subpixelOptions = {}) {
+    const defaultOptions = {
+        subpixelSizeX: 2,
+        subpixelSizeY: 3,
+        padding: 1,
+        subpixelLayout: 'rgb',
+        subpixelGlow: false,
+        glowStrength: 0.4,
+        glowRadius: 2,
+        screenBleed: false,
+        bleedOpacity: 0.15,
+        bleedSize: 24
+    };
+    const opts = Object.assign({}, defaultOptions, subpixelOptions);
+    const canvas_node = this.node;
+    const w = canvas_node.width, h = canvas_node.height;
+    if (w === 0 || h === 0) return this;
+    this.saveToHistory();
+    let subpixelCountX = 3, subpixelCountY = 1;
+    if (opts.subpixelLayout === 'quad') { subpixelCountX = 2; subpixelCountY = 2; }
+    else if (opts.subpixelLayout === 'vrgb' || opts.subpixelLayout === 'vbgr') { subpixelCountX = 1; subpixelCountY = 3; }
+    const blockSizeX = opts.subpixelSizeX * subpixelCountX + opts.padding;
+    const blockSizeY = opts.subpixelSizeY * subpixelCountY + opts.padding;
+    const ctx = canvas_node.getContext('2d', { willReadFrequently: true });
+    const srcData = ctx.getImageData(0, 0, w, h).data;
+    const blocksX = Math.ceil(w / blockSizeX);
+    const blocksY = Math.ceil(h / blockSizeY);
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = blocksX * blockSizeX;
+    tempCanvas.height = blocksY * blockSizeY;
+    const tempCtx = tempCanvas.getContext('2d');
+    const tempImg = tempCtx.createImageData(tempCanvas.width, tempCanvas.height);
+    const tempData = tempImg.data;
+    function getSubpixelColor(sx, sy, r, g, b, a, layout) {
+        if (layout === 'rgb') {
+            const idx = Math.floor(sx / opts.subpixelSizeX);
+            if (idx === 0) return [r, 0, 0, a];
+            if (idx === 1) return [0, g, 0, a];
+            if (idx === 2) return [0, 0, b, a];
+        } else if (layout === 'bgr') {
+            const idx = Math.floor(sx / opts.subpixelSizeX);
+            if (idx === 0) return [0, 0, b, a];
+            if (idx === 1) return [0, g, 0, a];
+            if (idx === 2) return [r, 0, 0, a];
+        } else if (layout === 'vrgb') {
+            const idx = Math.floor(sy / opts.subpixelSizeY);
+            if (idx === 0) return [r, 0, 0, a];
+            if (idx === 1) return [0, g, 0, a];
+            if (idx === 2) return [0, 0, b, a];
+        } else if (layout === 'vbgr') {
+            const idx = Math.floor(sy / opts.subpixelSizeY);
+            if (idx === 0) return [0, 0, b, a];
+            if (idx === 1) return [0, g, 0, a];
+            if (idx === 2) return [r, 0, 0, a];
+        } else if (layout === 'quad') {
+            const qx = Math.floor(sx / opts.subpixelSizeX);
+            const qy = Math.floor(sy / opts.subpixelSizeY);
+            if (qx === 0 && qy === 0) return [r, 0, 0, a];
+            if (qx === 1 && qy === 0) return [0, g, 0, a];
+            if (qx === 0 && qy === 1) return [0, 0, b, a];
+            return [0, 0, 0, a];
+        }
+        return [r, g, b, a];
+    }
+    for (let by = 0; by < blocksY; ++by) {
+        for (let bx = 0; bx < blocksX; ++bx) {
+            let r = 0, g = 0, b = 0, a = 0, count = 0;
+            for (let dy = 0; dy < blockSizeY; ++dy) {
+                for (let dx = 0; dx < blockSizeX; ++dx) {
+                    const sx = bx * blockSizeX + dx;
+                    const sy = by * blockSizeY + dy;
+                    if (sx < w && sy < h) {
+                        const idx = (sy * w + sx) * 4;
+                        r += srcData[idx];
+                        g += srcData[idx + 1];
+                        b += srcData[idx + 2];
+                        a += srcData[idx + 3];
+                        count++;
+                    }
+                }
+            }
+            r = Math.round(r / count);
+            g = Math.round(g / count);
+            b = Math.round(b / count);
+            a = Math.round(a / count);
+            for (let sy = 0; sy < blockSizeY; ++sy) {
+                for (let sx = 0; sx < blockSizeX; ++sx) {
+                    const tx = bx * blockSizeX + sx;
+                    const ty = by * blockSizeY + sy;
+                    const tidx = (ty * tempCanvas.width + tx) * 4;
+                    if (sx >= blockSizeX - opts.padding || sy >= blockSizeY - opts.padding) {
+                        tempData[tidx] = 0;
+                        tempData[tidx + 1] = 0;
+                        tempData[tidx + 2] = 0;
+                        tempData[tidx + 3] = 255;
+                    } else {
+                        const [cr, cg, cb, ca] = getSubpixelColor(sx, sy, r, g, b, a, opts.subpixelLayout);
+                        tempData[tidx] = cr;
+                        tempData[tidx + 1] = cg;
+                        tempData[tidx + 2] = cb;
+                        tempData[tidx + 3] = ca;
+                    }
+                }
+            }
+        }
+    }
+    tempCtx.putImageData(tempImg, 0, 0);
+    if (opts.subpixelGlow) {
+        const glowCanvas = document.createElement('canvas');
+        glowCanvas.width = tempCanvas.width;
+        glowCanvas.height = tempCanvas.height;
+        const glowCtx = glowCanvas.getContext('2d');
+        const glowImg = glowCtx.createImageData(tempCanvas.width, tempCanvas.height);
+        const glowData = glowImg.data;
+        for (let by = 0; by < blocksY; ++by) {
+            for (let bx = 0; bx < blocksX; ++bx) {
+                for (let sy = 0; sy < blockSizeY - opts.padding; ++sy) {
+                    for (let sx = 0; sx < blockSizeX - opts.padding; ++sx) {
+                        const tx = bx * blockSizeX + sx;
+                        const ty = by * blockSizeY + sy;
+                        const tidx = (ty * tempCanvas.width + tx) * 4;
+                        glowData[tidx] = tempData[tidx];
+                        glowData[tidx + 1] = tempData[tidx + 1];
+                        glowData[tidx + 2] = tempData[tidx + 2];
+                        glowData[tidx + 3] = tempData[tidx + 3];
+                    }
+                }
+            }
+        }
+        glowCtx.putImageData(glowImg, 0, 0);
+        tempCtx.save();
+        tempCtx.globalAlpha = opts.glowStrength;
+        tempCtx.globalCompositeOperation = "lighten";
+        tempCtx.filter = `blur(${opts.glowRadius}px)`;
+        tempCtx.drawImage(glowCanvas, 0, 0);
+        tempCtx.filter = "none";
+        tempCtx.globalAlpha = 1.0;
+        tempCtx.globalCompositeOperation = "source-over";
+        tempCtx.restore();
+    }
+    if (opts.screenBleed) {
+        tempCtx.save();
+        tempCtx.globalAlpha = opts.bleedOpacity;
+        let grad = tempCtx.createLinearGradient(0, 0, 0, opts.bleedSize);
+        grad.addColorStop(0, "#fff");
+        grad.addColorStop(1, "rgba(255,255,255,0)");
+        tempCtx.fillStyle = grad;
+        tempCtx.fillRect(0, 0, tempCanvas.width, opts.bleedSize);
+        grad = tempCtx.createLinearGradient(0, tempCanvas.height - opts.bleedSize, 0, tempCanvas.height);
+        grad.addColorStop(0, "rgba(255,255,255,0)");
+        grad.addColorStop(1, "#fff");
+        tempCtx.fillStyle = grad;
+        tempCtx.fillRect(0, tempCanvas.height - opts.bleedSize, tempCanvas.width, opts.bleedSize);
+        grad = tempCtx.createLinearGradient(0, 0, opts.bleedSize, 0);
+        grad.addColorStop(0, "#fff");
+        grad.addColorStop(1, "rgba(255,255,255,0)");
+        tempCtx.fillStyle = grad;
+        tempCtx.fillRect(0, 0, opts.bleedSize, tempCanvas.height);
+        grad = tempCtx.createLinearGradient(tempCanvas.width - opts.bleedSize, 0, tempCanvas.width, 0);
+        grad.addColorStop(0, "rgba(255,255,255,0)");
+        grad.addColorStop(1, "#fff");
+        tempCtx.fillStyle = grad;
+        tempCtx.fillRect(tempCanvas.width - opts.bleedSize, 0, opts.bleedSize, tempCanvas.height);
+        tempCtx.globalAlpha = 1.0;
+        tempCtx.restore();
+    }
+    ctx.clearRect(0, 0, w, h);
+    ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, w, h);
+    return this;
+};
+Q.Image.prototype.Sharpen = function (options = {}) {
+    const DEFAULTS = {
+        amount: 1.0,
+        radius: 1.0,
+        threshold: 0,
+        details: 0.5
+    };
+    const s = Object.assign({}, DEFAULTS, options);
+    s.amount = Math.min(4, Math.max(0, s.amount));
+    s.radius = Math.max(0, s.radius);
+    s.threshold = Math.max(0, s.threshold);
+    s.details = Math.min(1, Math.max(0, s.details));
+    const ctx = this.node.getContext('2d', { willReadFrequently: true });
+    const { width, height } = this.node;
+    const imgData = ctx.getImageData(0, 0, width, height);
+    const src = imgData.data;
+    const blurred = new Uint8ClampedArray(src);
+    const { kernel, size } = createGaussianKernel(s.radius);
+    convolve(src, blurred, width, height, kernel, size);
+    const amountFactor = s.amount * 0.75;
+    const detailFactor = s.details * 2;
+    for (let i = 0; i < src.length; i += 4) {
+        const r = src[i], g = src[i + 1], b = src[i + 2];
+        const rB = blurred[i], gB = blurred[i + 1], bB = blurred[i + 2];
+        const Y = 0.299 * r + 0.587 * g + 0.114 * b;
+        const Yb = 0.299 * rB + 0.587 * gB + 0.114 * bB;
+        const diff = Y - Yb;
+        if (Math.abs(diff) > s.threshold) {
+            const f = amountFactor + detailFactor * (Math.abs(diff) / 255);
+            const Ynew = Y + diff * f;
+            const ratio = Y > 0 ? Ynew / Y : 1;
+            imgData.data[i] = clamp255(r * ratio);
+            imgData.data[i + 1] = clamp255(g * ratio);
+            imgData.data[i + 2] = clamp255(b * ratio);
+        }
+    }
+    ctx.putImageData(imgData, 0, 0);
+    this.saveToHistory();
+    return this;
+};
+function clamp255(v) {
+    return v < 0 ? 0 : v > 255 ? 255 : v;
+}
+function createGaussianKernel(radius) {
+    radius = Math.floor(Math.max(0, radius));
+    const size = 2 * radius + 1;
+    if (size < 1) return { kernel: new Float32Array([1]), size: 1 };
+    if (radius === 0) return { kernel: new Float32Array([1]), size: 1 };
+    const kernel = new Float32Array(size * size);
+    const sigma = radius / 3;
+    const twoSigma2 = 2 * sigma * sigma;
+    let sum = 0, idx = 0, center = radius;
+    for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++, idx++) {
+            const dx = x - center, dy = y - center;
+            const w = Math.exp(-(dx * dx + dy * dy) / twoSigma2);
+            kernel[idx] = w;
+            sum += w;
+        }
+    }
+    if (sum <= 0 || !isFinite(sum)) {
+        kernel.fill(0);
+        kernel[center * size + center] = 1;
+        return { kernel, size: 1 };
+    }
+    for (let i = 0; i < kernel.length; i++) {
+        kernel[i] = isFinite(kernel[i] / sum) ? kernel[i] / sum : 0;
+    }
+    return { kernel, size };
+}
+function convolve(src, dst, width, height, kernel, size) {
+    const half = Math.floor(size / 2);
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            let r = 0, g = 0, b = 0, a = 0, wsum = 0;
+            const off = (y * width + x) * 4;
+            for (let ky = 0; ky < size; ky++) {
+                for (let kx = 0; kx < size; kx++) {
+                    const ny = y + ky - half;
+                    const nx = x + kx - half;
+                    if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
+                        const w = kernel[ky * size + kx];
+                        const i = (ny * width + nx) * 4;
+                        if (isFinite(w)) {
+                            r += src[i] * w;
+                            g += src[i + 1] * w;
+                            b += src[i + 2] * w;
+                            a += src[i + 3] * w;
+                            wsum += w;
+                        }
+                    }
+                }
+            }
+            if (wsum > 0) {
+                dst[off] = r / wsum;
+                dst[off + 1] = g / wsum;
+                dst[off + 2] = b / wsum;
+                dst[off + 3] = a / wsum;
+            } else {
+                dst[off] = src[off];
+                dst[off + 1] = src[off + 1];
+                dst[off + 2] = src[off + 2];
+                dst[off + 3] = src[off + 3];
+            }
+        }
+    }
+};
+Q.Image.prototype.Zoom = function(factor = 1.5, zoomOptions = {}) {
+        const defaultOptions = {
+            centerX: this.node.width / 2,   // Default center point X
+            centerY: this.node.height / 2,  // Default center point Y
+            smoothing: true,                // Whether to use smoothing
+            quality: 'high',                // Smoothing quality: 'low', 'medium', 'high'
+            background: 'transparent'       // Background for areas outside the image when zooming out
+        };
+        const finalOptions = Object.assign({}, defaultOptions, zoomOptions);
+        const canvas_node = this.node;
+        let temp = Q('<canvas>', { 
+            width: canvas_node.width, 
+            height: canvas_node.height 
+        }).nodes[0];
+        let ctx = temp.getContext('2d');
+        this.saveToHistory(); // Save the current state to history
+        ctx.imageSmoothingEnabled = finalOptions.smoothing;
+        ctx.imageSmoothingQuality = finalOptions.quality;
+        ctx.fillStyle = finalOptions.background;
+        ctx.fillRect(0, 0, temp.width, temp.height);
+        if (factor >= 1) {
+            const sWidth = canvas_node.width / factor;
+            const sHeight = canvas_node.height / factor;
+            const sx = finalOptions.centerX - (sWidth / 2);
+            const sy = finalOptions.centerY - (sHeight / 2);
+            const boundedSx = Math.max(0, Math.min(canvas_node.width - sWidth, sx));
+            const boundedSy = Math.max(0, Math.min(canvas_node.height - sHeight, sy));
+            ctx.drawImage(
+                canvas_node,
+                boundedSx, boundedSy, sWidth, sHeight,
+                0, 0, canvas_node.width, canvas_node.height
+            );
+        } else {
+            const scaledWidth = canvas_node.width * factor;
+            const scaledHeight = canvas_node.height * factor;
+            const dx = (canvas_node.width - scaledWidth) / 2;
+            const dy = (canvas_node.height - scaledHeight) / 2;
+            ctx.drawImage(
+                canvas_node,
+                0, 0, canvas_node.width, canvas_node.height,
+                dx, dy, scaledWidth, scaledHeight
+            );
+        }
+        canvas_node.getContext('2d').clearRect(0, 0, canvas_node.width, canvas_node.height);
+        canvas_node.getContext('2d').drawImage(temp, 0, 0);
+        return this;
+    };
+Q.Image.prototype.ZoomBlur = function (zoomOptions = {}) {
+    const defaultOptions = {
+        centerX: 50,
+        centerY: 50,
+        strength: 20,
+        steps: 15,
+        easing: 'linear',
+        opacityStart: 0.7,
+        opacityEnd: 0.1,
+        baseLayerOpacity: 1.0,
+        progressive: true
+    };
+    this.saveToHistory();
+    const finalOptions = Object.assign({}, defaultOptions, zoomOptions);
+    const canvas_node = this.node;
+    const centerX = (finalOptions.centerX / 100) * canvas_node.width;
+    const centerY = (finalOptions.centerY / 100) * canvas_node.height;
+    const strength = Math.max(1, Math.min(100, finalOptions.strength));
+    const steps = Math.max(3, Math.min(30, finalOptions.steps));
+    const sourceCanvas = document.createElement('canvas');
+    sourceCanvas.width = canvas_node.width;
+    sourceCanvas.height = canvas_node.height;
+    const sourceCtx = sourceCanvas.getContext('2d');
+    sourceCtx.drawImage(canvas_node, 0, 0);
+    const destCanvas = document.createElement('canvas');
+    destCanvas.width = canvas_node.width;
+    destCanvas.height = canvas_node.height;
+    const destCtx = destCanvas.getContext('2d');
+    destCtx.clearRect(0, 0, destCanvas.width, destCanvas.height);
+    if (finalOptions.progressive) {
+        destCtx.globalAlpha = finalOptions.baseLayerOpacity;
+        destCtx.drawImage(sourceCanvas, 0, 0);
+        for (let i = 0; i < steps; i++) {
+            const t = i / (steps - 1);
+            let scale;
+            switch (finalOptions.easing) {
+                case 'easeIn':
+                    scale = 1 + (strength / 100) * (t * t);
+                    break;
+                case 'easeOut':
+                    scale = 1 + (strength / 100) * (1 - (1 - t) * (1 - t));
+                    break;
+                default:
+                    scale = 1 + (strength / 100) * t;
+            }
+            const w = canvas_node.width * scale;
+            const h = canvas_node.height * scale;
+            const x = centerX - (centerX * scale);
+            const y = centerY - (centerY * scale);
+            const layerOpacity = finalOptions.opacityStart +
+                (finalOptions.opacityEnd - finalOptions.opacityStart) * t;
+            destCtx.globalAlpha = layerOpacity;
+            destCtx.drawImage(sourceCanvas, 0, 0, canvas_node.width, canvas_node.height,
+                x, y, w, h);
+        }
+    } else {
+        destCtx.globalAlpha = 1.0;
+        destCtx.drawImage(sourceCanvas, 0, 0);
+        for (let i = 0; i < steps; i++) {
+            const t = i / (steps - 1);
+            let scale;
+            switch (finalOptions.easing) {
+                case 'easeIn':
+                    scale = 1 + (strength / 100) * (t * t);
+                    break;
+                case 'easeOut':
+                    scale = 1 + (strength / 100) * (1 - (1 - t) * (1 - t));
+                    break;
+                default:
+                    scale = 1 + (strength / 100) * t;
+            }
+            const w = canvas_node.width * scale;
+            const h = canvas_node.height * scale;
+            const x = centerX - (centerX * scale);
+            const y = centerY - (centerY * scale);
+            destCtx.globalAlpha = 1 / steps;
+            destCtx.drawImage(sourceCanvas, 0, 0, canvas_node.width, canvas_node.height,
+                x, y, w, h);
+        }
+    }
+    const ctx = canvas_node.getContext('2d');
+    ctx.clearRect(0, 0, canvas_node.width, canvas_node.height);
+    ctx.drawImage(destCanvas, 0, 0);
+    return this;
 };
 function Media(options = {}) {
     if (!(this instanceof Media)) {

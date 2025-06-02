@@ -1,0 +1,13 @@
+{
+  "Name": "Image.ZoomBlur",
+  "Method": "Prototype",
+  "Desc": "Applies a zoom blur effect to the image.",
+  "LongDesc": "The ZoomBlur method creates a radial blur effect that simulates zooming in or out from a central point. It supports adjustable strength, number of steps, opacity, and progressive blending for smooth results. Useful for dynamic visual effects and focus simulation.",
+  "Type": "Image Effect",
+  "Example": [
+    "var img = new Q.Image({ width: 300, height: 200 });\nimg.Load('photo.jpg', function() { img.ZoomBlur({ centerX: 50, centerY: 50, strength: 30 }); });",
+    "Q.Image().Load('img.png').ZoomBlur({ strength: 10, steps: 20, opacityStart: 1, opacityEnd: 0.2 });"
+  ],
+  "Dependencies": ["Q.Image"],
+  "Variables": ["defaultOptions", "finalOptions", "canvas_node", "centerX", "centerY", "strength", "steps", "sourceCanvas", "destCanvas", "sourceCtx", "destCtx"]
+}

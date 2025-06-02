@@ -1,14 +1,15 @@
 {
     "Name": "position",
     "Method": "Prototype",
-    "Desc": "Gets the position of the first node relative to its offset parent.",
-    "LongDesc": "Returns an object containing the top and left position of an element relative to its offset parent. The offset parent is the closest positioned ancestor. Unlike offset(), which gives coordinates relative to the document, position() provides coordinates relative to the parent element, making it ideal for positioning elements within containers. This method is particularly useful for implementing drag and drop interfaces, tooltips that follow elements, or any UI feature that requires knowing an element's position within its containing context.",
+    "Desc": "Gets the position of the first node relative to its offset parent. Returns undefined for empty selection.",
+    "LongDesc": "Returns an object containing the top and left position of an element relative to its offset parent. The offset parent is the closest positioned ancestor. Unlike offset(), which gives coordinates relative to the document, position() provides coordinates relative to the parent element. If the selection is empty, returns undefined. This method is particularly useful for implementing drag and drop interfaces, tooltips that follow elements, or any UI feature that requires knowing an element's position within its containing context.",
     "Type": "Position",
     "Example": [
-        "const pos = Q('#element').position();",
-        "const { top, left } = Q('.item').position();",
-        "Q('#tooltip').css({ top: Q('#target').position().top + 20 + 'px' });",
-        "const buttonPos = Q('button').position(); console.log(`X: ${buttonPos.left}, Y: ${buttonPos.top}`);"
+        "const pos = Q('#element').position(); // { top: ..., left: ... } or undefined",
+        "const { top, left } = Q('.item').position() || {}; // Destructuring with fallback",
+        "Q('#tooltip').css({ top: Q('#target').position().top + 20 + 'px' }); // Use position for positioning",
+        "const buttonPos = Q('button').position(); console.log(`X: ${buttonPos?.left}, Y: ${buttonPos?.top}`); // Safe logging",
+        "Q('.missing').position(); // Returns undefined for empty selection"
     ],
     "Dependencies": [],
     "Variables": ["node", "parent", "parentPosition"]

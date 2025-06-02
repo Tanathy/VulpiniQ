@@ -1,0 +1,13 @@
+{
+  "Name": "Container",
+  "Method": "Constructor",
+  "Desc": "Core container and layout manager for VulpiniQ UI components.",
+  "LongDesc": "The Container module provides the foundation for creating, managing, and rendering UI containers. It supports adding elements, shared styles, and icon management, serving as the base for advanced container components.",
+  "Type": "Constructor",
+  "Example": [
+    "var container = new Container();\ndocument.body.appendChild(container.elements[0]);",
+    "var container = Q.Container();\ncontainer.elements[0].appendChild(document.createElement('div'));"
+  ],
+  "Dependencies": ["Q"],
+  "Variables": ["elements", "options", "classes"]
+}

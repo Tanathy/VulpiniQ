@@ -1,0 +1,13 @@
+{
+  "Name": "Image.Brightness",
+  "Method": "Prototype",
+  "Desc": "Adjusts the brightness of the image.",
+  "LongDesc": "The Brightness method increases or decreases the brightness of the image by adding a value to each color channel. It supports clamping and alpha preservation for safe and flexible adjustments.",
+  "Type": "Image Effect",
+  "Example": [
+    "var img = new Q.Image({ width: 300, height: 200 });\nimg.Load('photo.jpg', function() { img.Brightness(40); });",
+    "Q.Image().Load('img.png').Brightness(-20, { clamp: false });"
+  ],
+  "Dependencies": ["Q.Image"],
+  "Variables": ["defaultOptions", "finalOptions", "canvas_node", "data", "pixels"]
+}

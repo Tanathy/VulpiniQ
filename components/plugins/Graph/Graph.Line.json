@@ -11,5 +11,6 @@
   ],
   "Dependencies": [
     "Graph"
-  ]
+  ],
+  "Variables": []
 }

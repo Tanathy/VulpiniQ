@@ -1,0 +1,13 @@
+{
+  "Name": "Image.HDR",
+  "Method": "Prototype",
+  "Desc": "Applies a high dynamic range (HDR) effect to the image.",
+  "LongDesc": "The HDR method enhances the dynamic range of the image, adjusting shadows, highlights, brightness, contrast, vibrance, and clarity. It supports tonal balancing and is useful for making images appear more vivid and detailed.",
+  "Type": "Image Effect",
+  "Example": [
+    "var img = new Q.Image({ width: 400, height: 300 });\nimg.Load('photo.jpg', function() { img.HDR({ shadowAdjust: 20, highlights: -15 }); });",
+    "Q.Image().Load('img.png').HDR({ vibrance: 0.5, clarity: 15 });"
+  ],
+  "Dependencies": ["Q.Image"],
+  "Variables": ["defaultOptions", "finalOptions", "canvas_node", "temp", "ctx", "imageData", "data"]
+}

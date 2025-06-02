@@ -1,0 +1,13 @@
+{
+  "Name": "Image.RGBSubpixel",
+  "Method": "Prototype",
+  "Desc": "Simulates RGB subpixel rendering on the image.",
+  "LongDesc": "The RGBSubpixel method emulates the appearance of RGB subpixel layouts found in LCD screens. It supports different layouts, glow, and screen bleed effects for realistic display simulation.",
+  "Type": "Image Effect",
+  "Example": [
+    "var img = new Q.Image({ width: 320, height: 240 });\nimg.Load('photo.jpg', function() { img.RGBSubpixel({ subpixelLayout: 'rgb', subpixelGlow: true }); });",
+    "Q.Image().Load('img.png').RGBSubpixel({ subpixelLayout: 'quad', screenBleed: true });"
+  ],
+  "Dependencies": ["Q.Image"],
+  "Variables": ["defaultOptions", "opts", "canvas_node", "w", "h", "ctx", "srcData", "tempCanvas", "tempCtx", "tempImg", "tempData"]
+}

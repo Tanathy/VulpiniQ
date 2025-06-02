@@ -1,14 +1,16 @@
 {
     "Name": "height",
     "Method": "Prototype",
-    "Desc": "Gets or sets the height of the first node.",
-    "LongDesc": "Controls the height dimension of elements. When called without parameters, returns the current height of the first element in the set including padding and border (offsetHeight). When provided with a value, sets the CSS height property for all elements in the set, accepting values in pixels, percentages, or other CSS units. This method provides a convenient way to manage element dimensions programmatically for responsive layouts, animations, or dynamic content areas.",
+    "Desc": "Gets or sets the height of the first node, or sets the height for all nodes. Returns undefined for empty selection.",
+    "LongDesc": "Controls the height dimension of elements. When called without parameters, returns the current height (offsetHeight, including padding and border) of the first element in the set, or undefined if the selection is empty. When provided with a value, sets the CSS height property for all elements in the set, accepting values in pixels, percentages, or other CSS units. The setter is chainable, allowing further method calls. This method provides a convenient way to manage element dimensions programmatically for responsive layouts, animations, or dynamic content areas.",
     "Type": "Dimensions",
     "Example": [
-        "Q(selector).height();", 
-        "Q('#content').height('300px');",
-        "const elemHeight = Q('.box').height();",
-        "Q('.panel').height('50vh');"
+        "Q(selector).height(); // Get height of first element (px)",
+        "Q('#content').height('300px'); // Set height in px",
+        "const elemHeight = Q('.box').height(); // Get height of .box",
+        "Q('.panel').height('50vh'); // Set height in viewport units",
+        "Q('.column').height('60%').addClass('tall'); // Chaining after set",
+        "Q('.missing').height(); // Returns undefined for empty selection"
     ],
     "Dependencies": []
 }
