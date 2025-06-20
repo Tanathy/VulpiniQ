@@ -1,4 +1,9 @@
-Q.ImageViewer = function () {
+/**
+ * Q.ImageViewer - Egységesített plugin séma
+ * @param {Object} options
+ */
+Q.ImageViewer = function(options = {}) {
+    this.options = { ...options };
     let classes = Q.style(`
 .image_viewer_wrapper {
     position: fixed;
@@ -485,31 +490,40 @@ Q.ImageViewer = function () {
             this.currentIndex = 0;
         }
     }
-    let viewer = new Viewer();
+    this.viewer = new Viewer();
     return {
         selector: function (selector) {
-            viewer.setSelector(selector);
+            this.viewer.setSelector(selector);
             return this;
         },
         open: function (images) {
-            viewer.open(images);
+            this.viewer.open(images);
             return this;
         },
         close: function () {
-            viewer.close();
+            this.viewer.close();
             return this;
         },
         remove: function () {
-            viewer.remove();
+            this.viewer.remove();
             return this;
         },
         config: function (options) {
-            Object.assign(viewer.config, options);
+            Object.assign(this.viewer.config, options);
             return this;
         },
         source: function (images) {
-            viewer.source(images);
+            this.viewer.source(images);
             return this;
+        },
+        getState: function () {
+            return { config: this.viewer.config };
+        },
+        setState: function (state) {
+            if (state && state.config) this.viewer.config(state.config);
+        },
+        destroy: function () {
+            this.remove();
         }
     };
 }

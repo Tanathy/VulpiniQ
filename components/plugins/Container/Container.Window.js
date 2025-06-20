@@ -25,10 +25,6 @@ Container.prototype.Window = function (options = {}) {
         shadowOffsetX: 0,
         shadowOffsetY: 5,
         shadowSpread: 0,
-        blur: false,
-        blurInactive: false,
-        blurRadius: 10,
-        blurGradientOpacity: 0.3,
     };
 
     if (!Container.windowClassesInitialized) {
@@ -42,6 +38,7 @@ Container.prototype.Window = function (options = {}) {
             --window-button-text: #ffffff;
             --window-close-color: #e74c3c;
             --window-titlebar-height: 28px; /* Add fixed titlebar height */
+            --window-container-border: 1px solid rgba(255,255,255,0.1);
         `, `
             .window_container {
                 position: fixed; /* Change from absolute to fixed */
@@ -53,6 +50,16 @@ Container.prototype.Window = function (options = {}) {
                 z-index: 1000;
                 transition-property: opacity, transform, width, height, top, left;
                 transition-timing-function: ease-out;
+                outline: var(--window-container-border);
+            }
+            .window_container.window_active {
+                box-shadow: 0 8px 32px 0 rgba(0,0,0,0.45), 0 1.5px 8px 0 rgba(0,0,0,0.25);
+            }
+            .window_container:not(.window_active) {
+                box-shadow: 0 2px 8px 0 rgba(0,0,0,0.18);
+            }
+            .window_titlebar.window_inactive {
+                background-color: #333 !important;
             }
             .window_titlebar {
                 color: var(--window-titlebar-text);
@@ -79,7 +86,6 @@ Container.prototype.Window = function (options = {}) {
                 height:100%;
             }
             .window_button {
-                background-color: var(--window-button-bg);
                 cursor: default;
                 display: flex;
                 align-items: center;
@@ -199,14 +205,16 @@ Container.prototype.Window = function (options = {}) {
                 pointer-events: none;
             }
             .window_taskbar_btn {
+            user-select: none;
                 min-width: 100px;
                 max-width: 220px;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
                 background: #222;
+                margin-right: 1px;
+                outline: none;
                 color: #fff;
-                border: 1px solid #444;
                 border-radius: 4px;
                 padding: 0 12px;
                 height: 28px;
@@ -296,85 +304,18 @@ Container.prototype.Window = function (options = {}) {
     const titlebar = Q('<div>', { class: Container.windowClasses.window_titlebar });
 
 
-    function setTitlebarBlurElement(titlebarElem, active, blurRadius, gradientOpacity, animateMs) {
-        if (!titlebarElem) return;
-
-        if (typeof animateMs === 'number' && animateMs > 0) {
-            titlebarElem.style.transition = `backdrop-filter ${animateMs}ms, -webkit-backdrop-filter ${animateMs}ms, background-image ${animateMs}ms`;
-        } else {
-            titlebarElem.style.transition = '';
-        }
-        if (active) {
-            titlebarElem.style.backdropFilter = `blur(${blurRadius}px)`;
-            titlebarElem.style.WebkitBackdropFilter = `blur(${blurRadius}px)`;
-            titlebarElem.style.backgroundColor = 'transparent';
-            const buttonBg = getComputedStyle(document.documentElement)
-                .getPropertyValue('--window-button-bg') || '#111';
-            const leftAlpha = Math.max(0, Math.min(1, gradientOpacity));
-            titlebarElem.style.backgroundImage =
-                `linear-gradient(to right, rgba(17,17,17,${leftAlpha}), ${buttonBg.trim()} 80%)`;
-        } else {
-            titlebarElem.style.backdropFilter = 'blur(0px)';
-            titlebarElem.style.WebkitBackdropFilter = 'blur(0px)';
-            titlebarElem.style.backgroundColor = '';
-            titlebarElem.style.backgroundImage = '';
-        }
-    }
-
-
-    function updateAllTitlebarBlur() {
-        const allWindows = document.querySelectorAll('.' + Container.windowClasses.window_container);
-        let maxZ = -Infinity, activeWindow = null;
-        allWindows.forEach(win => {
-            const z = parseInt(win.style.zIndex || window.getComputedStyle(win).zIndex, 10) || 0;
-            if (z > maxZ) {
-                maxZ = z;
-                activeWindow = win;
-            }
-        });
-        allWindows.forEach(win => {
-            const tb = win.querySelector('.' + Container.windowClasses.window_titlebar);
-            if (!tb) return;
-            if (settings.blurInactive) {
-
-                setTitlebarBlurElement(
-                    tb,
-                    win !== activeWindow,
-                    settings.blurRadius,
-                    settings.blurGradientOpacity,
-                    settings.animate
-                );
-            } else if (settings.blur) {
-                setTitlebarBlurElement(tb, true, settings.blurRadius, settings.blurGradientOpacity, 0);
-            } else {
-                setTitlebarBlurElement(tb, false, settings.blurRadius, settings.blurGradientOpacity, 0);
-            }
-        });
-    }
-
-
-    if (settings.blurInactive) {
-        setTimeout(updateAllTitlebarBlur, 0);
-        windowElement.on('mousedown', function () {
-            setTimeout(updateAllTitlebarBlur, 0);
-        });
-    } else if (settings.blur) {
-        setTitlebarBlurElement(titlebar.nodes[0], true, settings.blurRadius, settings.blurGradientOpacity, 0);
-    } else {
-        setTitlebarBlurElement(titlebar.nodes[0], false, settings.blurRadius, settings.blurGradientOpacity, 0);
-    }
-
     const titleElement = Q('<div>', { class: Container.windowClasses.window_title }).text(settings.title);
     const controls = Q('<div>', { class: Container.windowClasses.window_controls });
     const contentContainer = Q('<div>', { class: Container.windowClasses.window_content });
-    if (settings.minimizable) {
+    // Gombok láthatósága options szerint
+    if (settings.minimizable && settings.maximizable) {
         const minimizeButton = Q('<div>', {
             class: Container.windowClasses.window_button + ' ' + Container.windowClasses.window_minimize
         });
         minimizeButton.append(this.Icon('window-minimize').addClass(Container.windowClasses.window_button_icon));
         controls.append(minimizeButton);
     }
-    if (settings.maximizable) {
+    if (settings.minimizable && settings.maximizable) {
         const maximizeButton = Q('<div>', {
             class: Container.windowClasses.window_button + ' ' + Container.windowClasses.window_maximize
         });
@@ -460,6 +401,28 @@ Container.prototype.Window = function (options = {}) {
         previousState.x = position.left;
         previousState.y = position.top;
     }
+    function updateActiveWindowClass() {
+        const allWindows = document.querySelectorAll('.' + Container.windowClasses.window_container);
+        let maxZ = -Infinity, activeWindow = null;
+        allWindows.forEach(win => {
+            const z = parseInt(win.style.zIndex || window.getComputedStyle(win).zIndex, 10) || 0;
+            if (z > maxZ) {
+                maxZ = z;
+                activeWindow = win;
+            }
+        });
+        allWindows.forEach(win => {
+            const tb = win.querySelector('.' + Container.windowClasses.window_titlebar);
+            if (!tb) return;
+            if (win === activeWindow) {
+                win.classList.add('window_active');
+                tb.classList.remove('window_inactive');
+            } else {
+                win.classList.remove('window_active');
+                tb.classList.add('window_inactive');
+            }
+        });
+    }
     function bringToFront() {
         const windowIndex = Container.openWindows.indexOf(windowElement.nodes[0]);
         if (windowIndex !== -1) {
@@ -467,7 +430,7 @@ Container.prototype.Window = function (options = {}) {
         }
         Container.openWindows.push(windowElement.nodes[0]);
         updateZIndices();
-        if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
+        setTimeout(updateActiveWindowClass, 0);
     }
     function updateZIndices() {
         const baseZIndex = settings.zIndex;
@@ -754,6 +717,7 @@ Container.prototype.Window = function (options = {}) {
                 windowElement.detach();
                 isMinimized = true;
                 isAnimating = false;
+                setTimeout(updateActiveWindowClass, 0);
             }, settings.animate + 10);
         } else {
 
@@ -806,6 +770,7 @@ Container.prototype.Window = function (options = {}) {
                 isMinimized = false;
                 bringToFront();
                 isAnimating = false;
+                setTimeout(updateActiveWindowClass, 0);
             }, settings.animate + 10);
         }
     }
@@ -847,6 +812,7 @@ Container.prototype.Window = function (options = {}) {
                 previousState.x = start.left;
                 previousState.y = start.top;
                 isAnimating = false;
+                setTimeout(updateActiveWindowClass, 0);
             }, settings.animate + 10);
         } else {
 
@@ -879,6 +845,7 @@ Container.prototype.Window = function (options = {}) {
                 windowElement.css({ transition: '', willChange: '' });
                 isMaximized = false;
                 isAnimating = false;
+                setTimeout(updateActiveWindowClass, 0);
             }, settings.animate + 10);
         }
     }
@@ -911,6 +878,7 @@ Container.prototype.Window = function (options = {}) {
                 }
                 windowElement.remove();
                 isOpen = false;
+                setTimeout(updateActiveWindowClass, 0);
             }, settings.animate);
         } else {
             if (windowElement.nodes[0]._resizeHandler) {
@@ -924,6 +892,7 @@ Container.prototype.Window = function (options = {}) {
             }
             windowElement.remove();
             isOpen = false;
+            setTimeout(updateActiveWindowClass, 0);
         }
 
         setTimeout(function () {
@@ -936,9 +905,6 @@ Container.prototype.Window = function (options = {}) {
                 }
             }
         }, 0);
-        if (settings.blurInactive) {
-            setTimeout(updateAllTitlebarBlur, 0);
-        }
     }
     function handleWindowResize() {
         if (isMaximized) {
@@ -1010,16 +976,17 @@ Container.prototype.Window = function (options = {}) {
                 setupWindowResizeHandler();
                 isOpen = true;
                 bringToFront();
-                if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
+                setTimeout(updateActiveWindowClass, 0);
             } else {
                 windowElement.show();
                 bringToFront();
+                setTimeout(updateActiveWindowClass, 0);
             }
             return this;
         },
         Close: function () {
             closeWindow();
-            if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
+            setTimeout(updateActiveWindowClass, 0);
             return this;
         },
         Content: function (content) {

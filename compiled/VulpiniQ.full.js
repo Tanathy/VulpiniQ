@@ -859,6 +859,20 @@ Q.Ext('removeTransition', function () {
     }
     return this;
 });
+Q.Ext('replaceWith', function(newContent) {
+    const nodes = this.nodes;
+    let newNodes = (newContent instanceof Q) ? newContent.nodes : [newContent];
+    for (let i = 0, l = nodes.length; i < l; i++) {
+        const node = nodes[i];
+        if (node && node.parentNode) {
+            for (let j = 0; j < newNodes.length; j++) {
+                node.parentNode.insertBefore(newNodes[j].cloneNode(true), node);
+            }
+            node.parentNode.removeChild(node);
+        }
+    }
+    return this;
+});
 Q.Ext('scrollHeight', function () {
     var node = this.nodes[0];
     return node.scrollHeight;

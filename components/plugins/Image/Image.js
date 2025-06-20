@@ -1,4 +1,9 @@
-Q.Image = function (options) {
+/**
+ * Q.Image - Egységesített plugin séma
+ * @param {Object} options
+ *   - width, height, format, fill, stb.
+ */
+Q.Image = function(options = {}) {
     const defaultOptions = {
         width: 0,
         height: 0,
@@ -11,7 +16,6 @@ Q.Image = function (options) {
     this.options = Object.assign({}, defaultOptions, options);
     this.canvas = Q('<canvas>');
     this.node = this.canvas.nodes[0];
-
     if (this.options.width && this.options.height) {
         this.node.width = this.options.width;
         this.node.height = this.options.height;
@@ -21,8 +25,8 @@ Q.Image = function (options) {
         position: -1,
         isUndoRedoing: false
     };
-
 };
+Q.Image.prototype.init = function() { return this; };
 Q.Image.prototype.Load = function (src, callback) {
     const img = new Image();
     img.crossOrigin = 'Anonymous';
@@ -145,4 +149,25 @@ Q.Image.prototype.History = function (offset) {
     this.history.position = target;
     this.history.isUndoRedoing = false;
     return this;
+};
+Q.Image.prototype.getState = function() {
+    return {
+        width: this.node.width,
+        height: this.node.height,
+        options: this.options,
+        history: this.history
+    };
+};
+Q.Image.prototype.setState = function(state) {
+    if (state) {
+        if (state.width) this.node.width = state.width;
+        if (state.height) this.node.height = state.height;
+        if (state.options) this.options = { ...this.options, ...state.options };
+        if (state.history) this.history = state.history;
+    }
+};
+Q.Image.prototype.destroy = function() {
+    this.canvas = null;
+    this.node = null;
+    this.history = { states: [], position: -1, isUndoRedoing: false };
 };

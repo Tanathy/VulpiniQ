@@ -1,77 +1,104 @@
-Q.Socket = function (url, onMessage, onStatus, options = {}) {
-    const {
-        retries = 5,                   
-        delay = 1000,                  
-        protocols = [],                
-        backoff = false,               
-        pingInterval = 0,              
-        pingMessage = 'ping',          
-        queueMessages = false,         
-        autoReconnect = true,          
-        onOpen = null,                 
-        onClose = null,                
-        onError = null                 
-    } = options;
-    let socket, attempts = 0, currentDelay = delay, pingId = null;
-    const messageQueue = [];
-    const connect = () => {
-        socket = new WebSocket(url, protocols);
-        socket.onopen = () => {
-            attempts = 0;
-            currentDelay = delay;
-            onStatus?.('connected');
-            onOpen?.();
-            if (queueMessages && messageQueue.length) {
-                while (messageQueue.length) {
-                    socket.send(messageQueue.shift());
+/**
+ * Q.Socket - Egységesített plugin séma
+ * @param {Object} options
+ *   - url: websocket url
+ *   - onMessage, onStatus, onOpen, onClose, onError, stb.
+ */
+Q.Socket = function(options = {}) {
+    const defaults = {
+        url: '',
+        retries: 5,
+        delay: 1000,
+        protocols: [],
+        backoff: false,
+        pingInterval: 0,
+        pingMessage: 'ping',
+        queueMessages: false,
+        autoReconnect: true,
+        onOpen: null,
+        onClose: null,
+        onError: null,
+        onMessage: null,
+        onStatus: null
+    };
+    this.options = { ...defaults, ...options };
+    this.attempts = 0;
+    this.currentDelay = this.options.delay;
+    this.pingId = null;
+    this.messageQueue = [];
+    this.socket = null;
+    this.init();
+};
+Q.Socket.prototype.init = function() {
+    const self = this;
+    const o = this.options;
+    function connect() {
+        self.socket = new WebSocket(o.url, o.protocols);
+        self.socket.onopen = function() {
+            self.attempts = 0;
+            self.currentDelay = o.delay;
+            o.onStatus?.('connected');
+            o.onOpen?.();
+            if (o.queueMessages && self.messageQueue.length) {
+                while (self.messageQueue.length) {
+                    self.socket.send(self.messageQueue.shift());
                 }
             }
-            if (pingInterval) {
-                pingId && clearInterval(pingId);
-                pingId = setInterval(() => {
-                    if (socket.readyState === WebSocket.OPEN) {
-                        socket.send(pingMessage);
+            if (o.pingInterval) {
+                self.pingId && clearInterval(self.pingId);
+                self.pingId = setInterval(() => {
+                    if (self.socket.readyState === WebSocket.OPEN) {
+                        self.socket.send(o.pingMessage);
                     }
-                }, pingInterval);
+                }, o.pingInterval);
             }
         };
-        socket.onmessage = event => onMessage?.(event.data);
-        socket.onerror = error => {
-            onStatus?.('error', error);
-            onError?.(error);
+        self.socket.onmessage = event => o.onMessage?.(event.data);
+        self.socket.onerror = error => {
+            o.onStatus?.('error', error);
+            o.onError?.(error);
         };
-        socket.onclose = event => {
-            onClose?.(event);
-            pingId && clearInterval(pingId);
-            if (autoReconnect && (retries === 0 || attempts < retries)) {
-                onStatus?.('closed');
-                attempts++;
+        self.socket.onclose = event => {
+            o.onClose?.(event);
+            self.pingId && clearInterval(self.pingId);
+            if (o.autoReconnect && (o.retries === 0 || self.attempts < o.retries)) {
+                o.onStatus?.('closed');
+                self.attempts++;
                 setTimeout(() => {
                     connect();
-                    if (backoff) {
-                        currentDelay *= 2;
+                    if (o.backoff) {
+                        self.currentDelay *= 2;
                     }
-                }, currentDelay);
+                }, self.currentDelay);
             } else {
-                onStatus?.('Max retries exceeded');
+                o.onStatus?.('Max retries exceeded');
             }
         };
-    };
+    }
     connect();
-    return {
-        send: message => {
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(message);
-            } else if (queueMessages) {
-                messageQueue.push(message);
-            }
-        },
-        reconnect: () => connect(),
-        close: () => {
-            autoReconnect = false;
-            pingId && clearInterval(pingId);
-            socket.close();
-        },
-        getState: () => socket?.readyState
-    };
+};
+Q.Socket.prototype.send = function(message) {
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+        this.socket.send(message);
+    } else if (this.options.queueMessages) {
+        this.messageQueue.push(message);
+    }
+};
+Q.Socket.prototype.reconnect = function() {
+    this.init();
+};
+Q.Socket.prototype.close = function() {
+    this.options.autoReconnect = false;
+    this.pingId && clearInterval(this.pingId);
+    this.socket.close();
+};
+Q.Socket.prototype.getState = function() {
+    return this.socket?.readyState;
+};
+Q.Socket.prototype.setState = function(state) {
+    // nincs értelmezhető állapot
+};
+Q.Socket.prototype.destroy = function() {
+    this.close();
+    this.messageQueue = [];
 };

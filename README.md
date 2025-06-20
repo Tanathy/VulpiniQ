@@ -155,6 +155,7 @@ While VulpiniQ is inspired by jQuery, it distinguishes itself in several key are
 | removeData | Prototype | Data Manipulation | Removes a data\-\* attribute from each node\. |
 | removeProp | Prototype | Property Manipulation | Removes a property from each node\. |
 | removeTransition | Prototype | Display | Removes the transition from each node\. |
+| replaceWith | Ext | DOM Manipulation | Replaces the selected element\(s\) with the given new content \(Q instance or DOM node\)\. |
 | scrollHeight | Prototype | Dimensions | Returns the scroll height of the first node\. Returns undefined for empty selection\. |
 | scrollLeft | Prototype | Scroll Manipulation | Gets or sets the horizontal scroll position of the first node, with an option to increment\. Returns undefined for empty selection\. |
 | scrollTop | Prototype | Scroll Manipulation | Gets or sets the vertical scroll position of the first node, with an option to increment\. Returns undefined for empty selection\. |

@@ -80,18 +80,22 @@ Container.prototype.Frame = function(options = {}) {
     // --- Új: azonosító és mentés opciók ---
     const frameId = options.id || null;
     const savePosition = !!options.savePosition;
-    const storageKey = options.storageKey;
+    // Rövidített storageKey, ha az alapértelmezett
+    const storageKey = (options.storageKey === 'settings.frames' || !options.storageKey) ? 'set.frame' : options.storageKey;
     const minSize = options.minSize;
     const responsive = !!options.responsive;
     const responsivesMaxCount = options.responsivesMaxCount || 5;
 
+    // Storage instance for frame settings
+    const storageInstance = new Q.Storage();
+
     // Helper: get/set/törlés a localStorage-ból Q.Storage segítségével
     function getSavedFrames() {
-        return Q.Storage(storageKey) || {};
+        return storageInstance.get(storageKey) || {};
     }
     function saveFrames(framesObj) {
         console.log('Saving frames:', framesObj);
-        Q.Storage(storageKey, framesObj);
+        storageInstance.set(storageKey, framesObj);
     }
     function clearFramePos(id) {
         const all = getSavedFrames();
@@ -114,6 +118,10 @@ Container.prototype.Frame = function(options = {}) {
         if (!saved || !Array.isArray(saved) || saved.length === 0) return null;
         for (let i = 0; i < saved.length; ++i) {
             const entry = saved[i];
+            if (entry && typeof entry.ssb === 'number' && entry.ssb === bucket) {
+                return entry;
+            }
+            // visszafelé kompatibilis régi kulcs
             if (entry && typeof entry.screenSizeBucket === 'number' && entry.screenSizeBucket === bucket) {
                 return entry;
             }
@@ -160,7 +168,18 @@ Container.prototype.Frame = function(options = {}) {
         if (savePosition && frameId) {
             const all = getSavedFrames();
             if (all[frameId]) {
-                if (responsive && Array.isArray(all[frameId].responsive)) {
+                // Új rövid kulcsok támogatása
+                if (responsive && Array.isArray(all[frameId].r)) {
+                    savedResponsiveList = all[frameId].r;
+                    const found = findSavedSizeByBucket(savedResponsiveList, currentScreenSizeBucket);
+                    if (found && Array.isArray(found.s) && found.s.length === frameDefs.length) {
+                        savedSizes = found.s;
+                    }
+                } else if (Array.isArray(all[frameId].s) && all[frameId].s.length === frameDefs.length) {
+                    savedSizes = all[frameId].s;
+                }
+                // Visszafelé kompatibilitás a régi kulcsokkal
+                else if (responsive && Array.isArray(all[frameId].responsive)) {
                     savedResponsiveList = all[frameId].responsive;
                     const found = findSavedSizeByBucket(savedResponsiveList, currentScreenSizeBucket);
                     if (found && Array.isArray(found.sizes) && found.sizes.length === frameDefs.length) {
@@ -345,11 +364,11 @@ Container.prototype.Frame = function(options = {}) {
                     if (direction === 'horizontal') {
                         const px = sec.nodes[0].getBoundingClientRect().width;
                         const parentPx = root.nodes[0].clientWidth;
-                        return (px / parentPx * 100) + '%';
+                        return (px / parentPx * 100).toFixed(2) + '%';
                     } else {
                         const px = sec.nodes[0].getBoundingClientRect().height;
                         const parentPx = root.nodes[0].clientHeight;
-                        return (px / parentPx * 100) + '%';
+                        return (px / parentPx * 100).toFixed(2) + '%';
                     }
                 });
                 const all = getSavedFrames();
@@ -357,16 +376,16 @@ Container.prototype.Frame = function(options = {}) {
                     let responsiveArr = (all[frameId] && Array.isArray(all[frameId].responsive)) ? all[frameId].responsive : [];
                     const screenSizeBucket = getScreenSizeBucket();
                     // Remove any entry with same bucket
-                    responsiveArr = responsiveArr.filter(entry => entry.screenSizeBucket !== screenSizeBucket);
+                    responsiveArr = responsiveArr.filter(entry => entry.ssb !== screenSizeBucket);
                     // Limit to responsivesMaxCount - 1 before push (so after push it's max)
                     if (responsiveArr.length >= responsivesMaxCount) {
                         // Remove the oldest (first) entry
                         responsiveArr.shift();
                     }
-                    responsiveArr.push({ screenSizeBucket, sizes });
-                    all[frameId] = { responsive: responsiveArr };
+                    responsiveArr.push({ ssb: screenSizeBucket, s: sizes });
+                    all[frameId] = { r: responsiveArr };
                 } else {
-                    all[frameId] = { sizes };
+                    all[frameId] = { s: sizes };
                 }
                 saveFrames(all);
             }

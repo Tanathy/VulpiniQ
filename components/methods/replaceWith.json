@@ -1,0 +1,16 @@
+{
+  "Name": "replaceWith",
+  "Method": "Ext",
+  "Desc": "Replaces the selected element(s) with the given new content (Q instance or DOM node).",
+  "LongDesc": "Adds a replaceWith method to Q, which replaces each node in the Q instance with the provided new content. The new content can be a Q instance or a DOM node. This is useful for dynamic UI updates.",
+  "Type": "DOM Manipulation",
+  "Example": [
+    "Q('.old').replaceWith(Q('<div>New</div>'))",
+    "Q('#item').replaceWith(document.createElement('span'))"
+  ],
+  "Dependencies": ["Q"],
+  "Returns": "Q (for chaining)",
+  "Arguments": [
+    { "name": "newContent", "type": "Q|Element", "desc": "The new content to insert in place of the current node(s)." }
+  ]
+}
