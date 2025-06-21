@@ -1,5 +1,5 @@
 /**
- * Q.ImageViewer - Egységesített plugin séma
+ * Q.ImageViewer - Unified plugin schema
  * @param {Object} options
  */
 Q.ImageViewer = function(options = {}) {

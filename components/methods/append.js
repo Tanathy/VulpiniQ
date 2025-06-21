@@ -6,7 +6,7 @@ Q.Ext('append', function (...contents) {
       const child = contents[j];
       if (typeof child === "string") {
         if (parent instanceof SVGElement) {
-          // SVG string beszúrása: SVG namespace-ben hozzuk létre
+          // Inserting SVG string: create in SVG namespace
           const temp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
           temp.innerHTML = child;
           Array.from(temp.childNodes).forEach(n => parent.appendChild(n));

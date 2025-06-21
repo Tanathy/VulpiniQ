@@ -405,128 +405,127 @@ Form.prototype.ColorPicker = function (options = {}) {
         input_lab = input_lab_obj.input;
         input_cmyk = input_cmyk_obj.input;
 
-        // Add event listeners to all inputs
-        function setupInputListeners() {
-            // HSB inputs
-            input_h.on('input', updateFromHSB);
-            input_s.on('input', updateFromHSB);
-            input_b.on('input', updateFromHSB);
-
-            // RGB inputs
-            input_r.on('input', updateFromRGB);
-            input_g.on('input', updateFromRGB);
-            input_b2.on('input', updateFromRGB);
-
-            // LAB inputs
-            input_l.on('input', updateFromLAB);
-            input_a.on('input', updateFromLAB);
-            input_b3.on('input', updateFromLAB);
-
-            // CMYK inputs
-            input_c.on('input', updateFromCMYK);
-            input_m.on('input', updateFromCMYK);
-            input_y.on('input', updateFromCMYK);
-            input_k.on('input', updateFromCMYK);
-
-            // Text format inputs
-            input_hex.on('input', updateFromHex);
-            input_rgb.on('input', updateFromRGBString);
-            input_hsl.on('input', updateFromHSLString);
-        }
-
-        function updateFromHSB() {
-            const h = parseInt(input_h.val()) / 360;
-            const s = parseInt(input_s.val()) / 100;
-            const b = parseInt(input_b.val()) / 100;
-
-            const [r, g, b2] = Q.HSL2RGB(h, s, (2 * b - b * s) / 2); // Convert HSB to RGB
-
-            updatePickerFromRGB(Math.round(r), Math.round(g), Math.round(b2));
-        }
-
-        function updateFromRGB() {
-            const r = parseInt(input_r.val());
-            const g = parseInt(input_g.val());
-            const b = parseInt(input_b2.val());
-
-            updatePickerFromRGB(r, g, b);
-        }
-
-        function updateFromLAB() {
-            const l = parseFloat(input_l.val());
-            const a = parseFloat(input_a.val());
-            const b = parseFloat(input_b3.val());
-
-            // LAB to RGB conversion is complex but we can add a simpler approximation here
-            // This is a placeholder, actual conversion would require more complex code
-            const [r, g, b2] = labToRGB(l, a, b);
-            updatePickerFromRGB(r, g, b2);
-        }
-
-        function updateFromCMYK() {
-            const c = parseInt(input_c.val()) / 100;
-            const m = parseInt(input_m.val()) / 100;
-            const y = parseInt(input_y.val()) / 100;
-            const k = parseInt(input_k.val()) / 100;
-
-            // CMYK to RGB conversion
-            const r = Math.round(255 * (1 - c) * (1 - k));
-            const g = Math.round(255 * (1 - m) * (1 - k));
-            const b = Math.round(255 * (1 - y) * (1 - k));
-
-            updatePickerFromRGB(r, g, b);
-        }
-
-        function updateFromHex() {
-            const hex = input_hex.val();
-            if (hex.match(/^#[0-9A-Fa-f]{6}$/)) {
-                const r = parseInt(hex.slice(1, 3), 16);
-                const g = parseInt(hex.slice(3, 5), 16);
-                const b = parseInt(hex.slice(5, 7), 16);
-
-                updatePickerFromRGB(r, g, b);
+        // --- CENTRAL COLOR UPDATE FUNCTION ---
+        function setColor({r, g, b, h, s, l, lab, cmyk, hex, hsl, source}) {
+            // If RGB is present, calculate everything from it
+            if (typeof r === 'number' && typeof g === 'number' && typeof b === 'number') {
+                // RGB -> HSL
+                [h, s, l] = Q.RGB2HSL(r, g, b);
+                // RGB -> LAB
+                lab = Q.RGB2LAB(r, g, b);
+                // RGB -> CMYK
+                cmyk = Q.RGB2CMYK(r, g, b);
+                // RGB -> HEX
+                hex = '#' + r.toString(16).padStart(2, '0') + g.toString(16).padStart(2, '0') + b.toString(16).padStart(2, '0');
+                // RGB -> HSL string
+                hsl = `hsl(${Math.round(h*360)},${Math.round(s*100)}%,${Math.round(l*100)}%)`;
+            } else if (typeof h === 'number' && typeof s === 'number' && typeof l === 'number') {
+                // HSL -> RGB
+                [r, g, b] = Q.HSL2RGB(h, s, l);
+                // RGB -> LAB
+                lab = Q.RGB2LAB(r, g, b);
+                // RGB -> CMYK
+                cmyk = Q.RGB2CMYK(r, g, b);
+                // RGB -> HEX
+                hex = '#' + r.toString(16).padStart(2, '0') + g.toString(16).padStart(2, '0') + b.toString(16).padStart(2, '0');
+                // HSL string
+                hsl = `hsl(${Math.round(h*360)},${Math.round(s*100)}%,${Math.round(l*100)}%)`;
+            } else if (lab && lab.length === 3) {
+                // LAB -> RGB
+                [r, g, b] = Q.LAB2RGB(lab[0], lab[1], lab[2]);
+                [h, s, l] = Q.RGB2HSL(r, g, b);
+                cmyk = Q.RGB2CMYK(r, g, b);
+                hex = '#' + r.toString(16).padStart(2, '0') + g.toString(16).padStart(2, '0') + b.toString(16).padStart(2, '0');
+                hsl = `hsl(${Math.round(h*360)},${Math.round(s*100)}%,${Math.round(l*100)}%)`;
+            } else if (cmyk && cmyk.length === 4) {
+                // CMYK -> RGB
+                r = Math.round(255 * (1 - cmyk[0]) * (1 - cmyk[3]));
+                g = Math.round(255 * (1 - cmyk[1]) * (1 - cmyk[3]));
+                b = Math.round(255 * (1 - cmyk[2]) * (1 - cmyk[3]));
+                [h, s, l] = Q.RGB2HSL(r, g, b);
+                lab = Q.RGB2LAB(r, g, b);
+                hex = '#' + r.toString(16).padStart(2, '0') + g.toString(16).padStart(2, '0') + b.toString(16).padStart(2, '0');
+                hsl = `hsl(${Math.round(h*360)},${Math.round(s*100)}%,${Math.round(l*100)}%)`;
+            } else if (typeof hex === 'string' && hex.length === 7) {
+                r = parseInt(hex.slice(1, 3), 16);
+                g = parseInt(hex.slice(3, 5), 16);
+                b = parseInt(hex.slice(5, 7), 16);
+                [h, s, l] = Q.RGB2HSL(r, g, b);
+                lab = Q.RGB2LAB(r, g, b);
+                cmyk = Q.RGB2CMYK(r, g, b);
+                hsl = `hsl(${Math.round(h*360)},${Math.round(s*100)}%,${Math.round(l*100)}%)`;
+            } else if (typeof hsl === 'string') {
+                const match = hsl.match(/hsl\((\d+),(\d+)%?,(\d+)%?\)/);
+                if (match) {
+                    h = parseInt(match[1])/360;
+                    s = parseInt(match[2])/100;
+                    l = parseInt(match[3])/100;
+                    [r, g, b] = Q.HSL2RGB(h, s, l);
+                    lab = Q.RGB2LAB(r, g, b);
+                    cmyk = Q.RGB2CMYK(r, g, b);
+                    hex = '#' + r.toString(16).padStart(2, '0') + g.toString(16).padStart(2, '0') + b.toString(16).padStart(2, '0');
+                }
+            } else {
+                return;
             }
-        }
-
-        function updateFromRGBString() {
-            const rgbStr = input_rgb.val();
-            const match = rgbStr.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
-            if (match) {
-                const r = parseInt(match[1]);
-                const g = parseInt(match[2]);
-                const b = parseInt(match[3]);
-
-                updatePickerFromRGB(r, g, b);
-            }
-        }
-
-        function updateFromHSLString() {
-            const hslStr = input_hsl.val();
-            const match = hslStr.match(/hsl\(\s*(\d+)\s*,\s*(\d+)%\s*,\s*(\d+)%\s*\)/);
-            if (match) {
-                const h = parseInt(match[1]) / 360;
-                const s = parseInt(match[2]) / 100;
-                const l = parseInt(match[3]) / 100;
-
-                const [r, g, b] = Q.HSL2RGB(h, s, l);
-                updatePickerFromRGB(Math.round(r), Math.round(g), Math.round(b));
-            }
-        }
-
-        function updatePickerFromRGB(r, g, b) {
-            // Extract just the hue component from the RGB color
-            const [h, s, l] = Q.RGB2HSL(r, g, b);
-            selectedHue = h; // Store just the hue
-
-            // Position both markers based on the new color values
+            // --- UPDATE ALL INPUTS ---
+            input_r.val(r);
+            input_g.val(g);
+            input_b2.val(b);
+            input_h.val(Math.round(h*360));
+            input_s.val(Math.round(s*100));
+            input_b.val(Math.round(l*100));
+            input_l.val(Math.round(lab[0]));
+            input_a.val(Math.round(lab[1]));
+            input_b3.val(Math.round(lab[2]));
+            input_c.val(Math.round(cmyk[0]*100));
+            input_m.val(Math.round(cmyk[1]*100));
+            input_y.val(Math.round(cmyk[2]*100));
+            input_k.val(Math.round(cmyk[3]*100));
+            input_hex.val(hex);
+            input_rgb.val(`rgb(${r},${g},${b})`);
+            input_hsl.val(hsl);
+            input_lab.val(`lab(${Math.round(lab[0])},${Math.round(lab[1])},${Math.round(lab[2])})`);
+            input_cmyk.val(`cmyk(${Math.round(cmyk[0]*100)}%,${Math.round(cmyk[1]*100)}%,${Math.round(cmyk[2]*100)}%,${Math.round(cmyk[3]*100)}%)`);
+            input_rgb888.val('0x' + r.toString(16).padStart(2, '0') + g.toString(16).padStart(2, '0') + b.toString(16).padStart(2, '0'));
+            const r5 = Math.round(r * 31 / 255) & 0x1F;
+            const g6 = Math.round(g * 63 / 255) & 0x3F;
+            const b5 = Math.round(b * 31 / 255) & 0x1F;
+            const rgb565 = (r5 << 11) | (g6 << 5) | b5;
+            input_rgb565.val('0x' + rgb565.toString(16).padStart(4, '0'));
+            // --- MARKER AND CANVAS UPDATE ---
+            selectedHue = h;
             positionHueMarker(h);
             positionTriangleMarker(s, l);
-
-            // Redraw the picker with the new hue
             drawPicker();
+            current_color.css('background-color', hex);
+            // --- CALLBACK ---
+            if (typeof wrapper.changeCallback === 'function' && source !== 'callback') {
+                wrapper.changeCallback(hex);
+            }
+        }
 
-            // Return the full color including saturation and lightness
-            return `rgb(${r},${g},${b})`;
+        // Every input event calls this:
+        function setupInputListeners() {
+            input_h.on('input', function(){ setColor({h:parseInt(input_h.val())/360, s:parseInt(input_s.val())/100, l:parseInt(input_b.val())/100, source:'input'}); });
+            input_s.on('input', function(){ setColor({h:parseInt(input_h.val())/360, s:parseInt(input_s.val())/100, l:parseInt(input_b.val())/100, source:'input'}); });
+            input_b.on('input', function(){ setColor({h:parseInt(input_h.val())/360, s:parseInt(input_s.val())/100, l:parseInt(input_b.val())/100, source:'input'}); });
+            input_r.on('input', function(){ setColor({r:parseInt(input_r.val()), g:parseInt(input_g.val()), b:parseInt(input_b2.val()), source:'input'}); });
+            input_g.on('input', function(){ setColor({r:parseInt(input_r.val()), g:parseInt(input_g.val()), b:parseInt(input_b2.val()), source:'input'}); });
+            input_b2.on('input', function(){ setColor({r:parseInt(input_r.val()), g:parseInt(input_g.val()), b:parseInt(input_b2.val()), source:'input'}); });
+            input_l.on('input', function(){ setColor({lab:[parseFloat(input_l.val()),parseFloat(input_a.val()),parseFloat(input_b3.val())], source:'input'}); });
+            input_a.on('input', function(){ setColor({lab:[parseFloat(input_l.val()),parseFloat(input_a.val()),parseFloat(input_b3.val())], source:'input'}); });
+            input_b3.on('input', function(){ setColor({lab:[parseFloat(input_l.val()),parseFloat(input_a.val()),parseFloat(input_b3.val())], source:'input'}); });
+            input_c.on('input', function(){ setColor({cmyk:[parseInt(input_c.val())/100,parseInt(input_m.val())/100,parseInt(input_y.val())/100,parseInt(input_k.val())/100], source:'input'}); });
+            input_m.on('input', function(){ setColor({cmyk:[parseInt(input_c.val())/100,parseInt(input_m.val())/100,parseInt(input_y.val())/100,parseInt(input_k.val())/100], source:'input'}); });
+            input_y.on('input', function(){ setColor({cmyk:[parseInt(input_c.val())/100,parseInt(input_m.val())/100,parseInt(input_y.val())/100,parseInt(input_k.val())/100], source:'input'}); });
+            input_k.on('input', function(){ setColor({cmyk:[parseInt(input_c.val())/100,parseInt(input_m.val())/100,parseInt(input_y.val())/100,parseInt(input_k.val())/100], source:'input'}); });
+            input_hex.on('input', function(){ setColor({hex:input_hex.val(), source:'input'}); });
+            input_rgb.on('input', function(){
+                const match = input_rgb.val().match(/rgb\((\d+),(\d+),(\d+)\)/);
+                if (match) setColor({r:parseInt(match[1]),g:parseInt(match[2]),b:parseInt(match[3]), source:'input'});
+            });
+            input_hsl.on('input', function(){ setColor({hsl:input_hsl.val(), source:'input'}); });
         }
 
         // Helper function to position the hue marker on the wheel
@@ -1003,9 +1002,11 @@ Form.prototype.ColorPicker = function (options = {}) {
             if (typeof wrapper.changeCallback === 'function') {
                 wrapper.changeCallback(triangleColor);
             }
-
+            if (showDetails && input_h) {
+                updateInputsFromColor(triangleColor);
+            }
             drawPicker();
-            return; // Exit early as we've handled the drag event
+            return;
         }
 
         // Special handling for hue ring dragging - allow dragging outside the ring
@@ -1022,9 +1023,11 @@ Form.prototype.ColorPicker = function (options = {}) {
             if (typeof wrapper.changeCallback === 'function') {
                 wrapper.changeCallback(computeTriangleColor(markers.triangle.x, markers.triangle.y));
             }
-
+            if (showDetails && input_h) {
+                updateInputsFromColor(computeTriangleColor(markers.triangle.x, markers.triangle.y));
+            }
             drawPicker();
-            return; // Exit early as we've handled the drag event
+            return;
         }
 
         // Use the scaled coordinates for all calculations
@@ -1047,8 +1050,10 @@ Form.prototype.ColorPicker = function (options = {}) {
             if (typeof wrapper.changeCallback === 'function') {
                 wrapper.changeCallback(computeTriangleColor(markers.triangle.x, markers.triangle.y));
             }
+            if (showDetails && input_h) {
+                updateInputsFromColor(computeTriangleColor(markers.triangle.x, markers.triangle.y));
+            }
         }
-
         else if (distFromCenter <= innerRadius && distFromCenter >= innerRadius - innerRingThickness) {
             const angle = Math.atan2(canvasY - ringCenterY, canvasX - centerX);
             // Position the marker directly based on the angle
@@ -1072,8 +1077,10 @@ Form.prototype.ColorPicker = function (options = {}) {
             if (typeof wrapper.changeCallback === 'function') {
                 wrapper.changeCallback(computeTriangleColor(markers.triangle.x, markers.triangle.y));
             }
+            if (showDetails && input_h) {
+                updateInputsFromColor(computeTriangleColor(markers.triangle.x, markers.triangle.y));
+            }
         }
-
         else if (isPointInTriangle(canvasX, canvasY, topVertex, bottomLeftVertex, bottomRightVertex)) {
             markers.triangle = { x: canvasX, y: canvasY };
 
@@ -1086,8 +1093,10 @@ Form.prototype.ColorPicker = function (options = {}) {
             if (typeof wrapper.changeCallback === 'function') {
                 wrapper.changeCallback(triangleColor);
             }
+            if (showDetails && input_h) {
+                updateInputsFromColor(triangleColor);
+            }
         }
-
         drawPicker();
     }
 
@@ -1230,6 +1239,7 @@ Form.prototype.ColorPicker = function (options = {}) {
 
         // Create a debounced version of the callback
         wrapper.changeCallback = function (color) {
+            console.log('ColorPicker change callback triggered with color:', color);
             Q.Debounce('colorpicker_change', 10, function () {
                 // Update all input fields with the new color
                 if (showDetails && input_h) {
@@ -1246,10 +1256,8 @@ Form.prototype.ColorPicker = function (options = {}) {
         if (!color) {
             return computeColor();
         }
-
         if (color.startsWith('#') || color.startsWith('rgb')) {
             let r, g, b;
-
             if (color.startsWith('rgb')) {
                 const rgbMatch = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
                 if (rgbMatch) {
@@ -1269,24 +1277,8 @@ Form.prototype.ColorPicker = function (options = {}) {
                     b = parseInt(hex.slice(4, 6), 16);
                 }
             }
-
-            const [h, s, l] = Q.RGB2HSL(r, g, b);
-            // Update just the hue while keeping the color's saturation and lightness for the marker
-            selectedHue = h;
-
-            // Position both markers using our helper functions
-            positionHueMarker(h);
-            positionTriangleMarker(s, l);
-
-            drawPicker();
-            current_color.css('background-color', color);
-            previous_color.css('background-color', color);
-
-            if (typeof wrapper.changeCallback === 'function') {
-                wrapper.changeCallback(color);
-            }
+            setColor({r, g, b, source:'val'});
         }
-
         return this;
     };
 

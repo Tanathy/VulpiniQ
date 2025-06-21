@@ -1,8 +1,8 @@
 /**
- * Q.Socket - Egységesített plugin séma
+ * Q.Socket - Unified plugin schema
  * @param {Object} options
  *   - url: websocket url
- *   - onMessage, onStatus, onOpen, onClose, onError, stb.
+ *   - onMessage, onStatus, onOpen, onClose, onError, etc.
  */
 Q.Socket = function(options = {}) {
     const defaults = {
@@ -96,7 +96,7 @@ Q.Socket.prototype.getState = function() {
     return this.socket?.readyState;
 };
 Q.Socket.prototype.setState = function(state) {
-    // nincs értelmezhető állapot
+    // no interpretable state
 };
 Q.Socket.prototype.destroy = function() {
     this.close();

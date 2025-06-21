@@ -1,7 +1,7 @@
 /**
- * Q.String - Egységesített plugin séma
+ * Q.String - Unified plugin schema
  * @param {Object} options
- *   - value: a feldolgozandó string
+ *   - value: string to process
  */
 Q.String = function(options = {}) {
     const defaults = { value: '' };
@@ -9,7 +9,7 @@ Q.String = function(options = {}) {
     this.value = this.options.value;
 };
 Q.String.prototype.init = function() {
-    // nincs külön inicializáció
+    // no separate initialization
     return this;
 };
 Q.String.prototype.capitalize = function() {

@@ -1,11 +1,11 @@
 /**
- * Q.Timer - Egységesített plugin séma
+ * Q.Timer - Unified plugin schema
  * @param {Object} options
- *   - tick: hány alkalommal fusson le (0 = végtelen)
- *   - delay: időzítés ms-ban
- *   - interrupt: megszakítsa-e a futó azonosítót
- *   - autoStart: automatikus indítás
- *   - done: callback, ha vége
+ *   - tick: how many times to run (0 = infinite)
+ *   - delay: timing in ms
+ *   - interrupt: whether to interrupt the running identifier
+ *   - autoStart: automatic start
+ *   - done: callback when finished
  */
 Q.Timer = function(options = {}) {
     const defaults = { tick: 1, delay: 1000, interrupt: false, autoStart: true, done: null, callback: null, id: null };

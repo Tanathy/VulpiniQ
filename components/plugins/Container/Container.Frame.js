@@ -77,10 +77,10 @@ Container.prototype.Frame = function(options = {}) {
     const root = Q('<div>', { class: Container.frameClasses.frame_root });
     root.addClass(direction === 'horizontal' ? Container.frameClasses.frame_horizontal : Container.frameClasses.frame_vertical);
 
-    // --- Új: azonosító és mentés opciók ---
+    // --- New: identifier and save options ---
     const frameId = options.id || null;
     const savePosition = !!options.savePosition;
-    // Rövidített storageKey, ha az alapértelmezett
+    // Shortened storageKey if default
     const storageKey = (options.storageKey === 'settings.frames' || !options.storageKey) ? 'set.frame' : options.storageKey;
     const minSize = options.minSize;
     const responsive = !!options.responsive;
@@ -89,7 +89,7 @@ Container.prototype.Frame = function(options = {}) {
     // Storage instance for frame settings
     const storageInstance = new Q.Storage();
 
-    // Helper: get/set/törlés a localStorage-ból Q.Storage segítségével
+    // Helper: get/set/delete from localStorage using Q.Storage
     function getSavedFrames() {
         return storageInstance.get(storageKey) || {};
     }
@@ -110,7 +110,7 @@ Container.prototype.Frame = function(options = {}) {
         const px = direction === 'horizontal'
             ? window.innerWidth
             : window.innerHeight;
-        return Math.floor(px / 100); // pl. 1842 -> 18
+        return Math.floor(px / 100); // e.g. 1842 -> 18
     }
 
     // Helper: find saved size by bucket
@@ -121,7 +121,7 @@ Container.prototype.Frame = function(options = {}) {
             if (entry && typeof entry.ssb === 'number' && entry.ssb === bucket) {
                 return entry;
             }
-            // visszafelé kompatibilis régi kulcs
+            // Backward compatible old key
             if (entry && typeof entry.screenSizeBucket === 'number' && entry.screenSizeBucket === bucket) {
                 return entry;
             }
@@ -137,7 +137,7 @@ Container.prototype.Frame = function(options = {}) {
         return this;
     };
 
-    // --- Új: clearPos metódus ---
+    // --- New: clearPos method ---
     root.clearPos = function() {
         if (frameId) clearFramePos(frameId);
         return this;
@@ -161,14 +161,14 @@ Container.prototype.Frame = function(options = {}) {
         // If no size, default to equal split
         const defaultSize = frameDefs.length > 0 ? (100 - totalFlex) / frameDefs.filter(f => !f.size).length : 100;
 
-        // --- Új: betöltjük a mentett pozíciókat ---
+        // --- New: load saved positions ---
         let savedSizes = null;
         let savedResponsiveList = null;
         let currentScreenSizeBucket = getScreenSizeBucket();
         if (savePosition && frameId) {
             const all = getSavedFrames();
             if (all[frameId]) {
-                // Új rövid kulcsok támogatása
+                // Support for new short keys
                 if (responsive && Array.isArray(all[frameId].r)) {
                     savedResponsiveList = all[frameId].r;
                     const found = findSavedSizeByBucket(savedResponsiveList, currentScreenSizeBucket);
@@ -178,7 +178,7 @@ Container.prototype.Frame = function(options = {}) {
                 } else if (Array.isArray(all[frameId].s) && all[frameId].s.length === frameDefs.length) {
                     savedSizes = all[frameId].s;
                 }
-                // Visszafelé kompatibilitás a régi kulcsokkal
+                // Backward compatibility with old keys
                 else if (responsive && Array.isArray(all[frameId].responsive)) {
                     savedResponsiveList = all[frameId].responsive;
                     const found = findSavedSizeByBucket(savedResponsiveList, currentScreenSizeBucket);
@@ -320,7 +320,7 @@ Container.prototype.Frame = function(options = {}) {
                                 }, options.responsiveAnimation + 10);
                             }
                         } else {
-                            // Nincs találat: állítsd vissza az alapértelmezett méretet animációval
+                            // No match: reset to default size with animation
                             let totalFlex = 0;
                             lastFrameDefs.forEach(def => {
                                 if (def.size && typeof def.size === 'string' && def.size.endsWith('%')) {
@@ -395,7 +395,7 @@ Container.prototype.Frame = function(options = {}) {
         root._frameSections = sections;
         root._frameMap = frameMap;
 
-        // Új: resize metódus a példányon
+        // New: resize method on instance
         root.resize = function(name, size) {
             if (root._frameMap && root._frameMap[name]) {
                 const section = root._frameMap[name].nodes[0];

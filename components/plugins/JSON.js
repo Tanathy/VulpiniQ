@@ -1,7 +1,7 @@
 /**
- * Q.JSON - Egységesített plugin séma
+ * Q.JSON - Unified plugin schema
  * @param {Object} options
- *   - json: feldolgozandó JSON objektum
+ *   - json: JSON object to process
  */
 Q.JSON = function(options = {}) {
     const defaults = { json: {} };

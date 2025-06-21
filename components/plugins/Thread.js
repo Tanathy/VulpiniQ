@@ -1,7 +1,7 @@
 /**
- * Q.Thread - Egységesített plugin séma
+ * Q.Thread - Unified plugin schema
  * @param {Object} options
- *   - maxWorkers: szálak száma
+ *   - maxWorkers: number of threads
  */
 Q.Thread = function(options = {}) {
     const defaults = { maxWorkers: 1 };
@@ -61,7 +61,7 @@ Q.Thread.prototype._processQueue = function() {
     }
 };
 Q.Thread.prototype.init = function() {
-    // nincs külön inicializáció
+    // no separate initialization
     return this;
 };
 Q.Thread.prototype.Workers = function(newWorkerCount) {

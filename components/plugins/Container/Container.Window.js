@@ -181,7 +181,7 @@ Container.prototype.Window = function (options = {}) {
                 overflow: hidden;
             }
             .window_minimized .window_content {
-                display: none !important; /* Biztosítjuk, hogy valóban ne jelenjen meg */
+                display: none !important; /* Ensure it really does not appear */
                 height: 0 !important;
             }
             .window_minimized .window_resize_handle {
@@ -307,7 +307,7 @@ Container.prototype.Window = function (options = {}) {
     const titleElement = Q('<div>', { class: Container.windowClasses.window_title }).text(settings.title);
     const controls = Q('<div>', { class: Container.windowClasses.window_controls });
     const contentContainer = Q('<div>', { class: Container.windowClasses.window_content });
-    // Gombok láthatósága options szerint
+    // Button visibility according to options
     if (settings.minimizable && settings.maximizable) {
         const minimizeButton = Q('<div>', {
             class: Container.windowClasses.window_button + ' ' + Container.windowClasses.window_minimize

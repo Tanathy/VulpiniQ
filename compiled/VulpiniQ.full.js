@@ -2365,7 +2365,7 @@ Container.prototype.Window = function (options = {}) {
                 overflow: hidden;
             }
             .window_minimized .window_content {
-                display: none !important; /* Biztosítjuk, hogy valóban ne jelenjen meg */
+                display: none !important; /* Ensure it really does not appear */
                 height: 0 !important;
             }
             .window_minimized .window_resize_handle {

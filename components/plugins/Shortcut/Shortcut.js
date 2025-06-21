@@ -140,7 +140,7 @@ ShortCuts.prototype._bindKeyListener = function () {
             if (sc.enabled === false) continue;
             if (self._eventMatches(e, sc)) {
                 e.preventDefault();
-                // --- ÚJ: Aktív shortcut kiemelés billentyűre 1 másodpercig ---
+                // --- NEW: Highlight active shortcut key for 1 second ---
                 self._macroActiveMacro = key;
                 if (self._listAutoUpdate && typeof self._updateList === 'function') self._updateList();
                 if (self._macroActiveTimeout) clearTimeout(self._macroActiveTimeout);
@@ -148,7 +148,7 @@ ShortCuts.prototype._bindKeyListener = function () {
                     self._macroActiveMacro = null;
                     if (self._listAutoUpdate && typeof self._updateList === 'function') self._updateList();
                 }, 1000);
-                // Macro futtatás, de az "active" csak a fenti timeouttól függ
+                // Run macro, but "active" only depends on the above timeout
                 self.runMacro(sc.macro);
                 break;
             }
@@ -404,7 +404,7 @@ ShortCuts.prototype._runMacroCommand = async function (cmd, arg) {
                 const varMatch = val.match(/^VAR\s+([a-zA-Z0-9_]+)/);
                 if (varMatch) {
                     const varName = varMatch[1];
-                    // Itt már nem kell újra ellenőrizni, mert a _runMacroSteps már dob hibát, ha nem engedélyezett változó
+                    // No need to check again here, because _runMacroSteps already throws an error if the variable is not allowed
                     val = (typeof window[varName] !== 'undefined') ? window[varName] : '';
                 }
                 const speed = this.options.typing_speed;
@@ -563,7 +563,7 @@ ShortCuts.prototype.import = function (setObj) {
     this.shortcuts = Object.assign({}, this.options.set);
 };
 
-// --- Billentyű kombinációk kiemelése gomb-stílusú elemekkel ---
+// --- Highlight key combinations with button-style elements ---
 ShortCuts.prototype.renderKeyCombo = function(keyCombo) {
     if (!keyCombo) return '';
     // Pl. "CTRL+SHIFT+UP" => ["CTRL", "+", "SHIFT", "+", "UP"]
@@ -582,7 +582,7 @@ ShortCuts.prototype.getList = function() {
 
     const classes = ShortCuts.classes;
 
-    // --- 2. Feldolgozás: grouposítás, ismétlődések, aktívak ---
+    // --- 2. Processing: grouping, duplicates, actives ---
     const set = this.options.set;
     const groupMap = {};
     const keyMap = {};
@@ -593,12 +593,12 @@ ShortCuts.prototype.getList = function() {
         const group = sc.group || 'Other';
         if (!groupMap[group]) groupMap[group] = [];
         groupMap[group].push(sc);
-        // Key string normalizálás (pl. CTRL+SHIFT+X)
+        // Key string normalization (e.g. CTRL+SHIFT+X)
         const keyStr = (sc.key || '').toUpperCase().replace(/\s+/g, '');
         if (!keyMap[keyStr]) keyMap[keyStr] = [];
         keyMap[keyStr].push(sc);
     }
-    // --- 3. UI generálás ---
+    // --- 3. UI generation ---
     const wrapper = Q('<div>', { class: classes.shortcut_list_wrapper });
     const activeMacroKey = this._macroActiveMacro;
     for (const group in groupMap) {
@@ -606,19 +606,19 @@ ShortCuts.prototype.getList = function() {
         groupDiv.append(Q('<div>', { class: classes.shortcut_group_title }).text(group));
         groupMap[group].forEach(sc => {
             const row = Q('<div>', { class: classes.shortcut_row });
-            // Ismétlődés detektálás
+            // Duplicate detection
             const keyStr = (sc.key || '').toUpperCase().replace(/\s+/g, '');
             if (keyMap[keyStr] && keyMap[keyStr].length > 1) row.addClass('duplicate');
-            // Aktív macro kiemelés CSAK ha a shortcut key az aktív
+            // Highlight active macro ONLY if the shortcut key is active
             if (activeMacroKey && keyStr === activeMacroKey.toUpperCase().replace(/\s+/g, '')) row.addClass('active');
-            // Bal oldal: name + desc
+            // Left side: name + desc
             const info = Q('<div>', { class: classes.shortcut_info });
             info.append(Q('<div>', { class: classes.shortcut_name }).text(sc.name || sc.key || '')); 
             if (sc.description) info.append(Q('<div>', { class: classes.shortcut_desc }).text(sc.description));
             row.append(info);
-            // Jobb oldal: key(ek)
+            // Right side: key(ek)
             const keys = Q('<div>', { class: classes.shortcut_keys });
-            // Kombinációk szétbontása (pl. CTRL+SHIFT+X)
+            // Split combinations (e.g. CTRL+SHIFT+X)
             const keyParts = (sc.key || '').split(',').map(k => k.trim());
             keyParts.forEach(k => {
                 const keyElems = this.renderKeyCombo(k);
@@ -629,7 +629,7 @@ ShortCuts.prototype.getList = function() {
         });
         wrapper.append(groupDiv);
     }
-    // --- 4. Frissítés figyelés ---
+    // --- 4. Update monitoring ---
     if (!this._listAutoUpdate) {
         const self = this;
         this._updateList = function() {
@@ -643,8 +643,8 @@ ShortCuts.prototype.getList = function() {
         this.import = function() { origImport.apply(this, arguments); updateList(); };
         this._listAutoUpdate = true;
     }
-    // --- 5. Aktív macro kiemelés futás közben ---
-    // Ezt a logikát eltávolítjuk, mert már a keydown-ban kezeljük
+    // --- 5. Highlight active macro during execution ---
+    // This logic is removed because it is now handled in keydown
     this._macroActiveKeys = [];
     return wrapper;
 };

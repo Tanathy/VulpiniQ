@@ -1,7 +1,7 @@
 /**
- * Q.Storage - Egységesített plugin séma
+ * Q.Storage - Unified plugin schema
  * @param {Object} options
- *   - compression: tömörítés engedélyezése
+ *   - compression: enable compression
  */
 Q.Storage = function(options = {}) {
     const defaults = { compression: false };
@@ -46,7 +46,7 @@ Q.Storage.prototype.getState = function() {
 Q.Storage.prototype.setState = function(state) {
     if (state && typeof state.compression === 'boolean') this.options.compression = state.compression;
 };
-Q.Storage.prototype.destroy = function() { /* nincs szükség takarításra */ };
+Q.Storage.prototype.destroy = function() { /* no cleanup needed */ };
 Q.Storage.lzw_compress = function(input) {
     let dictionary = {}, current = "", result = "", code = 256;
     for (let index = 0; index < input.length; index++) {

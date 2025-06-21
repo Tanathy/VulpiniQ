@@ -288,7 +288,7 @@
                     const varMatch = val.match(/^VAR\s+([a-zA-Z0-9_]+)/);
                     if (varMatch) {
                         const varName = varMatch[1];
-                        // Itt már nem kell újra ellenőrizni, mert a _runMacroSteps már dob hibát, ha nem engedélyezett változó
+                        // No need to check again here, because _runMacroSteps already throws an error if the variable is not allowed
                         val = (typeof window[varName] !== 'undefined') ? window[varName] : '';
                     }
                     const speed = this.options.typing_speed;

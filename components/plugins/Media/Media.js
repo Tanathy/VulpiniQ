@@ -1,5 +1,5 @@
 /**
- * Q.Media - Egységesített plugin séma
+ * Q.Media - Unified plugin schema
  * @param {Object} options
  */
 Q.Media = function(options = {}) {
@@ -19,5 +19,5 @@ Q.Media = function(options = {}) {
 };
 Q.Media.prototype.init = function() { return this; };
 Q.Media.prototype.getState = function() { return { initialized: Q.Media.initialized }; };
-Q.Media.prototype.setState = function(state) { /* nincs értelmezhető állapot */ };
-Q.Media.prototype.destroy = function() { /* nincs szükség takarításra */ };
+Q.Media.prototype.setState = function(state) { /* no interpretable state */ };
+Q.Media.prototype.destroy = function() { /* no cleanup needed */ };
