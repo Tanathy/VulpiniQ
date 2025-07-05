@@ -1,4 +1,4 @@
-Q.Ext('html', function (content) {
+Q.Method('html', function (content) {
     var nodes = this.nodes;
     if (content === undefined) {
         return nodes[0] ? nodes[0].innerHTML : null;

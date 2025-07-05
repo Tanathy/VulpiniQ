@@ -1,4 +1,4 @@
-Q.Ext('isExists', function () {
+Q.Method('isExists', function () {
     var node = this.nodes[0];
     return node ? document.body.contains(node) : false;
 });

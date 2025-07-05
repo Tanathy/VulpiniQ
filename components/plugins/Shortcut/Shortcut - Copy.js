@@ -17,11 +17,9 @@
         this._init();
         _instance = this;
     }
- 
     ShortCuts.prototype._init = function () {
         this._bindKeyListener();
     };
-
     ShortCuts.prototype._bindKeyListener = function () {
         const self = this;
         Q(document).on('keydown', function (e) {
@@ -39,7 +37,6 @@
             }
         });
     };
-
     ShortCuts.prototype._eventMatches = function (e, shortcut) {
         if (!shortcut.key) return false;
         const parts = shortcut.key.toUpperCase().split('+');
@@ -56,24 +53,20 @@
             (!!e.metaKey === meta)
         );
     };
-
     ShortCuts.prototype.add = function (def) {
         if (!def.key || !def.macro) return;
         this.options.set[def.key] = def;
         this.shortcuts[def.key] = def;
     };
-
     ShortCuts.prototype.remove = function (key) {
         delete this.options.set[key];
         delete this.shortcuts[key];
     };
-
     ShortCuts.prototype.edit = function (key, newDef) {
         if (!key || !newDef || !newDef.key || !newDef.macro) return;
         this.options.set[key] = newDef;
         this.shortcuts[key] = newDef;
     };
-
     ShortCuts.prototype.runMacro = async function (macro) {
         for (let step of macro) {
             if (typeof step === 'string') {
@@ -110,7 +103,6 @@
         }
         this.isRunning = false;
     };
-
     ShortCuts.prototype._runMacroSteps = async function (macro) {
         let i = 0;
         const stack = [];
@@ -258,7 +250,6 @@
             i++;
         }
     };
-
     ShortCuts.prototype._runMacroCommand = async function (cmd, arg) {
         switch (cmd) {
             case 'WAIT':
@@ -434,18 +425,15 @@
                 if (cmd) console.warn('Unknown macro command:', cmd, arg);
         }
     };
-
     // Export the current shortcuts set
     ShortCuts.prototype.export = function () {
         return JSON.parse(JSON.stringify(this.options.set));
     };
-
     // Import and overwrite the shortcuts set
     ShortCuts.prototype.import = function (setObj) {
         if (typeof setObj !== 'object' || setObj === null) return;
         this.options.set = JSON.parse(JSON.stringify(setObj));
         this.shortcuts = Object.assign({}, this.options.set);
     };
-
     Q.ShortCuts = ShortCuts;
 })(Q);

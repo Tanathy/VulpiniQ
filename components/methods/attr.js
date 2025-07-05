@@ -1,4 +1,4 @@
-Q.Ext('attr', function (attribute, value) {
+Q.Method('attr', function (attribute, value) {
     var nodes = this.nodes;
     if (typeof attribute === 'object') {
         var keys = Object.keys(attribute);

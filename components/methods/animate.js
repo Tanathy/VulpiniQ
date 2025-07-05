@@ -1,4 +1,4 @@
-Q.Ext('animate', function (duration, properties, callback) {
+Q.Method('animate', function (duration, properties, callback) {
   var nodes = this.nodes;
   for (var i = 0, len = nodes.length; i < len; i++) {
     var element = nodes[i],

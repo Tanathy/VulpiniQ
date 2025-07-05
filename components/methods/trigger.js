@@ -1,4 +1,4 @@
-Q.Ext('trigger', function (event) {
+Q.Method('trigger', function (event) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         this.nodes[i].dispatchEvent(new Event(event));
     }

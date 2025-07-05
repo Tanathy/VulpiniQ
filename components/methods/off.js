@@ -1,4 +1,4 @@
-Q.Ext('off', function (events, handler, options) {
+Q.Method('off', function (events, handler, options) {
     var defaultOptions = { capture: false, once: false, passive: false },
         opts = Object.assign({}, defaultOptions, options),
         eventList = events.split(' '),

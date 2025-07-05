@@ -10,16 +10,13 @@ Q.Image.prototype.Grayscale = function(grayOptions = {}) {
     finalOptions.intensity = Math.max(0, Math.min(1, finalOptions.intensity));
     const ctx = this.node.getContext('2d');
     this.saveToHistory(); // Save the current state to history
-
     let data = ctx.getImageData(0, 0, this.node.width, this.node.height);
     let pixels = data.data;
-
     for (let i = 0; i < pixels.length; i += 4) {
         let r = pixels[i];
         let g = pixels[i + 1];
         let b = pixels[i + 2];
         let gray;
-
         switch (finalOptions.algorithm) {
             case 'luminance':
                 gray = 0.299 * r + 0.587 * g + 0.114 * b;
@@ -44,12 +41,10 @@ Q.Image.prototype.Grayscale = function(grayOptions = {}) {
                 gray = (r + g + b) / 3;
                 break;
         }
-
         // Threshold mode (black/white)
         if (finalOptions.threshold !== null && !isNaN(finalOptions.threshold)) {
             gray = gray >= finalOptions.threshold ? 255 : 0;
         }
-
         if (finalOptions.intensity < 1.0) {
             // Partial grayscale blending, round to integer
             pixels[i]     = Math.round(r * (1 - finalOptions.intensity) + gray * finalOptions.intensity);
@@ -60,7 +55,6 @@ Q.Image.prototype.Grayscale = function(grayOptions = {}) {
         }
         // pixels[i + 3] (alpha) unchanged
     }
-
     ctx.putImageData(data, 0, 0);
     return this;
 };

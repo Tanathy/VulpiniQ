@@ -1,4 +1,4 @@
-Q.Ext('toggleClass', function (className) {
+Q.Method('toggleClass', function (className) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         this.nodes[i].classList.toggle(className);
     }

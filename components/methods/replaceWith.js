@@ -1,4 +1,4 @@
-Q.Ext('replaceWith', function(newContent) {
+Q.Method('replaceWith', function(newContent) {
     // Replace each node in this Q instance with newContent (Q instance or DOM node)
     const nodes = this.nodes;
     let newNodes = (newContent instanceof Q) ? newContent.nodes : [newContent];

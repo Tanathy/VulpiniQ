@@ -1,4 +1,4 @@
-Q.Ext('fadeIn', function(duration, callback) {
+Q.Method('fadeIn', function(duration, callback) {
     duration = duration || 400;
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {

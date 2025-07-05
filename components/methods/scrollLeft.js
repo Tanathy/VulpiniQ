@@ -1,4 +1,4 @@
-Q.Ext('scrollLeft', function (value, increment) {
+Q.Method('scrollLeft', function (value, increment) {
     const node = this.nodes[0];
     if (value === undefined) {
         return node.scrollLeft;

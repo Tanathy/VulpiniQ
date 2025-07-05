@@ -10,7 +10,6 @@ function Graph(options = {}) {
     }
     return this;
 };
-
 Graph.deepMerge = function(target, src) {
     for (const k in src) {
         if (src[k] && typeof src[k] === 'object' && !Array.isArray(src[k])) {
@@ -22,7 +21,6 @@ Graph.deepMerge = function(target, src) {
     }
     return target;
 };
-
 Graph.getPadding = function(pad) {
     if (Array.isArray(pad)) {
         if (pad.length === 2) return [pad[0], pad[1], pad[0], pad[1]];
@@ -31,7 +29,6 @@ Graph.getPadding = function(pad) {
     }
     return [pad, pad, pad, pad];
 };
-
 Graph.catmullRom2bezier = function(points) {
     let d = '';
     for (let i = 0; i < points.length - 1; i++) {
@@ -48,5 +45,4 @@ Graph.catmullRom2bezier = function(points) {
     }
     return d;
 };
-
 Q.Graph = Graph;

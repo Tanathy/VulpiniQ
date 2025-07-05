@@ -1,4 +1,4 @@
-Q.Ext('before', function (...contents) {
+Q.Method('before', function (...contents) {
   const nodes = this.nodes;
   for (let i = 0, len = nodes.length; i < len; i++) {
     const target = nodes[i];

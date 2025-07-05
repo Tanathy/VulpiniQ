@@ -1,4 +1,4 @@
-Q.Ext('closest', function (selector) {
+Q.Method('closest', function (selector) {
     let node = this.nodes[0];
     while (node) {
         if (node.matches && node.matches(selector)) {

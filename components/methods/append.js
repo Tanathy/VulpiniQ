@@ -1,4 +1,4 @@
-Q.Ext('append', function (...contents) {
+Q.Method('append', function (...contents) {
   const nodes = this.nodes;
   for (let i = 0, len = nodes.length; i < len; i++) {
     const parent = nodes[i];

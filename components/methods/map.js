@@ -1,4 +1,4 @@
-Q.Ext('map', function (callback) {
+Q.Method('map', function (callback) {
     var result = [],
         nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {

@@ -1,4 +1,4 @@
-Q.Ext('prop', function (property, value) {
+Q.Method('prop', function (property, value) {
     var nodes = this.nodes;
     if (value === undefined) {
         return nodes[0] ? nodes[0][property] : null;

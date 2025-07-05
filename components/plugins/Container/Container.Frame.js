@@ -1,6 +1,5 @@
 Container.prototype.Frame = function(options = {}) {
     const self = this;
-
     // All possible settings/options for Container.Frame
     const defaultOptions = {
         direction: 'horizontal', // 'horizontal' or 'vertical'
@@ -13,10 +12,8 @@ Container.prototype.Frame = function(options = {}) {
         responsiveAnimationEasing: 'ease-in-out',
         storageKey: "settings.frames"
     };
-
     // Merge defaultOptions with user-provided options (user options override defaults)
     options = Object.assign({}, defaultOptions, options);
-
     // CSS classes via Q.style
     if (!Container.frameClassesInitialized) {
         Container.frameClasses = Q.style('', `
@@ -60,7 +57,6 @@ Container.prototype.Frame = function(options = {}) {
             .frame_resizer:hover {
                 opacity: 0.5;
             }
-
         `, null, {
             'frame_root': 'frame_root',
             'frame_horizontal': 'frame_horizontal',
@@ -72,11 +68,9 @@ Container.prototype.Frame = function(options = {}) {
         },false);
         Container.frameClassesInitialized = true;
     }
-
     let direction = options.direction === 'vertical' ? 'vertical' : 'horizontal';
     const root = Q('<div>', { class: Container.frameClasses.frame_root });
     root.addClass(direction === 'horizontal' ? Container.frameClasses.frame_horizontal : Container.frameClasses.frame_vertical);
-
     // --- New: identifier and save options ---
     const frameId = options.id || null;
     const savePosition = !!options.savePosition;
@@ -85,10 +79,8 @@ Container.prototype.Frame = function(options = {}) {
     const minSize = options.minSize;
     const responsive = !!options.responsive;
     const responsivesMaxCount = options.responsivesMaxCount || 5;
-
     // Storage instance for frame settings
     const storageInstance = new Q.Storage();
-
     // Helper: get/set/delete from localStorage using Q.Storage
     function getSavedFrames() {
         return storageInstance.get(storageKey) || {};
@@ -104,7 +96,6 @@ Container.prototype.Frame = function(options = {}) {
             saveFrames(all);
         }
     }
-
     // Helper: get current screen size (width or height), bucketed by 100
     function getScreenSizeBucket() {
         const px = direction === 'horizontal'
@@ -112,7 +103,6 @@ Container.prototype.Frame = function(options = {}) {
             : window.innerHeight;
         return Math.floor(px / 100); // e.g. 1842 -> 18
     }
-
     // Helper: find saved size by bucket
     function findSavedSizeByBucket(saved, bucket) {
         if (!saved || !Array.isArray(saved) || saved.length === 0) return null;
@@ -128,7 +118,6 @@ Container.prototype.Frame = function(options = {}) {
         }
         return null;
     }
-
     // API: frame.direction(...)
     root.direction = function(dir) {
         direction = dir === 'vertical' ? 'vertical' : 'horizontal';
@@ -136,22 +125,18 @@ Container.prototype.Frame = function(options = {}) {
         root.addClass(direction === 'horizontal' ? Container.frameClasses.frame_horizontal : Container.frameClasses.frame_vertical);
         return this;
     };
-
     // --- New: clearPos method ---
     root.clearPos = function() {
         if (frameId) clearFramePos(frameId);
         return this;
     };
-
     // API: frame.frames([...])
     root.frames = function(frameDefs) {
         root.empty();
         const frameMap = {};
         let totalFlex = 0;
-
         // Store frameDefs in a private property on root for later access
         root._frameDefs = frameDefs;
-
         // Pre-calc flex basis for frames with size
         frameDefs.forEach(def => {
             if (def.size && typeof def.size === 'string' && def.size.endsWith('%')) {
@@ -160,7 +145,6 @@ Container.prototype.Frame = function(options = {}) {
         });
         // If no size, default to equal split
         const defaultSize = frameDefs.length > 0 ? (100 - totalFlex) / frameDefs.filter(f => !f.size).length : 100;
-
         // --- New: load saved positions ---
         let savedSizes = null;
         let savedResponsiveList = null;
@@ -190,7 +174,6 @@ Container.prototype.Frame = function(options = {}) {
                 }
             }
         }
-
         // Store Q objects for each section and resizer
         const sections = [];
         const resizers = [];
@@ -209,41 +192,32 @@ Container.prototype.Frame = function(options = {}) {
             }
             if (direction === 'horizontal') section.css('width', sizeVal);
             else section.css('height', sizeVal);
-
             // Store for API
             frameMap[def.name] = section;
             sections.push(section);
-
             // Append section
             root.append(section);
-
             // Add resizer if needed (not after last frame)
             if (def.resize && idx < frameDefs.length - 1) {
                 const resizer = Q('<div>', { class: Container.frameClasses.frame_resizer });
                 resizer.addClass(direction === 'horizontal' ? Container.frameClasses.frame_resizer_horizontal : Container.frameClasses.frame_resizer_vertical);
-
                 // Drag logic
                 resizer.on('mousedown', function(e) {
                     e.preventDefault();
                     const prev = section;
                     const next = sections[idx + 1];
                     if (!prev || !next) return;
-
                     // Get parent size for percent calculations
                     const parent = root.nodes[0];
                     const isHorizontal = direction === 'horizontal';
-
                     // Initial sizes in px and percent
                     const prevRect = prev.nodes[0].getBoundingClientRect();
                     const nextRect = next.nodes[0].getBoundingClientRect();
                     const parentPx = isHorizontal ? parent.clientWidth : parent.clientHeight;
-
                     // Initial percent sizes
                     const prevPercent = (isHorizontal ? prevRect.width : prevRect.height) / parentPx * 100;
                     const nextPercent = (isHorizontal ? nextRect.width : nextRect.height) / parentPx * 100;
-
                     const startX = e.clientX, startY = e.clientY;
-
                     function onMove(ev) {
                         // Calculate delta in px
                         let deltaPx = isHorizontal ? ev.clientX - startX : ev.clientY - startY;
@@ -282,7 +256,6 @@ Container.prototype.Frame = function(options = {}) {
                 resizers.push(resizer); // Store reference
             }
         });
-
         // --- Responsive resize handler ---
         if (responsive && frameId) {
             let lastScreenSizeBucket = currentScreenSizeBucket;
@@ -356,7 +329,6 @@ Container.prototype.Frame = function(options = {}) {
                 });
             });
         }
-
         // --- Save sizes helper (single definition) ---
         function saveCurrentSizes() {
             if (savePosition && frameId) {
@@ -390,11 +362,9 @@ Container.prototype.Frame = function(options = {}) {
                 saveFrames(all);
             }
         }
-
         // Attach sections and frameMap for programmatic access
         root._frameSections = sections;
         root._frameMap = frameMap;
-
         // New: resize method on instance
         root.resize = function(name, size) {
             if (root._frameMap && root._frameMap[name]) {
@@ -408,13 +378,10 @@ Container.prototype.Frame = function(options = {}) {
             }
             return this;
         };
-
         // API: frames["name"].append(...), .empty(), .html(), etc. (Q methods)
         // No need to override .append, just return the Q object for each frame
-
         return frameMap;
     };
-
     this.elements.push(root);
     return root;
 };

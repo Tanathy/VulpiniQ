@@ -14,7 +14,6 @@ Form.prototype.ProgressBar = function(min = 0, max = 100, value = 0) {
                 width: 0%;
                 border-radius: var(--form-default-border-radius);
             }
-
             .progress_fill:before {
                 content: "";
                 position: absolute;
@@ -30,10 +29,6 @@ Form.prototype.ProgressBar = function(min = 0, max = 100, value = 0) {
                 0% { background-position: 100% 100%; }
                 100% { background-position: -100% 100%; }
             }
-
-
-
-
         `, null, {
             'progress_bar': 'progress_bar',
             'progress_fill': 'progress_fill'

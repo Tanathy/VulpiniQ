@@ -51,21 +51,16 @@ Form.prototype.Switch = function (positions = 2, initial = 0) {
         });
         Form.switchClassesInitialized = true;
     }
-
     function clamp(val, min, max) {
         return Math.max(min, Math.min(max, val));
     }
-
     const sw = Q(`<div class="${Form.switchClasses.switch}"></div>`);
     const knob = Q(`<div class="${Form.switchClasses.switch_knob}"></div>`);
-
     sw.append(knob);
-
     let _positions = clamp(parseInt(positions) || 2, 2, 10);
     let _val = clamp(parseInt(initial) || 0, 0, _positions - 1);
     let _disabled = false;
     let _changeHandler = null;
-
     function updateKnob() {
         const percent = _positions === 1 ? 0 : _val / (_positions - 1);
         const minLeft = 2, maxLeft = 24;
@@ -74,7 +69,6 @@ Form.prototype.Switch = function (positions = 2, initial = 0) {
         if (_val > 0) sw.addClass(Form.switchClasses.switch_active);
         else sw.removeClass(Form.switchClasses.switch_active);
     }
-
     function setVal(val, fire = true) {
         const newVal = clamp(parseInt(val) || 0, 0, _positions - 1);
         if (_val !== newVal) {
@@ -87,7 +81,6 @@ Form.prototype.Switch = function (positions = 2, initial = 0) {
             updateKnob();
         }
     }
-
     // On every click, increment position, wrap to 0 if at max
     sw.on('click', function (e) {
         if (_disabled) return;
@@ -95,9 +88,7 @@ Form.prototype.Switch = function (positions = 2, initial = 0) {
         if (next >= _positions) next = 0;
         setVal(next, true);
     });
-
     sw.attr('tabindex', 0);
-
     sw.change = function (cb) {
         _changeHandler = cb;
         return sw;
@@ -125,9 +116,7 @@ Form.prototype.Switch = function (positions = 2, initial = 0) {
         sw.remove();
         return null;
     };
-
     updateKnob();
-
     this.elements.push(sw);
     return sw;
 };

@@ -1,4 +1,4 @@
-Q.Ext('css', function(property, value) {
+Q.Method('css', function(property, value) {
   const nodes = this.nodes;
   if (typeof property === 'object') {
       for (let i = 0, len = nodes.length; i < len; i++) {

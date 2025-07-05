@@ -1,4 +1,4 @@
-Q.Ext('wrapAll', function (wrapper) {
+Q.Method('wrapAll', function (wrapper) {
     if (!this.nodes.length) return this;
     const parent = this.nodes[0].parentNode;
     let newParent = typeof wrapper === 'string'

@@ -13,7 +13,6 @@ Form.prototype.TextBox = function(type = 'text', value = '', placeholder = '') {
                 resize: none;
                 transition: background-color 0s ease, color 0s ease, outline 0s ease;
             }
-            
             /* Fix for autofill background color */
             .q_form_input:-webkit-autofill,
             .q_form_input:-webkit-autofill:hover,
@@ -24,38 +23,31 @@ Form.prototype.TextBox = function(type = 'text', value = '', placeholder = '') {
                 transition: background-color 5000s ease-in-out 0s;
                 background-color: var(--form-default-background) !important;
             }
-            
             .q_form_input:hover {
                 outline: var(--form-default-outline-hover);
                 background-color: var(--form-default-background-hover);
             }
-            
             .q_form_input:hover:-webkit-autofill {
                 -webkit-box-shadow: 0 0 0 30px var(--form-default-background-hover) inset !important;
                 background-color: var(--form-default-background-hover) !important;
             }
-            
             .q_form_input:focus {
                 outline: var(--form-default-outline-focus);
                 background-color: var(--form-default-background-focus);
             }
-            
             .q_form_input:focus:-webkit-autofill {
                 -webkit-box-shadow: 0 0 0 30px var(--form-default-background-focus) inset !important;
                 background-color: var(--form-default-background-focus) !important;
             }
-            
             .q_form_input:active {
                 outline: var(--form-default-outline-active);
                 background-color: var(--form-default-background-active);
             }
-            
             .q_form_input:disabled {
                 background-color: var(--form-default-background-disabled);
                 color: var(--form-default-text-color-disabled);
                 cursor: not-allowed;
             }
-
         `, null, {
             'q_form_input': 'q_form_input'
         });
@@ -82,6 +74,5 @@ Form.prototype.TextBox = function(type = 'text', value = '', placeholder = '') {
         });
     };
     this.elements.push(input);
-
     return input;
 };

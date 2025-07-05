@@ -1,4 +1,4 @@
-Q.Ext('scrollTop', function (value, increment) {
+Q.Method('scrollTop', function (value, increment) {
     const node = this.nodes[0];
     if (value === undefined) {
         return node.scrollTop;

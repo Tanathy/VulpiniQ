@@ -1,4 +1,4 @@
-Q.Ext('width', function (value) {
+Q.Method('width', function (value) {
     if (typeof value === 'undefined') {
         return this.nodes[0] ? this.nodes[0].offsetWidth : undefined;
     }

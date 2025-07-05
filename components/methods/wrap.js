@@ -1,4 +1,4 @@
-Q.Ext('wrap', function (wrapper) {
+Q.Method('wrap', function (wrapper) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const node = this.nodes[i];
         const parent_Node = node.parentNode;

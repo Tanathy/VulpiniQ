@@ -54,7 +54,6 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
     const container = Q('<div class="' + Form.checkBoxClasses.form_checkbox + '">');
     const checkbox_container = Q('<div class="' + Form.checkBoxClasses.form_checkbox_element + '">');
     const labeltext = Q('<div class="' + Form.checkBoxClasses.form_label + '">' + text + '</div>');
-
     if (checked) {
         checkbox_container.addClass(Form.checkBoxClasses['checked']);
     }
@@ -68,7 +67,6 @@ Form.prototype.CheckBox = function(checked = false, text = '') {
         }
     });
     container.append(checkbox_container, labeltext);
-
     container.checked = function(state) {
         checkbox_container.toggleClass(Form.checkBoxClasses['checked'], state);
         if (state && container._changeCallback) {

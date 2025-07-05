@@ -1,4 +1,4 @@
-Q.Ext('detach', function() {
+Q.Method('detach', function() {
     const nodes = this.nodes;
     const detachedNodes = [];
     for (let i = 0, len = nodes.length; i < len; i++) {

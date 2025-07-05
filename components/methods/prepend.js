@@ -1,4 +1,4 @@
-Q.Ext('prepend', function () {
+Q.Method('prepend', function () {
     var nodes = this.nodes,
         contents = Array.prototype.slice.call(arguments),
         i, j, k, parent, child, subNodes;

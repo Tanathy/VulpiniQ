@@ -1,4 +1,4 @@
-Q.Ext('hide', function (duration, callback) {
+Q.Method('hide', function (duration, callback) {
     duration = duration || 0;
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {

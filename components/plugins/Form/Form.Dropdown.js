@@ -13,11 +13,9 @@ Form.prototype.Dropdown = function(options = {}) {
                 background-color: var(--form-default-background);
                 color: var(--form-default-text-color);
             }
-
             .selected_text {
             padding-right: 10px;
         }
-
             .form_dropdown.disabled {
                 opacity: 0.6;
                 cursor: not-allowed;
@@ -50,8 +48,6 @@ Form.prototype.Dropdown = function(options = {}) {
                 display: none;
                 color: var(--form-default-text-color);
                 font-family: var(--form-default-font-family);
-                
-                
             }
             .form_dropdown_item {
                 padding: var(--form-default-padding);
@@ -103,7 +99,6 @@ Form.prototype.Dropdown = function(options = {}) {
             'up': 'up'
         },true);
     }
-
     const container = Q('<div>').addClass(Form.dropdownStyles['form_dropdown']);
     const header = Q('<div>').addClass(Form.dropdownStyles['form_dropdown_selected']);
     const label = Q('<div>').text('Select an option').addClass(Form.dropdownStyles['selected_text']);
@@ -112,10 +107,8 @@ Form.prototype.Dropdown = function(options = {}) {
     const listContainer = Q('<div>')
         .addClass(Form.dropdownStyles['form_dropdown_items'])
         .addClass(Form.classes['scrollbar']);
-
     // always append the items container once
     container.append(header, listContainer);
-
     // one‐time outside‐click listener to close any open dropdown
     if (!Form.dropdownCloseListenerInitialized) {
         Q(document).on('click', () => {
@@ -124,19 +117,15 @@ Form.prototype.Dropdown = function(options = {}) {
         });
         Form.dropdownCloseListenerInitialized = true;
     }
-
     if (options['max-height']) {
         listContainer.css('maxHeight', options['max-height'] + 'px');
     }
-
     let selectedValue = null;
     let selectedText = '';
     let selectedIndex = -1;
     let isDisabled = options.disabled || false;
     let changeCallback = options.change || null;
-
     if (isDisabled) { container.addClass(Form.dropdownStyles['disabled']); }
-
     // swap below/above on open if needed
     header.on('click', function(e) {
         e.stopPropagation();
@@ -158,7 +147,6 @@ Form.prototype.Dropdown = function(options = {}) {
         }
         container.toggleClass(openCl);
     });
-
     // selectItem now just closes via class toggle
     function selectItem(index) {
         const items = listContainer.find('.' + Form.dropdownStyles['form_dropdown_item']);
@@ -176,11 +164,9 @@ Form.prototype.Dropdown = function(options = {}) {
             changeCallback(selectedValue, selectedText, selectedIndex);
         }
     }
-
     if (options.values && Array.isArray(options.values)) {
         setValues(options.values);
     }
-
     function setValues(values) {
         listContainer.html('');
         let defaultIndex = -1;
@@ -205,7 +191,6 @@ Form.prototype.Dropdown = function(options = {}) {
         if (defaultIndex < 0) defaultIndex = 0;
         selectItem(defaultIndex);
     }
-
     const dropdownAPI = {
         val: function(values) {
             if (values === undefined) {
@@ -308,20 +293,17 @@ Form.prototype.Dropdown = function(options = {}) {
                 return null;
             }
         },
-
         getCount: function() {
             const found = listContainer.find('.' + Form.dropdownStyles['form_dropdown_item']);
             const items = found ? found.nodes : [];
             return items.length;
         }
     };
-
     for (const key in dropdownAPI) {
         if (dropdownAPI.hasOwnProperty(key)) {
             container[key] = dropdownAPI[key];
         }
     }
-
     this.elements.push(container);
     return container;
 };

@@ -1,4 +1,4 @@
-Q.Ext('show', function (duration = 0, callback) {
+Q.Method('show', function (duration = 0, callback) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const element = this.nodes[i];
         if (duration === 0) {

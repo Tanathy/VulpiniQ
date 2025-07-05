@@ -1,4 +1,4 @@
-Q.Ext('height', function (value) {
+Q.Method('height', function (value) {
     var nodes = this.nodes;
     if (value === undefined) {
         return nodes[0].offsetHeight;

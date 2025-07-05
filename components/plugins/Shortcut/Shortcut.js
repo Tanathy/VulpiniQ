@@ -112,7 +112,6 @@
         });
             ShortCuts.initialized = true;
         }
-
     this.options = Object.assign({
         typing_speed: 20,
         macros: {},
@@ -124,11 +123,9 @@
     this.isRunning = false;
     this._init();
 }
- 
     ShortCuts.prototype._init = function () {
     this._bindKeyListener();
 };
-
 ShortCuts.prototype._bindKeyListener = function () {
     const self = this;
     Q(document).on('keydown', function (e) {
@@ -155,7 +152,6 @@ ShortCuts.prototype._bindKeyListener = function () {
         }
     });
 };
-
 ShortCuts.prototype._eventMatches = function (e, shortcut) {
     if (!shortcut.key) return false;
     const parts = shortcut.key.toUpperCase().split('+');
@@ -172,24 +168,20 @@ ShortCuts.prototype._eventMatches = function (e, shortcut) {
         (!!e.metaKey === meta)
     );
 };
-
 ShortCuts.prototype.add = function (def) {
     if (!def.key || !def.macro) return;
     this.options.set[def.key] = def;
     this.shortcuts[def.key] = def;
 };
-
 ShortCuts.prototype.remove = function (key) {
     delete this.options.set[key];
     delete this.shortcuts[key];
 };
-
 ShortCuts.prototype.edit = function (key, newDef) {
     if (!key || !newDef || !newDef.key || !newDef.macro) return;
     this.options.set[key] = newDef;
     this.shortcuts[key] = newDef;
 };
-
 ShortCuts.prototype.runMacro = async function (macro) {
     for (let step of macro) {
         if (typeof step === 'string') {
@@ -226,7 +218,6 @@ ShortCuts.prototype.runMacro = async function (macro) {
     }
     this.isRunning = false;
 };
-
 ShortCuts.prototype._runMacroSteps = async function (macro) {
     let i = 0;
     const stack = [];
@@ -374,7 +365,6 @@ ShortCuts.prototype._runMacroSteps = async function (macro) {
         i++;
     }
 };
-
 ShortCuts.prototype._runMacroCommand = async function (cmd, arg) {
     switch (cmd) {
         case 'WAIT':
@@ -550,19 +540,16 @@ ShortCuts.prototype._runMacroCommand = async function (cmd, arg) {
             if (cmd) console.warn('Unknown macro command:', cmd, arg);
     }
 };
-
 // Export the current shortcuts set
 ShortCuts.prototype.export = function () {
     return JSON.parse(JSON.stringify(this.options.set));
 };
-
 // Import and overwrite the shortcuts set
 ShortCuts.prototype.import = function (setObj) {
     if (typeof setObj !== 'object' || setObj === null) return;
     this.options.set = JSON.parse(JSON.stringify(setObj));
     this.shortcuts = Object.assign({}, this.options.set);
 };
-
 // --- Highlight key combinations with button-style elements ---
 ShortCuts.prototype.renderKeyCombo = function(keyCombo) {
     if (!keyCombo) return '';
@@ -576,12 +563,9 @@ ShortCuts.prototype.renderKeyCombo = function(keyCombo) {
         }
     });
 };
-
 // Shortcut list UI generator
 ShortCuts.prototype.getList = function() {
-
     const classes = ShortCuts.classes;
-
     // --- 2. Processing: grouping, duplicates, actives ---
     const set = this.options.set;
     const groupMap = {};
@@ -648,6 +632,5 @@ ShortCuts.prototype.getList = function() {
     this._macroActiveKeys = [];
     return wrapper;
 };
-
 Q.ShortCuts = ShortCuts;
 }) (Q);

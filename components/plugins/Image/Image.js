@@ -31,21 +31,17 @@ Q.Image.prototype.Load = function (src, callback) {
     const img = new Image();
     img.crossOrigin = 'Anonymous';
     img.onload = () => {
-
         if (this.node.width === 0 || this.node.height === 0 ||
             this.options.width === 0 || this.options.height === 0) {
             this.node.width = img.width;
             this.node.height = img.height;
         }
         const ctx = this.node.getContext('2d');
-
         ctx.clearRect(0, 0, this.node.width, this.node.height);
         ctx.drawImage(img, 0, 0, img.width, img.height,
             0, 0, this.node.width, this.node.height);
-
         this.history.states = [];
         this.history.position = -1;
-
         this.saveToHistory();
         if (callback) callback.call(this, null);
     };
@@ -97,18 +93,15 @@ Q.Image.prototype.Save = function (filename) {
 };
 Q.Image.prototype.saveToHistory = function () {
     if (this.history.isUndoRedoing || !this.options.autoSaveHistory) return;
-
     if (this.node.width === 0 || this.node.height === 0) return;
     const ctx = this.node.getContext('2d', { willReadFrequently: true });
     const imageData = ctx.getImageData(0, 0, this.node.width, this.node.height);
-
     if (this.history.position < this.history.states.length - 1) {
         this.history.states.length = this.history.position + 1;
     }
     this.history.states.push(imageData);
     if (this.history.states.length > this.options.historyLimit) {
         this.history.states.shift();
-
         if (this.history.position > 0) {
             this.history.position--;
         }
@@ -127,7 +120,6 @@ Q.Image.prototype.Redo = function () {
     return this.History(1);
 };
 Q.Image.prototype.History = function (offset) {
-
     if (this.history.states.length === 0) {
         console.warn('No history states available.');
         return this;
@@ -139,7 +131,6 @@ Q.Image.prototype.History = function (offset) {
     }
     this.history.isUndoRedoing = true;
     const ctx = this.node.getContext('2d', { willReadFrequently: true });
-
     const historyState = this.history.states[target];
     if (this.node.width !== historyState.width || this.node.height !== historyState.height) {
         this.node.width = historyState.width;

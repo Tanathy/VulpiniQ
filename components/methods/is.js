@@ -1,4 +1,4 @@
-Q.Ext('is', function (selector) {
+Q.Method('is', function (selector) {
     var node = this.nodes[0];
     if (!node) return false;
     if (typeof selector === 'function') {

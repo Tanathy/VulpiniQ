@@ -46,7 +46,6 @@ Media.prototype.Selector = function(container, options = {}) {
         Media.selectorClassesInitialized = true;
     }
     const classes = Media.selectorClasses;
-
     // DOM structure
     const wrapper = Q(container);
     // Ensure wrapper is position:relative
@@ -56,11 +55,9 @@ Media.prototype.Selector = function(container, options = {}) {
     // New: canvas element
     const canvas = Q('<canvas class="' + classes['media-selector-canvas'] + '"></canvas>');
     wrapper.append(canvas);
-
     // State
     let selection = null;
     let defaultDims = { x: 10, y: 10, w: 30, h: 30 }; // percent
-
     // Helper: get video/image rect relative to wrapper
     function getMediaRect() {
         const media = wrapper.find('video') || wrapper.find('img');
@@ -78,7 +75,6 @@ Media.prototype.Selector = function(container, options = {}) {
             height: mediaRect.height
         };
     }
-
     // Helper: percent <-> px, now relative to media area
     function percentToPx({x, y, w, h}) {
         const mediaRect = getMediaRect();
@@ -98,7 +94,6 @@ Media.prototype.Selector = function(container, options = {}) {
             h: mediaRect.height ? (h / mediaRect.height * 100) : 0
         };
     }
-
     // Draw the selection (only one allowed)
     function renderSelections() {
         // Sizing
@@ -111,27 +106,22 @@ Media.prototype.Selector = function(container, options = {}) {
         el.style.height = rect.height + "px";
         const ctx = el.getContext('2d');
         ctx.clearRect(0, 0, el.width, el.height);
-
         if (!selection) {
             return;
         }
-
         const dimsPx = percentToPx(selection);
-
         // Shading: whole area dark, selection area transparent
         ctx.save();
         ctx.fillStyle = 'rgba(0,0,0,0.7)';
         ctx.fillRect(0, 0, el.width, el.height);
         ctx.clearRect(dimsPx.x, dimsPx.y, dimsPx.w, dimsPx.h);
         ctx.restore();
-
         // Border
         ctx.save();
         ctx.strokeStyle = 'rgba(255,255,255,0.1)';
         ctx.lineWidth = 1;
         ctx.strokeRect(dimsPx.x, dimsPx.y, dimsPx.w, dimsPx.h);
         ctx.restore();
-
         // Resize dot (bottom right corner) - square, 6x6px, 0.8px border
         ctx.save();
         // First clear at dot position so no shadow/line below
@@ -145,7 +135,6 @@ Media.prototype.Selector = function(container, options = {}) {
         ctx.stroke();
         ctx.restore();
     }
-
     // Mouse events for drawing new selection or moving/resizing
     let drawing = null;
     let drag = null;
@@ -263,12 +252,10 @@ Media.prototype.Selector = function(container, options = {}) {
         }
         document.body.style.userSelect = '';
     });
-
     // Redraw selection on resize to keep correct position/sizes
     function handleResize() {
         renderSelections();
     }
-
     // Listen for window resize and also for wrapper resize (if ResizeObserver is available)
     window.addEventListener('resize', handleResize);
     if (window.ResizeObserver) {
@@ -280,7 +267,6 @@ Media.prototype.Selector = function(container, options = {}) {
             ro.observe(media.nodes[0]);
         }
     }
-
     // API
     function add(x, y, w, h) {
         selection = {
@@ -313,7 +299,6 @@ Media.prototype.Selector = function(container, options = {}) {
         renderSelections();
         return instance;
     }
-
     // New: programmatic setter
     function set(x, y, w, h) {
         selection = {
@@ -325,7 +310,6 @@ Media.prototype.Selector = function(container, options = {}) {
         renderSelections();
         return instance;
     }
-
     // New: aspect ratio setter/getter
     function aspectRatio(ratio) {
         // If no parameter, return current selection ratio
@@ -333,16 +317,13 @@ Media.prototype.Selector = function(container, options = {}) {
             if (!selection) return null;
             return (selection.w / selection.h).toFixed(4);
         }
-
         // Calculate from ratio string (e.g. "16:9", "4:3", "1:1", "3:4", etc.)
         let [rw, rh] = ratio.split(':').map(Number);
         if (!rw || !rh) return instance;
-
         const mediaRect = getMediaRect();
         const mediaW = mediaRect.width;
         const mediaH = mediaRect.height;
         if (!mediaW || !mediaH) return instance;
-
         // What would be the desired aspect rectangle on the full area?
         let targetW = mediaW, targetH = mediaW * rh / rw;
         if (targetH > mediaH) {
@@ -355,11 +336,9 @@ Media.prototype.Selector = function(container, options = {}) {
         const hPerc = (targetH / mediaH) * 100;
         const xPerc = (100 - wPerc) / 2;
         const yPerc = (100 - hPerc) / 2;
-
         set(xPerc, yPerc, wPerc, hPerc);
         return instance;
     }
-
     // Expose API
     const instance = canvas;
     instance.add = add;
@@ -368,19 +347,15 @@ Media.prototype.Selector = function(container, options = {}) {
     instance.dimensions = dimensions;
     instance.set = set; // <-- new method
     instance.aspectRatio = aspectRatio; // <-- new method
-
     // Optionally set initial dimensions
     if (options.default) {
         dimensions(options.default.x, options.default.y, options.default.w, options.default.h);
     }
-
     // Optionally add initial selection
     if (options.init) {
         add(options.init.x, options.init.y, options.init.w, options.init.h);
     }
-
     // Initial render
     renderSelections();
-
     return instance;
 };

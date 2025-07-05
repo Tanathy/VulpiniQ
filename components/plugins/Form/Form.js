@@ -6,60 +6,46 @@ function Form(options = {}) {
     this.options = options;
     if (!Form.initialized) {
         Form.classes = Q.style(`
-
             --form-default-accent-color: rgb(100, 60, 240);
             --form-default-accent-text-color: #fff;
             --form-default-font-size: 12px;
             --form-default-font-family: Arial, sans-serif;
-
             --form-default-dataset-header-font-weight: 600;
             --form-default-dataset-header-font-size: 12px;
             --form-default-dataset-header-data-font-size: 12px;
-            
             --form-default-dataset-header-background: rgba(127, 127, 127, 0.10);
             --form-default-dataset-header-text-color: #fff;
-
             --form-default-dataset-border: 1px solid rgba(127, 127, 127, 0.24);
-
             --form-default-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
             --form-default-shadow-active: 0px 0px 5px rgba(100, 60, 240, 0.5);
             --form-default-shadow-focus: 0px 0px 5px rgba(100, 60, 240, 0.5);
             --form-default-shadow-hover: 0px 0px 5px rgba(100, 60, 240, 0.5);
-
             --form-default-background-active: rgb(46, 46, 46);
             --form-default-background-focus: rgb(46, 46, 46);
             --form-default-background-hover: rgb(46, 46, 46);
             --form-default-background-disabled: rgb(46, 46, 46);
             --form-default-background: rgb(46, 46, 46);
-
             --form-default-border-active: 1px solid var(--form-default-accent-color);
             --form-default-border-focus: 1px solid var(--form-default-accent-color);
             --form-default-border-hover: 1px solid var(--form-default-accent-color);
             --form-default-border: 1px solid rgba(255, 255, 255, 0.03);
-
             --form-default-outline-active: var(--form-default-border-active);
             --form-default-outline-focus: var(--form-default-border-focus);
             --form-default-outline-hover: var(--form-default-border-hover);
             --form-default-outline: var(--form-default-border);
-            
             --form-default-border-radius: 5px;
             --form-default-margin: 0px 0px 0px 0px;
             --form-default-padding: 5px 10px 5px 10px;
-            
-            
             --form-default-text-color-active: #fff;
             --form-default-text-color-focus: #fff;
             --form-default-text-color-hover: #fff;
             --form-default-text-color-disabled: #999;
             --form-default-text-color: #999;
-            
             --form-default-text-active: normal var(--form-default-font-size) var(--form-default-font-family);
             --form-default-text-focus: normal var(--form-default-font-size) var(--form-default-font-family);
             --form-default-text-hover: normal var(--form-default-font-size) var(--form-default-font-family);
             --form-default-text: normal var(--form-default-font-size) var(--form-default-font-family);
-            
             --form-default-width: 100%;
-
         `, `
             .form_icon {
                 width: 100%;
@@ -170,5 +156,4 @@ Form.prototype.FX_Ripple = function(el) {
     });
     return this;
 };
-
 Q.Form = Form;

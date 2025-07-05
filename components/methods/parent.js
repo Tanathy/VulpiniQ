@@ -1,4 +1,4 @@
-Q.Ext('parent', function () {
+Q.Method('parent', function () {
     var node = this.nodes[0];
     return new Q(node ? node.parentNode : null);
 });

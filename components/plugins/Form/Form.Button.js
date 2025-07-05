@@ -41,7 +41,6 @@ Form.prototype.Button = function(text = '') {
         }
         return button;
     };
-    
     button.setText = function(newText) {
         button.text(newText);
         return button;
@@ -51,9 +50,7 @@ Form.prototype.Button = function(text = '') {
         return button;
     };
     this.elements.push(button);
-
     // enable ripple effect on this button
     this.FX_Ripple(button);
-
     return button;
 };

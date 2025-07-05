@@ -8,31 +8,34 @@ const Q = (() => {
         _win = window, _doc = document, _loc = location, _hist = history,
         _ls = localStorage, _ss = sessionStorage, _f = fetch, _ev = Event,
         _ac = AbortController, _as = AbortSignal, _err = Error;
-    let GLOBAL = {};
-    let styleData = {
-        elements: [],
-        root: '',
-        generic: "",
-        responsive: {},
-        element: _n,
-        init: false
+    const INTERNAL = {
+        moduleRegistry: new _map(),
+        moduleInstances: new _map(),
+        styleData: {
+            e: [],
+            r: '',
+            g: '',
+            s: {},
+            el: _n,
+            i: false
+        }
     };
     function applyStyles() {
-        if (!styleData.init) {
-            styleData.element = document.getElementById('qlib_set') || createStyleElement();
-            styleData.init = true;
+        if (!INTERNAL.styleData.i) {
+            INTERNAL.styleData.el = document.getElementById('qlib_set') || createStyleElement();
+            INTERNAL.styleData.i = true;
         }
-        let finalStyles = styleData.root ? `:root {${styleData.root}}\n` : '';
-        finalStyles += styleData.generic;
-        const breakpoints = _ob.keys(styleData.responsive);
+        let finalStyles = INTERNAL.styleData.r ? `:root {${INTERNAL.styleData.r}}\n` : '';
+        finalStyles += INTERNAL.styleData.g;
+        const breakpoints = _ob.keys(INTERNAL.styleData.s);
         for (let i = 0; i < breakpoints.length; i++) {
             const size = breakpoints[i];
-            const css = styleData.responsive[size];
+            const css = INTERNAL.styleData.s[size];
             if (css) {
                 finalStyles += `\n@media (max-width: ${size}) {\n${css}\n}`;
             }
         }
-        styleData.element.textContent = finalStyles;
+        INTERNAL.styleData.el.textContent = finalStyles;
     }
     function createStyleElement() {
         const styleElement = document.createElement('style');
@@ -62,7 +65,7 @@ const Q = (() => {
         if (typeof identifier === 'string') {
             const isCreating = attributes || identifier.indexOf('<') > -1;
             if (isCreating) {
-                const svgTags = ['svg','g','line','polyline','rect','circle','ellipse','text','path','polygon'];
+                const svgTags = ['svg', 'g', 'line', 'polyline', 'rect', 'circle', 'ellipse', 'text', 'path', 'polygon'];
                 const tagMatch = identifier.match(/^<([a-zA-Z0-9\-]+)(\s|>|\/)*/);
                 const tag = tagMatch ? tagMatch[1].toLowerCase() : null;
                 if (tag && svgTags.includes(tag)) {
@@ -139,65 +142,50 @@ const Q = (() => {
             }
         }
     }
-    Q.Ext = (methodName, functionImplementation) =>
-        (Q.prototype[methodName] = functionImplementation, Q);
-    Q.getGLOBAL = key => GLOBAL[key];
-    Q.setGLOBAL = value => (GLOBAL = { ...GLOBAL, ...value });
     Q.style = (root = _n, style = '', responsive = _n, mapping = _n, enable_mapping = true) => {
-        const cleanUp = (str) => {
-            str= str.replace(/^\s*[\r\n]/gm, '');
-            str = str.replace(/\s+/g, ' ');
-            str = str.replace(/;;/g, ';');
-            return str.trim();
-        }
+        const cleanUp = str => str.replace(/^\s*[\r\n]/gm, '').replace(/\s+/g, ' ').replace(/;;/g, ';').trim();
         if (mapping && enable_mapping) {
             const keys = _ob.keys(mapping);
-            const generateSecureCSSClassName = () => {
-                const letters = 'abcdefghijklmnopqrstuvwxyz';
-                const allChars = letters + '0123456789';
-                const length = _ma.floor(_ma.random() * 3) + 6;  
-                const firstChar = letters.charAt(_ma.floor(_ma.random() * letters.length));
-                const remainingChars = Array.from({ length: length - 1 }, () => 
-                    allChars.charAt(_ma.floor(_ma.random() * allChars.length))
-                ).join('');
-                return firstChar + remainingChars;
+            const generateClassName = () => {
+                const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+                let result = chars[_ma.floor(_ma.random() * 26)];
+                const len = _ma.floor(_ma.random() * 3) + 5;
+                for (let i = 1; i < len; i++) {
+                    result += chars[_ma.floor(_ma.random() * chars.length)];
+                }
+                return result;
             };
             const getUniqueClassName = () => {
                 let newKey;
                 do {
-                    newKey = generateSecureCSSClassName();
-                } while (styleData.elements.includes(newKey));
-                styleData.elements.push(newKey);
+                    newKey = generateClassName();
+                } while (INTERNAL.styleData.e.includes(newKey));
+                INTERNAL.styleData.e.push(newKey);
                 return newKey;
             };
-            keys.forEach((key) => {
-                let newKey = getUniqueClassName();
+            keys.forEach(key => {
+                const newKey = getUniqueClassName();
                 if (style && typeof style === 'string') {
-                    style = style.replace(new _re(`\\.${key}\\b`, 'gm'), `.${newKey}`);
-                    style = style.replace(new _re(`^\\s*\\.${key}\\s*{`, 'gm'), `.${newKey} {`);
-                    style = style.replace(new _re(`(,\\s*)\\.${key}\\b`, 'gm'), `$1.${newKey}`);
-                    style = style.replace(new _re(`(\\s+)\\.${key}\\b`, 'gm'), `$1.${newKey}`);
+                    style = style.replace(new _re(`\\.${key}\\b`, 'gm'), `.${newKey}`)
+                                 .replace(new _re(`^\\s*\\.${key}\\s*{`, 'gm'), `.${newKey} {`)
+                                 .replace(new _re(`(,\\s*)\\.${key}\\b`, 'gm'), `$1.${newKey}`)
+                                 .replace(new _re(`(\\s+)\\.${key}\\b`, 'gm'), `$1.${newKey}`);
                 }
                 mapping[key] = mapping[key].replace(key, newKey);
             });
         }
         if (root && typeof root === 'string') {
-            styleData.root += root.trim();
-            styleData.root = cleanUp(styleData.root);
+            INTERNAL.styleData.r = cleanUp(INTERNAL.styleData.r + root.trim());
         }
         if (style && typeof style === 'string') {
-            styleData.generic += style;
-            styleData.generic = cleanUp(styleData.generic);
+            INTERNAL.styleData.g = cleanUp(INTERNAL.styleData.g + style);
         }
         if (responsive && typeof responsive === 'object') {
             const breakpoints = _ob.entries(responsive);
             for (let i = 0; i < breakpoints.length; i++) {
                 const [size, css] = breakpoints[i];
                 if (css && typeof css === 'string') {
-                    if (!styleData.responsive[size]) {
-                        styleData.responsive[size] = '';
-                    }
-                    styleData.responsive[size] += css + '\n';
+                    INTERNAL.styleData.s[size] = (INTERNAL.styleData.s[size] || '') + css + '\n';
                 }
             }
         }
@@ -206,14 +194,238 @@ const Q = (() => {
         }
         return mapping;
     };
-    Q._ = {
+    const PRIVATE_REFS = {
         ob: _ob, ar: _ar, ma: _ma, da: _da, re: _re, st: _st, un: _un,
         n: _n, nl: _nl, el: _el, si: _si, c: _c, ct: _ct, ci: _ci,
         pr: _pr, str: _str, nu: _nu, bo: _bo, json: _json, map: _map,
         set: _set, sym: _sym, win: _win, doc: _doc, loc: _loc, hist: _hist,
-        ls: _ls, ss: _ss, f: _f, ev: _ev, ac: _ac, as: _as, err: _err
+        ls: _ls, ss: _ss, f: _f, ev: _ev, ac: _ac, as: _as, err: _err,
+        _log: _c.log.bind(_c), _warn: _c.warn.bind(_c), _error: _c.error.bind(_c),
+        _info: _c.info.bind(_c), _debug: _c.debug.bind(_c), _trace: _c.trace.bind(_c),
+        _table: _c.table.bind(_c), _group: _c.group.bind(_c), _groupEnd: _c.groupEnd.bind(_c),
+        _time: _c.time.bind(_c), _timeEnd: _c.timeEnd.bind(_c), _clear: _c.clear.bind(_c),
+        _int: parseInt, _float: parseFloat, _isNaN: isNaN, _isFinite: isFinite,
+        _encode: encodeURIComponent, _decode: decodeURIComponent,
+        _btoa: btoa, _atob: atob, _crypto: crypto, _perf: performance,
+        _rand: _ma.random.bind(_ma), _floor: _ma.floor.bind(_ma), _ceil: _ma.ceil.bind(_ma),
+        _round: _ma.round.bind(_ma), _abs: _ma.abs.bind(_ma), _min: _ma.min.bind(_ma), _max: _ma.max.bind(_ma),
+        _now: _da.now.bind(_da), _keys: _ob.keys.bind(_ob), _values: _ob.values.bind(_ob),
+        _entries: _ob.entries.bind(_ob), _assign: _ob.assign.bind(_ob), _create: _ob.create.bind(_ob),
+        _from: _ar.from.bind(_ar), _isArray: _ar.isArray.bind(_ar)
     };
-    Q.Ext('addClass', function (classes) {
+    const getPrivateRefs = function() {
+        if (this instanceof Q || this === Q || this.constructor === QModule) {
+            return PRIVATE_REFS;
+        }
+        return {};
+    };
+    const createInternalProxy = function() {
+        if (this instanceof Q || this === Q || this.constructor === QModule) {
+            return new Proxy(INTERNAL, {
+                get(target, prop) {
+                    return target[prop];
+                },
+                set(target, prop, value) {
+                    target[prop] = value;
+                    return true;
+                },
+                has(target, prop) {
+                    return prop in target;
+                },
+                ownKeys(target) {
+                    return _ob.keys(target);
+                },
+                getOwnPropertyDescriptor(target, prop) {
+                    return _ob.getOwnPropertyDescriptor(target, prop);
+                }
+            });
+        }
+        return {};
+    };
+    function QModule(name, methods = {}) {
+        if (!(this instanceof QModule)) {
+            if (typeof name === 'string' && typeof methods === 'object') {
+                return Q.Module.register(name, methods);
+            }
+            return new QModule(name, methods);
+        }
+        this.name = name;
+        this.methods = methods;
+        this.initialized = false;
+        this.config = _n;
+        this.state = _n;
+        this.init = config => {
+            this.config = config || {};
+            this.initialized = true;
+            if (this.methods.init) {
+                this.methods.init.call(this, this.config);
+            }
+            return this;
+        };
+        this.addMethod = (methodName, methodFunc) => {
+            if (typeof methodName === 'string' && typeof methodFunc === 'function') {
+                this.methods[methodName] = methodFunc;
+                this.initialized && this.createStaticMethod(methodName, methodFunc);
+            }
+            return this;
+        };
+        this.addMethods = methodsObj => {
+            if (typeof methodsObj === 'object') {
+                const keys = _ob.keys(methodsObj);
+                for (let i = 0; i < keys.length; i++) {
+                    const key = keys[i];
+                    this.methods[key] = methodsObj[key];
+                    this.initialized && this.createStaticMethod(key, methodsObj[key]);
+                }
+            }
+            return this;
+        };
+        this.createStaticMethod = (methodName, methodFunc) => {
+            (Q[this.name] = Q[this.name] || {})[methodName] = (...args) => {
+                const result = methodFunc.apply(this, args);
+                return result !== _un ? result : Q[this.name];
+            };
+            Q[this.name]._ = getPrivateRefs.bind(this);
+            _ob.defineProperty(Q[this.name], '_internal', {
+                get: () => createInternalProxy.call(this),
+                enumerable: false,
+                configurable: false
+            });
+        };
+        if (name && typeof name === 'string') {
+            INTERNAL.moduleInstances.set(name, this);
+            this.init();
+            const keys = _ob.keys(this.methods);
+            for (let i = 0; i < keys.length; i++) {
+                const methodName = keys[i];
+                methodName !== 'init' && this.createStaticMethod(methodName, this.methods[methodName]);
+            }
+        }
+    }
+    QModule.register = (name, methods = {}) => {
+        if (INTERNAL.moduleRegistry.has(name)) {
+            const existingModule = INTERNAL.moduleInstances.get(name);
+            if (existingModule) {
+                existingModule.addMethods(methods);
+            } else {
+                const existingMethods = INTERNAL.moduleRegistry.get(name);
+                const keys = _ob.keys(methods);
+                for (let i = 0; i < keys.length; i++) {
+                    existingMethods[keys[i]] = methods[keys[i]];
+                }
+                INTERNAL.moduleRegistry.set(name, existingMethods);
+            }
+        } else {
+            INTERNAL.moduleRegistry.set(name, methods);
+            new QModule(name, methods);
+        }
+        return Q;
+    };
+    QModule.extend = (name, methodName, methodFunc) => {
+        if (typeof methodFunc === 'object') {
+            const methodsObj = methodName;
+            INTERNAL.moduleInstances.has(name) ? 
+                INTERNAL.moduleInstances.get(name).addMethods(methodsObj) :
+                QModule.register(name, methodsObj);
+        } else {
+            INTERNAL.moduleInstances.has(name) ?
+                INTERNAL.moduleInstances.get(name).addMethod(methodName, methodFunc) :
+                QModule.register(name, { [methodName]: methodFunc });
+        }
+        return Q;
+    };
+    QModule.get = name => INTERNAL.moduleInstances.get(name) || _n;
+    QModule.exists = name => INTERNAL.moduleInstances.has(name);
+    QModule.list = () => _ar.from(INTERNAL.moduleInstances.keys());
+    QModule.remove = name => {
+        if (INTERNAL.moduleInstances.has(name)) {
+            INTERNAL.moduleInstances.delete(name);
+            INTERNAL.moduleRegistry.delete(name);
+            Q[name] && delete Q[name];
+        }
+        return Q;
+    };
+    QModule.prototype = (methodName, methodFunc) => {
+        if (typeof methodName === 'object') {
+            const entries = _ob.entries(methodName);
+            for (let i = 0; i < entries.length; i++) {
+                Q.prototype[entries[i][0]] = entries[i][1];
+            }
+        } else {
+            Q.prototype[methodName] = methodFunc;
+        }
+        return Q;
+    };
+    QModule.global = (methodName, methodFunc) => {
+        if (typeof methodName === 'object') {
+            const entries = _ob.entries(methodName);
+            for (let i = 0; i < entries.length; i++) {
+                Q[entries[i][0]] = entries[i][1];
+            }
+        } else {
+            Q[methodName] = methodFunc;
+        }
+        return Q;
+    };
+    Q.Module = QModule;
+    Q.Module.register = QModule.register;
+    Q.Method = (methodName, methodFunc) => QModule.prototype(methodName, methodFunc);
+    Q.Function = (methodName, methodFunc) => QModule.global(methodName, methodFunc);
+    Object.defineProperty(Q, '_', {
+        get: getPrivateRefs,
+        enumerable: false,
+        configurable: false
+    });
+    Object.defineProperty(Q.prototype, '_', {
+        get: getPrivateRefs,
+        enumerable: false,
+        configurable: false
+    });
+    Object.defineProperty(Q, '_internal', {
+        get: function() { return createInternalProxy.call(this); },
+        enumerable: false,
+        configurable: false
+    });
+    Object.defineProperty(Q.prototype, '_internal', {
+        get: function() { return createInternalProxy.call(this); },
+        enumerable: false,
+        configurable: false
+    });
+    QModule.prototype('module', function (moduleName, methodName, ...args) {
+        const module = INTERNAL.moduleInstances.get(moduleName);
+        if (module && module.methods[methodName]) {
+            const result = module.methods[methodName].apply(module, [this, ...args]);
+            return result instanceof Q ? result : this;
+        }
+        return this;
+    });
+    Q._perf = (() => {
+        let metrics = {};
+        return {
+            start: label => { metrics[label] = performance.now(); },
+            end: label => {
+                if (metrics[label]) {
+                    const duration = performance.now() - metrics[label];
+                    delete metrics[label];
+                    return duration;
+                }
+                return 0;
+            },
+            memory: () => performance.memory ? {
+                used: Math.round(performance.memory.usedJSHeapSize / 1024 / 1024 * 100) / 100,
+                total: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024 * 100) / 100,
+                limit: Math.round(performance.memory.jsHeapSizeLimit / 1024 / 1024 * 100) / 100
+            } : null,
+            internal: () => ({
+                modules: INTERNAL.moduleInstances.size,
+                registry: INTERNAL.moduleRegistry.size,
+                styleElements: INTERNAL.styleData.e.length,
+                styleSize: INTERNAL.styleData.r.length + INTERNAL.styleData.g.length + 
+                          _ob.values(INTERNAL.styleData.s).join('').length
+            })
+        };
+    })();
+    Q.Method('addClass', function (classes) {
     var list = classes.split(' '),
         nodes = this.nodes;
     for (var i = 0, l = nodes.length; i < l; i++) {
@@ -221,7 +433,7 @@ const Q = (() => {
     }
     return this;
 });
-Q.Ext('after', function (...contents) {
+Q.Method('after', function (...contents) {
   const nodes = this.nodes;
   for (let i = 0, len = nodes.length; i < len; i++) {
     const target = nodes[i];
@@ -259,7 +471,7 @@ Q.Ext('after', function (...contents) {
   }
   return this;
 });
-Q.Ext('animate', function (duration, properties, callback) {
+Q.Method('animate', function (duration, properties, callback) {
   var nodes = this.nodes;
   for (var i = 0, len = nodes.length; i < len; i++) {
     var element = nodes[i],
@@ -281,7 +493,7 @@ Q.Ext('animate', function (duration, properties, callback) {
   }
   return this;
 });
-Q.Ext('append', function (...contents) {
+Q.Method('append', function (...contents) {
   const nodes = this.nodes;
   for (let i = 0, len = nodes.length; i < len; i++) {
     const parent = nodes[i];
@@ -307,7 +519,7 @@ Q.Ext('append', function (...contents) {
   }
   return this;
 });
-Q.Ext('attr', function (attribute, value) {
+Q.Method('attr', function (attribute, value) {
     var nodes = this.nodes;
     if (typeof attribute === 'object') {
         var keys = Object.keys(attribute);
@@ -328,7 +540,7 @@ Q.Ext('attr', function (attribute, value) {
         return this;
     }
 });
-Q.Ext('before', function (...contents) {
+Q.Method('before', function (...contents) {
   const nodes = this.nodes;
   for (let i = 0, len = nodes.length; i < len; i++) {
     const target = nodes[i];
@@ -352,7 +564,7 @@ Q.Ext('before', function (...contents) {
   }
   return this;
 });
-Q.Ext('bind', function (event, handler) {
+Q.Method('bind', function (event, handler) {
     if (!this._eventDelegation) {
         this._eventDelegation = {};
     }
@@ -369,14 +581,14 @@ Q.Ext('bind', function (event, handler) {
     }
     return this;
 });
-Q.Ext('blur', function () {
+Q.Method('blur', function () {
     var nodes = this.nodes;
     for (var i = 0, l = nodes.length; i < l; i++) {
         nodes[i].blur();
     }
     return this;
 });
-Q.Ext('children', function (selector) {
+Q.Method('children', function (selector) {
   const result = [];
   const nodes = this.nodes;
   for (let i = 0, len = nodes.length; i < len; i++) {
@@ -397,17 +609,17 @@ Q.Ext('children', function (selector) {
   }
   return new Q(result);
 });
-Q.Ext('click', function () {
+Q.Method('click', function () {
     var nodes = this.nodes;
     for (var i = 0, l = nodes.length; i < l; i++) {
         nodes[i].click();
     }
     return this;
 });
-Q.Ext('clone', function () {
+Q.Method('clone', function () {
     return new Q(this.nodes[0].cloneNode(true));
 });
-Q.Ext('closest', function (selector) {
+Q.Method('closest', function (selector) {
     let node = this.nodes[0];
     while (node) {
         if (node.matches && node.matches(selector)) {
@@ -417,7 +629,7 @@ Q.Ext('closest', function (selector) {
     }
     return null;
 });
-Q.Ext('css', function(property, value) {
+Q.Method('css', function(property, value) {
   const nodes = this.nodes;
   if (typeof property === 'object') {
       for (let i = 0, len = nodes.length; i < len; i++) {
@@ -434,7 +646,7 @@ Q.Ext('css', function(property, value) {
   }
   return this;
 });
-Q.Ext('data', function (key, value) {
+Q.Method('data', function (key, value) {
     const nodes = this.nodes;
     if (value === Q._.un) {
         return nodes[0] && nodes[0].dataset[key] || Q._.n;
@@ -444,7 +656,7 @@ Q.Ext('data', function (key, value) {
     }
     return this;
 });
-Q.Ext('detach', function() {
+Q.Method('detach', function() {
     const nodes = this.nodes;
     const detachedNodes = [];
     for (let i = 0, len = nodes.length; i < len; i++) {
@@ -458,7 +670,7 @@ Q.Ext('detach', function() {
     this.nodes = detachedNodes;
     return this;
 });
-Q.Ext('each', function (callback) {
+Q.Method('each', function (callback) {
     if (!this.nodes) return this;
     const nodes = this.nodes;
     for (let i = 0, len = nodes.length; i < len; i++) {
@@ -466,18 +678,18 @@ Q.Ext('each', function (callback) {
     }
     return this;
 });
-Q.Ext('empty', function () {
+Q.Method('empty', function () {
   var nodes = this.nodes;
   for (var i = 0, len = nodes.length; i < len; i++) {
     nodes[i].innerHTML = '';
   }
   return this;
 });
-Q.Ext('eq', function (index) {
+Q.Method('eq', function (index) {
   var node = this.nodes[index];
   return node ? new Q(node) : null;
 });
-Q.Ext('fadeIn', function(duration, callback) {
+Q.Method('fadeIn', function(duration, callback) {
     duration = duration || 400;
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
@@ -495,7 +707,7 @@ Q.Ext('fadeIn', function(duration, callback) {
     }
     return this;
 });
-Q.Ext('fadeOut', function(duration, callback) {
+Q.Method('fadeOut', function(duration, callback) {
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         (function(el) {
@@ -511,7 +723,7 @@ Q.Ext('fadeOut', function(duration, callback) {
     }
     return this;
 });
-Q.Ext('fadeTo', function(opacity, duration, callback) {
+Q.Method('fadeTo', function(opacity, duration, callback) {
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         (function(el) {
@@ -527,7 +739,7 @@ Q.Ext('fadeTo', function(opacity, duration, callback) {
     }
     return this;
 });
-Q.Ext('fadeToggle', function(duration, callback) {
+Q.Method('fadeToggle', function(duration, callback) {
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         var computed = window.getComputedStyle(nodes[i]);
@@ -539,27 +751,27 @@ Q.Ext('fadeToggle', function(duration, callback) {
     }
     return this;
 });
-Q.Ext('find', function(selector) {
+Q.Method('find', function(selector) {
     var parent = this.nodes[0];
     if (!parent) return null;
     var found = parent.querySelectorAll(selector);
     return found.length ? Q(found) : null;
 });
-Q.Ext('first', function () {
+Q.Method('first', function () {
     return new Q(this.nodes[0]);
 });
-Q.Ext('focus', function () {
+Q.Method('focus', function () {
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         nodes[i].focus();
     }
     return this;
 });
-Q.Ext('hasClass', function(className) {
+Q.Method('hasClass', function(className) {
     var node = this.nodes[0];
     return (node && node.classList.contains(className)) || false;
 });
-Q.Ext('height', function (value) {
+Q.Method('height', function (value) {
     var nodes = this.nodes;
     if (value === undefined) {
         return nodes[0].offsetHeight;
@@ -569,7 +781,7 @@ Q.Ext('height', function (value) {
     }
     return this;
 });
-Q.Ext('hide', function (duration, callback) {
+Q.Method('hide', function (duration, callback) {
     duration = duration || 0;
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
@@ -595,7 +807,7 @@ Q.Ext('hide', function (duration, callback) {
     }
     return this;
 });
-Q.Ext('html', function (content) {
+Q.Method('html', function (content) {
     var nodes = this.nodes;
     if (content === undefined) {
         return nodes[0] ? nodes[0].innerHTML : null;
@@ -630,13 +842,13 @@ Q.Ext('html', function (content) {
     }
     return this;
 });
-Q.Ext('id', function (ident) {
+Q.Method('id', function (ident) {
     var node = this.nodes[0];
     if (ident === undefined) return node.id;
     node.id = ident;
     return this;
 });
-Q.Ext('index', function (index) {
+Q.Method('index', function (index) {
     var first = this.nodes[0];
     if (index === undefined) {
         return Array.prototype.indexOf.call(first.parentNode.children, first);
@@ -656,11 +868,11 @@ Q.Ext('index', function (index) {
     }
     return this;
 });
-Q.Ext('inside', function (selector) {
+Q.Method('inside', function (selector) {
     var node = this.nodes[0];
     return node ? node.closest(selector) !== null : false;
 });
-Q.Ext('is', function (selector) {
+Q.Method('is', function (selector) {
     var node = this.nodes[0];
     if (!node) return false;
     if (typeof selector === 'function') {
@@ -698,18 +910,18 @@ Q.Ext('is', function (selector) {
     }
     return false;
 });
-Q.Ext('isExists', function () {
+Q.Method('isExists', function () {
     var node = this.nodes[0];
     return node ? document.body.contains(node) : false;
 });
 Q.isExists = function (selector) {
     return document.querySelector(selector) !== null;
 };
-Q.Ext('last', function () {
+Q.Method('last', function () {
     var nodes = this.nodes;
     return new Q(nodes[nodes.length - 1]);
 });
-Q.Ext('map', function (callback) {
+Q.Method('map', function (callback) {
     var result = [],
         nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
@@ -717,7 +929,7 @@ Q.Ext('map', function (callback) {
     }
     return result;
 });
-Q.Ext('next', function(selector) {
+Q.Method('next', function(selector) {
     const result = [];
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const node = this.nodes[i];
@@ -730,7 +942,7 @@ Q.Ext('next', function(selector) {
     instance.nodes = result;
     return instance;
 });
-Q.Ext('off', function (events, handler, options) {
+Q.Method('off', function (events, handler, options) {
     var defaultOptions = { capture: false, once: false, passive: false },
         opts = Object.assign({}, defaultOptions, options),
         eventList = events.split(' '),
@@ -742,7 +954,7 @@ Q.Ext('off', function (events, handler, options) {
     }
     return this;
 });
-Q.Ext('offset', function () {
+Q.Method('offset', function () {
     var node = this.nodes[0],
         rect = node.getBoundingClientRect();
     return {
@@ -750,7 +962,7 @@ Q.Ext('offset', function () {
         left: rect.left + window.scrollX
     };
 });
-Q.Ext('on', function (events, handler, options) {
+Q.Method('on', function (events, handler, options) {
     var defaultOptions = { capture: false, once: false, passive: false },
         opts = Object.assign({}, defaultOptions, options),
         eventList = events.split(' '),
@@ -762,18 +974,18 @@ Q.Ext('on', function (events, handler, options) {
     }
     return this;
 });
-Q.Ext('parent', function () {
+Q.Method('parent', function () {
     var node = this.nodes[0];
     return new Q(node ? node.parentNode : null);
 });
-Q.Ext('position', function () {
+Q.Method('position', function () {
     var node = this.nodes[0];
     return {
         top: node.offsetTop,
         left: node.offsetLeft
     };
 });
-Q.Ext('prepend', function () {
+Q.Method('prepend', function () {
     var nodes = this.nodes,
         contents = Array.prototype.slice.call(arguments),
         i, j, k, parent, child, subNodes;
@@ -797,7 +1009,7 @@ Q.Ext('prepend', function () {
     }
     return this;
 });
-Q.Ext('prev', function(selector) {
+Q.Method('prev', function(selector) {
     const result = [];
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const node = this.nodes[i];
@@ -810,7 +1022,7 @@ Q.Ext('prev', function(selector) {
     instance.nodes = result;
     return instance;
 });
-Q.Ext('prop', function (property, value) {
+Q.Method('prop', function (property, value) {
     var nodes = this.nodes;
     if (value === undefined) {
         return nodes[0] ? nodes[0][property] : null;
@@ -820,46 +1032,46 @@ Q.Ext('prop', function (property, value) {
     }
     return this;
 });
-Q.Ext('remove', function() {
+Q.Method('remove', function() {
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         nodes[i].remove();
     }
     return this;
 });
-Q.Ext('removeAttr', function (attribute) {
+Q.Method('removeAttr', function (attribute) {
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         nodes[i].removeAttribute(attribute);
     }
     return this;
 });
-Q.Ext('removeClass', function (classes) {
+Q.Method('removeClass', function (classes) {
     var list = classes.split(' ');
     for (var i = 0, len = this.nodes.length; i < len; i++) {
         this.nodes[i].classList.remove.apply(this.nodes[i].classList, list);
     }
     return this;
 });
-Q.Ext('removeData', function (key) {
+Q.Method('removeData', function (key) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         delete this.nodes[i].dataset[key];
     }
     return this;
 });
-Q.Ext('removeProp', function (property) {
+Q.Method('removeProp', function (property) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         delete this.nodes[i][property];
     }
     return this;
 });
-Q.Ext('removeTransition', function () {
+Q.Method('removeTransition', function () {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         this.nodes[i].style.transition = '';
     }
     return this;
 });
-Q.Ext('replaceWith', function(newContent) {
+Q.Method('replaceWith', function(newContent) {
     const nodes = this.nodes;
     let newNodes = (newContent instanceof Q) ? newContent.nodes : [newContent];
     for (let i = 0, l = nodes.length; i < l; i++) {
@@ -873,11 +1085,11 @@ Q.Ext('replaceWith', function(newContent) {
     }
     return this;
 });
-Q.Ext('scrollHeight', function () {
+Q.Method('scrollHeight', function () {
     var node = this.nodes[0];
     return node.scrollHeight;
 });
-Q.Ext('scrollLeft', function (value, increment) {
+Q.Method('scrollLeft', function (value, increment) {
     const node = this.nodes[0];
     if (value === undefined) {
         return node.scrollLeft;
@@ -891,7 +1103,7 @@ Q.Ext('scrollLeft', function (value, increment) {
     }
     return this;
 });
-Q.Ext('scrollTop', function (value, increment) {
+Q.Method('scrollTop', function (value, increment) {
     const node = this.nodes[0];
     if (value === undefined) {
         return node.scrollTop;
@@ -905,11 +1117,11 @@ Q.Ext('scrollTop', function (value, increment) {
     }
     return this;
 });
-Q.Ext('scrollWidth', function () {
+Q.Method('scrollWidth', function () {
     var node = this.nodes[0];
     return node.scrollWidth;
 });
-Q.Ext('show', function (duration = 0, callback) {
+Q.Method('show', function (duration = 0, callback) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const element = this.nodes[i];
         if (duration === 0) {
@@ -930,7 +1142,7 @@ Q.Ext('show', function (duration = 0, callback) {
     }
     return this;
 });
-Q.Ext('siblings', function(selector) {
+Q.Method('siblings', function(selector) {
     const result = [];
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const node = this.nodes[i];
@@ -950,14 +1162,14 @@ Q.Ext('siblings', function(selector) {
     instance.nodes = result;
     return instance;
 });
-Q.Ext('size', function () {
+Q.Method('size', function () {
     const node = this.nodes[0];
 	return {
 		width: node.offsetWidth,
 		height: node.offsetHeight
 	};
 });
-Q.Ext('text', function (content) {
+Q.Method('text', function (content) {
     if (content === undefined) {
         return this.nodes[0]?.textContent || null;
     }
@@ -966,26 +1178,26 @@ Q.Ext('text', function (content) {
     }
     return this;
 });
-Q.Ext('toggle', function () {
+Q.Method('toggle', function () {
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         nodes[i].style.display = (nodes[i].style.display === 'none' ? '' : 'none');
     }
     return this;
 });
-Q.Ext('toggleClass', function (className) {
+Q.Method('toggleClass', function (className) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         this.nodes[i].classList.toggle(className);
     }
     return this;
 });
-Q.Ext('trigger', function (event) {
+Q.Method('trigger', function (event) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         this.nodes[i].dispatchEvent(new Event(event));
     }
     return this;
 });
-Q.Ext('unwrap', function () {
+Q.Method('unwrap', function () {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const el = this.nodes[i];
         const parent = el.parentNode;
@@ -995,24 +1207,24 @@ Q.Ext('unwrap', function () {
     }
     return this;
 });
-Q.Ext('val', function(input) {
+Q.Method('val', function(input) {
     if (input === undefined) return this.nodes[0]?.value || null;
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         this.nodes[i].value = input;
     }
     return this;
 });
-Q.Ext('wait', function(ms) {
+Q.Method('wait', function(ms) {
 	return new Promise(resolve => setTimeout(() => resolve(this), ms));
 });
-Q.Ext('walk', function (callback, useQObject = false) {
+Q.Method('walk', function (callback, useQObject = false) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const node = useQObject ? Q(this.nodes[i]) : this.nodes[i];
         callback.call(this.nodes[i], node, i);
     }
     return this;
 });
-Q.Ext('width', function (value) {
+Q.Method('width', function (value) {
     if (typeof value === 'undefined') {
         return this.nodes[0] ? this.nodes[0].offsetWidth : undefined;
     }
@@ -1021,7 +1233,7 @@ Q.Ext('width', function (value) {
     }
     return this;
 });
-Q.Ext('wrap', function (wrapper) {
+Q.Method('wrap', function (wrapper) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const node = this.nodes[i];
         const parent_Node = node.parentNode;
@@ -1038,7 +1250,7 @@ Q.Ext('wrap', function (wrapper) {
     }
     return this;
 });
-Q.Ext('wrapAll', function (wrapper) {
+Q.Method('wrapAll', function (wrapper) {
     if (!this.nodes.length) return this;
     const parent = this.nodes[0].parentNode;
     let newParent = typeof wrapper === 'string'
@@ -1051,7 +1263,7 @@ Q.Ext('wrapAll', function (wrapper) {
     }
     return this;
 });
-Q.Ext('zIndex', function (value) {
+Q.Method('zIndex', function (value) {
     const node = this.nodes[0];
     if (!node) return;
     if (value === undefined) {
@@ -1364,16 +1576,17 @@ Container.prototype.Frame = function(options = {}) {
     root.addClass(direction === 'horizontal' ? Container.frameClasses.frame_horizontal : Container.frameClasses.frame_vertical);
     const frameId = options.id || null;
     const savePosition = !!options.savePosition;
-    const storageKey = options.storageKey;
+    const storageKey = (options.storageKey === 'settings.frames' || !options.storageKey) ? 'set.frame' : options.storageKey;
     const minSize = options.minSize;
     const responsive = !!options.responsive;
     const responsivesMaxCount = options.responsivesMaxCount || 5;
+    const storageInstance = new Q.Storage();
     function getSavedFrames() {
-        return Q.Storage(storageKey) || {};
+        return storageInstance.get(storageKey) || {};
     }
     function saveFrames(framesObj) {
         console.log('Saving frames:', framesObj);
-        Q.Storage(storageKey, framesObj);
+        storageInstance.set(storageKey, framesObj);
     }
     function clearFramePos(id) {
         const all = getSavedFrames();
@@ -1386,12 +1599,15 @@ Container.prototype.Frame = function(options = {}) {
         const px = direction === 'horizontal'
             ? window.innerWidth
             : window.innerHeight;
-        return Math.floor(px / 100); // pl. 1842 -> 18
+        return Math.floor(px / 100); // e.g. 1842 -> 18
     }
     function findSavedSizeByBucket(saved, bucket) {
         if (!saved || !Array.isArray(saved) || saved.length === 0) return null;
         for (let i = 0; i < saved.length; ++i) {
             const entry = saved[i];
+            if (entry && typeof entry.ssb === 'number' && entry.ssb === bucket) {
+                return entry;
+            }
             if (entry && typeof entry.screenSizeBucket === 'number' && entry.screenSizeBucket === bucket) {
                 return entry;
             }
@@ -1425,7 +1641,16 @@ Container.prototype.Frame = function(options = {}) {
         if (savePosition && frameId) {
             const all = getSavedFrames();
             if (all[frameId]) {
-                if (responsive && Array.isArray(all[frameId].responsive)) {
+                if (responsive && Array.isArray(all[frameId].r)) {
+                    savedResponsiveList = all[frameId].r;
+                    const found = findSavedSizeByBucket(savedResponsiveList, currentScreenSizeBucket);
+                    if (found && Array.isArray(found.s) && found.s.length === frameDefs.length) {
+                        savedSizes = found.s;
+                    }
+                } else if (Array.isArray(all[frameId].s) && all[frameId].s.length === frameDefs.length) {
+                    savedSizes = all[frameId].s;
+                }
+                else if (responsive && Array.isArray(all[frameId].responsive)) {
                     savedResponsiveList = all[frameId].responsive;
                     const found = findSavedSizeByBucket(savedResponsiveList, currentScreenSizeBucket);
                     if (found && Array.isArray(found.sizes) && found.sizes.length === frameDefs.length) {
@@ -1577,25 +1802,25 @@ Container.prototype.Frame = function(options = {}) {
                     if (direction === 'horizontal') {
                         const px = sec.nodes[0].getBoundingClientRect().width;
                         const parentPx = root.nodes[0].clientWidth;
-                        return (px / parentPx * 100) + '%';
+                        return (px / parentPx * 100).toFixed(2) + '%';
                     } else {
                         const px = sec.nodes[0].getBoundingClientRect().height;
                         const parentPx = root.nodes[0].clientHeight;
-                        return (px / parentPx * 100) + '%';
+                        return (px / parentPx * 100).toFixed(2) + '%';
                     }
                 });
                 const all = getSavedFrames();
                 if (responsive) {
                     let responsiveArr = (all[frameId] && Array.isArray(all[frameId].responsive)) ? all[frameId].responsive : [];
                     const screenSizeBucket = getScreenSizeBucket();
-                    responsiveArr = responsiveArr.filter(entry => entry.screenSizeBucket !== screenSizeBucket);
+                    responsiveArr = responsiveArr.filter(entry => entry.ssb !== screenSizeBucket);
                     if (responsiveArr.length >= responsivesMaxCount) {
                         responsiveArr.shift();
                     }
-                    responsiveArr.push({ screenSizeBucket, sizes });
-                    all[frameId] = { responsive: responsiveArr };
+                    responsiveArr.push({ ssb: screenSizeBucket, s: sizes });
+                    all[frameId] = { r: responsiveArr };
                 } else {
-                    all[frameId] = { sizes };
+                    all[frameId] = { s: sizes };
                 }
                 saveFrames(all);
             }
@@ -2216,10 +2441,6 @@ Container.prototype.Window = function (options = {}) {
         shadowOffsetX: 0,
         shadowOffsetY: 5,
         shadowSpread: 0,
-        blur: false,
-        blurInactive: false,
-        blurRadius: 10,
-        blurGradientOpacity: 0.3,
     };
     if (!Container.windowClassesInitialized) {
         Container.windowClasses = Q.style(`
@@ -2232,6 +2453,7 @@ Container.prototype.Window = function (options = {}) {
             --window-button-text: #ffffff;
             --window-close-color: #e74c3c;
             --window-titlebar-height: 28px; /* Add fixed titlebar height */
+            --window-container-border: 1px solid rgba(255,255,255,0.1);
         `, `
             .window_container {
                 position: fixed; /* Change from absolute to fixed */
@@ -2243,6 +2465,16 @@ Container.prototype.Window = function (options = {}) {
                 z-index: 1000;
                 transition-property: opacity, transform, width, height, top, left;
                 transition-timing-function: ease-out;
+                outline: var(--window-container-border);
+            }
+            .window_container.window_active {
+                box-shadow: 0 8px 32px 0 rgba(0,0,0,0.45), 0 1.5px 8px 0 rgba(0,0,0,0.25);
+            }
+            .window_container:not(.window_active) {
+                box-shadow: 0 2px 8px 0 rgba(0,0,0,0.18);
+            }
+            .window_titlebar.window_inactive {
+                background-color: #333 !important;
             }
             .window_titlebar {
                 color: var(--window-titlebar-text);
@@ -2269,7 +2501,6 @@ Container.prototype.Window = function (options = {}) {
                 height:100%;
             }
             .window_button {
-                background-color: var(--window-button-bg);
                 cursor: default;
                 display: flex;
                 align-items: center;
@@ -2389,14 +2620,16 @@ Container.prototype.Window = function (options = {}) {
                 pointer-events: none;
             }
             .window_taskbar_btn {
+            user-select: none;
                 min-width: 100px;
                 max-width: 220px;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
                 background: #222;
+                margin-right: 1px;
+                outline: none;
                 color: #fff;
-                border: 1px solid #444;
                 border-radius: 4px;
                 padding: 0 12px;
                 height: 28px;
@@ -2476,78 +2709,17 @@ Container.prototype.Window = function (options = {}) {
         windowElement.css({ boxShadow: 'none' });
     }
     const titlebar = Q('<div>', { class: Container.windowClasses.window_titlebar });
-    function setTitlebarBlurElement(titlebarElem, active, blurRadius, gradientOpacity, animateMs) {
-        if (!titlebarElem) return;
-        if (typeof animateMs === 'number' && animateMs > 0) {
-            titlebarElem.style.transition = `backdrop-filter ${animateMs}ms, -webkit-backdrop-filter ${animateMs}ms, background-image ${animateMs}ms`;
-        } else {
-            titlebarElem.style.transition = '';
-        }
-        if (active) {
-            titlebarElem.style.backdropFilter = `blur(${blurRadius}px)`;
-            titlebarElem.style.WebkitBackdropFilter = `blur(${blurRadius}px)`;
-            titlebarElem.style.backgroundColor = 'transparent';
-            const buttonBg = getComputedStyle(document.documentElement)
-                .getPropertyValue('--window-button-bg') || '#111';
-            const leftAlpha = Math.max(0, Math.min(1, gradientOpacity));
-            titlebarElem.style.backgroundImage =
-                `linear-gradient(to right, rgba(17,17,17,${leftAlpha}), ${buttonBg.trim()} 80%)`;
-        } else {
-            titlebarElem.style.backdropFilter = 'blur(0px)';
-            titlebarElem.style.WebkitBackdropFilter = 'blur(0px)';
-            titlebarElem.style.backgroundColor = '';
-            titlebarElem.style.backgroundImage = '';
-        }
-    }
-    function updateAllTitlebarBlur() {
-        const allWindows = document.querySelectorAll('.' + Container.windowClasses.window_container);
-        let maxZ = -Infinity, activeWindow = null;
-        allWindows.forEach(win => {
-            const z = parseInt(win.style.zIndex || window.getComputedStyle(win).zIndex, 10) || 0;
-            if (z > maxZ) {
-                maxZ = z;
-                activeWindow = win;
-            }
-        });
-        allWindows.forEach(win => {
-            const tb = win.querySelector('.' + Container.windowClasses.window_titlebar);
-            if (!tb) return;
-            if (settings.blurInactive) {
-                setTitlebarBlurElement(
-                    tb,
-                    win !== activeWindow,
-                    settings.blurRadius,
-                    settings.blurGradientOpacity,
-                    settings.animate
-                );
-            } else if (settings.blur) {
-                setTitlebarBlurElement(tb, true, settings.blurRadius, settings.blurGradientOpacity, 0);
-            } else {
-                setTitlebarBlurElement(tb, false, settings.blurRadius, settings.blurGradientOpacity, 0);
-            }
-        });
-    }
-    if (settings.blurInactive) {
-        setTimeout(updateAllTitlebarBlur, 0);
-        windowElement.on('mousedown', function () {
-            setTimeout(updateAllTitlebarBlur, 0);
-        });
-    } else if (settings.blur) {
-        setTitlebarBlurElement(titlebar.nodes[0], true, settings.blurRadius, settings.blurGradientOpacity, 0);
-    } else {
-        setTitlebarBlurElement(titlebar.nodes[0], false, settings.blurRadius, settings.blurGradientOpacity, 0);
-    }
     const titleElement = Q('<div>', { class: Container.windowClasses.window_title }).text(settings.title);
     const controls = Q('<div>', { class: Container.windowClasses.window_controls });
     const contentContainer = Q('<div>', { class: Container.windowClasses.window_content });
-    if (settings.minimizable) {
+    if (settings.minimizable && settings.maximizable) {
         const minimizeButton = Q('<div>', {
             class: Container.windowClasses.window_button + ' ' + Container.windowClasses.window_minimize
         });
         minimizeButton.append(this.Icon('window-minimize').addClass(Container.windowClasses.window_button_icon));
         controls.append(minimizeButton);
     }
-    if (settings.maximizable) {
+    if (settings.minimizable && settings.maximizable) {
         const maximizeButton = Q('<div>', {
             class: Container.windowClasses.window_button + ' ' + Container.windowClasses.window_maximize
         });
@@ -2630,6 +2802,28 @@ Container.prototype.Window = function (options = {}) {
         previousState.x = position.left;
         previousState.y = position.top;
     }
+    function updateActiveWindowClass() {
+        const allWindows = document.querySelectorAll('.' + Container.windowClasses.window_container);
+        let maxZ = -Infinity, activeWindow = null;
+        allWindows.forEach(win => {
+            const z = parseInt(win.style.zIndex || window.getComputedStyle(win).zIndex, 10) || 0;
+            if (z > maxZ) {
+                maxZ = z;
+                activeWindow = win;
+            }
+        });
+        allWindows.forEach(win => {
+            const tb = win.querySelector('.' + Container.windowClasses.window_titlebar);
+            if (!tb) return;
+            if (win === activeWindow) {
+                win.classList.add('window_active');
+                tb.classList.remove('window_inactive');
+            } else {
+                win.classList.remove('window_active');
+                tb.classList.add('window_inactive');
+            }
+        });
+    }
     function bringToFront() {
         const windowIndex = Container.openWindows.indexOf(windowElement.nodes[0]);
         if (windowIndex !== -1) {
@@ -2637,7 +2831,7 @@ Container.prototype.Window = function (options = {}) {
         }
         Container.openWindows.push(windowElement.nodes[0]);
         updateZIndices();
-        if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
+        setTimeout(updateActiveWindowClass, 0);
     }
     function updateZIndices() {
         const baseZIndex = settings.zIndex;
@@ -2913,6 +3107,7 @@ Container.prototype.Window = function (options = {}) {
                 windowElement.detach();
                 isMinimized = true;
                 isAnimating = false;
+                setTimeout(updateActiveWindowClass, 0);
             }, settings.animate + 10);
         } else {
             Q('body').append(windowElement);
@@ -2961,6 +3156,7 @@ Container.prototype.Window = function (options = {}) {
                 isMinimized = false;
                 bringToFront();
                 isAnimating = false;
+                setTimeout(updateActiveWindowClass, 0);
             }, settings.animate + 10);
         }
     }
@@ -3001,6 +3197,7 @@ Container.prototype.Window = function (options = {}) {
                 previousState.x = start.left;
                 previousState.y = start.top;
                 isAnimating = false;
+                setTimeout(updateActiveWindowClass, 0);
             }, settings.animate + 10);
         } else {
             const end = {
@@ -3032,6 +3229,7 @@ Container.prototype.Window = function (options = {}) {
                 windowElement.css({ transition: '', willChange: '' });
                 isMaximized = false;
                 isAnimating = false;
+                setTimeout(updateActiveWindowClass, 0);
             }, settings.animate + 10);
         }
     }
@@ -3064,6 +3262,7 @@ Container.prototype.Window = function (options = {}) {
                 }
                 windowElement.remove();
                 isOpen = false;
+                setTimeout(updateActiveWindowClass, 0);
             }, settings.animate);
         } else {
             if (windowElement.nodes[0]._resizeHandler) {
@@ -3077,6 +3276,7 @@ Container.prototype.Window = function (options = {}) {
             }
             windowElement.remove();
             isOpen = false;
+            setTimeout(updateActiveWindowClass, 0);
         }
         setTimeout(function () {
             const selector = '.' + (Container.windowClasses.window_container || 'window_container');
@@ -3087,9 +3287,6 @@ Container.prototype.Window = function (options = {}) {
                 }
             }
         }, 0);
-        if (settings.blurInactive) {
-            setTimeout(updateAllTitlebarBlur, 0);
-        }
     }
     function handleWindowResize() {
         if (isMaximized) {
@@ -3161,16 +3358,17 @@ Container.prototype.Window = function (options = {}) {
                 setupWindowResizeHandler();
                 isOpen = true;
                 bringToFront();
-                if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
+                setTimeout(updateActiveWindowClass, 0);
             } else {
                 windowElement.show();
                 bringToFront();
+                setTimeout(updateActiveWindowClass, 0);
             }
             return this;
         },
         Close: function () {
             closeWindow();
-            if (settings.blurInactive) setTimeout(updateAllTitlebarBlur, 0);
+            setTimeout(updateActiveWindowClass, 0);
             return this;
         },
         Content: function (content) {
@@ -3841,7 +4039,7 @@ Form.prototype.ColorPicker = function (options = {}) {
         const block_hsl = Q('<div>', { class: Form.colorPickerClasses.block_hsl + ' ' + Form.colorPickerClasses.picker_blocks });
         const header_hsb = Q('<div>', {
             class: Form.colorPickerClasses.block_header,
-            text: 'HSB Color'
+            text: 'HSL Color' // Changed from 'HSB Color' to 'HSL Color'
         });
         const header_rgb = Q('<div>', {
             class: Form.colorPickerClasses.block_header,
@@ -3910,7 +4108,7 @@ Form.prototype.ColorPicker = function (options = {}) {
         });
         const input_h_obj = createInputWithLabel('number', Form.colorPickerClasses.input_h, 0, 0, 360, 'H:', '°');
         const input_s_obj = createInputWithLabel('number', Form.colorPickerClasses.input_s, 0, 0, 100, 'S:', '%');
-        const input_b_obj = createInputWithLabel('number', Form.colorPickerClasses.input_b, 0, 0, 100, 'B:', '%');
+        const input_b_obj = createInputWithLabel('number', Form.colorPickerClasses.input_b, 0, 0, 100, 'L:', '%'); // Changed 'B:' to 'L:'
         const input_r_obj = createInputWithLabel('number', Form.colorPickerClasses.input_r, 0, 0, 255, 'R:');
         const input_g_obj = createInputWithLabel('number', Form.colorPickerClasses.input_g, 0, 0, 255, 'G:');
         const input_b2_obj = createInputWithLabel('number', Form.colorPickerClasses.input_b2, 0, 0, 255, 'B:');
@@ -3948,92 +4146,142 @@ Form.prototype.ColorPicker = function (options = {}) {
         input_hsl = input_hsl_obj.input;
         input_lab = input_lab_obj.input;
         input_cmyk = input_cmyk_obj.input;
-        function setupInputListeners() {
-            input_h.on('input', updateFromHSB);
-            input_s.on('input', updateFromHSB);
-            input_b.on('input', updateFromHSB);
-            input_r.on('input', updateFromRGB);
-            input_g.on('input', updateFromRGB);
-            input_b2.on('input', updateFromRGB);
-            input_l.on('input', updateFromLAB);
-            input_a.on('input', updateFromLAB);
-            input_b3.on('input', updateFromLAB);
-            input_c.on('input', updateFromCMYK);
-            input_m.on('input', updateFromCMYK);
-            input_y.on('input', updateFromCMYK);
-            input_k.on('input', updateFromCMYK);
-            input_hex.on('input', updateFromHex);
-            input_rgb.on('input', updateFromRGBString);
-            input_hsl.on('input', updateFromHSLString);
-        }
-        function updateFromHSB() {
-            const h = parseInt(input_h.val()) / 360;
-            const s = parseInt(input_s.val()) / 100;
-            const b = parseInt(input_b.val()) / 100;
-            const [r, g, b2] = Q.HSL2RGB(h, s, (2 * b - b * s) / 2); // Convert HSB to RGB
-            updatePickerFromRGB(Math.round(r), Math.round(g), Math.round(b2));
-        }
-        function updateFromRGB() {
-            const r = parseInt(input_r.val());
-            const g = parseInt(input_g.val());
-            const b = parseInt(input_b2.val());
-            updatePickerFromRGB(r, g, b);
-        }
-        function updateFromLAB() {
-            const l = parseFloat(input_l.val());
-            const a = parseFloat(input_a.val());
-            const b = parseFloat(input_b3.val());
-            const [r, g, b2] = labToRGB(l, a, b);
-            updatePickerFromRGB(r, g, b2);
-        }
-        function updateFromCMYK() {
-            const c = parseInt(input_c.val()) / 100;
-            const m = parseInt(input_m.val()) / 100;
-            const y = parseInt(input_y.val()) / 100;
-            const k = parseInt(input_k.val()) / 100;
-            const r = Math.round(255 * (1 - c) * (1 - k));
-            const g = Math.round(255 * (1 - m) * (1 - k));
-            const b = Math.round(255 * (1 - y) * (1 - k));
-            updatePickerFromRGB(r, g, b);
-        }
-        function updateFromHex() {
-            const hex = input_hex.val();
-            if (hex.match(/^#[0-9A-Fa-f]{6}$/)) {
-                const r = parseInt(hex.slice(1, 3), 16);
-                const g = parseInt(hex.slice(3, 5), 16);
-                const b = parseInt(hex.slice(5, 7), 16);
-                updatePickerFromRGB(r, g, b);
+        function setColor({r, g, b, h, s, l, lab, cmyk, hex, hsl, source}) {
+            if (typeof r === 'number' && typeof g === 'number' && typeof b === 'number') {
+                [h, s, l] = Q.RGB2HSL(r, g, b);
+                lab = Q.RGB2LAB(r, g, b);
+                cmyk = Q.RGB2CMYK(r, g, b);
+                hex = '#' + r.toString(16).padStart(2, '0') + g.toString(16).padStart(2, '0') + b.toString(16).padStart(2, '0');
+                hsl = `hsl(${Math.round(h*360)},${Math.round(s*100)}%,${Math.round(l*100)}%)`;
+            } else if (typeof h === 'number' && typeof s === 'number' && typeof l === 'number') {
+                [r, g, b] = Q.HSL2RGB(h, s, l);
+                lab = Q.RGB2LAB(r, g, b);
+                cmyk = Q.RGB2CMYK(r, g, b);
+                hex = '#' + r.toString(16).padStart(2, '0') + g.toString(16).padStart(2, '0') + b.toString(16).padStart(2, '0');
+                hsl = `hsl(${Math.round(h*360)},${Math.round(s*100)}%,${Math.round(l*100)}%)`;
+            } else if (lab && lab.length === 3) {
+                [r, g, b] = Q.LAB2RGB(lab[0], lab[1], lab[2]);
+                [h, s, l] = Q.RGB2HSL(r, g, b);
+                cmyk = Q.RGB2CMYK(r, g, b);
+                hex = '#' + r.toString(16).padStart(2, '0') + g.toString(16).padStart(2, '0') + b.toString(16).padStart(2, '0');
+                hsl = `hsl(${Math.round(h*360)},${Math.round(s*100)}%,${Math.round(l*100)}%)`;
+            } else if (cmyk && cmyk.length === 4) {
+                r = Math.round(255 * (1 - cmyk[0]) * (1 - cmyk[3]));
+                g = Math.round(255 * (1 - cmyk[1]) * (1 - cmyk[3]));
+                b = Math.round(255 * (1 - cmyk[2]) * (1 - cmyk[3]));
+                [h, s, l] = Q.RGB2HSL(r, g, b);
+                lab = Q.RGB2LAB(r, g, b);
+                hex = '#' + r.toString(16).padStart(2, '0') + g.toString(16).padStart(2, '0') + b.toString(16).padStart(2, '0');
+                hsl = `hsl(${Math.round(h*360)},${Math.round(s*100)}%,${Math.round(l*100)}%)`;
+            } else if (typeof hex === 'string' && hex.length === 7) {
+                r = parseInt(hex.slice(1, 3), 16);
+                g = parseInt(hex.slice(3, 5), 16);
+                b = parseInt(hex.slice(5, 7), 16);
+                [h, s, l] = Q.RGB2HSL(r, g, b);
+                lab = Q.RGB2LAB(r, g, b);
+                cmyk = Q.RGB2CMYK(r, g, b);
+                hsl = `hsl(${Math.round(h*360)},${Math.round(s*100)}%,${Math.round(l*100)}%)`;
+            } else if (typeof hsl === 'string') {
+                const match = hsl.match(/hsl\((\d+),(\d+)%?,(\d+)%?\)/);
+                if (match) {
+                    h = parseInt(match[1])/360;
+                    s = parseInt(match[2])/100;
+                    l = parseInt(match[3])/100;
+                    [r, g, b] = Q.HSL2RGB(h, s, l);
+                    lab = Q.RGB2LAB(r, g, b);
+                    cmyk = Q.RGB2CMYK(r, g, b);
+                    hex = '#' + r.toString(16).padStart(2, '0') + g.toString(16).padStart(2, '0') + b.toString(16).padStart(2, '0');
+                }
+            } else {
+                return;
             }
-        }
-        function updateFromRGBString() {
-            const rgbStr = input_rgb.val();
-            const match = rgbStr.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
-            if (match) {
-                const r = parseInt(match[1]);
-                const g = parseInt(match[2]);
-                const b = parseInt(match[3]);
-                updatePickerFromRGB(r, g, b);
-            }
-        }
-        function updateFromHSLString() {
-            const hslStr = input_hsl.val();
-            const match = hslStr.match(/hsl\(\s*(\d+)\s*,\s*(\d+)%\s*,\s*(\d+)%\s*\)/);
-            if (match) {
-                const h = parseInt(match[1]) / 360;
-                const s = parseInt(match[2]) / 100;
-                const l = parseInt(match[3]) / 100;
-                const [r, g, b] = Q.HSL2RGB(h, s, l);
-                updatePickerFromRGB(Math.round(r), Math.round(g), Math.round(b));
-            }
-        }
-        function updatePickerFromRGB(r, g, b) {
-            const [h, s, l] = Q.RGB2HSL(r, g, b);
-            selectedHue = h; // Store just the hue
+            input_r.val(Math.round(r));
+            input_g.val(Math.round(g));
+            input_b2.val(Math.round(b));
+            input_h.val(Math.round(h*360));
+            input_s.val(Math.round(s*100));
+            input_b.val(Math.round(l*100));
+            input_l.val(Math.round(lab[0]));
+            input_a.val(Math.round(lab[1]));
+            input_b3.val(Math.round(lab[2]));
+            input_c.val(Math.round(cmyk[0]*100));
+            input_m.val(Math.round(cmyk[1]*100));
+            input_y.val(Math.round(cmyk[2]*100));
+            input_k.val(Math.round(cmyk[3]*100));
+            input_hex.val(hex);
+            input_rgb.val(`rgb(${r},${g},${b})`);
+            input_hsl.val(hsl);
+            input_lab.val(`lab(${Math.round(lab[0])},${Math.round(lab[1])},${Math.round(lab[2])})`);
+            input_cmyk.val(`cmyk(${Math.round(cmyk[0]*100)}%,${Math.round(cmyk[1]*100)}%,${Math.round(cmyk[2]*100)}%,${Math.round(cmyk[3]*100)}%)`);
+            input_rgb888.val('0x' + r.toString(16).padStart(2, '0') + g.toString(16).padStart(2, '0') + b.toString(16).padStart(2, '0'));
+            const r5 = Math.round(r * 31 / 255) & 0x1F;
+            const g6 = Math.round(g * 63 / 255) & 0x3F;
+            const b5 = Math.round(b * 31 / 255) & 0x1F;
+            const rgb565 = (r5 << 11) | (g6 << 5) | b5;
+            input_rgb565.val('0x' + rgb565.toString(16).padStart(4, '0'));            // --- MARKER AND CANVAS UPDATE ---
+            selectedHue = h;
             positionHueMarker(h);
-            positionTriangleMarker(s, l);
+            positionTriangleMarker(r, g, b);
             drawPicker();
-            return `rgb(${r},${g},${b})`;
+            current_color.css('background-color', hex);
+            if (typeof wrapper.changeCallback === 'function' && source !== 'callback') {
+                wrapper.changeCallback(hex);
+            }
         }
+        function setupInputListeners() {
+            input_h.on('input', function(){ setColor({h:parseInt(input_h.val())/360, s:parseInt(input_s.val())/100, l:parseInt(input_b.val())/100, source:'input'}); });
+            input_s.on('input', function(){ setColor({h:parseInt(input_h.val())/360, s:parseInt(input_s.val())/100, l:parseInt(input_b.val())/100, source:'input'}); });
+            input_b.on('input', function(){ setColor({h:parseInt(input_h.val())/360, s:parseInt(input_s.val())/100, l:parseInt(input_b.val())/100, source:'input'}); });
+            input_r.on('input', function(){ setColor({r:parseInt(input_r.val()), g:parseInt(input_g.val()), b:parseInt(input_b2.val()), source:'input'}); });
+            input_g.on('input', function(){ setColor({r:parseInt(input_r.val()), g:parseInt(input_g.val()), b:parseInt(input_b2.val()), source:'input'}); });
+            input_b2.on('input', function(){ setColor({r:parseInt(input_r.val()), g:parseInt(input_g.val()), b:parseInt(input_b2.val()), source:'input'}); });
+            input_l.on('input', function(){ setColor({lab:[parseFloat(input_l.val()),parseFloat(input_a.val()),parseFloat(input_b3.val())], source:'input'}); });
+            input_a.on('input', function(){ setColor({lab:[parseFloat(input_l.val()),parseFloat(input_a.val()),parseFloat(input_b3.val())], source:'input'}); });
+            input_b3.on('input', function(){ setColor({lab:[parseFloat(input_l.val()),parseFloat(input_a.val()),parseFloat(input_b3.val())], source:'input'}); });
+            input_c.on('input', function(){ setColor({cmyk:[parseInt(input_c.val())/100,parseInt(input_m.val())/100,parseInt(input_y.val())/100,parseInt(input_k.val())/100], source:'input'}); });
+            input_m.on('input', function(){ setColor({cmyk:[parseInt(input_c.val())/100,parseInt(input_m.val())/100,parseInt(input_y.val())/100,parseInt(input_k.val())/100], source:'input'}); });
+            input_y.on('input', function(){ setColor({cmyk:[parseInt(input_c.val())/100,parseInt(input_m.val())/100,parseInt(input_y.val())/100,parseInt(input_k.val())/100], source:'input'}); });
+            input_k.on('input', function(){ setColor({cmyk:[parseInt(input_c.val())/100,parseInt(input_m.val())/100,parseInt(input_y.val())/100,parseInt(input_k.val())/100], source:'input'}); });
+            input_hex.on('input', function(){ setColor({hex:input_hex.val(), source:'input'}); });
+            input_rgb.on('input', function(){
+                const match = input_rgb.val().match(/rgb\((\d+),(\d+),(\d+)\)/);
+                if (match) setColor({r:parseInt(match[1]),g:parseInt(match[2]),b:parseInt(match[3]), source:'input'});
+            });
+            input_hsl.on('input', function(){ setColor({hsl:input_hsl.val(), source:'input'}); });
+        }
+        function clampInt(val, min, max) {
+            val = Math.floor(Number(val));
+            if (isNaN(val)) return min;
+            return Math.max(min, Math.min(max, val));
+        }
+        function validateRGBInput(e) {
+            let v = e.target.value;
+            v = v.replace(/[^0-9]/g, ''); // Only digits
+            v = clampInt(v, 0, 255);
+            e.target.value = v;
+        }
+        function validateHInput(e) {
+            let v = e.target.value;
+            v = v.replace(/[^0-9]/g, '');
+            v = clampInt(v, 0, 360);
+            e.target.value = v;
+        }
+        function validateSLInput(e) {
+            let v = e.target.value;
+            v = v.replace(/[^0-9]/g, '');
+            v = clampInt(v, 0, 100);
+            e.target.value = v;
+        }
+        input_r.on('input', validateRGBInput);
+        input_g.on('input', validateRGBInput);
+        input_b2.on('input', validateRGBInput);
+        input_h.on('input', validateHInput);
+        input_s.on('input', validateSLInput);
+        input_b.on('input', validateSLInput);
+        input_c.on('input', validateSLInput);
+        input_m.on('input', validateSLInput);
+        input_y.on('input', validateSLInput);
+        input_k.on('input', validateSLInput);
         function positionHueMarker(hue) {
             const angle = hue * 2 * Math.PI;
             const innerRingMiddleRadius = innerRadius - innerRingThickness / 2;
@@ -4045,25 +4293,90 @@ Form.prototype.ColorPicker = function (options = {}) {
                 const segmentIndex = Math.floor(hue * outerSegments) % outerSegments;
                 selectedOuterSegment = (angle >= 0) ? segmentIndex : null;
             }
-        }
-        function positionTriangleMarker(s, l) {
-            const totalHeight = bottomLeftVertex.y - topVertex.y;
-            const relativeY = 1 - s;
-            const y = topVertex.y + relativeY * totalHeight;
-            const triangleWidthAtY = (bottomRightVertex.x - bottomLeftVertex.x) * relativeY;
-            let relativeX;
-            if (relativeY === 0) {
-                relativeX = 0.5;
-            } else {
-                if (l <= 0.5) {
-                    relativeX = 1 - (l / 0.5);
-                } else {
-                    relativeX = (1 - l) / 0.5;
+        }        // Helper function to position the triangle marker based on RGB values using optimized sampling
+        function positionTriangleMarker(targetR, targetG, targetB) {
+            if (arguments.length === 2) {
+                const s = arguments[0];
+                const l = arguments[1];
+                const [r, g, b] = Q.HSL2RGB(selectedHue, s, l);
+                targetR = Math.round(r);
+                targetG = Math.round(g);
+                targetB = Math.round(b);
+            }
+            let bestX = topVertex.x;
+            let bestY = topVertex.y;
+            let minDistance = Infinity;
+            const coarseSampleStep = 8;
+            let coarseBestX = bestX;
+            let coarseBestY = bestY;
+            let coarseMinDistance = Infinity;
+            const minX = Math.min(topVertex.x, bottomLeftVertex.x, bottomRightVertex.x);
+            const maxX = Math.max(topVertex.x, bottomLeftVertex.x, bottomRightVertex.x);
+            const minY = Math.min(topVertex.y, bottomLeftVertex.y, bottomRightVertex.y);
+            const maxY = Math.max(topVertex.y, bottomLeftVertex.y, bottomRightVertex.y);
+            for (let x = minX; x <= maxX; x += coarseSampleStep) {
+                for (let y = minY; y <= maxY; y += coarseSampleStep) {
+                    if (!isPointInTriangle(x, y, topVertex, bottomLeftVertex, bottomRightVertex)) {
+                        continue;
+                    }
+                    const [r, g, b] = getTriangleColorAtPosition(x, y);
+                    const distance = Math.sqrt(
+                        (r - targetR) * (r - targetR) +
+                        (g - targetG) * (g - targetG) +
+                        (b - targetB) * (b - targetB)
+                    );
+                    if (distance < coarseMinDistance) {
+                        coarseMinDistance = distance;
+                        coarseBestX = x;
+                        coarseBestY = y;
+                    }
                 }
             }
-            const leftX = centerX - triangleWidthAtY / 2;
-            const x = leftX + relativeX * triangleWidthAtY;
-            markers.triangle = { x, y };
+            const fineRadius = coarseSampleStep;
+            const fineSampleStep = 1;
+            for (let x = coarseBestX - fineRadius; x <= coarseBestX + fineRadius; x += fineSampleStep) {
+                for (let y = coarseBestY - fineRadius; y <= coarseBestY + fineRadius; y += fineSampleStep) {
+                    if (x < minX || x > maxX || y < minY || y > maxY) continue;
+                    if (!isPointInTriangle(x, y, topVertex, bottomLeftVertex, bottomRightVertex)) {
+                        continue;
+                    }
+                    const [r, g, b] = getTriangleColorAtPosition(x, y);
+                    const distance = Math.sqrt(
+                        (r - targetR) * (r - targetR) +
+                        (g - targetG) * (g - targetG) +
+                        (b - targetB) * (b - targetB)
+                    );
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        bestX = x;
+                        bestY = y;
+                    }
+                    if (distance < 1) {
+                        break;
+                    }
+                }
+                if (minDistance < 1) {
+                    break;
+                }
+            }
+            markers.triangle = { x: bestX, y: bestY };
+        }
+        function getTriangleColorAtPosition(x, y) {
+            const denominator = (bottomLeftVertex.y - bottomRightVertex.y) * (topVertex.x - bottomRightVertex.x) + 
+                               (bottomRightVertex.x - bottomLeftVertex.x) * (topVertex.y - bottomRightVertex.y);
+            if (Math.abs(denominator) < 1e-10) return [0, 0, 0];
+            const u = ((bottomLeftVertex.y - bottomRightVertex.y) * (x - bottomRightVertex.x) + 
+                       (bottomRightVertex.x - bottomLeftVertex.x) * (y - bottomRightVertex.y)) / denominator;
+            const v = ((bottomRightVertex.y - topVertex.y) * (x - bottomRightVertex.x) + 
+                       (topVertex.x - bottomRightVertex.x) * (y - bottomRightVertex.y)) / denominator;
+            const w = 1 - u - v;
+            const sum = u + v + w;
+            const normalizedU = sum > 0 ? u / sum : 0;
+            const normalizedV = sum > 0 ? v / sum : 0;
+            const s = Math.max(0, Math.min(1, normalizedU));
+            const l = Math.max(0, Math.min(1, normalizedV + normalizedU * 0.5));
+            const [r, g, b] = Q.HSL2RGB(selectedHue, s, l);
+            return [Math.round(r), Math.round(g), Math.round(b)];
         }
         function updateInputsFromColor(color) {
             if (!color) return;
@@ -4379,8 +4692,11 @@ Form.prototype.ColorPicker = function (options = {}) {
             if (typeof wrapper.changeCallback === 'function') {
                 wrapper.changeCallback(triangleColor);
             }
+            if (showDetails && input_h) {
+                updateInputsFromColor(triangleColor);
+            }
             drawPicker();
-            return; // Exit early as we've handled the drag event
+            return;
         }
         if (dragging === 'inner_ring') {
             const constrained = constrainToHueRing(canvasX, canvasY);
@@ -4391,8 +4707,11 @@ Form.prototype.ColorPicker = function (options = {}) {
             if (typeof wrapper.changeCallback === 'function') {
                 wrapper.changeCallback(computeTriangleColor(markers.triangle.x, markers.triangle.y));
             }
+            if (showDetails && input_h) {
+                updateInputsFromColor(computeTriangleColor(markers.triangle.x, markers.triangle.y));
+            }
             drawPicker();
-            return; // Exit early as we've handled the drag event
+            return;
         }
         const distFromCenter = Math.sqrt(Math.pow(canvasX - centerX, 2) + Math.pow(canvasY - ringCenterY, 2));
         if (distFromCenter <= outerRadius && distFromCenter >= outerRadius - outerRingThickness) {
@@ -4407,6 +4726,9 @@ Form.prototype.ColorPicker = function (options = {}) {
             }
             if (typeof wrapper.changeCallback === 'function') {
                 wrapper.changeCallback(computeTriangleColor(markers.triangle.x, markers.triangle.y));
+            }
+            if (showDetails && input_h) {
+                updateInputsFromColor(computeTriangleColor(markers.triangle.x, markers.triangle.y));
             }
         }
         else if (distFromCenter <= innerRadius && distFromCenter >= innerRadius - innerRingThickness) {
@@ -4426,6 +4748,9 @@ Form.prototype.ColorPicker = function (options = {}) {
             if (typeof wrapper.changeCallback === 'function') {
                 wrapper.changeCallback(computeTriangleColor(markers.triangle.x, markers.triangle.y));
             }
+            if (showDetails && input_h) {
+                updateInputsFromColor(computeTriangleColor(markers.triangle.x, markers.triangle.y));
+            }
         }
         else if (isPointInTriangle(canvasX, canvasY, topVertex, bottomLeftVertex, bottomRightVertex)) {
             markers.triangle = { x: canvasX, y: canvasY };
@@ -4435,6 +4760,9 @@ Form.prototype.ColorPicker = function (options = {}) {
             }
             if (typeof wrapper.changeCallback === 'function') {
                 wrapper.changeCallback(triangleColor);
+            }
+            if (showDetails && input_h) {
+                updateInputsFromColor(triangleColor);
             }
         }
         drawPicker();
@@ -4446,22 +4774,22 @@ Form.prototype.ColorPicker = function (options = {}) {
             x: centerX + innerRingMiddleRadius * Math.cos(angle),
             y: ringCenterY + innerRingMiddleRadius * Math.sin(angle)
         };
-    }
-    function computeTriangleColor(x, y) {
-        const totalHeight = bottomLeftVertex.y - topVertex.y;
-        const relativeY = Math.max(0, Math.min(1, (y - topVertex.y) / totalHeight));
-        const triangleWidthAtY = (bottomRightVertex.x - bottomLeftVertex.x) * relativeY;
-        const leftX = centerX - triangleWidthAtY / 2;
-        const rightX = centerX + triangleWidthAtY / 2;
-        const relativeX = Math.max(0, Math.min(1, (x - leftX) / (rightX - leftX)));
-        const saturation = 1 - relativeY;
-        let lightness = 0.5;
-        if (relativeY > 0) {
-            lightness = 0.5 * (1 - relativeY) + relativeY * (1 - relativeX);
-        }
-        const clampedSaturation = Math.max(0, Math.min(1, saturation));
-        const clampedLightness = Math.max(0, Math.min(1, lightness));
-        const [r, g, b] = Q.HSL2RGB(selectedHue, clampedSaturation, clampedLightness);
+    }    function computeTriangleColor(x, y) {
+        const denominator = (bottomLeftVertex.y - bottomRightVertex.y) * (topVertex.x - bottomRightVertex.x) + 
+                           (bottomRightVertex.x - bottomLeftVertex.x) * (topVertex.y - bottomRightVertex.y);
+        if (Math.abs(denominator) < 1e-10) return `rgb(0, 0, 0)`;
+        const u = ((bottomLeftVertex.y - bottomRightVertex.y) * (x - bottomRightVertex.x) + 
+                   (bottomRightVertex.x - bottomLeftVertex.x) * (y - bottomRightVertex.y)) / denominator;
+        const v = ((bottomRightVertex.y - topVertex.y) * (x - bottomRightVertex.x) + 
+                   (topVertex.x - bottomRightVertex.x) * (y - bottomRightVertex.y)) / denominator;
+        const w = 1 - u - v;
+        const sum = u + v + w;
+        const normalizedU = sum > 0 ? u / sum : 0;
+        const normalizedV = sum > 0 ? v / sum : 0;
+        const normalizedW = sum > 0 ? w / sum : 0;
+        const s = Math.max(0, Math.min(1, normalizedU));  // telítettség = topVertex súlya
+        const l = Math.max(0, Math.min(1, normalizedV + normalizedU * 0.5));  // világosság számítás
+        const [r, g, b] = Q.HSL2RGB(selectedHue, s, l);
         return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
     }
     function isPointInTriangle(px, py, v1, v2, v3) {
@@ -4532,6 +4860,7 @@ Form.prototype.ColorPicker = function (options = {}) {
     wrapper.change = function (callback) {
         const originalCallback = callback;
         wrapper.changeCallback = function (color) {
+            console.log('ColorPicker change callback triggered with color:', color);
             Q.Debounce('colorpicker_change', 10, function () {
                 if (showDetails && input_h) {
                     updateInputsFromColor(color);
@@ -4566,16 +4895,7 @@ Form.prototype.ColorPicker = function (options = {}) {
                     b = parseInt(hex.slice(4, 6), 16);
                 }
             }
-            const [h, s, l] = Q.RGB2HSL(r, g, b);
-            selectedHue = h;
-            positionHueMarker(h);
-            positionTriangleMarker(s, l);
-            drawPicker();
-            current_color.css('background-color', color);
-            previous_color.css('background-color', color);
-            if (typeof wrapper.changeCallback === 'function') {
-                wrapper.changeCallback(color);
-            }
+            setColor({r, g, b, source:'val'});
         }
         return this;
     };
@@ -4589,13 +4909,30 @@ Form.prototype.ColorPicker = function (options = {}) {
         return snatches[index]
             ? snatches[index].css('background-color')
             : null;
-    };
-    drawPicker();
+    };    drawPicker();
     console.log('ColorPicker drawn on canvas');
     if (showDetails) {
         updateInputsFromColor(initialColor);
         current_color.css('background-color', initialColor);
         previous_color.css('background-color', initialColor);
+        setColor({hex: initialColor, source: 'init'});
+    } else {
+        const canvas = wrapper.find('canvas');
+        if (canvas && canvas.nodes[0]) {
+            let r, g, b;
+            if (initialColor.startsWith('#')) {
+                r = parseInt(initialColor.substr(1, 2), 16);
+                g = parseInt(initialColor.substr(3, 2), 16);
+                b = parseInt(initialColor.substr(5, 2), 16);
+            }
+            if (r !== undefined && g !== undefined && b !== undefined) {
+                const [h, s, l] = Q.RGB2HSL(r, g, b);
+                selectedHue = h;
+                positionHueMarker(h);
+                positionTriangleMarker(r, g, b);
+                drawPicker();
+            }
+        }
     }
     this.elements.push(wrapper);
     return wrapper;
@@ -6750,7 +7087,12 @@ Graph.prototype.Line = function (options = {}) {
     render();
     return qsvg;
 };
-Q.Image = function (options) {
+/**
+ * Q.Image - Egységesített plugin séma
+ * @param {Object} options
+ *   - width, height, format, fill, stb.
+ */
+Q.Image = function(options = {}) {
     const defaultOptions = {
         width: 0,
         height: 0,
@@ -6773,6 +7115,7 @@ Q.Image = function (options) {
         isUndoRedoing: false
     };
 };
+Q.Image.prototype.init = function() { return this; };
 Q.Image.prototype.Load = function (src, callback) {
     const img = new Image();
     img.crossOrigin = 'Anonymous';
@@ -6886,6 +7229,27 @@ Q.Image.prototype.History = function (offset) {
     this.history.position = target;
     this.history.isUndoRedoing = false;
     return this;
+};
+Q.Image.prototype.getState = function() {
+    return {
+        width: this.node.width,
+        height: this.node.height,
+        options: this.options,
+        history: this.history
+    };
+};
+Q.Image.prototype.setState = function(state) {
+    if (state) {
+        if (state.width) this.node.width = state.width;
+        if (state.height) this.node.height = state.height;
+        if (state.options) this.options = { ...this.options, ...state.options };
+        if (state.history) this.history = state.history;
+    }
+};
+Q.Image.prototype.destroy = function() {
+    this.canvas = null;
+    this.node = null;
+    this.history = { states: [], position: -1, isUndoRedoing: false };
 };
 Q.Image.prototype.AutoAdjust = function(autoAdjustOptions = {}) {
     const defaultOptions = {
@@ -9678,11 +10042,12 @@ Q.Image.prototype.ZoomBlur = function (zoomOptions = {}) {
     ctx.drawImage(destCanvas, 0, 0);
     return this;
 };
-function Media(options = {}) {
-    if (!(this instanceof Media)) {
-        return new Media(options);
-    }
-    if (!Media.initialized) {
+/**
+ * Q.Media - Unified plugin schema
+ * @param {Object} options
+ */
+Q.Media = function(options = {}) {
+    if (!Q.Media.initialized) {
         Q.style(`
             --media-timeline-bg: #232323;
             --media-timeline-track-border: #3338;
@@ -9691,12 +10056,15 @@ function Media(options = {}) {
             --media-timeline-segment-warning: #f44336;
             --media-timeline-handle-bg:rgba(255, 255, 255, 0.21);
         `);
-        Media.initialized = true;
+        Q.Media.initialized = true;
         console.log('Media core initialized');
     }
-    return this;
+    this.options = { ...options };
 };
-Q.Media = Media;
+Q.Media.prototype.init = function() { return this; };
+Q.Media.prototype.getState = function() { return { initialized: Q.Media.initialized }; };
+Q.Media.prototype.setState = function(state) { /* no interpretable state */ };
+Q.Media.prototype.destroy = function() { /* no cleanup needed */ };
 Media.prototype.Selector = function(container, options = {}) {
     if (!Media.selectorClassesInitialized) {
         Media.selectorClasses = Q.style(`

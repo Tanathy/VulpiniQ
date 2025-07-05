@@ -1,4 +1,4 @@
-Q.Ext('text', function (content) {
+Q.Method('text', function (content) {
     if (content === undefined) {
         return this.nodes[0]?.textContent || null;
     }

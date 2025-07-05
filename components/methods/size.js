@@ -1,4 +1,4 @@
-Q.Ext('size', function () {
+Q.Method('size', function () {
     const node = this.nodes[0];
 	return {
 		width: node.offsetWidth,

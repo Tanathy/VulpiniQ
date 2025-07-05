@@ -1,4 +1,4 @@
-Q.Ext('zIndex', function (value) {
+Q.Method('zIndex', function (value) {
     const node = this.nodes[0];
     if (!node) return;
     if (value === undefined) {

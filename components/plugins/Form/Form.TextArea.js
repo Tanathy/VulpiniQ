@@ -27,7 +27,6 @@ Form.prototype.TextArea = function(value = '', placeholder = '') {
         .addClass(Form.textAreaClasses.form_textarea)
         .attr('placeholder', placeholder)
         .val(value);
-
     // no need for a separate placeholder() method
     textarea.disabled = function(state) {
         textarea.prop('disabled', state);
@@ -37,12 +36,10 @@ Form.prototype.TextArea = function(value = '', placeholder = '') {
         textarea.val('');
         return textarea;
     };
-
     textarea.resizeable = function(x = true, y = true) {
         textarea.css('resize', (x ? 'horizontal' : 'none') + ' ' + (y ? 'vertical' : 'none'));
         return textarea;
     }
-
     // use input for live updates
     textarea.change = function(callback) {
         textarea.on('input', function() {

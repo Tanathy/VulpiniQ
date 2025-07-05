@@ -1,4 +1,4 @@
-Q.Ext('bind', function (event, handler) {
+Q.Method('bind', function (event, handler) {
     if (!this._eventDelegation) {
         this._eventDelegation = {};
     }

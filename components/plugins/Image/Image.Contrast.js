@@ -1,6 +1,4 @@
-
 Q.Image.prototype.Contrast = function (value, contrastOptions = {}) {
-
     const defaultOptions = {
         preserveHue: true,
         clamp: true

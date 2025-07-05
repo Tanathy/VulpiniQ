@@ -1,5 +1,4 @@
 Container.prototype.Window = function (options = {}) {
-
     const defaultOptions = {
         title: 'Window',
         content: '',
@@ -26,7 +25,6 @@ Container.prototype.Window = function (options = {}) {
         shadowOffsetY: 5,
         shadowSpread: 0,
     };
-
     if (!Container.windowClassesInitialized) {
         Container.windowClasses = Q.style(`
             --window-bg-color:rgb(37, 37, 37);
@@ -251,10 +249,7 @@ Container.prototype.Window = function (options = {}) {
         }, false);
         Container.windowClassesInitialized = true;
     }
-
-
     if (!Container.taskbar) {
-
         let taskbarStyle = {
             position: 'fixed',
             height: '32px',
@@ -265,7 +260,6 @@ Container.prototype.Window = function (options = {}) {
             minHeight: '0',
             minWidth: '0'
         };
-
         switch (defaultOptions.minimizePosition || 'bottom-left') {
             case 'bottom-right':
                 taskbarStyle.right = defaultOptions.minimizeOffset + 'px';
@@ -288,10 +282,8 @@ Container.prototype.Window = function (options = {}) {
         Container.taskbar = Q('<div>', { class: Container.windowClasses.window_taskbar || 'window_taskbar' }).css(taskbarStyle);
         Q('body').append(Container.taskbar);
     }
-
     const settings = Object.assign({}, defaultOptions, options);
     const windowElement = Q('<div>', { class: Container.windowClasses.window_container });
-
     if (settings.shadow) {
         windowElement.css({
             boxShadow: `${settings.shadowOffsetX}px ${settings.shadowOffsetY}px ${settings.shadowBlur}px ${settings.shadowSpread}px ${settings.shadowColor}`
@@ -299,11 +291,7 @@ Container.prototype.Window = function (options = {}) {
     } else {
         windowElement.css({ boxShadow: 'none' });
     }
-
-
     const titlebar = Q('<div>', { class: Container.windowClasses.window_titlebar });
-
-
     const titleElement = Q('<div>', { class: Container.windowClasses.window_title }).text(settings.title);
     const controls = Q('<div>', { class: Container.windowClasses.window_controls });
     const contentContainer = Q('<div>', { class: Container.windowClasses.window_content });
@@ -363,10 +351,7 @@ Container.prototype.Window = function (options = {}) {
     };
     let isOpen = false;
     let isAnimating = false;
-
-
     let taskbarButton = null;
-
     function setTransitionDuration(duration) {
         if (!settings.animate) return;
         windowElement.css('transition-duration', duration + 'ms');
@@ -444,8 +429,6 @@ Container.prototype.Window = function (options = {}) {
         if (!settings.draggable) return;
         let isDragging = false;
         let startX, startY, startLeft, startTop;
-
-
         function onMouseMove(e) {
             if (!isDragging) return;
             const dx = e.clientX - startX;
@@ -487,7 +470,6 @@ Container.prototype.Window = function (options = {}) {
             Q(document).off('mousemove', onMouseMove);
             Q(document).off('mouseup', onMouseUp);
         }
-
         Q(titlebar).on('mousedown', function (e) {
             if (isMaximized || isMinimized) return;
             isDragging = true;
@@ -500,7 +482,6 @@ Container.prototype.Window = function (options = {}) {
             Q(document).on('mouseup', onMouseUp);
             e.preventDefault();
         });
-
         Q(titlebar).on('dblclick', function (e) {
             if (settings.maximizable) {
                 toggleMaximize();
@@ -513,7 +494,6 @@ Container.prototype.Window = function (options = {}) {
         let resizeDirection = '';
         let startX, startY, startWidth, startHeight, startLeft, startTop;
         const resizeHandles = windowElement.nodes[0].querySelectorAll('.' + Container.windowClasses.window_resize_handle);
-
         function onMouseMove(e) {
             if (!isResizing) return;
             const dx = e.clientX - startX;
@@ -590,7 +570,6 @@ Container.prototype.Window = function (options = {}) {
             Q(document).off('mousemove', onMouseMove);
             Q(document).off('mouseup', onMouseUp);
         }
-
         for (let i = 0; i < resizeHandles.length; i++) {
             const handle = resizeHandles[i];
             Q(handle).on('mousedown', function (e) {
@@ -650,7 +629,6 @@ Container.prototype.Window = function (options = {}) {
         if (isAnimating) return;
         isAnimating = true;
         if (!isMinimized) {
-
             const rect = windowElement.nodes[0].getBoundingClientRect();
             const start = {
                 width: rect.width,
@@ -659,7 +637,6 @@ Container.prototype.Window = function (options = {}) {
                 top: rect.top,
                 opacity: 1
             };
-
             let taskbarRect = { left: 0, top: window.innerHeight, width: 160, height: 28 };
             if (Container.taskbar && taskbarButton) {
                 const btnRect = taskbarButton.nodes[0].getBoundingClientRect();
@@ -674,7 +651,6 @@ Container.prototype.Window = function (options = {}) {
                 taskbarRect.left = barRect.left;
                 taskbarRect.top = barRect.top;
             }
-
             windowElement.css({
                 willChange: 'width,height,left,top,opacity',
                 transition: `all ${settings.animate}ms cubic-bezier(.4,0,.2,1)`
@@ -686,7 +662,6 @@ Container.prototype.Window = function (options = {}) {
                 top: start.top + 'px',
                 opacity: 1
             });
-
             setTimeout(() => {
                 windowElement.css({
                     width: taskbarRect.width + 'px',
@@ -698,7 +673,6 @@ Container.prototype.Window = function (options = {}) {
             }, 10);
             setTimeout(() => {
                 windowElement.css({ transition: '', willChange: '' });
-
                 if (!taskbarButton) {
                     let shortTitle = settings.title;
                     if (shortTitle.length > 18) {
@@ -720,10 +694,7 @@ Container.prototype.Window = function (options = {}) {
                 setTimeout(updateActiveWindowClass, 0);
             }, settings.animate + 10);
         } else {
-
-
             Q('body').append(windowElement);
-
             let btnRect = { left: 0, top: window.innerHeight, width: 160, height: 28 };
             if (taskbarButton) {
                 const rect = taskbarButton.nodes[0].getBoundingClientRect();
@@ -734,7 +705,6 @@ Container.prototype.Window = function (options = {}) {
                     height: rect.height
                 };
             }
-
             const end = {
                 width: previousState.width,
                 height: previousState.height,
@@ -778,7 +748,6 @@ Container.prototype.Window = function (options = {}) {
         if (isAnimating) return;
         isAnimating = true;
         if (!isMaximized) {
-
             const rect = windowElement.nodes[0].getBoundingClientRect();
             const start = {
                 width: rect.width,
@@ -815,7 +784,6 @@ Container.prototype.Window = function (options = {}) {
                 setTimeout(updateActiveWindowClass, 0);
             }, settings.animate + 10);
         } else {
-
             const end = {
                 width: previousState.width,
                 height: previousState.height,
@@ -894,9 +862,7 @@ Container.prototype.Window = function (options = {}) {
             isOpen = false;
             setTimeout(updateActiveWindowClass, 0);
         }
-
         setTimeout(function () {
-
             const selector = '.' + (Container.windowClasses.window_container || 'window_container');
             if (!Q(selector).nodes.length) {
                 if (Container.taskbar) {

@@ -1,4 +1,4 @@
-Q.Ext('next', function(selector) {
+Q.Method('next', function(selector) {
     const result = [];
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const node = this.nodes[i];

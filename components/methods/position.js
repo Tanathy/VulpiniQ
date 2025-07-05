@@ -1,4 +1,4 @@
-Q.Ext('position', function () {
+Q.Method('position', function () {
     var node = this.nodes[0];
     return {
         top: node.offsetTop,

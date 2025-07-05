@@ -8,31 +8,34 @@ const Q = (() => {
         _win = window, _doc = document, _loc = location, _hist = history,
         _ls = localStorage, _ss = sessionStorage, _f = fetch, _ev = Event,
         _ac = AbortController, _as = AbortSignal, _err = Error;
-    let GLOBAL = {};
-    let styleData = {
-        elements: [],
-        root: '',
-        generic: "",
-        responsive: {},
-        element: _n,
-        init: false
+    const INTERNAL = {
+        moduleRegistry: new _map(),
+        moduleInstances: new _map(),
+        styleData: {
+            e: [],
+            r: '',
+            g: '',
+            s: {},
+            el: _n,
+            i: false
+        }
     };
     function applyStyles() {
-        if (!styleData.init) {
-            styleData.element = document.getElementById('qlib_set') || createStyleElement();
-            styleData.init = true;
+        if (!INTERNAL.styleData.i) {
+            INTERNAL.styleData.el = document.getElementById('qlib_set') || createStyleElement();
+            INTERNAL.styleData.i = true;
         }
-        let finalStyles = styleData.root ? `:root {${styleData.root}}\n` : '';
-        finalStyles += styleData.generic;
-        const breakpoints = _ob.keys(styleData.responsive);
+        let finalStyles = INTERNAL.styleData.r ? `:root {${INTERNAL.styleData.r}}\n` : '';
+        finalStyles += INTERNAL.styleData.g;
+        const breakpoints = _ob.keys(INTERNAL.styleData.s);
         for (let i = 0; i < breakpoints.length; i++) {
             const size = breakpoints[i];
-            const css = styleData.responsive[size];
+            const css = INTERNAL.styleData.s[size];
             if (css) {
                 finalStyles += `\n@media (max-width: ${size}) {\n${css}\n}`;
             }
         }
-        styleData.element.textContent = finalStyles;
+        INTERNAL.styleData.el.textContent = finalStyles;
     }
     function createStyleElement() {
         const styleElement = document.createElement('style');
@@ -62,7 +65,7 @@ const Q = (() => {
         if (typeof identifier === 'string') {
             const isCreating = attributes || identifier.indexOf('<') > -1;
             if (isCreating) {
-                const svgTags = ['svg','g','line','polyline','rect','circle','ellipse','text','path','polygon'];
+                const svgTags = ['svg', 'g', 'line', 'polyline', 'rect', 'circle', 'ellipse', 'text', 'path', 'polygon'];
                 const tagMatch = identifier.match(/^<([a-zA-Z0-9\-]+)(\s|>|\/)*/);
                 const tag = tagMatch ? tagMatch[1].toLowerCase() : null;
                 if (tag && svgTags.includes(tag)) {
@@ -139,65 +142,50 @@ const Q = (() => {
             }
         }
     }
-    Q.Ext = (methodName, functionImplementation) =>
-        (Q.prototype[methodName] = functionImplementation, Q);
-    Q.getGLOBAL = key => GLOBAL[key];
-    Q.setGLOBAL = value => (GLOBAL = { ...GLOBAL, ...value });
     Q.style = (root = _n, style = '', responsive = _n, mapping = _n, enable_mapping = true) => {
-        const cleanUp = (str) => {
-            str= str.replace(/^\s*[\r\n]/gm, '');
-            str = str.replace(/\s+/g, ' ');
-            str = str.replace(/;;/g, ';');
-            return str.trim();
-        }
+        const cleanUp = str => str.replace(/^\s*[\r\n]/gm, '').replace(/\s+/g, ' ').replace(/;;/g, ';').trim();
         if (mapping && enable_mapping) {
             const keys = _ob.keys(mapping);
-            const generateSecureCSSClassName = () => {
-                const letters = 'abcdefghijklmnopqrstuvwxyz';
-                const allChars = letters + '0123456789';
-                const length = _ma.floor(_ma.random() * 3) + 6;  
-                const firstChar = letters.charAt(_ma.floor(_ma.random() * letters.length));
-                const remainingChars = Array.from({ length: length - 1 }, () => 
-                    allChars.charAt(_ma.floor(_ma.random() * allChars.length))
-                ).join('');
-                return firstChar + remainingChars;
+            const generateClassName = () => {
+                const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+                let result = chars[_ma.floor(_ma.random() * 26)];
+                const len = _ma.floor(_ma.random() * 3) + 5;
+                for (let i = 1; i < len; i++) {
+                    result += chars[_ma.floor(_ma.random() * chars.length)];
+                }
+                return result;
             };
             const getUniqueClassName = () => {
                 let newKey;
                 do {
-                    newKey = generateSecureCSSClassName();
-                } while (styleData.elements.includes(newKey));
-                styleData.elements.push(newKey);
+                    newKey = generateClassName();
+                } while (INTERNAL.styleData.e.includes(newKey));
+                INTERNAL.styleData.e.push(newKey);
                 return newKey;
             };
-            keys.forEach((key) => {
-                let newKey = getUniqueClassName();
+            keys.forEach(key => {
+                const newKey = getUniqueClassName();
                 if (style && typeof style === 'string') {
-                    style = style.replace(new _re(`\\.${key}\\b`, 'gm'), `.${newKey}`);
-                    style = style.replace(new _re(`^\\s*\\.${key}\\s*{`, 'gm'), `.${newKey} {`);
-                    style = style.replace(new _re(`(,\\s*)\\.${key}\\b`, 'gm'), `$1.${newKey}`);
-                    style = style.replace(new _re(`(\\s+)\\.${key}\\b`, 'gm'), `$1.${newKey}`);
+                    style = style.replace(new _re(`\\.${key}\\b`, 'gm'), `.${newKey}`)
+                                 .replace(new _re(`^\\s*\\.${key}\\s*{`, 'gm'), `.${newKey} {`)
+                                 .replace(new _re(`(,\\s*)\\.${key}\\b`, 'gm'), `$1.${newKey}`)
+                                 .replace(new _re(`(\\s+)\\.${key}\\b`, 'gm'), `$1.${newKey}`);
                 }
                 mapping[key] = mapping[key].replace(key, newKey);
             });
         }
         if (root && typeof root === 'string') {
-            styleData.root += root.trim();
-            styleData.root = cleanUp(styleData.root);
+            INTERNAL.styleData.r = cleanUp(INTERNAL.styleData.r + root.trim());
         }
         if (style && typeof style === 'string') {
-            styleData.generic += style;
-            styleData.generic = cleanUp(styleData.generic);
+            INTERNAL.styleData.g = cleanUp(INTERNAL.styleData.g + style);
         }
         if (responsive && typeof responsive === 'object') {
             const breakpoints = _ob.entries(responsive);
             for (let i = 0; i < breakpoints.length; i++) {
                 const [size, css] = breakpoints[i];
                 if (css && typeof css === 'string') {
-                    if (!styleData.responsive[size]) {
-                        styleData.responsive[size] = '';
-                    }
-                    styleData.responsive[size] += css + '\n';
+                    INTERNAL.styleData.s[size] = (INTERNAL.styleData.s[size] || '') + css + '\n';
                 }
             }
         }
@@ -206,14 +194,238 @@ const Q = (() => {
         }
         return mapping;
     };
-    Q._ = {
+    const PRIVATE_REFS = {
         ob: _ob, ar: _ar, ma: _ma, da: _da, re: _re, st: _st, un: _un,
         n: _n, nl: _nl, el: _el, si: _si, c: _c, ct: _ct, ci: _ci,
         pr: _pr, str: _str, nu: _nu, bo: _bo, json: _json, map: _map,
         set: _set, sym: _sym, win: _win, doc: _doc, loc: _loc, hist: _hist,
-        ls: _ls, ss: _ss, f: _f, ev: _ev, ac: _ac, as: _as, err: _err
+        ls: _ls, ss: _ss, f: _f, ev: _ev, ac: _ac, as: _as, err: _err,
+        _log: _c.log.bind(_c), _warn: _c.warn.bind(_c), _error: _c.error.bind(_c),
+        _info: _c.info.bind(_c), _debug: _c.debug.bind(_c), _trace: _c.trace.bind(_c),
+        _table: _c.table.bind(_c), _group: _c.group.bind(_c), _groupEnd: _c.groupEnd.bind(_c),
+        _time: _c.time.bind(_c), _timeEnd: _c.timeEnd.bind(_c), _clear: _c.clear.bind(_c),
+        _int: parseInt, _float: parseFloat, _isNaN: isNaN, _isFinite: isFinite,
+        _encode: encodeURIComponent, _decode: decodeURIComponent,
+        _btoa: btoa, _atob: atob, _crypto: crypto, _perf: performance,
+        _rand: _ma.random.bind(_ma), _floor: _ma.floor.bind(_ma), _ceil: _ma.ceil.bind(_ma),
+        _round: _ma.round.bind(_ma), _abs: _ma.abs.bind(_ma), _min: _ma.min.bind(_ma), _max: _ma.max.bind(_ma),
+        _now: _da.now.bind(_da), _keys: _ob.keys.bind(_ob), _values: _ob.values.bind(_ob),
+        _entries: _ob.entries.bind(_ob), _assign: _ob.assign.bind(_ob), _create: _ob.create.bind(_ob),
+        _from: _ar.from.bind(_ar), _isArray: _ar.isArray.bind(_ar)
     };
-    Q.Ext('addClass', function (classes) {
+    const getPrivateRefs = function() {
+        if (this instanceof Q || this === Q || this.constructor === QModule) {
+            return PRIVATE_REFS;
+        }
+        return {};
+    };
+    const createInternalProxy = function() {
+        if (this instanceof Q || this === Q || this.constructor === QModule) {
+            return new Proxy(INTERNAL, {
+                get(target, prop) {
+                    return target[prop];
+                },
+                set(target, prop, value) {
+                    target[prop] = value;
+                    return true;
+                },
+                has(target, prop) {
+                    return prop in target;
+                },
+                ownKeys(target) {
+                    return _ob.keys(target);
+                },
+                getOwnPropertyDescriptor(target, prop) {
+                    return _ob.getOwnPropertyDescriptor(target, prop);
+                }
+            });
+        }
+        return {};
+    };
+    function QModule(name, methods = {}) {
+        if (!(this instanceof QModule)) {
+            if (typeof name === 'string' && typeof methods === 'object') {
+                return Q.Module.register(name, methods);
+            }
+            return new QModule(name, methods);
+        }
+        this.name = name;
+        this.methods = methods;
+        this.initialized = false;
+        this.config = _n;
+        this.state = _n;
+        this.init = config => {
+            this.config = config || {};
+            this.initialized = true;
+            if (this.methods.init) {
+                this.methods.init.call(this, this.config);
+            }
+            return this;
+        };
+        this.addMethod = (methodName, methodFunc) => {
+            if (typeof methodName === 'string' && typeof methodFunc === 'function') {
+                this.methods[methodName] = methodFunc;
+                this.initialized && this.createStaticMethod(methodName, methodFunc);
+            }
+            return this;
+        };
+        this.addMethods = methodsObj => {
+            if (typeof methodsObj === 'object') {
+                const keys = _ob.keys(methodsObj);
+                for (let i = 0; i < keys.length; i++) {
+                    const key = keys[i];
+                    this.methods[key] = methodsObj[key];
+                    this.initialized && this.createStaticMethod(key, methodsObj[key]);
+                }
+            }
+            return this;
+        };
+        this.createStaticMethod = (methodName, methodFunc) => {
+            (Q[this.name] = Q[this.name] || {})[methodName] = (...args) => {
+                const result = methodFunc.apply(this, args);
+                return result !== _un ? result : Q[this.name];
+            };
+            Q[this.name]._ = getPrivateRefs.bind(this);
+            _ob.defineProperty(Q[this.name], '_internal', {
+                get: () => createInternalProxy.call(this),
+                enumerable: false,
+                configurable: false
+            });
+        };
+        if (name && typeof name === 'string') {
+            INTERNAL.moduleInstances.set(name, this);
+            this.init();
+            const keys = _ob.keys(this.methods);
+            for (let i = 0; i < keys.length; i++) {
+                const methodName = keys[i];
+                methodName !== 'init' && this.createStaticMethod(methodName, this.methods[methodName]);
+            }
+        }
+    }
+    QModule.register = (name, methods = {}) => {
+        if (INTERNAL.moduleRegistry.has(name)) {
+            const existingModule = INTERNAL.moduleInstances.get(name);
+            if (existingModule) {
+                existingModule.addMethods(methods);
+            } else {
+                const existingMethods = INTERNAL.moduleRegistry.get(name);
+                const keys = _ob.keys(methods);
+                for (let i = 0; i < keys.length; i++) {
+                    existingMethods[keys[i]] = methods[keys[i]];
+                }
+                INTERNAL.moduleRegistry.set(name, existingMethods);
+            }
+        } else {
+            INTERNAL.moduleRegistry.set(name, methods);
+            new QModule(name, methods);
+        }
+        return Q;
+    };
+    QModule.extend = (name, methodName, methodFunc) => {
+        if (typeof methodFunc === 'object') {
+            const methodsObj = methodName;
+            INTERNAL.moduleInstances.has(name) ? 
+                INTERNAL.moduleInstances.get(name).addMethods(methodsObj) :
+                QModule.register(name, methodsObj);
+        } else {
+            INTERNAL.moduleInstances.has(name) ?
+                INTERNAL.moduleInstances.get(name).addMethod(methodName, methodFunc) :
+                QModule.register(name, { [methodName]: methodFunc });
+        }
+        return Q;
+    };
+    QModule.get = name => INTERNAL.moduleInstances.get(name) || _n;
+    QModule.exists = name => INTERNAL.moduleInstances.has(name);
+    QModule.list = () => _ar.from(INTERNAL.moduleInstances.keys());
+    QModule.remove = name => {
+        if (INTERNAL.moduleInstances.has(name)) {
+            INTERNAL.moduleInstances.delete(name);
+            INTERNAL.moduleRegistry.delete(name);
+            Q[name] && delete Q[name];
+        }
+        return Q;
+    };
+    QModule.prototype = (methodName, methodFunc) => {
+        if (typeof methodName === 'object') {
+            const entries = _ob.entries(methodName);
+            for (let i = 0; i < entries.length; i++) {
+                Q.prototype[entries[i][0]] = entries[i][1];
+            }
+        } else {
+            Q.prototype[methodName] = methodFunc;
+        }
+        return Q;
+    };
+    QModule.global = (methodName, methodFunc) => {
+        if (typeof methodName === 'object') {
+            const entries = _ob.entries(methodName);
+            for (let i = 0; i < entries.length; i++) {
+                Q[entries[i][0]] = entries[i][1];
+            }
+        } else {
+            Q[methodName] = methodFunc;
+        }
+        return Q;
+    };
+    Q.Module = QModule;
+    Q.Module.register = QModule.register;
+    Q.Method = (methodName, methodFunc) => QModule.prototype(methodName, methodFunc);
+    Q.Function = (methodName, methodFunc) => QModule.global(methodName, methodFunc);
+    Object.defineProperty(Q, '_', {
+        get: getPrivateRefs,
+        enumerable: false,
+        configurable: false
+    });
+    Object.defineProperty(Q.prototype, '_', {
+        get: getPrivateRefs,
+        enumerable: false,
+        configurable: false
+    });
+    Object.defineProperty(Q, '_internal', {
+        get: function() { return createInternalProxy.call(this); },
+        enumerable: false,
+        configurable: false
+    });
+    Object.defineProperty(Q.prototype, '_internal', {
+        get: function() { return createInternalProxy.call(this); },
+        enumerable: false,
+        configurable: false
+    });
+    QModule.prototype('module', function (moduleName, methodName, ...args) {
+        const module = INTERNAL.moduleInstances.get(moduleName);
+        if (module && module.methods[methodName]) {
+            const result = module.methods[methodName].apply(module, [this, ...args]);
+            return result instanceof Q ? result : this;
+        }
+        return this;
+    });
+    Q._perf = (() => {
+        let metrics = {};
+        return {
+            start: label => { metrics[label] = performance.now(); },
+            end: label => {
+                if (metrics[label]) {
+                    const duration = performance.now() - metrics[label];
+                    delete metrics[label];
+                    return duration;
+                }
+                return 0;
+            },
+            memory: () => performance.memory ? {
+                used: Math.round(performance.memory.usedJSHeapSize / 1024 / 1024 * 100) / 100,
+                total: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024 * 100) / 100,
+                limit: Math.round(performance.memory.jsHeapSizeLimit / 1024 / 1024 * 100) / 100
+            } : null,
+            internal: () => ({
+                modules: INTERNAL.moduleInstances.size,
+                registry: INTERNAL.moduleRegistry.size,
+                styleElements: INTERNAL.styleData.e.length,
+                styleSize: INTERNAL.styleData.r.length + INTERNAL.styleData.g.length + 
+                          _ob.values(INTERNAL.styleData.s).join('').length
+            })
+        };
+    })();
+    Q.Method('addClass', function (classes) {
     var list = classes.split(' '),
         nodes = this.nodes;
     for (var i = 0, l = nodes.length; i < l; i++) {
@@ -221,7 +433,7 @@ const Q = (() => {
     }
     return this;
 });
-Q.Ext('after', function (...contents) {
+Q.Method('after', function (...contents) {
   const nodes = this.nodes;
   for (let i = 0, len = nodes.length; i < len; i++) {
     const target = nodes[i];
@@ -259,7 +471,7 @@ Q.Ext('after', function (...contents) {
   }
   return this;
 });
-Q.Ext('animate', function (duration, properties, callback) {
+Q.Method('animate', function (duration, properties, callback) {
   var nodes = this.nodes;
   for (var i = 0, len = nodes.length; i < len; i++) {
     var element = nodes[i],
@@ -281,7 +493,7 @@ Q.Ext('animate', function (duration, properties, callback) {
   }
   return this;
 });
-Q.Ext('append', function (...contents) {
+Q.Method('append', function (...contents) {
   const nodes = this.nodes;
   for (let i = 0, len = nodes.length; i < len; i++) {
     const parent = nodes[i];
@@ -307,7 +519,7 @@ Q.Ext('append', function (...contents) {
   }
   return this;
 });
-Q.Ext('attr', function (attribute, value) {
+Q.Method('attr', function (attribute, value) {
     var nodes = this.nodes;
     if (typeof attribute === 'object') {
         var keys = Object.keys(attribute);
@@ -328,7 +540,7 @@ Q.Ext('attr', function (attribute, value) {
         return this;
     }
 });
-Q.Ext('before', function (...contents) {
+Q.Method('before', function (...contents) {
   const nodes = this.nodes;
   for (let i = 0, len = nodes.length; i < len; i++) {
     const target = nodes[i];
@@ -352,7 +564,7 @@ Q.Ext('before', function (...contents) {
   }
   return this;
 });
-Q.Ext('bind', function (event, handler) {
+Q.Method('bind', function (event, handler) {
     if (!this._eventDelegation) {
         this._eventDelegation = {};
     }
@@ -369,14 +581,14 @@ Q.Ext('bind', function (event, handler) {
     }
     return this;
 });
-Q.Ext('blur', function () {
+Q.Method('blur', function () {
     var nodes = this.nodes;
     for (var i = 0, l = nodes.length; i < l; i++) {
         nodes[i].blur();
     }
     return this;
 });
-Q.Ext('children', function (selector) {
+Q.Method('children', function (selector) {
   const result = [];
   const nodes = this.nodes;
   for (let i = 0, len = nodes.length; i < len; i++) {
@@ -397,17 +609,17 @@ Q.Ext('children', function (selector) {
   }
   return new Q(result);
 });
-Q.Ext('click', function () {
+Q.Method('click', function () {
     var nodes = this.nodes;
     for (var i = 0, l = nodes.length; i < l; i++) {
         nodes[i].click();
     }
     return this;
 });
-Q.Ext('clone', function () {
+Q.Method('clone', function () {
     return new Q(this.nodes[0].cloneNode(true));
 });
-Q.Ext('closest', function (selector) {
+Q.Method('closest', function (selector) {
     let node = this.nodes[0];
     while (node) {
         if (node.matches && node.matches(selector)) {
@@ -417,7 +629,7 @@ Q.Ext('closest', function (selector) {
     }
     return null;
 });
-Q.Ext('css', function(property, value) {
+Q.Method('css', function(property, value) {
   const nodes = this.nodes;
   if (typeof property === 'object') {
       for (let i = 0, len = nodes.length; i < len; i++) {
@@ -434,7 +646,7 @@ Q.Ext('css', function(property, value) {
   }
   return this;
 });
-Q.Ext('data', function (key, value) {
+Q.Method('data', function (key, value) {
     const nodes = this.nodes;
     if (value === Q._.un) {
         return nodes[0] && nodes[0].dataset[key] || Q._.n;
@@ -444,7 +656,7 @@ Q.Ext('data', function (key, value) {
     }
     return this;
 });
-Q.Ext('detach', function() {
+Q.Method('detach', function() {
     const nodes = this.nodes;
     const detachedNodes = [];
     for (let i = 0, len = nodes.length; i < len; i++) {
@@ -458,7 +670,7 @@ Q.Ext('detach', function() {
     this.nodes = detachedNodes;
     return this;
 });
-Q.Ext('each', function (callback) {
+Q.Method('each', function (callback) {
     if (!this.nodes) return this;
     const nodes = this.nodes;
     for (let i = 0, len = nodes.length; i < len; i++) {
@@ -466,18 +678,18 @@ Q.Ext('each', function (callback) {
     }
     return this;
 });
-Q.Ext('empty', function () {
+Q.Method('empty', function () {
   var nodes = this.nodes;
   for (var i = 0, len = nodes.length; i < len; i++) {
     nodes[i].innerHTML = '';
   }
   return this;
 });
-Q.Ext('eq', function (index) {
+Q.Method('eq', function (index) {
   var node = this.nodes[index];
   return node ? new Q(node) : null;
 });
-Q.Ext('fadeIn', function(duration, callback) {
+Q.Method('fadeIn', function(duration, callback) {
     duration = duration || 400;
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
@@ -495,7 +707,7 @@ Q.Ext('fadeIn', function(duration, callback) {
     }
     return this;
 });
-Q.Ext('fadeOut', function(duration, callback) {
+Q.Method('fadeOut', function(duration, callback) {
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         (function(el) {
@@ -511,7 +723,7 @@ Q.Ext('fadeOut', function(duration, callback) {
     }
     return this;
 });
-Q.Ext('fadeTo', function(opacity, duration, callback) {
+Q.Method('fadeTo', function(opacity, duration, callback) {
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         (function(el) {
@@ -527,7 +739,7 @@ Q.Ext('fadeTo', function(opacity, duration, callback) {
     }
     return this;
 });
-Q.Ext('fadeToggle', function(duration, callback) {
+Q.Method('fadeToggle', function(duration, callback) {
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         var computed = window.getComputedStyle(nodes[i]);
@@ -539,27 +751,27 @@ Q.Ext('fadeToggle', function(duration, callback) {
     }
     return this;
 });
-Q.Ext('find', function(selector) {
+Q.Method('find', function(selector) {
     var parent = this.nodes[0];
     if (!parent) return null;
     var found = parent.querySelectorAll(selector);
     return found.length ? Q(found) : null;
 });
-Q.Ext('first', function () {
+Q.Method('first', function () {
     return new Q(this.nodes[0]);
 });
-Q.Ext('focus', function () {
+Q.Method('focus', function () {
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         nodes[i].focus();
     }
     return this;
 });
-Q.Ext('hasClass', function(className) {
+Q.Method('hasClass', function(className) {
     var node = this.nodes[0];
     return (node && node.classList.contains(className)) || false;
 });
-Q.Ext('height', function (value) {
+Q.Method('height', function (value) {
     var nodes = this.nodes;
     if (value === undefined) {
         return nodes[0].offsetHeight;
@@ -569,7 +781,7 @@ Q.Ext('height', function (value) {
     }
     return this;
 });
-Q.Ext('hide', function (duration, callback) {
+Q.Method('hide', function (duration, callback) {
     duration = duration || 0;
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
@@ -595,7 +807,7 @@ Q.Ext('hide', function (duration, callback) {
     }
     return this;
 });
-Q.Ext('html', function (content) {
+Q.Method('html', function (content) {
     var nodes = this.nodes;
     if (content === undefined) {
         return nodes[0] ? nodes[0].innerHTML : null;
@@ -630,13 +842,13 @@ Q.Ext('html', function (content) {
     }
     return this;
 });
-Q.Ext('id', function (ident) {
+Q.Method('id', function (ident) {
     var node = this.nodes[0];
     if (ident === undefined) return node.id;
     node.id = ident;
     return this;
 });
-Q.Ext('index', function (index) {
+Q.Method('index', function (index) {
     var first = this.nodes[0];
     if (index === undefined) {
         return Array.prototype.indexOf.call(first.parentNode.children, first);
@@ -656,11 +868,11 @@ Q.Ext('index', function (index) {
     }
     return this;
 });
-Q.Ext('inside', function (selector) {
+Q.Method('inside', function (selector) {
     var node = this.nodes[0];
     return node ? node.closest(selector) !== null : false;
 });
-Q.Ext('is', function (selector) {
+Q.Method('is', function (selector) {
     var node = this.nodes[0];
     if (!node) return false;
     if (typeof selector === 'function') {
@@ -698,18 +910,18 @@ Q.Ext('is', function (selector) {
     }
     return false;
 });
-Q.Ext('isExists', function () {
+Q.Method('isExists', function () {
     var node = this.nodes[0];
     return node ? document.body.contains(node) : false;
 });
 Q.isExists = function (selector) {
     return document.querySelector(selector) !== null;
 };
-Q.Ext('last', function () {
+Q.Method('last', function () {
     var nodes = this.nodes;
     return new Q(nodes[nodes.length - 1]);
 });
-Q.Ext('map', function (callback) {
+Q.Method('map', function (callback) {
     var result = [],
         nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
@@ -717,7 +929,7 @@ Q.Ext('map', function (callback) {
     }
     return result;
 });
-Q.Ext('next', function(selector) {
+Q.Method('next', function(selector) {
     const result = [];
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const node = this.nodes[i];
@@ -730,7 +942,7 @@ Q.Ext('next', function(selector) {
     instance.nodes = result;
     return instance;
 });
-Q.Ext('off', function (events, handler, options) {
+Q.Method('off', function (events, handler, options) {
     var defaultOptions = { capture: false, once: false, passive: false },
         opts = Object.assign({}, defaultOptions, options),
         eventList = events.split(' '),
@@ -742,7 +954,7 @@ Q.Ext('off', function (events, handler, options) {
     }
     return this;
 });
-Q.Ext('offset', function () {
+Q.Method('offset', function () {
     var node = this.nodes[0],
         rect = node.getBoundingClientRect();
     return {
@@ -750,7 +962,7 @@ Q.Ext('offset', function () {
         left: rect.left + window.scrollX
     };
 });
-Q.Ext('on', function (events, handler, options) {
+Q.Method('on', function (events, handler, options) {
     var defaultOptions = { capture: false, once: false, passive: false },
         opts = Object.assign({}, defaultOptions, options),
         eventList = events.split(' '),
@@ -762,18 +974,18 @@ Q.Ext('on', function (events, handler, options) {
     }
     return this;
 });
-Q.Ext('parent', function () {
+Q.Method('parent', function () {
     var node = this.nodes[0];
     return new Q(node ? node.parentNode : null);
 });
-Q.Ext('position', function () {
+Q.Method('position', function () {
     var node = this.nodes[0];
     return {
         top: node.offsetTop,
         left: node.offsetLeft
     };
 });
-Q.Ext('prepend', function () {
+Q.Method('prepend', function () {
     var nodes = this.nodes,
         contents = Array.prototype.slice.call(arguments),
         i, j, k, parent, child, subNodes;
@@ -797,7 +1009,7 @@ Q.Ext('prepend', function () {
     }
     return this;
 });
-Q.Ext('prev', function(selector) {
+Q.Method('prev', function(selector) {
     const result = [];
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const node = this.nodes[i];
@@ -810,7 +1022,7 @@ Q.Ext('prev', function(selector) {
     instance.nodes = result;
     return instance;
 });
-Q.Ext('prop', function (property, value) {
+Q.Method('prop', function (property, value) {
     var nodes = this.nodes;
     if (value === undefined) {
         return nodes[0] ? nodes[0][property] : null;
@@ -820,46 +1032,46 @@ Q.Ext('prop', function (property, value) {
     }
     return this;
 });
-Q.Ext('remove', function() {
+Q.Method('remove', function() {
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         nodes[i].remove();
     }
     return this;
 });
-Q.Ext('removeAttr', function (attribute) {
+Q.Method('removeAttr', function (attribute) {
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         nodes[i].removeAttribute(attribute);
     }
     return this;
 });
-Q.Ext('removeClass', function (classes) {
+Q.Method('removeClass', function (classes) {
     var list = classes.split(' ');
     for (var i = 0, len = this.nodes.length; i < len; i++) {
         this.nodes[i].classList.remove.apply(this.nodes[i].classList, list);
     }
     return this;
 });
-Q.Ext('removeData', function (key) {
+Q.Method('removeData', function (key) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         delete this.nodes[i].dataset[key];
     }
     return this;
 });
-Q.Ext('removeProp', function (property) {
+Q.Method('removeProp', function (property) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         delete this.nodes[i][property];
     }
     return this;
 });
-Q.Ext('removeTransition', function () {
+Q.Method('removeTransition', function () {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         this.nodes[i].style.transition = '';
     }
     return this;
 });
-Q.Ext('replaceWith', function(newContent) {
+Q.Method('replaceWith', function(newContent) {
     const nodes = this.nodes;
     let newNodes = (newContent instanceof Q) ? newContent.nodes : [newContent];
     for (let i = 0, l = nodes.length; i < l; i++) {
@@ -873,11 +1085,11 @@ Q.Ext('replaceWith', function(newContent) {
     }
     return this;
 });
-Q.Ext('scrollHeight', function () {
+Q.Method('scrollHeight', function () {
     var node = this.nodes[0];
     return node.scrollHeight;
 });
-Q.Ext('scrollLeft', function (value, increment) {
+Q.Method('scrollLeft', function (value, increment) {
     const node = this.nodes[0];
     if (value === undefined) {
         return node.scrollLeft;
@@ -891,7 +1103,7 @@ Q.Ext('scrollLeft', function (value, increment) {
     }
     return this;
 });
-Q.Ext('scrollTop', function (value, increment) {
+Q.Method('scrollTop', function (value, increment) {
     const node = this.nodes[0];
     if (value === undefined) {
         return node.scrollTop;
@@ -905,11 +1117,11 @@ Q.Ext('scrollTop', function (value, increment) {
     }
     return this;
 });
-Q.Ext('scrollWidth', function () {
+Q.Method('scrollWidth', function () {
     var node = this.nodes[0];
     return node.scrollWidth;
 });
-Q.Ext('show', function (duration = 0, callback) {
+Q.Method('show', function (duration = 0, callback) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const element = this.nodes[i];
         if (duration === 0) {
@@ -930,7 +1142,7 @@ Q.Ext('show', function (duration = 0, callback) {
     }
     return this;
 });
-Q.Ext('siblings', function(selector) {
+Q.Method('siblings', function(selector) {
     const result = [];
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const node = this.nodes[i];
@@ -950,14 +1162,14 @@ Q.Ext('siblings', function(selector) {
     instance.nodes = result;
     return instance;
 });
-Q.Ext('size', function () {
+Q.Method('size', function () {
     const node = this.nodes[0];
 	return {
 		width: node.offsetWidth,
 		height: node.offsetHeight
 	};
 });
-Q.Ext('text', function (content) {
+Q.Method('text', function (content) {
     if (content === undefined) {
         return this.nodes[0]?.textContent || null;
     }
@@ -966,26 +1178,26 @@ Q.Ext('text', function (content) {
     }
     return this;
 });
-Q.Ext('toggle', function () {
+Q.Method('toggle', function () {
     var nodes = this.nodes;
     for (var i = 0, len = nodes.length; i < len; i++) {
         nodes[i].style.display = (nodes[i].style.display === 'none' ? '' : 'none');
     }
     return this;
 });
-Q.Ext('toggleClass', function (className) {
+Q.Method('toggleClass', function (className) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         this.nodes[i].classList.toggle(className);
     }
     return this;
 });
-Q.Ext('trigger', function (event) {
+Q.Method('trigger', function (event) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         this.nodes[i].dispatchEvent(new Event(event));
     }
     return this;
 });
-Q.Ext('unwrap', function () {
+Q.Method('unwrap', function () {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const el = this.nodes[i];
         const parent = el.parentNode;
@@ -995,24 +1207,24 @@ Q.Ext('unwrap', function () {
     }
     return this;
 });
-Q.Ext('val', function(input) {
+Q.Method('val', function(input) {
     if (input === undefined) return this.nodes[0]?.value || null;
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         this.nodes[i].value = input;
     }
     return this;
 });
-Q.Ext('wait', function(ms) {
+Q.Method('wait', function(ms) {
 	return new Promise(resolve => setTimeout(() => resolve(this), ms));
 });
-Q.Ext('walk', function (callback, useQObject = false) {
+Q.Method('walk', function (callback, useQObject = false) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const node = useQObject ? Q(this.nodes[i]) : this.nodes[i];
         callback.call(this.nodes[i], node, i);
     }
     return this;
 });
-Q.Ext('width', function (value) {
+Q.Method('width', function (value) {
     if (typeof value === 'undefined') {
         return this.nodes[0] ? this.nodes[0].offsetWidth : undefined;
     }
@@ -1021,7 +1233,7 @@ Q.Ext('width', function (value) {
     }
     return this;
 });
-Q.Ext('wrap', function (wrapper) {
+Q.Method('wrap', function (wrapper) {
     for (let i = 0, n = this.nodes.length; i < n; i++) {
         const node = this.nodes[i];
         const parent_Node = node.parentNode;
@@ -1038,7 +1250,7 @@ Q.Ext('wrap', function (wrapper) {
     }
     return this;
 });
-Q.Ext('wrapAll', function (wrapper) {
+Q.Method('wrapAll', function (wrapper) {
     if (!this.nodes.length) return this;
     const parent = this.nodes[0].parentNode;
     let newParent = typeof wrapper === 'string'
@@ -1051,7 +1263,7 @@ Q.Ext('wrapAll', function (wrapper) {
     }
     return this;
 });
-Q.Ext('zIndex', function (value) {
+Q.Method('zIndex', function (value) {
     const node = this.nodes[0];
     if (!node) return;
     if (value === undefined) {

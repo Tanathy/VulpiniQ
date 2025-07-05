@@ -15,11 +15,9 @@ Form.prototype.Radio = function(options = []) {
                 background-color: var(--form-default-background);
                 border-radius: 50%;
             }
-
             .form_radio_item:hover::before {
                 outline: 2px solid var(--form-default-accent-color);
             }
-
             .form_radio_item.selected::before {
                 background-color: var(--form-default-accent-color);
             }

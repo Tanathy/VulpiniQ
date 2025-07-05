@@ -1,5 +1,4 @@
 Q.Image.prototype.Brightness = function (value, brightOptions = {}) {
-
     const defaultOptions = {
         preserveAlpha: true,
         clamp: true

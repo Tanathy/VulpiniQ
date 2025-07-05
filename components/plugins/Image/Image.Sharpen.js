@@ -1,76 +1,55 @@
 Q.Image.prototype.Sharpen = function (options = {}) {
-
     const DEFAULTS = {
         amount: 1.0,
         radius: 1.0,
         threshold: 0,
         details: 0.5
     };
-
     const s = Object.assign({}, DEFAULTS, options);
-
     s.amount = Math.min(4, Math.max(0, s.amount));
     s.radius = Math.max(0, s.radius);
     s.threshold = Math.max(0, s.threshold);
     s.details = Math.min(1, Math.max(0, s.details));
-
     const ctx = this.node.getContext('2d', { willReadFrequently: true });
     const { width, height } = this.node;
     const imgData = ctx.getImageData(0, 0, width, height);
     const src = imgData.data;
     const blurred = new Uint8ClampedArray(src);
-
-
     const { kernel, size } = createGaussianKernel(s.radius);
     convolve(src, blurred, width, height, kernel, size);
-
-
     const amountFactor = s.amount * 0.75;
     const detailFactor = s.details * 2;
     for (let i = 0; i < src.length; i += 4) {
-
         const r = src[i], g = src[i + 1], b = src[i + 2];
         const rB = blurred[i], gB = blurred[i + 1], bB = blurred[i + 2];
-
-
         const Y = 0.299 * r + 0.587 * g + 0.114 * b;
         const Yb = 0.299 * rB + 0.587 * gB + 0.114 * bB;
         const diff = Y - Yb;
-
-
         if (Math.abs(diff) > s.threshold) {
             const f = amountFactor + detailFactor * (Math.abs(diff) / 255);
             const Ynew = Y + diff * f;
             const ratio = Y > 0 ? Ynew / Y : 1;
-
             imgData.data[i] = clamp255(r * ratio);
             imgData.data[i + 1] = clamp255(g * ratio);
             imgData.data[i + 2] = clamp255(b * ratio);
         }
-
     }
-
     ctx.putImageData(imgData, 0, 0);
     this.saveToHistory();
     return this;
 };
-
 function clamp255(v) {
     return v < 0 ? 0 : v > 255 ? 255 : v;
 }
-
-
 function createGaussianKernel(radius) {
     radius = Math.floor(Math.max(0, radius));
     const size = 2 * radius + 1;
     if (size < 1) return { kernel: new Float32Array([1]), size: 1 };
     if (radius === 0) return { kernel: new Float32Array([1]), size: 1 };
-
     const kernel = new Float32Array(size * size);
     const sigma = radius / 3;
     const twoSigma2 = 2 * sigma * sigma;
     let sum = 0, idx = 0, center = radius;
-
     for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++, idx++) {
             const dx = x - center, dy = y - center;
@@ -89,8 +68,6 @@ function createGaussianKernel(radius) {
     }
     return { kernel, size };
 }
-
-
 function convolve(src, dst, width, height, kernel, size) {
     const half = Math.floor(size / 2);
     for (let y = 0; y < height; y++) {

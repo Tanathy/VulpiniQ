@@ -90,33 +90,26 @@ Container.prototype.Tab = function(data, horizontal = true) {
         });
         Container.tabClassesInitialized = true;
     }
-    
     const wrapper = Q('<div>', { class: Container.tabClasses.tab_container });
     const header = Q('<div>', { class: Container.tabClasses.tab_navigation_header });
     const prevBtn = Q('<div>', { class: Container.tabClasses.tab_navigation_buttons });
     const nextBtn = Q('<div>', { class: Container.tabClasses.tab_navigation_buttons });
     const tabs = Q('<div>', { class: Container.tabClasses.tab_navigation_tabs });
     const contentContainer = Q('<div>', { class: Container.tabClasses.tab_content_container });
-    
     if (!horizontal) {
         wrapper.addClass(Container.tabClasses.tab_container_vertical);
         header.addClass(Container.tabClasses.tab_navigation_header_vertical);
         tabs.addClass(Container.tabClasses.tab_navigation_tabs_vertical);
         prevBtn.addClass(Container.tabClasses.tab_navigation_buttons_vertical);
         nextBtn.addClass(Container.tabClasses.tab_navigation_buttons_vertical);
-        
         prevBtn.html('▲');
         nextBtn.html('▼');
     } else {
-        
         prevBtn.html('◀');
         nextBtn.html('▶');
     }
-    
     header.append(prevBtn, tabs, nextBtn);
     wrapper.append(header, contentContainer);
-
-    
     function updateNavButtons() {
         const el = tabs.nodes[0];
         const hasOverflow = horizontal
@@ -126,12 +119,9 @@ Container.prototype.Tab = function(data, horizontal = true) {
         prevBtn.css('display', disp);
         nextBtn.css('display', disp);
     }
-
-    
     const data_tabs = {};
     const data_contents = {};
     let activeTab = null;
-    
     prevBtn.off('click').on('click', () => {
         const scrollAmount = horizontal ? tabs.width() : tabs.height();
         const el = tabs.nodes[0];
@@ -160,16 +150,13 @@ Container.prototype.Tab = function(data, horizontal = true) {
                        : tabs.scrollTop( scrollAmount, true);
         }
     });
-    
     data.forEach(item => {
-        
         const tab = Q('<div>', { class: Container.tabClasses.tab })
             .attr('data-value', item.value)
             .text(item.title);
         if (item.disabled) {
             tab.addClass(Container.tabClasses.tab_disabled);
         }
-        
         let content;
         if (typeof item.content === 'string') {
             content = Q('<div>').html(item.content);
@@ -180,36 +167,27 @@ Container.prototype.Tab = function(data, horizontal = true) {
         } else {
             content = Q('<div>');
         }
-        
         data_tabs[item.value] = tab;
         data_contents[item.value] = content;
-        
         tab.on('click', function() {
             // Prevent loading content if the tab has been disabled
             if (tab.hasClass(Container.tabClasses.tab_disabled)) return;
-
             const activeTabs = tabs.find('.' + Container.tabClasses.tab_active);
             if (activeTabs) activeTabs.removeClass(Container.tabClasses.tab_active);
             tab.addClass(Container.tabClasses.tab_active);
-            
             showContent(item.value);
         });
         tabs.append(tab);
     });
     updateNavButtons();
-
-    
     function showContent(value) {
         if (!data_contents[value]) return;
-        
         if (activeTab && data_contents[activeTab]) {
             data_contents[activeTab].detach();
         }
-        
         activeTab = value;
         contentContainer.append(data_contents[value]);
     }
-    
     wrapper.select = function(value) {
         const tab = data_tabs[value];
         if (tab) tab.click();
@@ -225,14 +203,12 @@ Container.prototype.Tab = function(data, horizontal = true) {
     };
     wrapper.addTab = function(tabData) {
         if (!tabData) return null;
-        
         const tab = Q('<div>', { class: Container.tabClasses.tab })
             .attr('data-value', tabData.value)
             .text(tabData.title);
         if (tabData.disabled) {
             tab.addClass(Container.tabClasses.tab_disabled);
         }
-        
         let content;
         if (typeof tabData.content === 'string') {
             content = Q('<div>').html(tabData.content);
@@ -243,14 +219,11 @@ Container.prototype.Tab = function(data, horizontal = true) {
         } else {
             content = Q('<div>');
         }
-        
         data_tabs[tabData.value] = tab;
         data_contents[tabData.value] = content;
-        
         tab.on('click', function() {
             // Prevent loading content if the tab has been disabled
             if (tab.hasClass(Container.tabClasses.tab_disabled)) return;
-
             const activeTabs = tabs.find('.' + Container.tabClasses.tab_active);
             if (activeTabs) activeTabs.removeClass(Container.tabClasses.tab_active);
             tab.addClass(Container.tabClasses.tab_active);
@@ -262,21 +235,16 @@ Container.prototype.Tab = function(data, horizontal = true) {
     };
     wrapper.removeTab = function(value) {
         if (data_tabs[value]) {
-            
             data_tabs[value].remove();
-            
             if (activeTab === value) {
-                
                 const availableTab = Object.keys(data_tabs).find(key => key !== value);
                 if (availableTab) {
                     this.select(availableTab);
                 } else {
-                    
                     contentContainer.empty();
                     activeTab = null;
                 }
             }
-            
             if (data_contents[value]) {
                 data_contents[value].remove();
             }
@@ -286,11 +254,9 @@ Container.prototype.Tab = function(data, horizontal = true) {
         updateNavButtons();
         return this;
     };
-    
     wrapper.getContent = function(value) {
         return data_contents[value] || null;
     };
-    
     wrapper.updateContent = function(value, newContent) {
         if (!data_contents[value]) return this;
         if (typeof newContent === 'string') {

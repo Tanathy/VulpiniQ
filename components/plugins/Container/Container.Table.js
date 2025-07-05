@@ -13,7 +13,6 @@ Container.prototype.Table = function (data = [], options = {}) {
     language: ['Search...', 'No results found.', 'Showing [PAGE] to [ALL_PAGES] of [TOTAL] entries','First', 'Prev', 'Next', 'Last'],
   };
   options = Object.assign({}, defaultOptions, options);
-
   const {
     debounce: debounceTime,
     search: enableSearch,
@@ -22,27 +21,21 @@ Container.prototype.Table = function (data = [], options = {}) {
     page: enablePage,
     info: enableInfo
   } = options;
-
   if (!Container.tableClassesInitialized) {
     Container.tableClasses = Q.style('', `
       .tbl_wrapper { display: flex; flex-direction: column; }
       .tbl_top { display: flex; justify-content: space-between; margin-bottom: 5px; }
       .tbl_table { width:100%; border-collapse: collapse; 
-      
       border-radius: var(--form-default-border-radius);
       overflow: hidden;
       }
-
-
       .tbl_table th, .tbl_table td {
       border: var(--form-default-dataset-border);
       padding:6px;
       text-align:left;
       cursor: default;
       }
-
       .tbl_row.selected { background: var(--form-default-accent-color); color: var(--form-default-accent-text-color); }
-      
             .tbl_table th
       {
         background: var(--form-default-dataset-header-background);
@@ -56,7 +49,6 @@ Container.prototype.Table = function (data = [], options = {}) {
         font-size: var(--form-default-dataset-header-data-font-size);
         color: var(--form-default-dataset-data-text-color);
     }
-
       .tbl_bottom {
       display: flex;
       justify-content: space-between;
@@ -64,23 +56,19 @@ Container.prototype.Table = function (data = [], options = {}) {
       font-size: var(--form-default-dataset-header-data-font-size);
       color: var(--form-default-dataset-data-text-color);
       }
-      
       .tbl_pagination {
       display:flex;
       gap:2px;
       }
-      
       .tbl_page_btn {
       padding: 5px 15px;
       cursor: default;
       user-select: none;
       }
-      
       .tbl_page_btn.active { 
       background: var(--form-default-accent-color);
         color: var(--form-default-text-color-active);
     }
-
       .tbl_table th { position: relative; }
       .tbl_table th .sort-icons {
         position: absolute; right: 8px; top: 50%;
@@ -88,11 +76,9 @@ Container.prototype.Table = function (data = [], options = {}) {
         display: flex; flex-direction: column;
         font-size: 8px; line-height: 1.3;
       }
-
       .sort_active {
       color: var(--form-default-accent-color);
     }
-
     `, null, {
       'tbl_wrapper': 'tbl_wrapper',
       'tbl_top': 'tbl_top',
@@ -113,7 +99,6 @@ Container.prototype.Table = function (data = [], options = {}) {
   }
   const wrapper = Q('<div>', { class: Container.tableClasses.tbl_wrapper });
   const top = Q('<div>', { class: Container.tableClasses.tbl_top });
-
   let allData = [...data],
     currentPage = 1,
     sortKey = null,
@@ -121,43 +106,32 @@ Container.prototype.Table = function (data = [], options = {}) {
     selectedIdx = null,
     onChange = null,
     filteredIndices = [];
-
   const columnSizes = options.sizes;
-
   const form = new Q.Form();
-
   const searchInput = form.TextBox('text', '', options.language[0]);
   const search = Q('<div>', { class: Container.tableClasses.tbl_search })
     .append(searchInput.nodes[0]);
-
   if (enableSearch) top.append(search);
-
   const searchDebounceId = Q.ID('tbl_search_');
-
   const table = Q('<table>', { class: Container.tableClasses.tbl_table });
   const bottom = Q('<div>', { class: Container.tableClasses.tbl_bottom });
   const status = Q('<div>');
   const pagination = Q('<div>', { class: Container.tableClasses.tbl_pagination });
   bottom.append(status, pagination);
   wrapper.append(top, table, bottom);
-
   let pageSizeVal = options.pageSize;
   const pageSizeDropdown = form.Dropdown({
     values: [10, 25, 50, 100].map(n => ({ value: n, text: '' + n, default: n === pageSizeVal }))
   });
   const pageSize = Q('<div>', { class: Container.tableClasses.tbl_page_size })
     .append(pageSizeDropdown.nodes[0]);
-
   if (enablePage) top.append(pageSize);
-
   pageSizeDropdown.change(v => {
     pageSizeVal = +v;
     currentPage = 1;
     render();
   });
-
   pageSizeVal = +pageSizeDropdown.val().value;
-
   function render() {
     const rawVal = searchInput.val() || '';
     const term = rawVal.trim();
@@ -186,7 +160,6 @@ Container.prototype.Table = function (data = [], options = {}) {
     } else {
       filteredIndices = allData.map((_, i) => i);
     }
-
     if (enableSort && sortKey && sortOrder !== 'off') {
       filteredIndices.sort((a, b) => {
         const aVal = allData[a][sortKey];
@@ -196,7 +169,6 @@ Container.prototype.Table = function (data = [], options = {}) {
         return 0;
       });
     }
-
     const total = filteredIndices.length;
     const totalPages = Math.ceil(total / pageSizeVal) || 1;
     currentPage = Math.min(currentPage, totalPages);
@@ -205,7 +177,6 @@ Container.prototype.Table = function (data = [], options = {}) {
     const pageIndices = enablePage
       ? filteredIndices.slice(start, end)
       : filteredIndices;
-
     const keys = Object.keys(allData[0] || {});
     // build table headers, only inject sort icons if sorting enabled
     const thead = `<thead><tr>${keys.map((k, i) => {
@@ -218,7 +189,6 @@ Container.prototype.Table = function (data = [], options = {}) {
       return `<th data-key="${k}"${columnSizes[i] ? ` style="width:${columnSizes[i]}"` : ''}>${k}${icons}</th>`;
     }).join('')
       }</tr></thead>`;
-
     const tbody = pageIndices.map(idx => {
       const row = allData[idx];
       return `<tr data-idx="${idx}" class="${Container.tableClasses.tbl_row}${idx === selectedIdx ? ' '+ Container.tableClasses.selected : ''}">${Object.values(row).map(v => {
@@ -228,10 +198,8 @@ Container.prototype.Table = function (data = [], options = {}) {
       }).join('')
         }</tr>`;
     }).join('');
-
     table.html('');
     table.append(thead + `<tbody>${tbody}</tbody>`);
-
     if (enableInfo) {
       if (total === 0) {
         status.html(options.language[1]);
@@ -243,14 +211,12 @@ Container.prototype.Table = function (data = [], options = {}) {
       status.html(pageInfo);
       }
     }
-
     if (enablePage) {
       pagination.html('');
       [options.language[3], options.language[4]].forEach(t => {
         const btn = `<span class="${Container.tableClasses.tbl_page_btn}" data-action="${t.toLowerCase()}">${t}</span>`;
         pagination.append(btn);
       });
-
       const limit = options.pageButtonLimit;
       const half = Math.floor(limit / 2);
       let startPage = Math.max(1, currentPage - half);
@@ -262,14 +228,12 @@ Container.prototype.Table = function (data = [], options = {}) {
         const cls = p === currentPage ? ' '+ Container.tableClasses.active : '';
         pagination.append(`<span class="${Container.tableClasses.tbl_page_btn + cls}" data-page="${p}">${p}</span>`);
       }
-
       [options.language[5], options.language[6]].forEach(t => {
         const btn = `<span class="${Container.tableClasses.tbl_page_btn}" data-action="${t.toLowerCase()}">${t}</span>`;
         pagination.append(btn);
       });
     }
   }
-
   if (enableSearch) {
     searchInput.change(() => {
       Q.Debounce(searchDebounceId, debounceTime, () => {
@@ -278,7 +242,6 @@ Container.prototype.Table = function (data = [], options = {}) {
       });
     });
   }
-
   table.on('click', evt => {
     const th = evt.target.closest('th');
     const tr = evt.target.closest('tr[data-idx]');
@@ -294,7 +257,6 @@ Container.prototype.Table = function (data = [], options = {}) {
       }
       render();
       Q('.' + Container.tableClasses.sort_active).removeClass(Container.tableClasses.sort_active);
-
       if (sortOrder != 'off') {
         const arrowKey = sortOrder === 'asc' ? Container.tableClasses.asc : Container.tableClasses.desc;
         const head = Q(`[data-key="${key}"] .${arrowKey}`);
@@ -305,7 +267,6 @@ Container.prototype.Table = function (data = [], options = {}) {
       wrapper.select(idx);
     }
   });
-
   if (enablePage) {
     pagination.on('click', evt => {
       const tgt = evt.target;
@@ -317,7 +278,6 @@ Container.prototype.Table = function (data = [], options = {}) {
       render();
     });
   }
-
   wrapper.load = function (newData, stayOn = false) {
     allData = [...newData];
     if (!stayOn) { sortKey = null; sortOrder = 'off'; currentPage = 1; }
@@ -337,7 +297,6 @@ Container.prototype.Table = function (data = [], options = {}) {
   wrapper.change = function (cb) { onChange = cb; return this; };
   wrapper.index = function (idx) { return wrapper.select(idx); };
   wrapper.clear = function () { allData = []; render(); return this; };
-
   this.elements.push(wrapper);
   render();
   return wrapper;

@@ -1,4 +1,4 @@
-Q.Ext('index', function (index) {
+Q.Method('index', function (index) {
     var first = this.nodes[0];
     if (index === undefined) {
         return Array.prototype.indexOf.call(first.parentNode.children, first);

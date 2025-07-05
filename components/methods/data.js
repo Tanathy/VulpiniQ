@@ -1,4 +1,4 @@
-Q.Ext('data', function (key, value) {
+Q.Method('data', function (key, value) {
     const nodes = this.nodes;
     if (value === Q._.un) {
         return nodes[0] && nodes[0].dataset[key] || Q._.n;
