@@ -1,3 +1,35 @@
+/**
+ * @metadata
+ * {
+ *   "name": "html",
+ *   "method": "html(content)",
+ *   "author": "Vulpini",
+ *   "version": "1.0.0",
+ *   "date": "2025-07-06",
+ *   "type": "Prototype",
+ *   "category": "DOM",
+ *   "desc": "Gets or sets the HTML content of selected elements.",
+ *   "longDesc": "This method provides comprehensive HTML content manipulation. When called without arguments, it returns the innerHTML of the first element. When called with content, it replaces the innerHTML of all selected elements. It supports various content types including strings, Q objects, HTML elements, nodes, arrays, and NodeLists. The method intelligently handles different content types and properly appends them to the target elements.",
+ *   "dependencies": [],
+ *   "variables": [
+ *     "nodes",
+ *     "node",
+ *     "appendContent",
+ *     "subs",
+ *     "contArr",
+ *     "m",
+ *     "mlen"
+ *   ],
+ *   "examples": [
+ *     "Q('.element').html('<p>New content</p>');",
+ *     "var content = Q('#myDiv').html();",
+ *     "Q('.container').html([elem1, elem2, elem3]);"
+ *   ],
+ *   "flaws": "None known",
+ *   "optimizations": "Uses insertAdjacentHTML for string content, supports multiple content types efficiently",
+ *   "performance": "Optimized for various content types with appropriate DOM manipulation methods for each case"
+ * }
+ */
 Q.Method('html', function (content) {
     var nodes = this.nodes;
     if (content === undefined) {

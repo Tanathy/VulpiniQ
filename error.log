@@ -1,0 +1,54 @@
+VulpiniQ Builder Error Log
+Generated: 2025-07-06 21:14:53
+
+
+File: methods\find.js
+  - Field 'name' cannot contain spaces and not looking like a valid function/method name, got 'Find Elements Method'
+
+File: methods\focus.js
+  - Field 'name' cannot contain spaces and not looking like a valid function/method name, got 'Focus Element Method'
+
+File: methods\height.js
+  - Field 'desc' must be less than 140 characters, got 148 characters
+
+File: methods\index.js
+  - Field 'desc' must be less than 140 characters, got 141 characters
+
+File: methods\is.js
+  - Field 'desc' must be less than 140 characters, got 158 characters
+
+File: methods\isExists.js
+  - Field 'desc' must be less than 140 characters, got 151 characters
+
+File: methods\map.js
+  - Field 'desc' must be less than 140 characters, got 181 characters
+
+File: methods\next.js
+  - Field 'name' cannot contain spaces and not looking like a valid function/method name, got 'Next Sibling Method'
+
+File: methods\parent.js
+  - Field 'name' cannot contain spaces and not looking like a valid function/method name, got 'Parent Element Method'
+
+File: methods\prepend.js
+  - Field 'name' cannot contain spaces and not looking like a valid function/method name, got 'Prepend Content Method'
+
+File: methods\prev.js
+  - Field 'name' cannot contain spaces and not looking like a valid function/method name, got 'Previous Sibling Method'
+
+File: methods\remove.js
+  - Field 'name' cannot contain spaces and not looking like a valid function/method name, got 'Remove Elements Method'
+
+File: methods\siblings.js
+  - Field 'name' cannot contain spaces and not looking like a valid function/method name, got 'Siblings Method'
+
+File: methods\text.js
+  - Field 'name' cannot contain spaces and not looking like a valid function/method name, got 'Text Content Method'
+
+File: methods\toggle.js
+  - Field 'name' cannot contain spaces and not looking like a valid function/method name, got 'Toggle Visibility Method'
+
+File: methods\val.js
+  - Field 'name' cannot contain spaces and not looking like a valid function/method name, got 'Value Method'
+
+File: methods\width.js
+  - Field 'desc' must be less than 140 characters, got 145 characters

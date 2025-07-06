@@ -1,3 +1,27 @@
+/**
+ * @metadata
+ * {
+ *   "name": "scrollLeft",
+ *   "method": "scrollLeft(value)",
+ *   "author": "Vulpini",
+ *   "version": "1.0.0",
+ *   "date": "2025-07-06",
+ *   "type": "Prototype",
+ *   "category": "dimensions",
+ *   "desc": "Gets or sets the horizontal scroll position of elements. Supports increment mode for relative scrolling with boundary checking.",
+ *   "longDesc": "This method allows getting or setting the horizontal scroll position of selected elements. When called without arguments, it returns the scrollLeft value of the first element. When called with a value, it sets the scrollLeft property of all selected elements. The increment parameter allows for relative scrolling with boundary checking to prevent scrolling beyond the maximum scroll width.",
+ *   "dependencies": [],
+ *   "variables": ["node", "value", "increment", "current", "maxScrollLeft"],
+ *   "examples": [
+ *     "const scrollPos = Q('.container').scrollLeft()",
+ *     "Q('.container').scrollLeft(100)",
+ *     "Q('.container').scrollLeft(50, true)"
+ *   ],
+ *   "flaws": "Gets from first element only, Complex parameter handling",
+ *   "optimizations": "Separate methods for get/set/increment, Add smooth scrolling option",
+ *   "performance": "O(1) for getting, O(n) for setting where n is number of elements"
+ * }
+ */
 Q.Method('scrollLeft', function (value, increment) {
     const node = this.nodes[0];
     if (value === undefined) {

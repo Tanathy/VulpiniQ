@@ -1,3 +1,32 @@
+/**
+ * @metadata
+ * {
+ *   "name": "hide",
+ *   "method": "hide(duration, callback)",
+ *   "author": "Vulpini",
+ *   "version": "1.0.0",
+ *   "date": "2025-07-06",
+ *   "type": "Prototype",
+ *   "category": "Effects",
+ *   "desc": "Hides visible elements with optional fade-out animation.",
+ *   "longDesc": "This method hides visible elements by setting their display style to 'none'. When a duration is specified, it performs a fade-out animation by transitioning the opacity from 1 to 0 over the specified time period, then sets display to none. An optional callback function can be provided that will be executed when the animation completes. For instant hiding without animation, use a duration of 0.",
+ *   "dependencies": [],
+ *   "variables": [
+ *     "nodes",
+ *     "node",
+ *     "i",
+ *     "len"
+ *   ],
+ *   "examples": [
+ *     "Q('.visible').hide();",
+ *     "Q('#modal').hide(500);",
+ *     "Q('.element').hide(300, function() { console.log('Hidden!'); });"
+ *   ],
+ *   "flaws": "None known",
+ *   "optimizations": "Uses CSS transitions for smooth animations, proper event cleanup, closure pattern for node reference",
+ *   "performance": "Efficient visibility control with optional smooth animations using CSS transitions"
+ * }
+ */
 Q.Method('hide', function (duration, callback) {
     duration = duration || 0;
     var nodes = this.nodes;

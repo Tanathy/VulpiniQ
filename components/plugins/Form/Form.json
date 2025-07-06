@@ -1,8 +1,0 @@
-{
-  "Name": "Form",
-  "Method": "Constructor",
-  "Desc": "Form is a simple library for creating forms and windows in the browser. It provides a set of methods for creating form elements, windows, and other UI components.",
-  "Type": "Constructor",
-  "Example": "var containers = Q.Form()",
-  "Dependencies": ["Style", "addClass", "removeClass", "on", "append", "each", "find", "scrollTop", "scrollLeft", "hasClass", "text", "html", "val", "click", "closest", "empty", "show", "hide", "css", "attr", "prop", "remove", "add"]
-}

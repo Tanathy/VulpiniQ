@@ -1,3 +1,27 @@
+/**
+ * @metadata
+ * {
+ *   "name": "after",
+ *   "method": "after(...contents)",
+ *   "author": "Vulpini",
+ *   "version": "1.0.0",
+ *   "date": "2025-07-06",
+ *   "type": "Prototype",
+ *   "category": "manipulation",
+ *   "desc": "Inserts content after each element in the current set. Content can be HTML strings, DOM elements, Q objects, arrays, or NodeLists.",
+ *   "longDesc": "This method inserts the specified content after each element in the current selection. It supports various content types including HTML strings, DOM elements, Q objects, arrays, and NodeLists. The content is inserted as siblings after each target element.",
+ *   "dependencies": [],
+ *   "variables": ["nodes", "target", "parent", "content", "nextSibling", "subNodes"],
+ *   "examples": [
+ *     "Q('.item').after('<p>New content</p>');",
+ *     "Q('#header').after(document.createElement('div'));",
+ *     "Q('.element').after(Q('.another-element'));"
+ *   ],
+ *   "flaws": "Does not handle all edge cases with nested structures, performance can degrade with large content arrays",
+ *   "optimizations": "Pre-process content type checking, use document fragments for multiple elements",
+ *   "performance": "O(n*m) where n is number of elements and m is number of content items"
+ * }
+ */
 Q.Method('after', function (...contents) {
   const nodes = this.nodes;
   for (let i = 0, len = nodes.length; i < len; i++) {

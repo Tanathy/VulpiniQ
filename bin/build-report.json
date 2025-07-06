@@ -1,0 +1,12 @@
+{
+  "buildTime": "2025-07-06 22:10:24",
+  "totalComponents": 75,
+  "categories": {
+    "basics": 4,
+    "methods": 71
+  },
+  "types": {
+    "Static": 4,
+    "Prototype": 71
+  }
+}
